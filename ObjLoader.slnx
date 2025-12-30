@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="ObjLoader.SourceGenerator/ObjLoader.SourceGenerator.csproj" Id="51feb93c-e384-4e60-b4ba-7e2ae07069c3" />
+  <Project Path="ObjLoader/ObjLoader.csproj">
+    <Platform Project="x64" />
+  </Project>
+  <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.csproj" />
+</Solution>

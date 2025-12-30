@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>es-es</value></data>
+<data name="PluginName" xml:space="preserve"><value>Modelo OBJ</value></data>
+<data name="CoordinateSystem" xml:space="preserve"><value>Sistema de coordenadas</value></data>
+<data name="CoordinateSystem_Desc" xml:space="preserve"><value>Establece la orientación de los ejes de coordenadas al cargar el modelo.</value></data>
+<data name="CoordinateSystem_RightHandedYUp" xml:space="preserve"><value>Mano derecha Y-Up (Estándar)</value></data>
+<data name="CoordinateSystem_RightHandedZUp" xml:space="preserve"><value>Mano derecha Z-Up</value></data>
+<data name="CoordinateSystem_LeftHandedYUp" xml:space="preserve"><value>Mano izquierda Y-Up</value></data>
+<data name="CoordinateSystem_LeftHandedZUp" xml:space="preserve"><value>Mano izquierda Z-Up</value></data>
+<data name="CullMode" xml:space="preserve"><value>Recorte</value></data>
+<data name="CullMode_Desc" xml:space="preserve"><value>Establece el modo de recorte para el renderizado.</value></data>
+<data name="CullMode_None" xml:space="preserve"><value>Ninguno</value></data>
+<data name="CullMode_Front" xml:space="preserve"><value>Frente</value></data>
+<data name="CullMode_Back" xml:space="preserve"><value>Dorso</value></data>
+<data name="Group_Global" xml:space="preserve"><value>Configuración global</value></data>
+<data name="Group_Lighting" xml:space="preserve"><value>Iluminación</value></data>
+<data name="AmbientColor" xml:space="preserve"><value>Color ambiental</value></data>
+<data name="AmbientColor_Desc" xml:space="preserve"><value>Establece el color de la luz ambiental.</value></data>
+<data name="DiffuseIntensity" xml:space="preserve"><value>Intensidad difusa</value></data>
+<data name="DiffuseIntensity_Desc" xml:space="preserve"><value>Establece la intensidad de la reflexión difusa.</value></data>
+<data name="SpecularIntensity" xml:space="preserve"><value>Intensidad especular</value></data>
+<data name="SpecularIntensity_Desc" xml:space="preserve"><value>Establece la intensidad de la reflexión especular (resaltados).</value></data>
+<data name="Shininess" xml:space="preserve"><value>Brillo</value></data>
+<data name="Shininess_Desc" xml:space="preserve"><value>Establece la nitidez de los resaltados. Los valores más altos significan resaltados más nítidos.</value></data>
+<data name="Group_Environment" xml:space="preserve"><value>Entorno</value></data>
+<data name="LightColor" xml:space="preserve"><value>Color de la luz</value></data>
+<data name="LightColor_Desc" xml:space="preserve"><value>Establece el color de la fuente de luz.</value></data>
+<data name="ResetDefaults" xml:space="preserve"><value>Restablecer valores predeterminados</value></data>
+<data name="OK" xml:space="preserve"><value>Aceptar</value></data>
+<data name="Cancel" xml:space="preserve"><value>Cancelar</value></data>
+<data name="Group_Model" xml:space="preserve"><value>Modelo</value></data>
+<data name="Setting" xml:space="preserve"><value>Configuración</value></data>
+<data name="File" xml:space="preserve"><value>Archivo</value></data>
+<data name="File_Desc" xml:space="preserve"><value>3mf)</value></data>
+<data name="BaseColor" xml:space="preserve"><value>Color base</value></data>
+<data name="Projection" xml:space="preserve"><value>Proyección</value></data>
+<data name="Group_Display" xml:space="preserve"><value>Visualización</value></data>
+<data name="ScreenWidth" xml:space="preserve"><value>Ancho de pantalla</value></data>
+<data name="ScreenHeight" xml:space="preserve"><value>Altura de pantalla</value></data>
+<data name="Group_Placement" xml:space="preserve"><value>Colocación</value></data>
+<data name="X" xml:space="preserve"><value>Posición X</value></data>
+<data name="Y" xml:space="preserve"><value>Posición Y</value></data>
+<data name="Z" xml:space="preserve"><value>Posición Z</value></data>
+<data name="Fov" xml:space="preserve"><value>Campo de visión</value></data>
+<data name="Scale" xml:space="preserve"><value>Escala</value></data>
+<data name="RotationX" xml:space="preserve"><value>Rotación X</value></data>
+<data name="RotationY" xml:space="preserve"><value>Rotación Y</value></data>
+<data name="RotationZ" xml:space="preserve"><value>Rotación Z</value></data>
+<data name="ResetTrigger" xml:space="preserve"><value>Restablecer</value></data>
+<data name="Group_Light" xml:space="preserve"><value>Luz</value></data>
+<data name="IsLightEnabled" xml:space="preserve"><value>Habilitado</value></data>
+<data name="LightX" xml:space="preserve"><value>Posición X</value></data>
+<data name="LightY" xml:space="preserve"><value>Posición Y</value></data>
+<data name="LightZ" xml:space="preserve"><value>Posición Z</value></data>
+<data name="Projection_Parallel" xml:space="preserve"><value>Proyección paralela</value></data>
+<data name="Projection_Perspective" xml:space="preserve"><value>Proyección en perspectiva</value></data>
+<data name="ResetTransform" xml:space="preserve"><value>Restablecer transformación</value></data>
+<data name="SettingsTitle" xml:space="preserve"><value>Configuración</value></data>
+<data name="On" xml:space="preserve"><value>Encendido</value></data>
+<data name="Off" xml:space="preserve"><value>Apagado</value></data>
+<data name="UpdateAvailableTitle" xml:space="preserve"><value>Actualización disponible</value></data>
+<data name="UpdateAvailableMessage" xml:space="preserve"><value>Hay una nueva versión ({0}) disponible. ¿Desea abrir la página de descarga?</value></data>
+</root>

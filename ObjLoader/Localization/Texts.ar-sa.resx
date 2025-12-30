@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>ar-sa</value></data>
+<data name="PluginName" xml:space="preserve"><value>نموذج OBJ</value></data>
+<data name="CoordinateSystem" xml:space="preserve"><value>نظام الإحداثيات</value></data>
+<data name="CoordinateSystem_Desc" xml:space="preserve"><value>يحدد اتجاه محاور الإحداثيات عند تحميل النموذج.</value></data>
+<data name="CoordinateSystem_RightHandedYUp" xml:space="preserve"><value>يد يمنى Y-Up (افتراضي)</value></data>
+<data name="CoordinateSystem_RightHandedZUp" xml:space="preserve"><value>يد يمنى Z-Up</value></data>
+<data name="CoordinateSystem_LeftHandedYUp" xml:space="preserve"><value>يد يسرى Y-Up</value></data>
+<data name="CoordinateSystem_LeftHandedZUp" xml:space="preserve"><value>يد يسرى Z-Up</value></data>
+<data name="CullMode" xml:space="preserve"><value>إعدام</value></data>
+<data name="CullMode_Desc" xml:space="preserve"><value>يحدد وضع الإعدام للتصيير.</value></data>
+<data name="CullMode_None" xml:space="preserve"><value>لا شيء</value></data>
+<data name="CullMode_Front" xml:space="preserve"><value>أمام</value></data>
+<data name="CullMode_Back" xml:space="preserve"><value>خلف</value></data>
+<data name="Group_Global" xml:space="preserve"><value>الإعدادات العامة</value></data>
+<data name="Group_Lighting" xml:space="preserve"><value>إضاءة</value></data>
+<data name="AmbientColor" xml:space="preserve"><value>لون المحيط</value></data>
+<data name="AmbientColor_Desc" xml:space="preserve"><value>يحدد لون الضوء المحيط.</value></data>
+<data name="DiffuseIntensity" xml:space="preserve"><value>كثافة الانتشار</value></data>
+<data name="DiffuseIntensity_Desc" xml:space="preserve"><value>يحدد كثافة الانعكاس المنتشر للضوء.</value></data>
+<data name="SpecularIntensity" xml:space="preserve"><value>كثافة الانعكاس</value></data>
+<data name="SpecularIntensity_Desc" xml:space="preserve"><value>يحدد كثافة الانعكاس المرآوي (الإضاءة الساطعة).</value></data>
+<data name="Shininess" xml:space="preserve"><value>لمعان</value></data>
+<data name="Shininess_Desc" xml:space="preserve"><value>يحدد حدة الإضاءة الساطعة. القيم الأعلى تعني إضاءة أكثر حدة.</value></data>
+<data name="Group_Environment" xml:space="preserve"><value>بيئة</value></data>
+<data name="LightColor" xml:space="preserve"><value>لون الضوء</value></data>
+<data name="LightColor_Desc" xml:space="preserve"><value>يحدد لون مصدر الضوء.</value></data>
+<data name="ResetDefaults" xml:space="preserve"><value>إعادة تعيين الافتراضيات</value></data>
+<data name="OK" xml:space="preserve"><value>موافق</value></data>
+<data name="Cancel" xml:space="preserve"><value>إلغاء</value></data>
+<data name="Group_Model" xml:space="preserve"><value>نموذج</value></data>
+<data name="Setting" xml:space="preserve"><value>إعدادات</value></data>
+<data name="File" xml:space="preserve"><value>ملف</value></data>
+<data name="File_Desc" xml:space="preserve"><value>Specifies the 3D model file to load. (obj</value></data>
+<data name="BaseColor" xml:space="preserve"><value>اللون الأساسي</value></data>
+<data name="Projection" xml:space="preserve"><value>إسقاط</value></data>
+<data name="Group_Display" xml:space="preserve"><value>عرض</value></data>
+<data name="ScreenWidth" xml:space="preserve"><value>عرض الشاشة</value></data>
+<data name="ScreenHeight" xml:space="preserve"><value>ارتفاع الشاشة</value></data>
+<data name="Group_Placement" xml:space="preserve"><value>توضيع</value></data>
+<data name="X" xml:space="preserve"><value>الموضع س</value></data>
+<data name="Y" xml:space="preserve"><value>الموضع ص</value></data>
+<data name="Z" xml:space="preserve"><value>الموضع ع</value></data>
+<data name="Fov" xml:space="preserve"><value>مجال الرؤية</value></data>
+<data name="Scale" xml:space="preserve"><value>مقياس</value></data>
+<data name="RotationX" xml:space="preserve"><value>تدوير س</value></data>
+<data name="RotationY" xml:space="preserve"><value>تدوير ص</value></data>
+<data name="RotationZ" xml:space="preserve"><value>تدوير ع</value></data>
+<data name="ResetTrigger" xml:space="preserve"><value>إعادة تعيين</value></data>
+<data name="Group_Light" xml:space="preserve"><value>ضوء</value></data>
+<data name="IsLightEnabled" xml:space="preserve"><value>ممكن</value></data>
+<data name="LightX" xml:space="preserve"><value>الموضع س</value></data>
+<data name="LightY" xml:space="preserve"><value>الموضع ص</value></data>
+<data name="LightZ" xml:space="preserve"><value>الموضع ع</value></data>
+<data name="Projection_Parallel" xml:space="preserve"><value>إسقاط متوازي</value></data>
+<data name="Projection_Perspective" xml:space="preserve"><value>إسقاط منظوري</value></data>
+<data name="ResetTransform" xml:space="preserve"><value>إعادة تعيين التحويل</value></data>
+<data name="SettingsTitle" xml:space="preserve"><value>إعدادات</value></data>
+<data name="On" xml:space="preserve"><value>تشغيل</value></data>
+<data name="Off" xml:space="preserve"><value>إيقاف</value></data>
+<data name="UpdateAvailableTitle" xml:space="preserve"><value>تحديث متاح</value></data>
+<data name="UpdateAvailableMessage" xml:space="preserve"><value>يتوفر إصدار جديد ({0}). هل تريد فتح صفحة التنزيل؟</value></data>
+</root>

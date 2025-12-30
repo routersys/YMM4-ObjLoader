@@ -1,0 +1,69 @@
+﻿using System.Windows.Media;
+using YukkuriMovieMaker.Commons;
+using ObjLoader.Core;
+
+namespace ObjLoader.Plugin
+{
+    internal class ObjLoaderParameterSharedData
+    {
+        public string FilePath { get; }
+        public Color BaseColor { get; }
+        public ProjectionType Projection { get; }
+        public Animation ScreenWidth { get; } = new Animation(1920, 1, 8192);
+        public Animation ScreenHeight { get; } = new Animation(1080, 1, 8192);
+        public Animation X { get; } = new Animation(0, -100000, 100000);
+        public Animation Y { get; } = new Animation(0, -100000, 100000);
+        public Animation Z { get; } = new Animation(0, -100000, 100000);
+        public Animation Scale { get; } = new Animation(100, 0, 100000);
+        public Animation RotationX { get; } = new Animation(0, -36000, 36000);
+        public Animation RotationY { get; } = new Animation(0, -36000, 36000);
+        public Animation RotationZ { get; } = new Animation(0, -36000, 36000);
+        public Animation Fov { get; } = new Animation(45, 1, 179);
+        public bool IsLightEnabled { get; }
+        public Animation LightX { get; } = new Animation(0, -100000, 100000);
+        public Animation LightY { get; } = new Animation(0, -100000, 100000);
+        public Animation LightZ { get; } = new Animation(-100, -100000, 100000);
+
+        public ObjLoaderParameterSharedData(ObjLoaderParameter parameter)
+        {
+            FilePath = parameter.FilePath;
+            BaseColor = parameter.BaseColor;
+            Projection = parameter.Projection;
+            ScreenWidth.CopyFrom(parameter.ScreenWidth);
+            ScreenHeight.CopyFrom(parameter.ScreenHeight);
+            X.CopyFrom(parameter.X);
+            Y.CopyFrom(parameter.Y);
+            Z.CopyFrom(parameter.Z);
+            Scale.CopyFrom(parameter.Scale);
+            RotationX.CopyFrom(parameter.RotationX);
+            RotationY.CopyFrom(parameter.RotationY);
+            RotationZ.CopyFrom(parameter.RotationZ);
+            Fov.CopyFrom(parameter.Fov);
+            IsLightEnabled = parameter.IsLightEnabled;
+            LightX.CopyFrom(parameter.LightX);
+            LightY.CopyFrom(parameter.LightY);
+            LightZ.CopyFrom(parameter.LightZ);
+        }
+
+        public void CopyTo(ObjLoaderParameter parameter)
+        {
+            parameter.FilePath = FilePath;
+            parameter.BaseColor = BaseColor;
+            parameter.Projection = Projection;
+            parameter.ScreenWidth.CopyFrom(ScreenWidth);
+            parameter.ScreenHeight.CopyFrom(ScreenHeight);
+            parameter.X.CopyFrom(X);
+            parameter.Y.CopyFrom(Y);
+            parameter.Z.CopyFrom(Z);
+            parameter.Scale.CopyFrom(Scale);
+            parameter.RotationX.CopyFrom(RotationX);
+            parameter.RotationY.CopyFrom(RotationY);
+            parameter.RotationZ.CopyFrom(RotationZ);
+            parameter.Fov.CopyFrom(Fov);
+            parameter.IsLightEnabled = IsLightEnabled;
+            parameter.LightX.CopyFrom(LightX);
+            parameter.LightY.CopyFrom(LightY);
+            parameter.LightZ.CopyFrom(LightZ);
+        }
+    }
+}
