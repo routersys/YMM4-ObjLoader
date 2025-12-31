@@ -119,4 +119,5 @@
 <data name="Off" xml:space="preserve"><value>Off</value></data>
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>Update Available</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>A new version ({0}) is available. Do you want to open the download page?</value></data>
+<data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
 </root>

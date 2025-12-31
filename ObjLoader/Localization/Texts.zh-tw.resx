@@ -119,4 +119,5 @@
 <data name="Off" xml:space="preserve"><value>關</value></data>
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>更新可用</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>新版本 ({0}) 可用。是否打開下載頁面？</value></data>
+<data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
 </root>

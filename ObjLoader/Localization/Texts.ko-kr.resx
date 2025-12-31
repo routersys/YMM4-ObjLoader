@@ -119,4 +119,5 @@
 <data name="Off" xml:space="preserve"><value>꺼짐</value></data>
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>업데이트 가능</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>새 버전 ({0})을 사용할 수 있습니다. 다운로드 페이지를 여시겠습니까?</value></data>
+<data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
 </root>

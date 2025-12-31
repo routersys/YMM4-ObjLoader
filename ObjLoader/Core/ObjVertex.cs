@@ -9,5 +9,6 @@ namespace ObjLoader.Core
         public Vector3 Position;
         public Vector3 Normal;
         public Vector2 TexCoord;
+        public Vector4 Color;
     }
 }

@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using ObjLoader.Core;
+using ObjLoader.Localization;
 
 namespace ObjLoader.Parsers
 {
@@ -66,6 +67,82 @@ namespace ObjLoader.Parsers
                 using var doc = JsonDocument.Parse(jsonStr);
                 var root = doc.RootElement;
 
+                if (root.TryGetProperty("extensionsRequired", out var exts))
+                {
+                    foreach (var ext in exts.EnumerateArray())
+                    {
+                        if (ext.GetString() == "KHR_draco_mesh_compression")
+                        {
+                            throw new Exception(Texts.DracoNotSupported);
+                        }
+                    }
+                }
+
+                var images = new List<string>();
+                if (root.TryGetProperty("images", out var imagesProp))
+                {
+                    int imgIdx = 0;
+                    foreach (var img in imagesProp.EnumerateArray())
+                    {
+                        string ext = ".png";
+                        if (img.TryGetProperty("mimeType", out var mimeProp))
+                        {
+                            var mime = mimeProp.GetString();
+                            if (mime == "image/jpeg") ext = ".jpg";
+                        }
+
+                        byte[]? imgBytes = null;
+                        if (img.TryGetProperty("bufferView", out var bvProp))
+                        {
+                            if (binData != null && GetBufferViewInfo(root, bvProp.GetInt32(), out int bIdx, out int bOff, out int bLen, out int bStr))
+                            {
+                                if (bIdx == 0 && bOff + bLen <= binData.Length)
+                                {
+                                    imgBytes = new byte[bLen];
+                                    Array.Copy(binData, bOff, imgBytes, 0, bLen);
+                                }
+                            }
+                        }
+                        else if (img.TryGetProperty("uri", out var uriProp))
+                        {
+                            var uri = uriProp.GetString();
+                            if (!string.IsNullOrEmpty(uri) && uri.StartsWith("data:image"))
+                            {
+                                var base64 = uri.Substring(uri.IndexOf(",") + 1);
+                                imgBytes = Convert.FromBase64String(base64);
+                            }
+                        }
+
+                        if (imgBytes != null)
+                        {
+                            var tmpPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{ext}");
+                            File.WriteAllBytes(tmpPath, imgBytes);
+                            images.Add(tmpPath);
+                        }
+                        else
+                        {
+                            images.Add(string.Empty);
+                        }
+                        imgIdx++;
+                    }
+                }
+
+                var textures = new List<int>();
+                if (root.TryGetProperty("textures", out var texProp))
+                {
+                    foreach (var tex in texProp.EnumerateArray())
+                    {
+                        if (tex.TryGetProperty("source", out var srcProp))
+                        {
+                            textures.Add(srcProp.GetInt32());
+                        }
+                        else
+                        {
+                            textures.Add(-1);
+                        }
+                    }
+                }
+
                 JsonElement nodes = default;
                 if (root.TryGetProperty("nodes", out var nodesProp)) nodes = nodesProp;
 
@@ -102,16 +179,20 @@ namespace ObjLoader.Parsers
                     int meshCount = meshes.GetArrayLength();
                     for (int i = 0; i < meshCount; i++)
                     {
-                        ProcessMesh(root, binData, i, Matrix4x4.Identity, allVertices, allIndices, parts, materials);
+                        ProcessMesh(root, binData, i, Matrix4x4.Identity, allVertices, allIndices, parts, materials, images, textures);
                     }
                 }
                 else
                 {
                     foreach (var nodeIdx in sceneNodes)
                     {
-                        TraverseNode(root, binData, nodeIdx, Matrix4x4.Identity, allVertices, allIndices, parts, nodes, meshes, materials);
+                        TraverseNode(root, binData, nodeIdx, Matrix4x4.Identity, allVertices, allIndices, parts, nodes, meshes, materials, images, textures);
                     }
                 }
+            }
+            catch (Exception ex) when (ex.Message == Texts.DracoNotSupported)
+            {
+                throw;
             }
             catch
             {
@@ -148,7 +229,7 @@ namespace ObjLoader.Parsers
             };
         }
 
-        private void TraverseNode(JsonElement root, byte[]? binData, int nodeIdx, Matrix4x4 parentTransform, List<ObjVertex> vertices, List<int> indices, List<ModelPart> parts, JsonElement nodes, JsonElement meshes, JsonElement materials)
+        private void TraverseNode(JsonElement root, byte[]? binData, int nodeIdx, Matrix4x4 parentTransform, List<ObjVertex> vertices, List<int> indices, List<ModelPart> parts, JsonElement nodes, JsonElement meshes, JsonElement materials, List<string> images, List<int> textures)
         {
             if (nodes.ValueKind != JsonValueKind.Array || nodeIdx < 0 || nodeIdx >= nodes.GetArrayLength()) return;
 
@@ -193,19 +274,19 @@ namespace ObjLoader.Parsers
 
             if (node.TryGetProperty("mesh", out var meshIdxProp))
             {
-                ProcessMesh(root, binData, meshIdxProp.GetInt32(), worldTransform, vertices, indices, parts, materials);
+                ProcessMesh(root, binData, meshIdxProp.GetInt32(), worldTransform, vertices, indices, parts, materials, images, textures);
             }
 
             if (node.TryGetProperty("children", out var childrenProp) && childrenProp.ValueKind == JsonValueKind.Array)
             {
                 foreach (var childIdx in childrenProp.EnumerateArray())
                 {
-                    TraverseNode(root, binData, childIdx.GetInt32(), worldTransform, vertices, indices, parts, nodes, meshes, materials);
+                    TraverseNode(root, binData, childIdx.GetInt32(), worldTransform, vertices, indices, parts, nodes, meshes, materials, images, textures);
                 }
             }
         }
 
-        private void ProcessMesh(JsonElement root, byte[]? binData, int meshIdx, Matrix4x4 transform, List<ObjVertex> allVertices, List<int> allIndices, List<ModelPart> parts, JsonElement materials)
+        private void ProcessMesh(JsonElement root, byte[]? binData, int meshIdx, Matrix4x4 transform, List<ObjVertex> allVertices, List<int> allIndices, List<ModelPart> parts, JsonElement materials, List<string> images, List<int> textures)
         {
             if (!root.TryGetProperty("meshes", out var meshes) || meshIdx < 0 || meshIdx >= meshes.GetArrayLength()) return;
 
@@ -220,6 +301,7 @@ namespace ObjLoader.Parsers
                     int posAccIdx = posAccIdxElem.GetInt32();
                     int normAccIdx = attrs.TryGetProperty("NORMAL", out var normElem) ? normElem.GetInt32() : -1;
                     int uvAccIdx = attrs.TryGetProperty("TEXCOORD_0", out var uvElem) ? uvElem.GetInt32() : -1;
+                    int colAccIdx = attrs.TryGetProperty("COLOR_0", out var colElem) ? colElem.GetInt32() : -1;
                     int indAccIdx = prim.TryGetProperty("indices", out var indElem) ? indElem.GetInt32() : -1;
                     int matIdx = prim.TryGetProperty("material", out var matElem) ? matElem.GetInt32() : -1;
 
@@ -228,6 +310,7 @@ namespace ObjLoader.Parsers
 
                     var normals = normAccIdx >= 0 ? ReadVector3Array(root, binData, normAccIdx) : null;
                     var uvs = uvAccIdx >= 0 ? ReadVector2Array(root, binData, uvAccIdx) : null;
+                    var colors = colAccIdx >= 0 ? ReadVector4Array(root, binData, colAccIdx) : null;
                     var indices = indAccIdx >= 0 ? ReadIntArray(root, binData, indAccIdx) : null;
 
                     int vertexOffset = allVertices.Count;
@@ -245,7 +328,8 @@ namespace ObjLoader.Parsers
                         {
                             Position = p,
                             Normal = n,
-                            TexCoord = (uvs != null && i < uvs.Length) ? uvs[i] : Vector2.Zero
+                            TexCoord = (uvs != null && i < uvs.Length) ? uvs[i] : Vector2.Zero,
+                            Color = (colors != null && i < colors.Length) ? colors[i] : Vector4.One
                         };
                         allVertices.Add(v);
                     }
@@ -267,6 +351,10 @@ namespace ObjLoader.Parsers
                     }
 
                     Vector4 baseColor = Vector4.One;
+                    float metallic = 1.0f;
+                    float roughness = 1.0f;
+                    string texPath = string.Empty;
+
                     if (matIdx >= 0 && materials.ValueKind == JsonValueKind.Array && matIdx < materials.GetArrayLength())
                     {
                         var mat = materials[matIdx];
@@ -281,15 +369,35 @@ namespace ObjLoader.Parsers
                                     colFactor[3].GetSingle()
                                 );
                             }
+                            if (pbr.TryGetProperty("metallicFactor", out var mProp)) metallic = mProp.GetSingle();
+                            if (pbr.TryGetProperty("roughnessFactor", out var rProp)) roughness = rProp.GetSingle();
+
+                            if (pbr.TryGetProperty("baseColorTexture", out var bTexProp))
+                            {
+                                if (bTexProp.TryGetProperty("index", out var bTexIdxProp))
+                                {
+                                    int bTexIdx = bTexIdxProp.GetInt32();
+                                    if (bTexIdx >= 0 && bTexIdx < textures.Count)
+                                    {
+                                        int imgIdx = textures[bTexIdx];
+                                        if (imgIdx >= 0 && imgIdx < images.Count)
+                                        {
+                                            texPath = images[imgIdx];
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
                     parts.Add(new ModelPart
                     {
-                        TexturePath = string.Empty,
+                        TexturePath = texPath,
                         IndexOffset = startIndex,
                         IndexCount = allIndices.Count - startIndex,
-                        BaseColor = baseColor
+                        BaseColor = baseColor,
+                        Metallic = metallic,
+                        Roughness = roughness
                     });
                 }
             }
@@ -340,6 +448,52 @@ namespace ObjLoader.Parsers
                 float x = BitConverter.ToSingle(binData, p);
                 float y = BitConverter.ToSingle(binData, p + 4);
                 result[i] = new Vector2(x, 1.0f - y);
+            }
+            return result;
+        }
+
+        private Vector4[]? ReadVector4Array(JsonElement root, byte[]? binData, int accessorIdx)
+        {
+            if (binData == null) return null;
+            if (!GetAccessorInfo(root, accessorIdx, out int buffViewIdx, out int offset, out int count, out int compType)) return null;
+            if (!GetBufferViewInfo(root, buffViewIdx, out int buffIdx, out int viewOffset, out int viewLen, out int stride)) return null;
+            if (buffIdx != 0) return null;
+
+            int elementSize = compType == 5121 ? 4 : (compType == 5123 ? 8 : 16);
+            if (stride == 0) stride = elementSize;
+
+            var result = new Vector4[count];
+            int start = viewOffset + offset;
+
+            for (int i = 0; i < count; i++)
+            {
+                int p = start + i * stride;
+                if (p + elementSize > binData.Length) break;
+
+                float x = 0, y = 0, z = 0, w = 1;
+
+                if (compType == 5126)
+                {
+                    x = BitConverter.ToSingle(binData, p);
+                    y = BitConverter.ToSingle(binData, p + 4);
+                    z = BitConverter.ToSingle(binData, p + 8);
+                    w = BitConverter.ToSingle(binData, p + 12);
+                }
+                else if (compType == 5121)
+                {
+                    x = binData[p] / 255.0f;
+                    y = binData[p + 1] / 255.0f;
+                    z = binData[p + 2] / 255.0f;
+                    w = binData[p + 3] / 255.0f;
+                }
+                else if (compType == 5123)
+                {
+                    x = BitConverter.ToUInt16(binData, p) / 65535.0f;
+                    y = BitConverter.ToUInt16(binData, p + 2) / 65535.0f;
+                    z = BitConverter.ToUInt16(binData, p + 4) / 65535.0f;
+                    w = BitConverter.ToUInt16(binData, p + 6) / 65535.0f;
+                }
+                result[i] = new Vector4(x, y, z, w);
             }
             return result;
         }

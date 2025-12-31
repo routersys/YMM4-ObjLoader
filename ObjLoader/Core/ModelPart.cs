@@ -8,5 +8,7 @@ namespace ObjLoader.Core
         public int IndexOffset;
         public int IndexCount;
         public Vector4 BaseColor;
+        public float Metallic;
+        public float Roughness;
     }
 }

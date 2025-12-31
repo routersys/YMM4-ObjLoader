@@ -59,3 +59,4 @@ On,Boolean Value,On,On,开,開,켜짐,Encendido,تشغيل,
 Off,Boolean Value,Off,Off,关,關,꺼짐,Apagado,إيقاف,
 UpdateAvailableTitle,Message Box Title,アップデート利用可能,Update Available,更新可用,更新可用,업데이트 가능,Actualización disponible,تحديث متاح,
 UpdateAvailableMessage,Message Box Text,新しいバージョン ({0}) が利用可能です。ダウンロードページを開きますか？,A new version ({0}) is available. Do you want to open the download page?,新版本 ({0}) 可用。是否打开下载页面？,新版本 ({0}) 可用。是否打開下載頁面？,새 버전 ({0})을 사용할 수 있습니다. 다운로드 페이지를 여시겠습니까?,Hay una nueva versión ({0}) disponible. ¿Desea abrir la página de descarga?,يتوفر إصدار جديد ({0}). هل تريد فتح صفحة التنزيل؟,
+DracoNotSupported,DracoNotSupported,Draco圧縮されたファイルには対応していません,Draco compression is not supported,Draco compression is not supported,Draco compression is not supported,Draco compression is not supported
