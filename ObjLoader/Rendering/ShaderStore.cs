@@ -71,11 +71,11 @@ namespace ObjLoader.Rendering
                             return texColor;
                         }
 
-                        float3 ambient = texColor.rgb * AmbientColor.rgb;
+                        float3 ambient = texColor.rgb * (AmbientColor.rgb + 0.3f);
 
                         float3 n = normalize(input.norm);
                         float3 lightDir = normalize(LightPos.xyz - input.wPos);
-                        float diff = max(dot(n, lightDir), 0.0f);
+                        float diff = dot(n, lightDir) * 0.5f + 0.5f;
                         float3 diffuse = texColor.rgb * LightColor.rgb * diff * DiffuseIntensity;
 
                         float3 viewDir = normalize(CameraPos.xyz - input.wPos);

@@ -241,9 +241,11 @@ namespace ObjLoader.Rendering
                 {
                     try
                     {
+                        var bytes = File.ReadAllBytes(tPath);
+                        using var ms = new MemoryStream(bytes);
                         var bitmap = new BitmapImage();
                         bitmap.BeginInit();
-                        bitmap.UriSource = new Uri(tPath);
+                        bitmap.StreamSource = ms;
                         bitmap.CacheOption = BitmapCacheOption.OnLoad;
                         bitmap.EndInit();
                         bitmap.Freeze();
