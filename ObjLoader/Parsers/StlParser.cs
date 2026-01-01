@@ -26,7 +26,7 @@ namespace ObjLoader.Parsers
                 if (!start.StartsWith("solid", StringComparison.OrdinalIgnoreCase)) isAscii = false;
             }
 
-            if (isAscii) return new ObjModel();
+            if (isAscii) return ParseAscii(path);
 
             int count = BitConverter.ToInt32(bytes, 80);
             if (bytes.Length < 84 + count * 50) return new ObjModel();
@@ -55,6 +55,47 @@ namespace ObjLoader.Parsers
                 }
             }
 
+            return ProcessVertices(rawPositions, rawNormals, totalV);
+        }
+
+        private ObjModel ParseAscii(string path)
+        {
+            var rawPositions = new List<Vector3>();
+            var rawNormals = new List<Vector3>();
+
+            using (var reader = new StreamReader(path))
+            {
+                string? line;
+                Vector3 currentNormal = Vector3.Zero;
+
+                while ((line = reader.ReadLine()) != null)
+                {
+                    var parts = line.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length == 0) continue;
+
+                    if (parts[0] == "facet" && parts.Length >= 4 && parts[1] == "normal")
+                    {
+                        float.TryParse(parts[2], out float nx);
+                        float.TryParse(parts[3], out float ny);
+                        float.TryParse(parts[4], out float nz);
+                        currentNormal = new Vector3(nx, ny, nz);
+                    }
+                    else if (parts[0] == "vertex" && parts.Length >= 4)
+                    {
+                        float.TryParse(parts[1], out float x);
+                        float.TryParse(parts[2], out float y);
+                        float.TryParse(parts[3], out float z);
+                        rawPositions.Add(new Vector3(x, y, z));
+                        rawNormals.Add(currentNormal);
+                    }
+                }
+            }
+
+            return ProcessVertices(rawPositions.ToArray(), rawNormals.ToArray(), rawPositions.Count);
+        }
+
+        private ObjModel ProcessVertices(Vector3[] rawPositions, Vector3[] rawNormals, int totalV)
+        {
             var pSort = new int[totalV];
             for (int i = 0; i < totalV; i++) pSort[i] = i;
 
@@ -77,7 +118,7 @@ namespace ObjLoader.Parsers
                 int currentPIdx = pSort[0];
                 var currP = rawPositions[currentPIdx];
                 var currN = rawNormals[currentPIdx];
-                vertices.Add(new ObjVertex { Position = currP, Normal = currN, TexCoord = Vector2.Zero });
+                vertices.Add(new ObjVertex { Position = currP, Normal = currN, TexCoord = Vector2.Zero, Color = Vector4.One });
                 indices[currentPIdx] = 0;
 
                 for (int i = 1; i < totalV; i++)
@@ -90,16 +131,34 @@ namespace ObjLoader.Parsers
                         uniqueIdx++;
                         currP = p;
                         currN = rawNormals[pIdx];
-                        vertices.Add(new ObjVertex { Position = currP, Normal = currN, TexCoord = Vector2.Zero });
+                        vertices.Add(new ObjVertex { Position = currP, Normal = currN, TexCoord = Vector2.Zero, Color = Vector4.One });
                     }
                     else
                     {
-                        vertices[uniqueIdx] = new ObjVertex { Position = vertices[uniqueIdx].Position, Normal = vertices[uniqueIdx].Normal + rawNormals[pIdx], TexCoord = Vector2.Zero };
+                        vertices[uniqueIdx] = new ObjVertex { Position = vertices[uniqueIdx].Position, Normal = vertices[uniqueIdx].Normal + rawNormals[pIdx], TexCoord = Vector2.Zero, Color = Vector4.One };
                     }
                     indices[pIdx] = uniqueIdx;
                 }
 
-                for (int i = 0; i < vertices.Count; i++) vertices[i] = new ObjVertex { Position = vertices[i].Position, Normal = Vector3.Normalize(vertices[i].Normal), TexCoord = Vector2.Zero };
+                bool recalcNormals = false;
+                for (int i = 0; i < vertices.Count; i++)
+                {
+                    if (vertices[i].Normal.LengthSquared() < 1e-6f)
+                    {
+                        recalcNormals = true;
+                    }
+                    else
+                    {
+                        vertices[i] = new ObjVertex { Position = vertices[i].Position, Normal = Vector3.Normalize(vertices[i].Normal), TexCoord = Vector2.Zero, Color = Vector4.One };
+                    }
+                }
+
+                if (recalcNormals)
+                {
+                    var vArray = vertices.ToArray();
+                    ModelHelper.CalculateNormals(vArray, indices);
+                    vertices = new List<ObjVertex>(vArray);
+                }
             }
 
             var verts = vertices.ToArray();
