@@ -107,15 +107,17 @@ namespace ObjLoader.Rendering
             var lightZ = _parameter.LightZ.GetValue(frame, length, fps);
             var baseColor = _parameter.BaseColor;
             var filePath = _parameter.FilePath?.Trim('"') ?? string.Empty;
+            var worldIdParam = (int)_parameter.WorldId.GetValue(frame, length, fps);
 
             var settings = PluginSettings.Instance;
             var coordSystem = settings.CoordinateSystem;
             var cullMode = settings.CullMode;
-            var ambientColor = settings.AmbientColor;
-            var lightColor = settings.LightColor;
-            var diffuseIntensity = settings.DiffuseIntensity;
-            var specularIntensity = settings.SpecularIntensity;
-            var shininess = settings.Shininess;
+
+            var ambientColor = settings.GetAmbientColor(worldIdParam);
+            var lightColor = settings.GetLightColor(worldIdParam);
+            var diffuseIntensity = settings.GetDiffuseIntensity(worldIdParam);
+            var specularIntensity = settings.GetSpecularIntensity(worldIdParam);
+            var shininess = settings.GetShininess(worldIdParam);
 
             _resources.UpdateRasterizerState(cullMode);
 

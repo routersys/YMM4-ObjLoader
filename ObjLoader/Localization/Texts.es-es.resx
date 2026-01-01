@@ -104,7 +104,7 @@
 <data name="Scale" xml:space="preserve"><value>Escala</value></data>
 <data name="RotationX" xml:space="preserve"><value>Rotación X</value></data>
 <data name="RotationY" xml:space="preserve"><value>Rotación Y</value></data>
-<data name="RotationZ" xml:space="preserve"><value>Rotación Z</value></data>
+<data name="RotationZ" xml:space="preserve"><value>تدوير ع</value></data>
 <data name="ResetTrigger" xml:space="preserve"><value>Restablecer</value></data>
 <data name="Group_Light" xml:space="preserve"><value>Luz</value></data>
 <data name="IsLightEnabled" xml:space="preserve"><value>Habilitado</value></data>
@@ -119,4 +119,6 @@
 <data name="Off" xml:space="preserve"><value>Apagado</value></data>
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>Actualización disponible</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>Hay una nueva versión ({0}) disponible. ¿Desea abrir la página de descarga?</value></data>
+<data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
+<data name="WorldId" xml:space="preserve"><value>ID de mundo</value></data>
 </root>

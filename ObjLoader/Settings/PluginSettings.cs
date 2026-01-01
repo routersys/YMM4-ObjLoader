@@ -40,15 +40,37 @@ namespace ObjLoader.Settings
         private CoordinateSystem _coordinateSystem = CoordinateSystem.RightHandedYUp;
         private RenderCullMode _cullMode = RenderCullMode.None;
 
-        private Color _ambientColor = Color.FromRgb(50, 50, 50);
-        private Color _lightColor = Colors.White;
-        private double _diffuseIntensity = 1.0;
-        private double _specularIntensity = 0.5;
-        private double _shininess = 20.0;
+        private const int MaxWorlds = 10;
+        private int _worldId = 0;
+
+        private List<Color> _ambientColors = Enumerable.Repeat(Color.FromRgb(50, 50, 50), MaxWorlds).ToList();
+        private List<Color> _lightColors = Enumerable.Repeat(Colors.White, MaxWorlds).ToList();
+        private List<double> _diffuseIntensities = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+        private List<double> _specularIntensities = Enumerable.Repeat(0.5, MaxWorlds).ToList();
+        private List<double> _shininesses = Enumerable.Repeat(20.0, MaxWorlds).ToList();
 
         public override void Initialize()
         {
+            EnsureCount(_ambientColors, Color.FromRgb(50, 50, 50));
+            EnsureCount(_lightColors, Colors.White);
+            EnsureCount(_diffuseIntensities, 1.0);
+            EnsureCount(_specularIntensities, 0.5);
+            EnsureCount(_shininesses, 20.0);
         }
+
+        private void EnsureCount<T>(List<T> list, T defaultValue)
+        {
+            if (list.Count < MaxWorlds)
+            {
+                list.AddRange(Enumerable.Repeat(defaultValue, MaxWorlds - list.Count));
+            }
+        }
+
+        public Color GetAmbientColor(int id) => _ambientColors[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public Color GetLightColor(int id) => _lightColors[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetDiffuseIntensity(int id) => _diffuseIntensities[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetSpecularIntensity(int id) => _specularIntensities[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetShininess(int id) => _shininesses[Math.Clamp(id, 0, MaxWorlds - 1)];
 
         [SettingGroup("Global", nameof(Texts.Group_Global), Order = 0, Icon = "M21,16.5C21,16.88 20.79,17.21 20.47,17.38L12.57,21.82C12.41,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L3.53,17.38C3.21,17.21 3,16.88 3,16.5V7.5C3,7.12 3.21,6.79 3.53,6.62L11.43,2.18C11.59,2.06 11.79,2 12,2C12.21,2 12.41,2.06 12.57,2.18L20.47,6.62C20.79,6.79 21,7.12 21,7.5V16.5M12,4.15L6.04,7.5L12,10.85L17.96,7.5L12,4.15M5,15.91L11,19.29V12.58L5,9.21V15.91M19,15.91V9.21L13,12.58V19.29L19,15.91Z", ResourceType = typeof(Texts))]
         [EnumSetting("Global", nameof(Texts.CoordinateSystem), Description = nameof(Texts.CoordinateSystem_Desc), ResourceType = typeof(Texts))]
@@ -66,40 +88,92 @@ namespace ObjLoader.Settings
         }
 
         [SettingGroup("Lighting", nameof(Texts.Group_Lighting), Order = 1, Icon = "M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z", ResourceType = typeof(Texts))]
+        [IntSpinnerSetting("Lighting", nameof(Texts.WorldId), 0, 9, IsGroupHeader = true, ResourceType = typeof(Texts))]
+        public int WorldId
+        {
+            get => _worldId;
+            set
+            {
+                if (SetProperty(ref _worldId, value))
+                {
+                    OnPropertyChanged(nameof(AmbientColor));
+                    OnPropertyChanged(nameof(LightColor));
+                    OnPropertyChanged(nameof(DiffuseIntensity));
+                    OnPropertyChanged(nameof(SpecularIntensity));
+                    OnPropertyChanged(nameof(Shininess));
+                }
+            }
+        }
+
         [ColorSetting("Lighting", nameof(Texts.AmbientColor), Description = nameof(Texts.AmbientColor_Desc), ResourceType = typeof(Texts))]
         public Color AmbientColor
         {
-            get => _ambientColor;
-            set => SetProperty(ref _ambientColor, value);
+            get => _ambientColors[_worldId];
+            set
+            {
+                if (_ambientColors[_worldId] != value)
+                {
+                    _ambientColors[_worldId] = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         [RangeSetting("Lighting", nameof(Texts.DiffuseIntensity), 0, 5, Tick = 0.1, Description = nameof(Texts.DiffuseIntensity_Desc), ResourceType = typeof(Texts))]
         public double DiffuseIntensity
         {
-            get => _diffuseIntensity;
-            set => SetProperty(ref _diffuseIntensity, value);
+            get => _diffuseIntensities[_worldId];
+            set
+            {
+                if (_diffuseIntensities[_worldId] != value)
+                {
+                    _diffuseIntensities[_worldId] = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         [RangeSetting("Lighting", nameof(Texts.SpecularIntensity), 0, 5, Tick = 0.1, Description = nameof(Texts.SpecularIntensity_Desc), ResourceType = typeof(Texts))]
         public double SpecularIntensity
         {
-            get => _specularIntensity;
-            set => SetProperty(ref _specularIntensity, value);
+            get => _specularIntensities[_worldId];
+            set
+            {
+                if (_specularIntensities[_worldId] != value)
+                {
+                    _specularIntensities[_worldId] = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         [RangeSetting("Lighting", nameof(Texts.Shininess), 1, 100, Tick = 1, Description = nameof(Texts.Shininess_Desc), ResourceType = typeof(Texts))]
         public double Shininess
         {
-            get => _shininess;
-            set => SetProperty(ref _shininess, value);
+            get => _shininesses[_worldId];
+            set
+            {
+                if (_shininesses[_worldId] != value)
+                {
+                    _shininesses[_worldId] = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
-        [SettingGroup("Environment", nameof(Texts.Group_Environment), Order = 2, Icon = "M12,22C17.5,22 22,17.5 22,12C22,6.5 17.5,2 12,2C6.5,2 2,6.5 2,12C2,17.5 6.5,22 12,22M12,18L6,12L12,6L18,12L12,18Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Environment", nameof(Texts.Group_Environment), Order = 2, ParentId = "Lighting", Icon = "M12,22C17.5,22 22,17.5 22,12C22,6.5 17.5,2 12,2C6.5,2 2,6.5 2,12C2,17.5 6.5,22 12,22M12,18L6,12L12,6L18,12L12,18Z", ResourceType = typeof(Texts))]
         [ColorSetting("Environment", nameof(Texts.LightColor), Description = nameof(Texts.LightColor_Desc), ResourceType = typeof(Texts))]
         public Color LightColor
         {
-            get => _lightColor;
-            set => SetProperty(ref _lightColor, value);
+            get => _lightColors[_worldId];
+            set
+            {
+                if (_lightColors[_worldId] != value)
+                {
+                    _lightColors[_worldId] = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         [SettingButton(nameof(Texts.ResetDefaults), Placement = SettingButtonPlacement.BottomLeft, Order = 0, ResourceType = typeof(Texts))]

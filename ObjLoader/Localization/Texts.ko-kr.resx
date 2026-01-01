@@ -104,7 +104,7 @@
 <data name="Scale" xml:space="preserve"><value>배율</value></data>
 <data name="RotationX" xml:space="preserve"><value>회전 X</value></data>
 <data name="RotationY" xml:space="preserve"><value>회전 Y</value></data>
-<data name="RotationZ" xml:space="preserve"><value>회전 Z</value></data>
+<data name="RotationZ" xml:space="preserve"><value>Rotación Z</value></data>
 <data name="ResetTrigger" xml:space="preserve"><value>재설정</value></data>
 <data name="Group_Light" xml:space="preserve"><value>조명</value></data>
 <data name="IsLightEnabled" xml:space="preserve"><value>활성화</value></data>
@@ -120,4 +120,5 @@
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>업데이트 가능</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>새 버전 ({0})을 사용할 수 있습니다. 다운로드 페이지를 여시겠습니까?</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
+<data name="WorldId" xml:space="preserve"><value>월드 ID</value></data>
 </root>

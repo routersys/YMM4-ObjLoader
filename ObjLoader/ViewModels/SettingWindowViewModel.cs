@@ -16,6 +16,7 @@ namespace ObjLoader.ViewModels
         private string _description = string.Empty;
         private string _backupJson = string.Empty;
         private readonly Dictionary<string, List<SettingItemViewModelBase>> _viewModels = new Dictionary<string, List<SettingItemViewModelBase>>();
+        private readonly List<SettingGroupViewModel> _allGroups = new List<SettingGroupViewModel>();
 
         public ObservableCollection<SettingGroupViewModel> Groups { get; } = new ObservableCollection<SettingGroupViewModel>();
         public ObservableCollection<ButtonSettingViewModel> LeftButtons { get; } = new ObservableCollection<ButtonSettingViewModel>();
@@ -26,8 +27,12 @@ namespace ObjLoader.ViewModels
             get => _selectedGroup;
             set
             {
-                if (Set(ref _selectedGroup, value))
+                if (_selectedGroup != value)
                 {
+                    if (_selectedGroup != null) _selectedGroup.IsSelected = false;
+                    _selectedGroup = value;
+                    if (_selectedGroup != null) _selectedGroup.IsSelected = true;
+                    OnPropertyChanged(nameof(SelectedGroup));
                     Description = string.Empty;
                 }
             }
@@ -46,6 +51,90 @@ namespace ObjLoader.ViewModels
             _target = target ?? this;
             Backup();
             Initialize();
+        }
+
+        public void AddGroup(SettingGroupViewModel group)
+        {
+            _allGroups.Add(group);
+        }
+
+        public void RegisterViewModel(string propertyName, SettingItemViewModelBase vm)
+        {
+            if (!_viewModels.TryGetValue(propertyName, out var list))
+            {
+                list = new List<SettingItemViewModelBase>();
+                _viewModels[propertyName] = list;
+            }
+            list.Add(vm);
+        }
+
+        public void FinalizeGroups()
+        {
+            var rootGroups = new List<SettingGroupViewModel>();
+            var groupDict = _allGroups.ToDictionary(g => g.Id);
+
+            foreach (var group in _allGroups)
+            {
+                group.PropertyChanged += (s, e) =>
+                {
+                    if (e.PropertyName == nameof(SettingGroupViewModel.IsSelected) && group.IsSelected)
+                    {
+                        SelectedGroup = group;
+                    }
+                };
+
+                if (!string.IsNullOrEmpty(group.ParentId) && groupDict.TryGetValue(group.ParentId, out var parent))
+                {
+                    parent.Children.Add(group);
+                }
+                else
+                {
+                    rootGroups.Add(group);
+                }
+
+                foreach (var item in group.Items)
+                {
+                    if (item is PropertySettingViewModel pvm && !string.IsNullOrEmpty(pvm.EnableBy))
+                    {
+                        if (_viewModels.TryGetValue(pvm.EnableBy, out var masters))
+                        {
+                            var master = masters.FirstOrDefault();
+                            if (master is PropertySettingViewModel masterProp)
+                            {
+                                pvm.IsDependent = true;
+                                void UpdateEnabled()
+                                {
+                                    if (masterProp.Value is bool b)
+                                    {
+                                        pvm.IsEnabled = b;
+                                    }
+                                }
+                                masterProp.PropertyChanged += (s, e) =>
+                                {
+                                    if (e.PropertyName == nameof(PropertySettingViewModel.Value)) UpdateEnabled();
+                                };
+                                UpdateEnabled();
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var group in _allGroups)
+            {
+                var view = CollectionViewSource.GetDefaultView(group.Children);
+                if (view != null)
+                {
+                    view.SortDescriptions.Add(new SortDescription(nameof(SettingGroupViewModel.Order), ListSortDirection.Ascending));
+                }
+            }
+
+            foreach (var root in rootGroups)
+            {
+                Groups.Add(root);
+            }
+
+            if (Groups.Count > 0) SelectedGroup = Groups[0];
         }
 
         private void Backup()
@@ -90,150 +179,30 @@ namespace ObjLoader.ViewModels
                     {
                         foreach (var vm in vms)
                         {
-                            var method = vm.GetType().GetMethod("OnPropertyChanged", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                            if (method != null)
-                            {
-                                method.Invoke(vm, new object[] { "Value" });
-                                if (vm is ColorSettingViewModel)
-                                {
-                                    method.Invoke(vm, new object[] { "ColorValue" });
-                                }
-                            }
+                            vm.Refresh();
                         }
                     }
                 };
             }
 
-            var properties = _target.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var methods = _target.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            var groupDict = new Dictionary<string, SettingGroupViewModel>();
-
-            string GetString(Type? resourceType, string name)
+            var typeName = "ObjLoader.Generated.SettingsInitializer";
+            var assembly = Assembly.GetExecutingAssembly();
+            var type = assembly.GetType(typeName);
+            if (type != null)
             {
-                if (resourceType != null && !string.IsNullOrEmpty(name))
+                var method = type.GetMethod("TryInitialize", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                if (method != null)
                 {
-                    var prop = resourceType.GetProperty(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (prop != null) return prop.GetValue(null) as string ?? name;
-                }
-                return name;
-            }
-
-            foreach (var prop in properties)
-            {
-                var groupAttr = prop.GetCustomAttribute<SettingGroupAttribute>();
-                if (groupAttr != null)
-                {
-                    if (!groupDict.ContainsKey(groupAttr.Id))
-                    {
-                        string title = GetString(groupAttr.ResourceType, groupAttr.Title);
-                        groupDict[groupAttr.Id] = new SettingGroupViewModel(groupAttr.Id, title, groupAttr.Order, groupAttr.Icon);
-                    }
-                }
-
-                var itemAttr = prop.GetCustomAttribute<SettingItemAttribute>();
-                if (itemAttr != null)
-                {
-                    if (!groupDict.ContainsKey(itemAttr.GroupId))
-                    {
-                        groupDict[itemAttr.GroupId] = new SettingGroupViewModel(itemAttr.GroupId, itemAttr.GroupId, 0, "Geometry");
-                    }
-
-                    SettingItemViewModelBase? vm = itemAttr switch
-                    {
-                        TextSettingAttribute ta => new TextSettingViewModel(_target, prop, ta),
-                        BoolSettingAttribute ba => new BoolSettingViewModel(_target, prop, ba),
-                        RangeSettingAttribute ra => new RangeSettingViewModel(_target, prop, ra),
-                        EnumSettingAttribute ea => new EnumSettingViewModel(_target, prop, ea),
-                        ColorSettingAttribute ca => new ColorSettingViewModel(_target, prop, ca),
-                        FilePathSettingAttribute fa => new FilePathSettingViewModel(_target, prop, fa),
-                        _ => null
-                    };
-
-                    if (vm != null)
-                    {
-                        if (!_viewModels.ContainsKey(prop.Name))
-                        {
-                            _viewModels[prop.Name] = new List<SettingItemViewModelBase>();
-                        }
-                        _viewModels[prop.Name].Add(vm);
-
-                        vm.Hovered += (s, e) =>
-                        {
-                            if (s is SettingItemViewModelBase item) Description = item.Description;
-                        };
-                        groupDict[itemAttr.GroupId].Items.Add(vm);
-                    }
+                    method.Invoke(null, new object[] { _target, this });
+                    return;
                 }
             }
 
-            foreach (var method in methods)
-            {
-                var btnAttr = method.GetCustomAttribute<SettingButtonAttribute>();
-                if (btnAttr != null)
-                {
-                    Action<Window> action = w => { };
-                    if (btnAttr.Type == SettingButtonType.OK)
-                    {
-                        action = w =>
-                        {
-                            var saveMethod = _target.GetType().GetMethod("Save", Type.EmptyTypes);
-                            saveMethod?.Invoke(_target, null);
-                            w?.Close();
-                        };
-                    }
-                    else if (btnAttr.Type == SettingButtonType.Cancel)
-                    {
-                        action = w => { Rollback(); w?.Close(); };
-                    }
-                    else if (btnAttr.Type == SettingButtonType.Close)
-                    {
-                        action = w => w?.Close();
-                    }
-
-                    var vm = new ButtonSettingViewModel(_target, method, btnAttr, action);
-                    vm.Hovered += (s, e) => Description = vm.Description;
-
-                    if (btnAttr.Placement == SettingButtonPlacement.Content)
-                    {
-                        if (groupDict.TryGetValue(btnAttr.GroupId, out var group))
-                        {
-                            group.Items.Add(vm);
-                        }
-                    }
-                    else if (btnAttr.Placement == SettingButtonPlacement.BottomLeft)
-                    {
-                        LeftButtons.Add(vm);
-                    }
-                    else if (btnAttr.Placement == SettingButtonPlacement.BottomRight)
-                    {
-                        RightButtons.Add(vm);
-                    }
-                }
-            }
-
-            var sortedGroups = groupDict.Values.ToList();
-            sortedGroups.Sort();
-
-            foreach (var group in sortedGroups)
-            {
-                var view = CollectionViewSource.GetDefaultView(group.Items);
-                view.SortDescriptions.Add(new SortDescription(nameof(SettingItemViewModelBase.Order), ListSortDirection.Ascending));
-                Groups.Add(group);
-            }
-
-            SortButtons(LeftButtons);
-            SortButtons(RightButtons);
-
-            SelectedGroup = Groups.FirstOrDefault();
+            FallbackInitialize();
         }
 
-        private void SortButtons(ObservableCollection<ButtonSettingViewModel> collection)
+        private void FallbackInitialize()
         {
-            var list = collection.ToList();
-            list.Sort((a, b) => a.Order.CompareTo(b.Order));
-            collection.Clear();
-            foreach (var item in list) collection.Add(item);
         }
     }
 }

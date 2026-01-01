@@ -20,6 +20,14 @@ namespace ObjLoader.Infrastructure
         public bool IsVisible { get => _isVisible; set => Set(ref _isVisible, value); }
         private bool _isVisible = true;
 
+        public bool IsEnabled { get => _isEnabled; set => Set(ref _isEnabled, value); }
+        private bool _isEnabled = true;
+
+        public string EnableBy { get; set; } = string.Empty;
+        public bool IsGroupHeader { get; set; }
+        public bool IsDependent { get => _isDependent; set => Set(ref _isDependent, value); }
+        private bool _isDependent;
+
         public bool IsHovered
         {
             get => _isHovered;
@@ -38,8 +46,9 @@ namespace ObjLoader.Infrastructure
 
         public abstract void Commit();
         public abstract void LoadFrom(object source);
+        public virtual void Refresh() { }
 
-        protected static string GetString(Type? resourceType, string name)
+        internal static string GetString(Type? resourceType, string name)
         {
             if (resourceType != null && !string.IsNullOrEmpty(name))
             {
@@ -56,15 +65,25 @@ namespace ObjLoader.Infrastructure
         public string Title { get; }
         public string IconData { get; }
         public int Order { get; }
+        public string ParentId { get; }
 
         public ObservableCollection<SettingItemViewModelBase> Items { get; } = new ObservableCollection<SettingItemViewModelBase>();
+        public ObservableCollection<SettingItemViewModelBase> HeaderItems { get; } = new ObservableCollection<SettingItemViewModelBase>();
+        public ObservableCollection<SettingGroupViewModel> Children { get; } = new ObservableCollection<SettingGroupViewModel>();
 
-        public SettingGroupViewModel(string id, string title, int order, string icon)
+        public bool IsExpanded { get => _isExpanded; set => Set(ref _isExpanded, value); }
+        private bool _isExpanded = true;
+
+        public bool IsSelected { get => _isSelected; set => Set(ref _isSelected, value); }
+        private bool _isSelected;
+
+        public SettingGroupViewModel(string id, string title, int order, string icon, string parentId, Type? resourceType)
         {
             Id = id;
-            Title = title;
+            Title = SettingItemViewModelBase.GetString(resourceType, title);
             Order = order;
             IconData = icon;
+            ParentId = parentId;
         }
 
         public int CompareTo(SettingGroupViewModel? other)
@@ -87,6 +106,8 @@ namespace ObjLoader.Infrastructure
             Label = GetString(attr.ResourceType, attr.Label);
             Description = GetString(attr.ResourceType, attr.Description);
             Order = attr.Order;
+            EnableBy = attr.EnableBy;
+            IsGroupHeader = attr.IsGroupHeader;
 
             if (string.IsNullOrEmpty(Description) && attr.ResourceType == null)
             {
@@ -108,7 +129,6 @@ namespace ObjLoader.Infrastructure
                 {
                     Property.SetValue(Target, value);
                     OnPropertyChanged(nameof(Value));
-                    OnPropertyChanged(nameof(ColorSettingViewModel.ColorValue));
                 }
             }
         }
@@ -123,6 +143,11 @@ namespace ObjLoader.Infrastructure
                 Value = val;
             }
             catch { }
+        }
+
+        public override void Refresh()
+        {
+            OnPropertyChanged(nameof(Value));
         }
     }
 
@@ -170,6 +195,38 @@ namespace ObjLoader.Infrastructure
         public override object? Value
         {
             get => Convert.ToDouble(base.Value);
+            set => base.Value = Convert.ChangeType(value, Property.PropertyType);
+        }
+    }
+
+    public class IntSpinnerSettingViewModel : PropertySettingViewModel
+    {
+        public int Min { get; }
+        public int Max { get; }
+        public ICommand UpCommand { get; }
+        public ICommand DownCommand { get; }
+
+        public IntSpinnerSettingViewModel(object target, PropertyInfo property, IntSpinnerSettingAttribute attr)
+            : base(target, property, attr)
+        {
+            Min = attr.Min;
+            Max = attr.Max;
+            UpCommand = new ActionCommand(_ => true, _ => Add(1));
+            DownCommand = new ActionCommand(_ => true, _ => Add(-1));
+        }
+
+        private void Add(int delta)
+        {
+            if (Value is int i)
+            {
+                var next = Math.Clamp(i + delta, Min, Max);
+                Value = next;
+            }
+        }
+
+        public override object? Value
+        {
+            get => Convert.ToInt32(base.Value);
             set => base.Value = Convert.ChangeType(value, Property.PropertyType);
         }
     }
@@ -223,6 +280,22 @@ namespace ObjLoader.Infrastructure
             get => (Color)(Value ?? Colors.White);
             set => Value = value;
         }
+
+        public override object? Value
+        {
+            get => base.Value;
+            set
+            {
+                base.Value = value;
+                OnPropertyChanged(nameof(ColorValue));
+            }
+        }
+
+        public override void Refresh()
+        {
+            base.Refresh();
+            OnPropertyChanged(nameof(ColorValue));
+        }
     }
 
     public class FilePathSettingViewModel : PropertySettingViewModel
@@ -261,6 +334,7 @@ namespace ObjLoader.Infrastructure
             Label = GetString(attr.ResourceType, attr.Label);
             Placement = attr.Placement;
             Order = attr.Order;
+            EnableBy = attr.EnableBy;
             Description = "";
             Command = new ActionCommand(
                 _ => true,

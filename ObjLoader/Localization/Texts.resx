@@ -120,4 +120,5 @@
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>アップデート利用可能</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>新しいバージョン ({0}) が利用可能です。ダウンロードページを開きますか？</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco圧縮されたファイルには対応していません</value></data>
+<data name="WorldId" xml:space="preserve"><value>ワールドID</value></data>
 </root>

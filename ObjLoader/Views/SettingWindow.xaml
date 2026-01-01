@@ -20,21 +20,21 @@
         <DataTemplate x:Key="TextTemplate" DataType="{x:Type infra:TextSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Padding="5"/>
+                <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Padding="5" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="BoolTemplate" DataType="{x:Type infra:BoolSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <c:ToggleSlider Value="{Binding Value}" HorizontalAlignment="Left"/>
+                <c:ToggleSlider Value="{Binding Value}" HorizontalAlignment="Left" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="RangeTemplate" DataType="{x:Type infra:RangeSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <Grid>
+                <Grid IsEnabled="{Binding IsEnabled}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="60"/>
@@ -61,24 +61,38 @@
             </DockPanel>
         </DataTemplate>
 
+        <DataTemplate x:Key="IntSpinnerTemplate" DataType="{x:Type infra:IntSpinnerSettingViewModel}">
+            <Grid IsEnabled="{Binding IsEnabled}" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Margin="0,0,2,0" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Button Command="{Binding UpCommand}" Content="▲" FontSize="6" Height="8" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    <Button Command="{Binding DownCommand}" Content="▼" FontSize="6" Height="8" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
         <DataTemplate x:Key="EnumTemplate" DataType="{x:Type infra:EnumSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <ComboBox ItemsSource="{Binding EnumValues}" SelectedValue="{Binding Value}" DisplayMemberPath="Label" SelectedValuePath="Value" Padding="5"/>
+                <ComboBox ItemsSource="{Binding EnumValues}" SelectedValue="{Binding Value}" DisplayMemberPath="Label" SelectedValuePath="Value" Padding="5" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="ColorTemplate" DataType="{x:Type infra:ColorSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <c:ColorPicker Value="{Binding ColorValue, Mode=TwoWay}" Height="26" HorizontalAlignment="Stretch" Margin="0,0,8,0"/>
+                <c:ColorPicker Value="{Binding ColorValue, Mode=TwoWay}" Height="26" HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" DataType="{x:Type infra:FilePathSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <Grid>
+                <Grid IsEnabled="{Binding IsEnabled}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -90,7 +104,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="ButtonTemplate" DataType="{x:Type infra:ButtonSettingViewModel}">
-            <Button Content="{Binding Label}" Command="{Binding Command}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,5" Padding="10,5" HorizontalAlignment="Left"/>
+            <Button Content="{Binding Label}" Command="{Binding Command}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,5" Padding="10,5" HorizontalAlignment="Left" IsEnabled="{Binding IsEnabled}"/>
         </DataTemplate>
 
         <util:SettingTemplateSelector x:Key="SettingSelector"
@@ -100,32 +114,9 @@
                                       EnumTemplate="{StaticResource EnumTemplate}"
                                       ColorTemplate="{StaticResource ColorTemplate}"
                                       FileTemplate="{StaticResource FileTemplate}"
-                                      ButtonTemplate="{StaticResource ButtonTemplate}"/>
+                                      ButtonTemplate="{StaticResource ButtonTemplate}"
+                                      IntSpinnerTemplate="{StaticResource IntSpinnerTemplate}"/>
 
-        <Style TargetType="ListBoxItem" x:Key="GroupListItemStyle">
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Opacity" Value="0.8"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border Name="Bd" BorderThickness="0,0,0,0" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="true">
-                                <Setter Property="Opacity" Value="1.0"/>
-                                <Setter TargetName="Bd" Property="BorderThickness" Value="4,0,0,0"/>
-                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter Property="Opacity" Value="1.0"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <Grid>
@@ -135,18 +126,113 @@
         </Grid.ColumnDefinitions>
 
         <Border Grid.Column="0" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,0,1,0">
-            <ListBox ItemsSource="{Binding Groups}" SelectedItem="{Binding SelectedGroup}" 
-                     ItemContainerStyle="{StaticResource GroupListItemStyle}"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" BorderThickness="0" Background="Transparent">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <Path Data="{Binding IconData}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0"/>
-                            <TextBlock Text="{Binding Title}" FontSize="14" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+            <TreeView ItemsSource="{Binding Groups}" Background="Transparent" BorderThickness="0">
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Padding" Value="5"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type TreeViewItem}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" MinWidth="19"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition/>
+                                        </Grid.RowDefinitions>
+
+                                        <ToggleButton x:Name="Expander" ClickMode="Press" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                            <ToggleButton.Style>
+                                                <Style TargetType="{x:Type ToggleButton}">
+                                                    <Setter Property="Focusable" Value="False"/>
+                                                    <Setter Property="Width" Value="16"/>
+                                                    <Setter Property="Height" Value="16"/>
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                                <Border Background="Transparent" Height="16" Padding="5" Width="16">
+                                                                    <Path x:Name="ExpandPath" Data="M0,0 L0,6 L6,0 z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
+                                                                        <Path.RenderTransform>
+                                                                            <RotateTransform Angle="135" CenterX="3" CenterY="3"/>
+                                                                        </Path.RenderTransform>
+                                                                    </Path>
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsChecked" Value="True">
+                                                                        <Setter Property="RenderTransform" TargetName="ExpandPath">
+                                                                            <Setter.Value>
+                                                                                <RotateTransform Angle="180" CenterX="3" CenterY="3"/>
+                                                                            </Setter.Value>
+                                                                        </Setter>
+                                                                        <Setter Property="Fill" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                                                                        <Setter Property="Stroke" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter Property="Stroke" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                                        <Setter Property="Fill" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Style>
+                                            </ToggleButton.Style>
+                                        </ToggleButton>
+
+                                        <Border x:Name="Bd" Grid.Column="1" BorderThickness="0" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+                                            <ContentPresenter x:Name="PART_Header" ContentSource="Header" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                        </Border>
+                                        <ItemsPresenter x:Name="ItemsHost" Grid.Column="1" Grid.Row="1"/>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsExpanded" Value="false">
+                                            <Setter Property="Visibility" TargetName="ItemsHost" Value="Collapsed"/>
+                                        </Trigger>
+                                        <Trigger Property="HasItems" Value="false">
+                                            <Setter Property="Visibility" TargetName="Expander" Value="Hidden"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="true">
+                                            <Setter Property="Background" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                            <Setter Property="TextElement.Foreground" TargetName="Bd" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="0" Data="{Binding IconData}" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Width="16" Height="16" Stretch="Uniform" Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="14" VerticalAlignment="Center"/>
+                            <ItemsControl Grid.Column="2" ItemsSource="{Binding HeaderItems}" ItemTemplateSelector="{StaticResource SettingSelector}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemContainerStyle>
+                                    <Style TargetType="ContentPresenter">
+                                        <Setter Property="Margin" Value="5,0,0,0"/>
+                                    </Style>
+                                </ItemsControl.ItemContainerStyle>
+                            </ItemsControl>
+                        </Grid>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
         </Border>
 
         <Grid Grid.Column="1">
@@ -172,6 +258,27 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsVisible}" Value="False">
                                     <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsDependent}" Value="True">
+                                    <Setter Property="Opacity" Value="1.0"/>
+                                </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsDependent}" Value="True"/>
+                                        <Condition Binding="{Binding IsEnabled}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </MultiDataTrigger>
+                                <DataTrigger Binding="{Binding IsDependent}" Value="True">
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="2,0,0,0" Padding="10,0,0,0">
+                                                    <ContentPresenter Content="{Binding}" ContentTemplateSelector="{StaticResource SettingSelector}"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>

@@ -104,7 +104,7 @@
 <data name="Scale" xml:space="preserve"><value>縮放</value></data>
 <data name="RotationX" xml:space="preserve"><value>旋轉 X</value></data>
 <data name="RotationY" xml:space="preserve"><value>旋轉 Y</value></data>
-<data name="RotationZ" xml:space="preserve"><value>旋轉 Z</value></data>
+<data name="RotationZ" xml:space="preserve"><value>회전 Z</value></data>
 <data name="ResetTrigger" xml:space="preserve"><value>重置</value></data>
 <data name="Group_Light" xml:space="preserve"><value>燈光</value></data>
 <data name="IsLightEnabled" xml:space="preserve"><value>啟用</value></data>
@@ -120,4 +120,5 @@
 <data name="UpdateAvailableTitle" xml:space="preserve"><value>更新可用</value></data>
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>新版本 ({0}) 可用。是否打開下載頁面？</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
+<data name="WorldId" xml:space="preserve"><value>世界ID</value></data>
 </root>

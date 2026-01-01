@@ -13,6 +13,7 @@ namespace ObjLoader.Utilities
         public DataTemplate? ColorTemplate { get; set; }
         public DataTemplate? FileTemplate { get; set; }
         public DataTemplate? ButtonTemplate { get; set; }
+        public DataTemplate? IntSpinnerTemplate { get; set; }
 
         public override DataTemplate? SelectTemplate(object item, DependencyObject container)
         {
@@ -25,6 +26,7 @@ namespace ObjLoader.Utilities
                 ColorSettingViewModel => ColorTemplate,
                 FilePathSettingViewModel => FileTemplate,
                 ButtonSettingViewModel => ButtonTemplate,
+                IntSpinnerSettingViewModel => IntSpinnerTemplate,
                 _ => base.SelectTemplate(item, container)
             };
         }

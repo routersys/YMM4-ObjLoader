@@ -25,6 +25,7 @@ namespace ObjLoader.Infrastructure
         public int Order { get; set; }
         public string Icon { get; set; } = "Geometry";
         public Type? ResourceType { get; set; }
+        public string ParentId { get; set; } = string.Empty;
 
         public SettingGroupAttribute(string id, string title)
         {
@@ -41,6 +42,8 @@ namespace ObjLoader.Infrastructure
         public string Description { get; set; } = string.Empty;
         public int Order { get; set; }
         public Type? ResourceType { get; set; }
+        public string EnableBy { get; set; } = string.Empty;
+        public bool IsGroupHeader { get; set; }
 
         protected SettingItemAttribute(string groupId, string label)
         {
@@ -75,6 +78,18 @@ namespace ObjLoader.Infrastructure
         }
     }
 
+    public class IntSpinnerSettingAttribute : SettingItemAttribute
+    {
+        public int Min { get; }
+        public int Max { get; }
+
+        public IntSpinnerSettingAttribute(string groupId, string label, int min, int max) : base(groupId, label)
+        {
+            Min = min;
+            Max = max;
+        }
+    }
+
     public class EnumSettingAttribute : SettingItemAttribute
     {
         public EnumSettingAttribute(string groupId, string label) : base(groupId, label) { }
@@ -100,6 +115,7 @@ namespace ObjLoader.Infrastructure
         public string GroupId { get; set; } = string.Empty;
         public int Order { get; set; }
         public Type? ResourceType { get; set; }
+        public string EnableBy { get; set; } = string.Empty;
 
         public SettingButtonAttribute(string label)
         {

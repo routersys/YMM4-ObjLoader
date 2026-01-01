@@ -156,12 +156,16 @@ namespace ObjLoader.SourceGenerator
                     var id = memberGroupAttr.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
                     var title = memberGroupAttr.ConstructorArguments[1].Value?.ToString() ?? string.Empty;
                     var order = GetNamedArgument(memberGroupAttr, "Order", 0);
+                    var parentId = GetNamedArgument(memberGroupAttr, "ParentId", string.Empty).ToString().Trim('"');
 
                     var iconArg = memberGroupAttr.NamedArguments.FirstOrDefault(na => na.Key == "Icon");
                     var icon = iconArg.Key != null ? FormatTypedConstant(iconArg.Value) : "\"Geometry\"";
 
+                    var resTypeArg = memberGroupAttr.NamedArguments.FirstOrDefault(na => na.Key == "ResourceType");
+                    var resType = resTypeArg.Key != null ? FormatTypedConstant(resTypeArg.Value) : "null";
+
                     sb.AppendLine($"            if (!groupDict.ContainsKey(\"{id}\"))");
-                    sb.AppendLine($"                groupDict[\"{id}\"] = new SettingGroupViewModel(\"{id}\", \"{title}\", {order}, {icon});");
+                    sb.AppendLine($"                groupDict[\"{id}\"] = new SettingGroupViewModel(\"{id}\", \"{title}\", {order}, {icon}, \"{parentId}\", {resType});");
                 }
             }
 
@@ -174,18 +178,27 @@ namespace ObjLoader.SourceGenerator
                     {
                         var groupId = itemAttribute.ConstructorArguments[0].Value?.ToString() ?? string.Empty;
                         sb.AppendLine($"            if (!groupDict.ContainsKey(\"{groupId}\"))");
-                        sb.AppendLine($"                groupDict[\"{groupId}\"] = new SettingGroupViewModel(\"{groupId}\", \"{groupId}\", 0, \"Geometry\");");
+                        sb.AppendLine($"                groupDict[\"{groupId}\"] = new SettingGroupViewModel(\"{groupId}\", \"{groupId}\", 0, \"Geometry\", \"\", null);");
 
                         var vmType = GetViewModelType(itemAttribute.AttributeClass.Name);
                         var attrCreation = GenerateAttributeCreation(itemAttribute);
+                        var isGroupHeader = (bool)GetNamedArgument(itemAttribute, "IsGroupHeader", false);
 
                         sb.AppendLine($"            {{");
                         sb.AppendLine($"                var propInfo = typeof({fullTypeName}).GetProperty(\"{prop.Name}\", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);");
                         sb.AppendLine($"                if (propInfo != null)");
                         sb.AppendLine($"                {{");
                         sb.AppendLine($"                    var itemVm = new {vmType}(target, propInfo, {attrCreation});");
+                        sb.AppendLine($"                    vm.RegisterViewModel(\"{prop.Name}\", itemVm);");
                         sb.AppendLine($"                    itemVm.PropertyChanged += (s, e) => {{ if (s is SettingItemViewModelBase item) vm.Description = item.Description; }};");
-                        sb.AppendLine($"                    groupDict[\"{groupId}\"].Items.Add(itemVm);");
+                        if (isGroupHeader)
+                        {
+                            sb.AppendLine($"                    groupDict[\"{groupId}\"].HeaderItems.Add(itemVm);");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"                    groupDict[\"{groupId}\"].Items.Add(itemVm);");
+                        }
                         sb.AppendLine($"                }}");
                         sb.AppendLine($"            }}");
                     }
@@ -248,12 +261,12 @@ namespace ObjLoader.SourceGenerator
             sb.AppendLine("                {");
             sb.AppendLine("                    view.SortDescriptions.Add(new SortDescription(nameof(SettingItemViewModelBase.Order), ListSortDirection.Ascending));");
             sb.AppendLine("                }");
-            sb.AppendLine("                vm.Groups.Add(group);");
+            sb.AppendLine("                vm.AddGroup(group);");
             sb.AppendLine("            }");
             sb.AppendLine();
             sb.AppendLine("            SortButtons(vm.LeftButtons);");
             sb.AppendLine("            SortButtons(vm.RightButtons);");
-            sb.AppendLine("            if (vm.Groups.Count > 0) vm.SelectedGroup = vm.Groups[0];");
+            sb.AppendLine("            vm.FinalizeGroups();");
             sb.AppendLine("        }");
             sb.AppendLine();
             sb.AppendLine("        private static void SortButtons(System.Collections.ObjectModel.ObservableCollection<ButtonSettingViewModel> collection)");
@@ -276,6 +289,7 @@ namespace ObjLoader.SourceGenerator
                 "EnumSettingAttribute" => "EnumSettingViewModel",
                 "ColorSettingAttribute" => "ColorSettingViewModel",
                 "FilePathSettingAttribute" => "FilePathSettingViewModel",
+                "IntSpinnerSettingAttribute" => "IntSpinnerSettingViewModel",
                 _ => "PropertySettingViewModel"
             };
         }
