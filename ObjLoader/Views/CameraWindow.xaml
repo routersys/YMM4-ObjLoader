@@ -1,0 +1,137 @@
+﻿<Window x:Class="ObjLoader.Views.CameraWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:l="clr-namespace:ObjLoader.Localization"
+        xmlns:vm="clr-namespace:ObjLoader.ViewModels"
+        xmlns:c="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
+        mc:Ignorable="d"
+        Title="{x:Static l:Texts.CameraSettings}" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="300"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0" Background="#222" ClipToBounds="True"
+              MouseWheel="Viewport_MouseWheel" MouseDown="Viewport_MouseDown" MouseUp="Viewport_MouseUp" MouseMove="Viewport_MouseMove"
+              SizeChanged="Viewport_SizeChanged">
+
+            <Image Source="{Binding SceneImage}" Stretch="Fill"/>
+
+            <Viewport3D x:Name="MainViewport" Camera="{Binding Camera}">
+                <ModelVisual3D>
+                    <ModelVisual3D.Content>
+                        <Model3DGroup>
+                            <DirectionalLight Color="White" Direction="-1,-1,-1"/>
+                            <DirectionalLight Color="#888" Direction="1,1,1"/>
+                            <AmbientLight Color="#666"/>
+
+                            <GeometryModel3D Geometry="{Binding GridGeometry}">
+                                <GeometryModel3D.Material>
+                                    <DiffuseMaterial Brush="#555"/>
+                                </GeometryModel3D.Material>
+                            </GeometryModel3D>
+
+                            <GeometryModel3D Geometry="{Binding CameraVisualGeometry}">
+                                <GeometryModel3D.Material>
+                                    <DiffuseMaterial Brush="#FF8800"/>
+                                </GeometryModel3D.Material>
+                                <GeometryModel3D.BackMaterial>
+                                    <DiffuseMaterial Brush="#FF8800"/>
+                                </GeometryModel3D.BackMaterial>
+                            </GeometryModel3D>
+
+                            <GeometryModel3D Geometry="{Binding TargetVisualGeometry}">
+                                <GeometryModel3D.Material>
+                                    <DiffuseMaterial Brush="#FFFF00"/>
+                                </GeometryModel3D.Material>
+                            </GeometryModel3D>
+
+                            <GeometryModel3D Geometry="{Binding CameraHandleGeometry}">
+                                <GeometryModel3D.Material>
+                                    <DiffuseMaterial Brush="#00FFFF"/>
+                                </GeometryModel3D.Material>
+                            </GeometryModel3D>
+
+                        </Model3DGroup>
+                    </ModelVisual3D.Content>
+                </ModelVisual3D>
+            </Viewport3D>
+
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Width="120" Height="120">
+                <Viewport3D x:Name="GizmoViewport" MouseDown="GizmoViewport_MouseDown" MouseMove="GizmoViewport_MouseMove">
+                    <Viewport3D.Camera>
+                        <PerspectiveCamera Position="{Binding GizmoCamera.Position}" LookDirection="{Binding GizmoCamera.LookDirection}" UpDirection="0,1,0" FieldOfView="45"/>
+                    </Viewport3D.Camera>
+                    <ModelVisual3D Content="{Binding ViewCubeModel}"/>
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <AmbientLight Color="White"/>
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+                </Viewport3D>
+                <TextBlock Text="{Binding HoveredDirectionName}" Foreground="White" Background="#88000000" Padding="4" 
+                           HorizontalAlignment="Center" VerticalAlignment="Bottom" IsHitTestVisible="False"
+                           Visibility="{Binding HoveredDirectionName, Converter={x:Static l:StringVisibilityConverter.Instance}}"/>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                <CheckBox Content="{x:Static l:Texts.Grid}" IsChecked="{Binding IsGridVisible}" Foreground="White"/>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Column="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,0,0,0" Padding="10">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="{x:Static l:Texts.CameraPos}" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <DockPanel Margin="0,5">
+                        <TextBlock Text="X" Width="20" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding CamX, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,5">
+                        <TextBlock Text="Y" Width="20" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding CamY, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+                    <DockPanel Margin="0,5">
+                        <TextBlock Text="Z" Width="20" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding CamZ, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,10"/>
+
+                    <DockPanel Margin="0,0,0,5">
+                        <TextBlock Text="{x:Static l:Texts.CameraTarget}" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="固定" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <c:ToggleSlider Value="{Binding IsTargetFixed}"/>
+                        </StackPanel>
+                    </DockPanel>
+
+                    <StackPanel IsEnabled="{Binding IsTargetFree}">
+                        <DockPanel Margin="0,5">
+                            <TextBlock Text="X" Width="20" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding TargetX, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DockPanel>
+                        <DockPanel Margin="0,5">
+                            <TextBlock Text="Y" Width="20" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding TargetY, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DockPanel>
+                        <DockPanel Margin="0,5">
+                            <TextBlock Text="Z" Width="20" VerticalAlignment="Center"/>
+                            <TextBox Text="{Binding TargetZ, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
+                        </DockPanel>
+                    </StackPanel>
+
+                    <Separator Margin="0,10"/>
+
+                    <Button Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Margin="0,10"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</Window>

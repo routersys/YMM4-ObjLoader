@@ -80,6 +80,18 @@ namespace ObjLoader.Plugin
         public bool ResetTrigger { get => _resetTrigger; set => Set(ref _resetTrigger, value); }
         private bool _resetTrigger;
 
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.OpenCameraWindow), ResourceType = typeof(Texts))]
+        [CameraWindowButton]
+        public bool IsCameraWindowOpen2 { get => _isCameraWindowOpen2; set => Set(ref _isCameraWindowOpen2, value); }
+        private bool _isCameraWindowOpen2;
+
+        public Animation CameraX { get; } = new Animation(0, -100000, 100000);
+        public Animation CameraY { get; } = new Animation(0, -100000, 100000);
+        public Animation CameraZ { get; } = new Animation(-2.5, -100000, 100000);
+        public Animation TargetX { get; } = new Animation(0, -100000, 100000);
+        public Animation TargetY { get; } = new Animation(0, -100000, 100000);
+        public Animation TargetZ { get; } = new Animation(0, -100000, 100000);
+
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.WorldId), ResourceType = typeof(Texts))]
         [AnimationSlider("F0", "", 0, 9)]
         public Animation WorldId { get; } = new Animation(0, 0, 9);
@@ -130,7 +142,7 @@ namespace ObjLoader.Plugin
 
         protected override IEnumerable<IAnimatable> GetAnimatables()
         {
-            return new[] { ScreenWidth, ScreenHeight, X, Y, Z, Scale, RotationX, RotationY, RotationZ, Fov, LightX, LightY, LightZ, WorldId };
+            return new[] { ScreenWidth, ScreenHeight, X, Y, Z, Scale, RotationX, RotationY, RotationZ, Fov, LightX, LightY, LightZ, WorldId, CameraX, CameraY, CameraZ, TargetX, TargetY, TargetZ };
         }
 
         protected override void LoadSharedData(SharedDataStore store)

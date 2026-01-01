@@ -121,4 +121,20 @@
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>新しいバージョン ({0}) が利用可能です。ダウンロードページを開きますか？</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco圧縮されたファイルには対応していません</value></data>
 <data name="WorldId" xml:space="preserve"><value>ワールドID</value></data>
+<data name="CameraSettings" xml:space="preserve"><value>カメラ設定</value></data>
+<data name="OpenCameraWindow" xml:space="preserve"><value>カメラ位置設定</value></data>
+<data name="Grid" xml:space="preserve"><value>グリッド</value></data>
+<data name="ResetCamera" xml:space="preserve"><value>カメラリセット</value></data>
+<data name="CameraPos" xml:space="preserve"><value>カメラ位置</value></data>
+<data name="CameraTarget" xml:space="preserve"><value>注視点</value></data>
+<data name="ViewFront" xml:space="preserve"><value>前</value></data>
+<data name="ViewBack" xml:space="preserve"><value>後</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>左</value></data>
+<data name="ViewRight" xml:space="preserve"><value>右</value></data>
+<data name="ViewTop" xml:space="preserve"><value>上</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>下</value></data>
+<data name="ViewIsoFrontRight" xml:space="preserve"><value>斜め(前右)</value></data>
+<data name="ViewIsoFrontLeft" xml:space="preserve"><value>斜め(前左)</value></data>
+<data name="ViewIsoBackRight" xml:space="preserve"><value>斜め(後右)</value></data>
+<data name="ViewIsoBackLeft" xml:space="preserve"><value>斜め(後左)</value></data>
 </root>

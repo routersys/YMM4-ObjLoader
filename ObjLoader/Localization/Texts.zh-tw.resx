@@ -121,4 +121,20 @@
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>新版本 ({0}) 可用。是否打開下載頁面？</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
 <data name="WorldId" xml:space="preserve"><value>世界ID</value></data>
+<data name="CameraSettings" xml:space="preserve"><value>相機設定</value></data>
+<data name="OpenCameraWindow" xml:space="preserve"><value>相機位置</value></data>
+<data name="Grid" xml:space="preserve"><value>網格</value></data>
+<data name="ResetCamera" xml:space="preserve"><value>重置相機</value></data>
+<data name="CameraPos" xml:space="preserve"><value>相機位置</value></data>
+<data name="CameraTarget" xml:space="preserve"><value>目標</value></data>
+<data name="ViewFront" xml:space="preserve"><value>前</value></data>
+<data name="ViewBack" xml:space="preserve"><value>後</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>左</value></data>
+<data name="ViewRight" xml:space="preserve"><value>右</value></data>
+<data name="ViewTop" xml:space="preserve"><value>上</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>下</value></data>
+<data name="ViewIsoFrontRight" xml:space="preserve"><value>斜向(前右)</value></data>
+<data name="ViewIsoFrontLeft" xml:space="preserve"><value>斜向(前左)</value></data>
+<data name="ViewIsoBackRight" xml:space="preserve"><value>斜向(後右)</value></data>
+<data name="ViewIsoBackLeft" xml:space="preserve"><value>斜向(後左)</value></data>
 </root>

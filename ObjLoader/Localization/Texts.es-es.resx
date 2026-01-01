@@ -121,4 +121,20 @@
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>Hay una nueva versión ({0}) disponible. ¿Desea abrir la página de descarga?</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
 <data name="WorldId" xml:space="preserve"><value>ID de mundo</value></data>
+<data name="CameraSettings" xml:space="preserve"><value>Configuración de la cámara</value></data>
+<data name="OpenCameraWindow" xml:space="preserve"><value>Posición de la cámara</value></data>
+<data name="Grid" xml:space="preserve"><value>Cuadrícula</value></data>
+<data name="ResetCamera" xml:space="preserve"><value>Restablecer cámara</value></data>
+<data name="CameraPos" xml:space="preserve"><value>Posición de la cámara</value></data>
+<data name="CameraTarget" xml:space="preserve"><value>Objetivo</value></data>
+<data name="ViewFront" xml:space="preserve"><value>Frente</value></data>
+<data name="ViewBack" xml:space="preserve"><value>Atrás</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>Izquierda</value></data>
+<data name="ViewRight" xml:space="preserve"><value>Derecha</value></data>
+<data name="ViewTop" xml:space="preserve"><value>Arriba</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>Abajo</value></data>
+<data name="ViewIsoFrontRight" xml:space="preserve"><value>Iso(FR)</value></data>
+<data name="ViewIsoFrontLeft" xml:space="preserve"><value>Iso(FL)</value></data>
+<data name="ViewIsoBackRight" xml:space="preserve"><value>Iso(BR)</value></data>
+<data name="ViewIsoBackLeft" xml:space="preserve"><value>Iso(BL)</value></data>
 </root>

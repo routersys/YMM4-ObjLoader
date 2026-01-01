@@ -52,6 +52,12 @@ namespace ObjLoader.Rendering
         private double _lastDiffuseIntensity = double.NaN;
         private double _lastSpecularIntensity = double.NaN;
         private double _lastShininess = double.NaN;
+        private double _lastCamX = double.NaN;
+        private double _lastCamY = double.NaN;
+        private double _lastCamZ = double.NaN;
+        private double _lastTargetX = double.NaN;
+        private double _lastTargetY = double.NaN;
+        private double _lastTargetZ = double.NaN;
 
         static ObjLoaderSource()
         {
@@ -105,6 +111,13 @@ namespace ObjLoader.Rendering
             var lightX = _parameter.LightX.GetValue(frame, length, fps);
             var lightY = _parameter.LightY.GetValue(frame, length, fps);
             var lightZ = _parameter.LightZ.GetValue(frame, length, fps);
+            var camX = _parameter.CameraX.GetValue(frame, length, fps);
+            var camY = _parameter.CameraY.GetValue(frame, length, fps);
+            var camZ = _parameter.CameraZ.GetValue(frame, length, fps);
+            var targetX = _parameter.TargetX.GetValue(frame, length, fps);
+            var targetY = _parameter.TargetY.GetValue(frame, length, fps);
+            var targetZ = _parameter.TargetZ.GetValue(frame, length, fps);
+
             var baseColor = _parameter.BaseColor;
             var filePath = _parameter.FilePath?.Trim('"') ?? string.Empty;
             var worldIdParam = (int)_parameter.WorldId.GetValue(frame, length, fps);
@@ -171,12 +184,18 @@ namespace ObjLoader.Rendering
                 _lastLightColor == lightColor &&
                 Math.Abs(_lastDiffuseIntensity - diffuseIntensity) < 1e-5 &&
                 Math.Abs(_lastSpecularIntensity - specularIntensity) < 1e-5 &&
-                Math.Abs(_lastShininess - shininess) < 1e-5)
+                Math.Abs(_lastShininess - shininess) < 1e-5 &&
+                Math.Abs(_lastCamX - camX) < 1e-5 &&
+                Math.Abs(_lastCamY - camY) < 1e-5 &&
+                Math.Abs(_lastCamZ - camZ) < 1e-5 &&
+                Math.Abs(_lastTargetX - targetX) < 1e-5 &&
+                Math.Abs(_lastTargetY - targetY) < 1e-5 &&
+                Math.Abs(_lastTargetZ - targetZ) < 1e-5)
             {
                 return;
             }
 
-            RenderToTexture(resource, sw, sh, x, y, z, scale, rx, ry, rz, fov, lightX, lightY, lightZ, baseColor, coordSystem, ambientColor, lightColor, diffuseIntensity, specularIntensity, shininess);
+            RenderToTexture(resource, sw, sh, x, y, z, scale, rx, ry, rz, fov, lightX, lightY, lightZ, baseColor, coordSystem, ambientColor, lightColor, diffuseIntensity, specularIntensity, shininess, camX, camY, camZ, targetX, targetY, targetZ);
             CreateCommandList();
 
             _lastX = x;
@@ -201,6 +220,12 @@ namespace ObjLoader.Rendering
             _lastDiffuseIntensity = diffuseIntensity;
             _lastSpecularIntensity = specularIntensity;
             _lastShininess = shininess;
+            _lastCamX = camX;
+            _lastCamY = camY;
+            _lastCamZ = camZ;
+            _lastTargetX = targetX;
+            _lastTargetY = targetY;
+            _lastTargetZ = targetZ;
         }
 
         private unsafe GpuResourceCacheItem CreateGpuResource(ObjModel model, string filePath)
@@ -289,7 +314,7 @@ namespace ObjLoader.Rendering
             return item;
         }
 
-        private void RenderToTexture(GpuResourceCacheItem resource, int width, int height, double x, double y, double z, double scale, double rx, double ry, double rz, double fov, double lightX, double lightY, double lightZ, Color baseColor, CoordinateSystem coordSystem, Color ambientColor, Color lightColor, double diffuseIntensity, double specularIntensity, double shininess)
+        private void RenderToTexture(GpuResourceCacheItem resource, int width, int height, double x, double y, double z, double scale, double rx, double ry, double rz, double fov, double lightX, double lightY, double lightZ, Color baseColor, CoordinateSystem coordSystem, Color ambientColor, Color lightColor, double diffuseIntensity, double specularIntensity, double shininess, double camX, double camY, double camZ, double targetX, double targetY, double targetZ)
         {
             if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
 
@@ -348,16 +373,23 @@ namespace ObjLoader.Rendering
 
             if (_parameter.Projection == ProjectionType.Parallel)
             {
-                cameraPosition = new Vector3(0, 0, -2.0f);
-                view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
-                proj = Matrix4x4.CreateOrthographic(2.0f * aspect, 2.0f, 0.1f, 100.0f);
+                cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
+                var target = new Vector3((float)targetX, (float)targetY, (float)targetZ);
+                if (cameraPosition == target) cameraPosition.Z -= 2.0f;
+
+                view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
+                float orthoSize = 2.0f;
+                proj = Matrix4x4.CreateOrthographic(orthoSize * aspect, orthoSize, 0.1f, 1000.0f);
             }
             else
             {
-                cameraPosition = new Vector3(0, 0, -2.5f);
-                view = Matrix4x4.CreateLookAt(cameraPosition, Vector3.Zero, Vector3.UnitY);
+                cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
+                var target = new Vector3((float)targetX, (float)targetY, (float)targetZ);
+                if (cameraPosition == target) cameraPosition.Z -= 2.5f;
+
+                view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
                 float radFov = (float)(Math.Max(1, Math.Min(179, fov)) * Math.PI / 180.0);
-                proj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, 0.1f, 100.0f);
+                proj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, 0.1f, 1000.0f);
             }
 
             var wvp = world * view * proj;

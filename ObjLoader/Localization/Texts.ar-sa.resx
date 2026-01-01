@@ -120,4 +120,20 @@
 <data name="UpdateAvailableMessage" xml:space="preserve"><value>يتوفر إصدار جديد ({0}). هل تريد فتح صفحة التنزيل؟</value></data>
 <data name="DracoNotSupported" xml:space="preserve"><value>Draco compression is not supported</value></data>
 <data name="WorldId" xml:space="preserve"><value>معرف العالم</value></data>
+<data name="CameraSettings" xml:space="preserve"><value>إعدادات الكاميرا</value></data>
+<data name="OpenCameraWindow" xml:space="preserve"><value>موضع الكاميرا</value></data>
+<data name="Grid" xml:space="preserve"><value>شبكة</value></data>
+<data name="ResetCamera" xml:space="preserve"><value>إعادة تعيين الكاميرا</value></data>
+<data name="CameraPos" xml:space="preserve"><value>موضع الكاميرا</value></data>
+<data name="CameraTarget" xml:space="preserve"><value>الهدف</value></data>
+<data name="ViewFront" xml:space="preserve"><value>أمام</value></data>
+<data name="ViewBack" xml:space="preserve"><value>خلف</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>يسار</value></data>
+<data name="ViewRight" xml:space="preserve"><value>يمين</value></data>
+<data name="ViewTop" xml:space="preserve"><value>أعلى</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>أسفل</value></data>
+<data name="ViewIsoFrontRight" xml:space="preserve"><value>قطري(أمام يمين)</value></data>
+<data name="ViewIsoFrontLeft" xml:space="preserve"><value>قطري(أمام يسار)</value></data>
+<data name="ViewIsoBackRight" xml:space="preserve"><value>قطري(خلف يمين)</value></data>
+<data name="ViewIsoBackLeft" xml:space="preserve"><value>قطري(خلف يسار)</value></data>
 </root>
