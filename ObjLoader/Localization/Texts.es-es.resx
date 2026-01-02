@@ -127,14 +127,29 @@
 <data name="ResetCamera" xml:space="preserve"><value>Restablecer cámara</value></data>
 <data name="CameraPos" xml:space="preserve"><value>Posición de la cámara</value></data>
 <data name="CameraTarget" xml:space="preserve"><value>Objetivo</value></data>
-<data name="ViewFront" xml:space="preserve"><value>Frente</value></data>
-<data name="ViewBack" xml:space="preserve"><value>Atrás</value></data>
-<data name="ViewLeft" xml:space="preserve"><value>Izquierda</value></data>
 <data name="ViewRight" xml:space="preserve"><value>Derecha</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>Izquierda</value></data>
 <data name="ViewTop" xml:space="preserve"><value>Arriba</value></data>
 <data name="ViewBottom" xml:space="preserve"><value>Abajo</value></data>
-<data name="ViewIsoFrontRight" xml:space="preserve"><value>Iso(FR)</value></data>
-<data name="ViewIsoFrontLeft" xml:space="preserve"><value>Iso(FL)</value></data>
-<data name="ViewIsoBackRight" xml:space="preserve"><value>Iso(BR)</value></data>
-<data name="ViewIsoBackLeft" xml:space="preserve"><value>Iso(BL)</value></data>
+<data name="ViewFront" xml:space="preserve"><value>Frente</value></data>
+<data name="ViewBack" xml:space="preserve"><value>Atrás</value></data>
+<data name="CornerFRT" xml:space="preserve"><value>Frente Derecha Arriba</value></data>
+<data name="CornerFLT" xml:space="preserve"><value>Frente Izquierda Arriba</value></data>
+<data name="CornerBRT" xml:space="preserve"><value>Atrás Derecha Arriba</value></data>
+<data name="CornerBLT" xml:space="preserve"><value>Atrás Izquierda Arriba</value></data>
+<data name="CornerFRB" xml:space="preserve"><value>Frente Derecha Abajo</value></data>
+<data name="CornerFLB" xml:space="preserve"><value>Frente Izquierda Abajo</value></data>
+<data name="CornerBRB" xml:space="preserve"><value>Atrás Derecha Abajo</value></data>
+<data name="CornerBLB" xml:space="preserve"><value>Atrás Izquierda Abajo</value></data>
+<data name="PilotView" xml:space="preserve"><value>Vista de piloto</value></data>
+<data name="Wireframe" xml:space="preserve"><value>Estructura de alambre</value></data>
+<data name="Snap" xml:space="preserve"><value>Ajuste</value></data>
+<data name="Focus" xml:space="preserve"><value>Enfoque (F)</value></data>
+<data name="Undo" xml:space="preserve"><value>Deshacer</value></data>
+<data name="Redo" xml:space="preserve"><value>Rehacer</value></data>
+<data name="Solid" xml:space="preserve"><value>Sólido</value></data>
+<data name="Flat" xml:space="preserve"><value>Plano</value></data>
+<data name="DisplayMode" xml:space="preserve"><value>Modo de visualización</value></data>
+<data name="InfiniteGrid" xml:space="preserve"><value>Cuadrícula infinita</value></data>
+<data name="TargetFixed" xml:space="preserve"><value>Fijo</value></data>
 </root>

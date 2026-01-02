@@ -126,14 +126,29 @@
 <data name="ResetCamera" xml:space="preserve"><value>إعادة تعيين الكاميرا</value></data>
 <data name="CameraPos" xml:space="preserve"><value>موضع الكاميرا</value></data>
 <data name="CameraTarget" xml:space="preserve"><value>الهدف</value></data>
-<data name="ViewFront" xml:space="preserve"><value>أمام</value></data>
-<data name="ViewBack" xml:space="preserve"><value>خلف</value></data>
-<data name="ViewLeft" xml:space="preserve"><value>يسار</value></data>
-<data name="ViewRight" xml:space="preserve"><value>يمين</value></data>
+<data name="ViewRight" xml:space="preserve"><value>حق</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>اليسار</value></data>
 <data name="ViewTop" xml:space="preserve"><value>أعلى</value></data>
 <data name="ViewBottom" xml:space="preserve"><value>أسفل</value></data>
-<data name="ViewIsoFrontRight" xml:space="preserve"><value>قطري(أمام يمين)</value></data>
-<data name="ViewIsoFrontLeft" xml:space="preserve"><value>قطري(أمام يسار)</value></data>
-<data name="ViewIsoBackRight" xml:space="preserve"><value>قطري(خلف يمين)</value></data>
-<data name="ViewIsoBackLeft" xml:space="preserve"><value>قطري(خلف يسار)</value></data>
+<data name="ViewFront" xml:space="preserve"><value>أمامي</value></data>
+<data name="ViewBack" xml:space="preserve"><value>خلف</value></data>
+<data name="CornerFRT" xml:space="preserve"><value>الجبهة اليمنى العليا</value></data>
+<data name="CornerFLT" xml:space="preserve"><value>الجبهة اليسرى العليا</value></data>
+<data name="CornerBRT" xml:space="preserve"><value>الخلفية اليمنى العليا</value></data>
+<data name="CornerBLT" xml:space="preserve"><value>الخلفية اليسرى العليا</value></data>
+<data name="CornerFRB" xml:space="preserve"><value>الجبهة اليمنى السفلى</value></data>
+<data name="CornerFLB" xml:space="preserve"><value>الجبهة اليسرى السفلى</value></data>
+<data name="CornerBRB" xml:space="preserve"><value>الخلفية اليمنى السفلى</value></data>
+<data name="CornerBLB" xml:space="preserve"><value>الخلفية اليسرى السفلى</value></data>
+<data name="PilotView" xml:space="preserve"><value>وجهة نظر الطيار</value></data>
+<data name="Wireframe" xml:space="preserve"><value>إطار سلكي</value></data>
+<data name="Snap" xml:space="preserve"><value>العض</value></data>
+<data name="Focus" xml:space="preserve"><value>التركيز (F)</value></data>
+<data name="Undo" xml:space="preserve"><value>تراجع</value></data>
+<data name="Redo" xml:space="preserve"><value>إعادة</value></data>
+<data name="Solid" xml:space="preserve"><value>صلب</value></data>
+<data name="Flat" xml:space="preserve"><value>مسطح</value></data>
+<data name="DisplayMode" xml:space="preserve"><value>وضع العرض</value></data>
+<data name="InfiniteGrid" xml:space="preserve"><value>شبكة لا نهائية</value></data>
+<data name="TargetFixed" xml:space="preserve"><value>ثابت</value></data>
 </root>

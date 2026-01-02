@@ -127,14 +127,29 @@
 <data name="ResetCamera" xml:space="preserve"><value>카메라 재설정</value></data>
 <data name="CameraPos" xml:space="preserve"><value>카메라 위치</value></data>
 <data name="CameraTarget" xml:space="preserve"><value>목표</value></data>
-<data name="ViewFront" xml:space="preserve"><value>앞</value></data>
-<data name="ViewBack" xml:space="preserve"><value>뒤</value></data>
-<data name="ViewLeft" xml:space="preserve"><value>왼쪽</value></data>
-<data name="ViewRight" xml:space="preserve"><value>오른쪽</value></data>
-<data name="ViewTop" xml:space="preserve"><value>위</value></data>
-<data name="ViewBottom" xml:space="preserve"><value>아래</value></data>
-<data name="ViewIsoFrontRight" xml:space="preserve"><value>대각선(앞우)</value></data>
-<data name="ViewIsoFrontLeft" xml:space="preserve"><value>대각선(앞좌)</value></data>
-<data name="ViewIsoBackRight" xml:space="preserve"><value>대각선(뒤우)</value></data>
-<data name="ViewIsoBackLeft" xml:space="preserve"><value>대각선(뒤좌)</value></data>
+<data name="ViewRight" xml:space="preserve"><value>우</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>좌</value></data>
+<data name="ViewTop" xml:space="preserve"><value>상</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>하</value></data>
+<data name="ViewFront" xml:space="preserve"><value>전</value></data>
+<data name="ViewBack" xml:space="preserve"><value>후</value></data>
+<data name="CornerFRT" xml:space="preserve"><value>전우상</value></data>
+<data name="CornerFLT" xml:space="preserve"><value>전좌상</value></data>
+<data name="CornerBRT" xml:space="preserve"><value>후우상</value></data>
+<data name="CornerBLT" xml:space="preserve"><value>후좌상</value></data>
+<data name="CornerFRB" xml:space="preserve"><value>전우하</value></data>
+<data name="CornerFLB" xml:space="preserve"><value>전좌하</value></data>
+<data name="CornerBRB" xml:space="preserve"><value>후우하</value></data>
+<data name="CornerBLB" xml:space="preserve"><value>후좌하</value></data>
+<data name="PilotView" xml:space="preserve"><value>파일럿 시점</value></data>
+<data name="Wireframe" xml:space="preserve"><value>와이어프레임</value></data>
+<data name="Snap" xml:space="preserve"><value>스냅</value></data>
+<data name="Focus" xml:space="preserve"><value>초점 (F)</value></data>
+<data name="Undo" xml:space="preserve"><value>실행 취소</value></data>
+<data name="Redo" xml:space="preserve"><value>다시 실행</value></data>
+<data name="Solid" xml:space="preserve"><value>솔리드</value></data>
+<data name="Flat" xml:space="preserve"><value>플랫</value></data>
+<data name="DisplayMode" xml:space="preserve"><value>표시 모드</value></data>
+<data name="InfiniteGrid" xml:space="preserve"><value>무한 그리드</value></data>
+<data name="TargetFixed" xml:space="preserve"><value>고정</value></data>
 </root>

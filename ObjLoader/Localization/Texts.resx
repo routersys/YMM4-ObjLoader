@@ -127,14 +127,29 @@
 <data name="ResetCamera" xml:space="preserve"><value>カメラリセット</value></data>
 <data name="CameraPos" xml:space="preserve"><value>カメラ位置</value></data>
 <data name="CameraTarget" xml:space="preserve"><value>注視点</value></data>
-<data name="ViewFront" xml:space="preserve"><value>前</value></data>
-<data name="ViewBack" xml:space="preserve"><value>後</value></data>
-<data name="ViewLeft" xml:space="preserve"><value>左</value></data>
-<data name="ViewRight" xml:space="preserve"><value>右</value></data>
-<data name="ViewTop" xml:space="preserve"><value>上</value></data>
-<data name="ViewBottom" xml:space="preserve"><value>下</value></data>
-<data name="ViewIsoFrontRight" xml:space="preserve"><value>斜め(前右)</value></data>
-<data name="ViewIsoFrontLeft" xml:space="preserve"><value>斜め(前左)</value></data>
-<data name="ViewIsoBackRight" xml:space="preserve"><value>斜め(後右)</value></data>
-<data name="ViewIsoBackLeft" xml:space="preserve"><value>斜め(後左)</value></data>
+<data name="ViewRight" xml:space="preserve"><value>右 (Right)</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>左 (Left)</value></data>
+<data name="ViewTop" xml:space="preserve"><value>上 (Top)</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>下 (Bottom)</value></data>
+<data name="ViewFront" xml:space="preserve"><value>前 (Front)</value></data>
+<data name="ViewBack" xml:space="preserve"><value>後 (Back)</value></data>
+<data name="CornerFRT" xml:space="preserve"><value>前右上</value></data>
+<data name="CornerFLT" xml:space="preserve"><value>前左上</value></data>
+<data name="CornerBRT" xml:space="preserve"><value>後右上</value></data>
+<data name="CornerBLT" xml:space="preserve"><value>後左上</value></data>
+<data name="CornerFRB" xml:space="preserve"><value>前右下</value></data>
+<data name="CornerFLB" xml:space="preserve"><value>前左下</value></data>
+<data name="CornerBRB" xml:space="preserve"><value>後右下</value></data>
+<data name="CornerBLB" xml:space="preserve"><value>後左下</value></data>
+<data name="PilotView" xml:space="preserve"><value>パイロット視点</value></data>
+<data name="Wireframe" xml:space="preserve"><value>ワイヤーフレーム</value></data>
+<data name="Snap" xml:space="preserve"><value>スナップ</value></data>
+<data name="Focus" xml:space="preserve"><value>フォーカス (F)</value></data>
+<data name="Undo" xml:space="preserve"><value>元に戻す</value></data>
+<data name="Redo" xml:space="preserve"><value>やり直し</value></data>
+<data name="Solid" xml:space="preserve"><value>ソリッド</value></data>
+<data name="Flat" xml:space="preserve"><value>フラット</value></data>
+<data name="DisplayMode" xml:space="preserve"><value>表示モード</value></data>
+<data name="InfiniteGrid" xml:space="preserve"><value>無限グリッド</value></data>
+<data name="TargetFixed" xml:space="preserve"><value>固定</value></data>
 </root>

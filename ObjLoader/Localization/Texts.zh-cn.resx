@@ -127,14 +127,29 @@
 <data name="ResetCamera" xml:space="preserve"><value>重置相机</value></data>
 <data name="CameraPos" xml:space="preserve"><value>相机位置</value></data>
 <data name="CameraTarget" xml:space="preserve"><value>目标</value></data>
-<data name="ViewFront" xml:space="preserve"><value>前</value></data>
-<data name="ViewBack" xml:space="preserve"><value>后</value></data>
-<data name="ViewLeft" xml:space="preserve"><value>左</value></data>
 <data name="ViewRight" xml:space="preserve"><value>右</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>左</value></data>
 <data name="ViewTop" xml:space="preserve"><value>上</value></data>
 <data name="ViewBottom" xml:space="preserve"><value>下</value></data>
-<data name="ViewIsoFrontRight" xml:space="preserve"><value>斜向(前右)</value></data>
-<data name="ViewIsoFrontLeft" xml:space="preserve"><value>斜向(前左)</value></data>
-<data name="ViewIsoBackRight" xml:space="preserve"><value>斜向(后右)</value></data>
-<data name="ViewIsoBackLeft" xml:space="preserve"><value>斜向(后左)</value></data>
+<data name="ViewFront" xml:space="preserve"><value>前</value></data>
+<data name="ViewBack" xml:space="preserve"><value>后</value></data>
+<data name="CornerFRT" xml:space="preserve"><value>前右上</value></data>
+<data name="CornerFLT" xml:space="preserve"><value>前左上</value></data>
+<data name="CornerBRT" xml:space="preserve"><value>后右上</value></data>
+<data name="CornerBLT" xml:space="preserve"><value>后左上</value></data>
+<data name="CornerFRB" xml:space="preserve"><value>前右下</value></data>
+<data name="CornerFLB" xml:space="preserve"><value>前左下</value></data>
+<data name="CornerBRB" xml:space="preserve"><value>后右下</value></data>
+<data name="CornerBLB" xml:space="preserve"><value>后左下</value></data>
+<data name="PilotView" xml:space="preserve"><value>飞行员视角</value></data>
+<data name="Wireframe" xml:space="preserve"><value>线框</value></data>
+<data name="Snap" xml:space="preserve"><value>吸附</value></data>
+<data name="Focus" xml:space="preserve"><value>聚焦 (F)</value></data>
+<data name="Undo" xml:space="preserve"><value>撤销</value></data>
+<data name="Redo" xml:space="preserve"><value>重做</value></data>
+<data name="Solid" xml:space="preserve"><value>实体</value></data>
+<data name="Flat" xml:space="preserve"><value>平坦</value></data>
+<data name="DisplayMode" xml:space="preserve"><value>显示模式</value></data>
+<data name="InfiniteGrid" xml:space="preserve"><value>无限网格</value></data>
+<data name="TargetFixed" xml:space="preserve"><value>固定</value></data>
 </root>

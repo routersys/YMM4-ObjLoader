@@ -21,9 +21,10 @@ namespace ObjLoader.ViewModels
             var param = _properties.FirstOrDefault()?.PropertyOwner as ObjLoaderParameter;
             if (param != null)
             {
-                using var vm = new CameraWindowViewModel(param);
+                var vm = new CameraWindowViewModel(param);
                 var win = new CameraWindow { DataContext = vm };
-                win.ShowDialog();
+                win.Closed += (s, e) => vm.Dispose();
+                win.Show();
             }
         }
     }
