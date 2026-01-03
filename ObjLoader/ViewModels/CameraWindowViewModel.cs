@@ -199,6 +199,8 @@ namespace ObjLoader.ViewModels
         public void ResizeViewport(int width, int height)
         {
             if (width < 1 || height < 1) return;
+            if (_device == null) return;
+
             _viewportWidth = width;
             _viewportHeight = height;
 
@@ -1120,23 +1122,35 @@ namespace ObjLoader.ViewModels
         public void Dispose()
         {
             _animationTimer?.Stop();
+            _animationTimer = null;
             _d3dResources?.Dispose();
+            _d3dResources = null;
             _rtv?.Dispose();
+            _rtv = null;
             _renderTarget?.Dispose();
+            _renderTarget = null;
             _dsv?.Dispose();
+            _dsv = null;
             _depthStencil?.Dispose();
+            _depthStencil = null;
             _stagingTexture?.Dispose();
+            _stagingTexture = null;
             _resolveTexture?.Dispose();
+            _resolveTexture = null;
             _modelResource?.Dispose();
+            _modelResource = null;
             _gridVertexBuffer?.Dispose();
+            _gridVertexBuffer = null;
 
             if (_context != null)
             {
                 _context.ClearState();
                 _context.Flush();
                 _context.Dispose();
+                _context = null;
             }
             _device?.Dispose();
+            _device = null;
         }
     }
 }

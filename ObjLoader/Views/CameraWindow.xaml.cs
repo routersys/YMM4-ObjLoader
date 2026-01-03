@@ -3,39 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using ObjLoader.ViewModels;
-using System.Globalization;
-using System.Windows.Data;
 using System.Windows.Controls;
-
-namespace ObjLoader.Localization
-{
-    public class StringVisibilityConverter : IValueConverter
-    {
-        public static StringVisibilityConverter Instance = new StringVisibilityConverter();
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return string.IsNullOrEmpty(value as string) ? Visibility.Collapsed : Visibility.Visible;
-        }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
-    }
-}
-
-namespace ObjLoader.Converters
-{
-    public class InverseBooleanConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool b) return !b;
-            return false;
-        }
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool b) return !b;
-            return false;
-        }
-    }
-}
 
 namespace ObjLoader.Views
 {
@@ -48,6 +16,8 @@ namespace ObjLoader.Views
         public CameraWindow()
         {
             InitializeComponent();
+            Owner = Application.Current.MainWindow;
+            Closed += (s, e) => (DataContext as IDisposable)?.Dispose();
         }
 
         private void Viewport_MouseWheel(object sender, MouseWheelEventArgs e)

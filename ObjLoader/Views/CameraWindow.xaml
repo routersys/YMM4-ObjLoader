@@ -118,7 +118,7 @@
                 </Viewport3D>
                 <TextBlock Text="{Binding HoveredDirectionName}" Foreground="White" Background="#88000000" Padding="4" 
                            HorizontalAlignment="Center" VerticalAlignment="Bottom" IsHitTestVisible="False"
-                           Visibility="{Binding HoveredDirectionName, Converter={x:Static l:StringVisibilityConverter.Instance}}"/>
+                           Visibility="{Binding HoveredDirectionName, Converter={x:Static conv:StringVisibilityConverter.Instance}}"/>
             </Grid>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
