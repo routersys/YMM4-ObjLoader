@@ -89,6 +89,8 @@ namespace ObjLoader.Rendering
 
         public void Update(TimelineItemSourceDescription desc)
         {
+            _parameter.Duration = (double)desc.ItemDuration.Frame / desc.FPS;
+
             var frame = desc.ItemPosition.Frame;
             var length = desc.ItemDuration.Frame;
             var fps = desc.FPS;
@@ -111,12 +113,25 @@ namespace ObjLoader.Rendering
             var lightX = _parameter.LightX.GetValue(frame, length, fps);
             var lightY = _parameter.LightY.GetValue(frame, length, fps);
             var lightZ = _parameter.LightZ.GetValue(frame, length, fps);
-            var camX = _parameter.CameraX.GetValue(frame, length, fps);
-            var camY = _parameter.CameraY.GetValue(frame, length, fps);
-            var camZ = _parameter.CameraZ.GetValue(frame, length, fps);
-            var targetX = _parameter.TargetX.GetValue(frame, length, fps);
-            var targetY = _parameter.TargetY.GetValue(frame, length, fps);
-            var targetZ = _parameter.TargetZ.GetValue(frame, length, fps);
+
+            double camX, camY, camZ, targetX, targetY, targetZ;
+
+            if (_parameter.Keyframes.Count > 0)
+            {
+                double time = (double)frame / fps;
+                var state = _parameter.GetCameraState(time);
+                camX = state.cx; camY = state.cy; camZ = state.cz;
+                targetX = state.tx; targetY = state.ty; targetZ = state.tz;
+            }
+            else
+            {
+                camX = _parameter.CameraX.GetValue(frame, length, fps);
+                camY = _parameter.CameraY.GetValue(frame, length, fps);
+                camZ = _parameter.CameraZ.GetValue(frame, length, fps);
+                targetX = _parameter.TargetX.GetValue(frame, length, fps);
+                targetY = _parameter.TargetY.GetValue(frame, length, fps);
+                targetZ = _parameter.TargetZ.GetValue(frame, length, fps);
+            }
 
             var baseColor = _parameter.BaseColor;
             var filePath = _parameter.FilePath?.Trim('"') ?? string.Empty;

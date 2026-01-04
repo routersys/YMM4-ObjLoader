@@ -10,9 +10,52 @@ using YukkuriMovieMaker.Exo;
 using YukkuriMovieMaker.Player.Video;
 using YukkuriMovieMaker.Plugin.Shape;
 using YukkuriMovieMaker.Project;
+using System.Collections.Generic;
+using System.Linq;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace ObjLoader.Plugin
 {
+    public enum EasingType
+    {
+        Linear,
+        SineIn, SineOut, SineInOut,
+        QuadIn, QuadOut, QuadInOut,
+        CubicIn, CubicOut, CubicInOut
+    }
+
+    public class CameraKeyframe : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        protected bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            OnPropertyChanged(propertyName);
+            return true;
+        }
+
+        private double _time;
+        private EasingType _easing;
+        private double _camX;
+        private double _camY;
+        private double _camZ;
+        private double _targetX;
+        private double _targetY;
+        private double _targetZ;
+
+        public double Time { get => _time; set => Set(ref _time, value); }
+        public EasingType Easing { get => _easing; set => Set(ref _easing, value); }
+        public double CamX { get => _camX; set => Set(ref _camX, value); }
+        public double CamY { get => _camY; set => Set(ref _camY, value); }
+        public double CamZ { get => _camZ; set => Set(ref _camZ, value); }
+        public double TargetX { get => _targetX; set => Set(ref _targetX, value); }
+        public double TargetY { get => _targetY; set => Set(ref _targetY, value); }
+        public double TargetZ { get => _targetZ; set => Set(ref _targetZ, value); }
+    }
+
     public class ObjLoaderParameter : ShapeParameterBase
     {
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
@@ -113,6 +156,11 @@ namespace ObjLoader.Plugin
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation LightZ { get; } = new Animation(-100, -100000, 100000);
 
+        public List<CameraKeyframe> Keyframes { get; set; } = new List<CameraKeyframe>();
+
+        public double Duration { get => _duration; set => Set(ref _duration, value); }
+        private double _duration = 10.0;
+
         public ObjLoaderParameter() : this(null) { }
         public ObjLoaderParameter(SharedDataStore? sharedData) : base(sharedData)
         {
@@ -155,6 +203,54 @@ namespace ObjLoader.Plugin
         protected override void SaveSharedData(SharedDataStore store)
         {
             store.Save(new ObjLoaderParameterSharedData(this));
+        }
+
+        public (double cx, double cy, double cz, double tx, double ty, double tz) GetCameraState(double time)
+        {
+            if (Keyframes == null || Keyframes.Count == 0) return (0, 0, 0, 0, 0, 0);
+
+            var sorted = Keyframes.OrderBy(k => k.Time).ToList();
+            var prev = sorted.LastOrDefault(k => k.Time <= time);
+            var next = sorted.FirstOrDefault(k => k.Time > time);
+
+            if (prev == null && next != null) return (next.CamX, next.CamY, next.CamZ, next.TargetX, next.TargetY, next.TargetZ);
+            if (prev != null && next == null) return (prev.CamX, prev.CamY, prev.CamZ, prev.TargetX, prev.TargetY, prev.TargetZ);
+            if (prev != null && next != null)
+            {
+                double t = (time - prev.Time) / (next.Time - prev.Time);
+                double easedT = ApplyEasing(t, prev.Easing);
+                return (
+                    Lerp(prev.CamX, next.CamX, easedT),
+                    Lerp(prev.CamY, next.CamY, easedT),
+                    Lerp(prev.CamZ, next.CamZ, easedT),
+                    Lerp(prev.TargetX, next.TargetX, easedT),
+                    Lerp(prev.TargetY, next.TargetY, easedT),
+                    Lerp(prev.TargetZ, next.TargetZ, easedT)
+                );
+            }
+            return (0, 0, 0, 0, 0, 0);
+        }
+
+        private double Lerp(double a, double b, double t)
+        {
+            return a + (b - a) * t;
+        }
+
+        private double ApplyEasing(double t, EasingType type)
+        {
+            switch (type)
+            {
+                case EasingType.SineIn: return 1 - Math.Cos((t * Math.PI) / 2);
+                case EasingType.SineOut: return Math.Sin((t * Math.PI) / 2);
+                case EasingType.SineInOut: return -(Math.Cos(Math.PI * t) - 1) / 2;
+                case EasingType.QuadIn: return t * t;
+                case EasingType.QuadOut: return 1 - (1 - t) * (1 - t);
+                case EasingType.QuadInOut: return t < 0.5 ? 2 * t * t : 1 - Math.Pow(-2 * t + 2, 2) / 2;
+                case EasingType.CubicIn: return t * t * t;
+                case EasingType.CubicOut: return 1 - Math.Pow(1 - t, 3);
+                case EasingType.CubicInOut: return t < 0.5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2;
+                default: return t;
+            }
         }
     }
 }

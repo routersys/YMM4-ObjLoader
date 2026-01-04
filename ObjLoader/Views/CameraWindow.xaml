@@ -5,10 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:ObjLoader.Localization"
         xmlns:vm="clr-namespace:ObjLoader.ViewModels"
+        xmlns:pl="clr-namespace:ObjLoader.Plugin"
         xmlns:conv="clr-namespace:ObjLoader.Converters"
         xmlns:c="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="{x:Static l:Texts.CameraSettings}" Height="600" Width="900"
+        Title="{x:Static l:Texts.CameraSettings}" Height="750" Width="900"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         KeyDown="Window_KeyDown">
@@ -18,6 +20,11 @@
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:StringToDoubleConverter x:Key="StringToDoubleConverter"/>
+            <ObjectDataProvider x:Key="EasingTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="pl:EasingType"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
 
             <Style x:Key="ModernTextBox" TargetType="TextBox">
                 <Setter Property="Background" Value="Transparent"/>
@@ -152,243 +159,322 @@
     </Window.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="320"/>
-        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <Grid Grid.Column="0" Background="{DynamicResource {x:Static SystemColors.ControlDarkDarkBrushKey}}" ClipToBounds="True"
-              MouseWheel="Viewport_MouseWheel" MouseDown="Viewport_MouseDown" MouseUp="Viewport_MouseUp" MouseMove="Viewport_MouseMove"
-              SizeChanged="Viewport_SizeChanged">
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="320"/>
+            </Grid.ColumnDefinitions>
 
-            <Image x:Name="SceneImage" Source="{Binding SceneImage}" Stretch="Fill"/>
+            <Grid Grid.Column="0" Background="{DynamicResource {x:Static SystemColors.ControlDarkDarkBrushKey}}" ClipToBounds="True"
+                  MouseWheel="Viewport_MouseWheel" MouseDown="Viewport_MouseDown" MouseUp="Viewport_MouseUp" MouseMove="Viewport_MouseMove"
+                  SizeChanged="Viewport_SizeChanged">
 
-            <Border BorderBrush="#CCFF0000" BorderThickness="4" IsHitTestVisible="False"
-                    Visibility="{Binding IsPilotFrameVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Image x:Name="SceneImage" Source="{Binding SceneImage}" Stretch="Fill"/>
 
-            <Viewport3D x:Name="MainViewport">
-                <Viewport3D.Camera>
-                    <Binding Path="Camera"/>
-                </Viewport3D.Camera>
-                <ModelVisual3D>
-                    <ModelVisual3D.Content>
-                        <Model3DGroup>
-                            <AmbientLight Color="#808080"/>
-                            <DirectionalLight Color="#FFFFFF" Direction="-1,-1,-1"/>
+                <Border BorderBrush="#CCFF0000" BorderThickness="4" IsHitTestVisible="False"
+                        Visibility="{Binding IsPilotFrameVisible, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                            <GeometryModel3D Geometry="{Binding CameraVisualGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="#80FFFF00"/>
-                                </GeometryModel3D.Material>
-                                <GeometryModel3D.BackMaterial>
-                                    <DiffuseMaterial Brush="#80FFFF00"/>
-                                </GeometryModel3D.BackMaterial>
-                            </GeometryModel3D>
-
-                            <GeometryModel3D Geometry="{Binding TargetVisualGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="Cyan"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-
-                            <GeometryModel3D Geometry="{Binding GizmoXGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="Red"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-                            <GeometryModel3D Geometry="{Binding GizmoYGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="Lime"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-                            <GeometryModel3D Geometry="{Binding GizmoZGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="Blue"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-                            <GeometryModel3D Geometry="{Binding GizmoXYGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="#80FFFF00"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-                            <GeometryModel3D Geometry="{Binding GizmoYZGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="#8000FFFF"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-                            <GeometryModel3D Geometry="{Binding GizmoZXGeometry}">
-                                <GeometryModel3D.Material>
-                                    <DiffuseMaterial Brush="#80FF00FF"/>
-                                </GeometryModel3D.Material>
-                            </GeometryModel3D>
-
-                        </Model3DGroup>
-                    </ModelVisual3D.Content>
-                </ModelVisual3D>
-            </Viewport3D>
-
-            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Width="120" Height="120">
-                <Viewport3D x:Name="GizmoViewport" MouseDown="GizmoViewport_MouseDown" MouseMove="GizmoViewport_MouseMove">
+                <Viewport3D x:Name="MainViewport">
                     <Viewport3D.Camera>
-                        <Binding Path="GizmoCamera"/>
+                        <Binding Path="Camera"/>
                     </Viewport3D.Camera>
-                    <ModelVisual3D Content="{Binding ViewCubeModel}">
-                        <ModelVisual3D.Transform>
-                            <RotateTransform3D>
-                                <RotateTransform3D.Rotation>
-                                    <AxisAngleRotation3D Axis="0,1,0" Angle="0"/>
-                                </RotateTransform3D.Rotation>
-                            </RotateTransform3D>
-                        </ModelVisual3D.Transform>
-                    </ModelVisual3D>
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
-                            <AmbientLight Color="White"/>
+                            <Model3DGroup>
+                                <AmbientLight Color="#808080"/>
+                                <DirectionalLight Color="#FFFFFF" Direction="-1,-1,-1"/>
+
+                                <GeometryModel3D Geometry="{Binding CameraVisualGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="#80FFFF00"/>
+                                    </GeometryModel3D.Material>
+                                    <GeometryModel3D.BackMaterial>
+                                        <DiffuseMaterial Brush="#80FFFF00"/>
+                                    </GeometryModel3D.BackMaterial>
+                                </GeometryModel3D>
+
+                                <GeometryModel3D Geometry="{Binding TargetVisualGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="Cyan"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+
+                                <GeometryModel3D Geometry="{Binding GizmoXGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="Red"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                                <GeometryModel3D Geometry="{Binding GizmoYGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="Lime"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                                <GeometryModel3D Geometry="{Binding GizmoZGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="Blue"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                                <GeometryModel3D Geometry="{Binding GizmoXYGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="#80FFFF00"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                                <GeometryModel3D Geometry="{Binding GizmoYZGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="#8000FFFF"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+                                <GeometryModel3D Geometry="{Binding GizmoZXGeometry}">
+                                    <GeometryModel3D.Material>
+                                        <DiffuseMaterial Brush="#80FF00FF"/>
+                                    </GeometryModel3D.Material>
+                                </GeometryModel3D>
+
+                            </Model3DGroup>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
                 </Viewport3D>
-                <TextBlock Text="{Binding HoveredDirectionName}" Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" Background="#88000000" Padding="4" 
-                           HorizontalAlignment="Center" VerticalAlignment="Bottom" IsHitTestVisible="False"
-                           Visibility="{Binding HoveredDirectionName, Converter={x:Static conv:StringVisibilityConverter.Instance}}"/>
+
+                <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Width="120" Height="120">
+                    <Viewport3D x:Name="GizmoViewport" MouseDown="GizmoViewport_MouseDown" MouseMove="GizmoViewport_MouseMove">
+                        <Viewport3D.Camera>
+                            <Binding Path="GizmoCamera"/>
+                        </Viewport3D.Camera>
+                        <ModelVisual3D Content="{Binding ViewCubeModel}">
+                            <ModelVisual3D.Transform>
+                                <RotateTransform3D>
+                                    <RotateTransform3D.Rotation>
+                                        <AxisAngleRotation3D Axis="0,1,0" Angle="0"/>
+                                    </RotateTransform3D.Rotation>
+                                </RotateTransform3D>
+                            </ModelVisual3D.Transform>
+                        </ModelVisual3D>
+                        <ModelVisual3D>
+                            <ModelVisual3D.Content>
+                                <AmbientLight Color="White"/>
+                            </ModelVisual3D.Content>
+                        </ModelVisual3D>
+                    </Viewport3D>
+                    <TextBlock Text="{Binding HoveredDirectionName}" Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" Background="#88000000" Padding="4" 
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom" IsHitTestVisible="False"
+                               Visibility="{Binding HoveredDirectionName, Converter={x:Static conv:StringVisibilityConverter.Instance}}"/>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                    <CheckBox Content="{x:Static l:Texts.Grid}" IsChecked="{Binding IsGridVisible}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0"/>
+                    <CheckBox Content="{x:Static l:Texts.InfiniteGrid}" IsChecked="{Binding IsInfiniteGrid}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0"/>
+                    <CheckBox Content="{x:Static l:Texts.Snap}" IsChecked="{Binding IsSnapping}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
+                    <ToggleButton Content="{x:Static l:Texts.Wireframe}" IsChecked="{Binding IsWireframe}" Margin="0,0,5,0"/>
+                    <ToggleButton Content="{x:Static l:Texts.PilotView}" IsChecked="{Binding IsPilotView}" Margin="0,0,5,0"/>
+                    <Button Content="{x:Static l:Texts.Focus}" Command="{Binding FocusCommand}" Style="{StaticResource ModernButton}"/>
+                </StackPanel>
             </Grid>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
-                <CheckBox Content="{x:Static l:Texts.Grid}" IsChecked="{Binding IsGridVisible}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0"/>
-                <CheckBox Content="{x:Static l:Texts.InfiniteGrid}" IsChecked="{Binding IsInfiniteGrid}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0"/>
-                <CheckBox Content="{x:Static l:Texts.Snap}" IsChecked="{Binding IsSnapping}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-            </StackPanel>
+            <Border Grid.Column="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" 
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,0,0,0" Padding="15">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{x:Static l:Texts.CameraPos}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" Margin="0,0,0,10"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
-                <ToggleButton Content="{x:Static l:Texts.Wireframe}" IsChecked="{Binding IsWireframe}" Margin="0,0,5,0"/>
-                <ToggleButton Content="{x:Static l:Texts.PilotView}" IsChecked="{Binding IsPilotView}" Margin="0,0,5,0"/>
-                <Button Content="{x:Static l:Texts.Focus}" Command="{Binding FocusCommand}" Style="{StaticResource ModernButton}"/>
-            </StackPanel>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="65"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="X"/>
+                            <Slider Grid.Column="1" Value="{Binding CamX}" Minimum="{Binding CamXMin}" Maximum="{Binding CamXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Text="{Binding CamX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                        </Grid>
+
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="65"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Y"/>
+                            <Slider Grid.Column="1" Value="{Binding CamY}" Minimum="{Binding CamYMin}" Maximum="{Binding CamYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Text="{Binding CamY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                        </Grid>
+
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="65"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Z"/>
+                            <Slider Grid.Column="1" Value="{Binding CamZ}" Minimum="{Binding CamZMin}" Maximum="{Binding CamZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Text="{Binding CamZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                        </Grid>
+
+                        <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
+
+                        <DockPanel Margin="0,0,0,10">
+                            <TextBlock Text="{x:Static l:Texts.CameraTarget}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Static l:Texts.TargetFixed}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <c:ToggleSlider Value="{Binding IsTargetFixed}"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <StackPanel IsEnabled="{Binding IsTargetFree}">
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="65"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider Grid.Column="1" Value="{Binding TargetX}" Minimum="{Binding TargetXMin}" Maximum="{Binding TargetXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                                <TextBox Grid.Column="2" Text="{Binding TargetX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="65"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider Grid.Column="1" Value="{Binding TargetY}" Minimum="{Binding TargetYMin}" Maximum="{Binding TargetYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                                <TextBox Grid.Column="2" Text="{Binding TargetY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                            </Grid>
+
+                            <Grid Margin="0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="65"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
+                                <Slider Grid.Column="1" Value="{Binding TargetZ}" Minimum="{Binding TargetZMin}" Maximum="{Binding TargetZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                                <TextBox Grid.Column="2" Text="{Binding TargetZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                            </Grid>
+                        </StackPanel>
+
+                        <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
+
+                        <Button Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Style="{StaticResource ModernButton}" Margin="0,0,0,10"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="{x:Static l:Texts.Undo}" Command="{Binding UndoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="0,0,5,0"/>
+                            <Button Content="{x:Static l:Texts.Redo}" Command="{Binding RedoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="5,0,0,0"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
         </Grid>
 
-        <Border Grid.Column="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,0,0,0" Padding="15">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <StackPanel>
-                    <TextBlock Text="{x:Static l:Texts.CameraPos}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" Margin="0,0,0,10"/>
+        <Border Grid.Row="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0" Padding="10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <Grid Margin="0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="65"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="X"/>
-                        <Slider Grid.Column="1" Value="{Binding CamX}" Minimum="{Binding CamXMin}" Maximum="{Binding CamXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                        <TextBox Grid.Column="2" Text="{Binding CamX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                    </Grid>
+                <Slider Grid.Row="0" Minimum="0" Maximum="{Binding MaxDuration}" Value="{Binding CurrentTime}" Style="{StaticResource ModernSlider}" Margin="0,0,0,10"/>
 
-                    <Grid Margin="0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="65"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Y"/>
-                        <Slider Grid.Column="1" Value="{Binding CamY}" Minimum="{Binding CamYMin}" Maximum="{Binding CamYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                        <TextBox Grid.Column="2" Text="{Binding CamY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                    </Grid>
+                <Grid Grid.Row="1" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <Grid Margin="0,5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="20"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="65"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Z"/>
-                        <Slider Grid.Column="1" Value="{Binding CamZ}" Minimum="{Binding CamZMin}" Maximum="{Binding CamZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                        <TextBox Grid.Column="2" Text="{Binding CamZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                    </Grid>
-
-                    <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
-
-                    <DockPanel Margin="0,0,0,10">
-                        <TextBlock Text="{x:Static l:Texts.CameraTarget}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="{x:Static l:Texts.TargetFixed}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <c:ToggleSlider Value="{Binding IsTargetFixed}"/>
-                        </StackPanel>
-                    </DockPanel>
-
-                    <StackPanel IsEnabled="{Binding IsTargetFree}">
-                        <Grid Margin="0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="65"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
-                            <Slider Grid.Column="1" Value="{Binding TargetX}" Minimum="{Binding TargetXMin}" Maximum="{Binding TargetXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="2" Text="{Binding TargetX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                        </Grid>
-
-                        <Grid Margin="0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="65"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
-                            <Slider Grid.Column="1" Value="{Binding TargetY}" Minimum="{Binding TargetYMin}" Maximum="{Binding TargetYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="2" Text="{Binding TargetY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                        </Grid>
-
-                        <Grid Margin="0,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="20"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="65"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
-                            <Slider Grid.Column="1" Value="{Binding TargetZ}" Minimum="{Binding TargetZMin}" Maximum="{Binding TargetZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="2" Text="{Binding TargetZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
-                        </Grid>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,20,0">
+                        <Button Content="{x:Static l:Texts.Timeline_Play}" Command="{Binding PlayCommand}" Style="{StaticResource ModernButton}" Visibility="{Binding IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}"/>
+                        <Button Content="{x:Static l:Texts.Timeline_Pause}" Command="{Binding PauseCommand}" Style="{StaticResource ModernButton}" Visibility="{Binding IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <Button Content="{x:Static l:Texts.Timeline_Stop}" Command="{Binding StopCommand}" Style="{StaticResource ModernButton}" Margin="5,0,0,0"/>
                     </StackPanel>
 
-                    <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
-
-                    <Button Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Style="{StaticResource ModernButton}" Margin="0,0,0,10"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="{x:Static l:Texts.Undo}" Command="{Binding UndoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Redo}" Command="{Binding RedoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="5,0,0,0"/>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
+                        <TextBlock Text="{Binding CurrentTime, StringFormat=N2}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold"/>
+                        <TextBlock Text=" / " Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                        <TextBox Text="{Binding MaxDuration, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="50" Style="{StaticResource ModernTextBox}"/>
+                        <TextBlock Text="{x:Static l:Texts.Timeline_Seconds}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="2,0,0,0"/>
                     </StackPanel>
 
-                </StackPanel>
-            </ScrollViewer>
+                    <StackPanel Orientation="Horizontal" Grid.Column="2">
+                        <Button Content="{x:Static l:Texts.Timeline_AddKey}" Command="{Binding AddKeyframeCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
+                        <Button Content="{x:Static l:Texts.Timeline_RemoveKey}" Command="{Binding RemoveKeyframeCommand}" Style="{StaticResource ModernButton}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Grid.Column="4" VerticalAlignment="Center">
+                        <TextBlock Text="{x:Static l:Texts.Timeline_Easing}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <ComboBox ItemsSource="{Binding Source={StaticResource EasingTypes}}" SelectedItem="{Binding SelectedKeyframeEasing}" Width="120" IsEnabled="{Binding IsKeyframeSelected}"/>
+                    </StackPanel>
+                </Grid>
+
+                <ListView Grid.Row="2" ItemsSource="{Binding Keyframes}" SelectedItem="{Binding SelectedKeyframe}" Height="100" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="{x:Static l:Texts.Timeline_Time}" DisplayMemberBinding="{Binding Time, StringFormat=N2}" Width="60"/>
+                            <GridViewColumn Header="{x:Static l:Texts.Timeline_Easing}" DisplayMemberBinding="{Binding Easing}" Width="100"/>
+                            <GridViewColumn Header="Cam X" DisplayMemberBinding="{Binding CamX, StringFormat=N2}" Width="60"/>
+                            <GridViewColumn Header="Cam Y" DisplayMemberBinding="{Binding CamY, StringFormat=N2}" Width="60"/>
+                            <GridViewColumn Header="Cam Z" DisplayMemberBinding="{Binding CamZ, StringFormat=N2}" Width="60"/>
+                            <GridViewColumn Header="Target X" DisplayMemberBinding="{Binding TargetX, StringFormat=N2}" Width="60"/>
+                            <GridViewColumn Header="Target Y" DisplayMemberBinding="{Binding TargetY, StringFormat=N2}" Width="60"/>
+                            <GridViewColumn Header="Target Z" DisplayMemberBinding="{Binding TargetZ, StringFormat=N2}" Width="60"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
         </Border>
     </Grid>
 </Window>

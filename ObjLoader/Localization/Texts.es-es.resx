@@ -152,4 +152,13 @@
 <data name="DisplayMode" xml:space="preserve"><value>Modo de visualización</value></data>
 <data name="InfiniteGrid" xml:space="preserve"><value>Cuadrícula infinita</value></data>
 <data name="TargetFixed" xml:space="preserve"><value>Fijo</value></data>
+<data name="Timeline_Play" xml:space="preserve"><value>Reproducir</value></data>
+<data name="Timeline_Pause" xml:space="preserve"><value>Pausa</value></data>
+<data name="Timeline_Stop" xml:space="preserve"><value>Detener</value></data>
+<data name="Timeline_AddKey" xml:space="preserve"><value>Añadir fotograma clave</value></data>
+<data name="Timeline_RemoveKey" xml:space="preserve"><value>Eliminar fotograma clave</value></data>
+<data name="Timeline_Easing" xml:space="preserve"><value>Atenuación</value></data>
+<data name="Timeline_Time" xml:space="preserve"><value>Tiempo</value></data>
+<data name="Timeline_Duration" xml:space="preserve"><value>Duración</value></data>
+<data name="Timeline_Seconds" xml:space="preserve"><value>s</value></data>
 </root>

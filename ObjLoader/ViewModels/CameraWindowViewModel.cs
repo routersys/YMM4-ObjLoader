@@ -3,17 +3,21 @@ using ObjLoader.Core;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Services;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
+using System.Windows.Threading;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
+using System.ComponentModel;
+using EasingType = ObjLoader.Plugin.EasingType;
 
 namespace ObjLoader.ViewModels
 {
@@ -61,6 +65,13 @@ namespace ObjLoader.ViewModels
         private GpuResourceCacheItem? _modelResource;
         private System.Windows.Media.Color _themeColor = System.Windows.Media.Colors.White;
 
+        private double _currentTime = 0;
+        private double _maxDuration = 10.0;
+        private bool _isPlaying = false;
+        private DispatcherTimer _playbackTimer;
+        private CameraKeyframe? _selectedKeyframe;
+        private bool _isUpdatingAnimation;
+
         public PerspectiveCamera Camera { get; } = new PerspectiveCamera { FieldOfView = 45, NearPlaneDistance = 0.01, FarPlaneDistance = 100000 };
         public PerspectiveCamera GizmoCamera { get; } = new PerspectiveCamera { FieldOfView = 45, NearPlaneDistance = 0.1, FarPlaneDistance = 100 };
 
@@ -79,21 +90,28 @@ namespace ObjLoader.ViewModels
 
         public WriteableBitmap? SceneImage => _renderService.SceneImage;
 
+        public ObservableCollection<CameraKeyframe> Keyframes { get; }
+
         public ActionCommand ResetCommand { get; }
         public ActionCommand UndoCommand { get; }
         public ActionCommand RedoCommand { get; }
         public ActionCommand FocusCommand { get; }
+        public ActionCommand PlayCommand { get; }
+        public ActionCommand PauseCommand { get; }
+        public ActionCommand StopCommand { get; }
+        public ActionCommand AddKeyframeCommand { get; }
+        public ActionCommand RemoveKeyframeCommand { get; }
 
         public string HoveredDirectionName { get => _hoveredDirectionName; set => Set(ref _hoveredDirectionName, value); }
         public bool IsTargetFree => !_isTargetFixed;
         public bool IsPilotFrameVisible => _cameraLogic.IsPilotView;
 
-        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); UpdateVisuals(); SyncToParameter(); } }
-        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); UpdateVisuals(); SyncToParameter(); } }
-        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); UpdateVisuals(); SyncToParameter(); } }
-        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); UpdateVisuals(); SyncToParameter(); } }
-        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); UpdateVisuals(); SyncToParameter(); } }
-        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); UpdateVisuals(); SyncToParameter(); } }
+        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
+        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
+        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
+        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
+        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
+        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
 
         public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
         public double CamXMax { get => _camXMax; set => Set(ref _camXMax, value); }
@@ -121,6 +139,65 @@ namespace ObjLoader.ViewModels
         public bool IsSnapping { get => _isSnapping; set => Set(ref _isSnapping, value); }
         public bool IsTargetFixed { get => _isTargetFixed; set { if (Set(ref _isTargetFixed, value)) { OnPropertyChanged(nameof(IsTargetFree)); UpdateVisuals(); } } }
 
+        public double CurrentTime
+        {
+            get => _currentTime;
+            set
+            {
+                if (Set(ref _currentTime, value))
+                {
+                    UpdateAnimation();
+                }
+            }
+        }
+
+        public double MaxDuration
+        {
+            get => _maxDuration;
+            set => Set(ref _maxDuration, value);
+        }
+
+        public bool IsPlaying
+        {
+            get => _isPlaying;
+            set
+            {
+                if (Set(ref _isPlaying, value))
+                {
+                    PlayCommand.RaiseCanExecuteChanged();
+                    PauseCommand.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public CameraKeyframe? SelectedKeyframe
+        {
+            get => _selectedKeyframe;
+            set
+            {
+                Set(ref _selectedKeyframe, value);
+                OnPropertyChanged(nameof(IsKeyframeSelected));
+                OnPropertyChanged(nameof(SelectedKeyframeEasing));
+                RemoveKeyframeCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        public bool IsKeyframeSelected => SelectedKeyframe != null;
+
+        public EasingType SelectedKeyframeEasing
+        {
+            get => SelectedKeyframe?.Easing ?? EasingType.Linear;
+            set
+            {
+                if (SelectedKeyframe != null)
+                {
+                    SelectedKeyframe.Easing = value;
+                    OnPropertyChanged();
+                    UpdateAnimation();
+                }
+            }
+        }
+
         public CameraWindowViewModel(ObjLoaderParameter parameter)
         {
             _parameter = parameter;
@@ -141,6 +218,8 @@ namespace ObjLoader.ViewModels
 
             _cameraLogic.Updated += UpdateVisuals;
 
+            Keyframes = new ObservableCollection<CameraKeyframe>(_parameter.Keyframes);
+
             double sw = _parameter.ScreenWidth.Values[0].Value;
             double sh = _parameter.ScreenHeight.Values[0].Value;
             if (sh > 0) _aspectRatio = sw / sh;
@@ -150,9 +229,128 @@ namespace ObjLoader.ViewModels
             RedoCommand = new ActionCommand(_ => _undoStack.CanRedo, _ => PerformRedo());
             FocusCommand = new ActionCommand(_ => true, _ => PerformFocus());
 
+            PlayCommand = new ActionCommand(_ => !IsPlaying, _ => StartPlayback());
+            PauseCommand = new ActionCommand(_ => IsPlaying, _ => PausePlayback());
+            StopCommand = new ActionCommand(_ => true, _ => StopPlayback());
+            AddKeyframeCommand = new ActionCommand(_ => true, _ => AddKeyframe());
+            RemoveKeyframeCommand = new ActionCommand(_ => IsKeyframeSelected, _ => RemoveKeyframe());
+
+            _playbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+            _playbackTimer.Tick += PlaybackTick;
+
+            _parameter.PropertyChanged += OnParameterPropertyChanged;
+            MaxDuration = _parameter.Duration;
+            if (MaxDuration <= 0) MaxDuration = 10.0;
+
             ViewCubeModel = GizmoBuilder.CreateViewCube(out _cubeFaces, out _cubeCorners);
             _renderService.Initialize();
             LoadModel();
+            UpdateVisuals();
+        }
+
+        private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(ObjLoaderParameter.Duration))
+            {
+                MaxDuration = _parameter.Duration;
+            }
+        }
+
+        private void StartPlayback()
+        {
+            if (_isPlaying) return;
+            if (CurrentTime >= MaxDuration) CurrentTime = 0;
+            IsPlaying = true;
+            _playbackTimer.Start();
+        }
+
+        private void PausePlayback()
+        {
+            IsPlaying = false;
+            _playbackTimer.Stop();
+        }
+
+        private void StopPlayback()
+        {
+            IsPlaying = false;
+            _playbackTimer.Stop();
+            CurrentTime = 0;
+        }
+
+        private void PlaybackTick(object? sender, EventArgs e)
+        {
+            if (!_isPlaying) return;
+            double nextTime = CurrentTime + 0.016;
+            if (nextTime >= MaxDuration)
+            {
+                CurrentTime = MaxDuration;
+                PausePlayback();
+            }
+            else
+            {
+                CurrentTime = nextTime;
+            }
+        }
+
+        private void AddKeyframe()
+        {
+            var keyframe = new CameraKeyframe
+            {
+                Time = CurrentTime,
+                CamX = CamX,
+                CamY = CamY,
+                CamZ = CamZ,
+                TargetX = TargetX,
+                TargetY = TargetY,
+                TargetZ = TargetZ,
+                Easing = EasingType.Linear
+            };
+
+            var existing = Keyframes.FirstOrDefault(k => Math.Abs(k.Time - CurrentTime) < 0.001);
+            if (existing != null)
+            {
+                Keyframes.Remove(existing);
+                _parameter.Keyframes.Remove(existing);
+            }
+
+            Keyframes.Add(keyframe);
+            _parameter.Keyframes.Add(keyframe);
+
+            var sorted = Keyframes.OrderBy(k => k.Time).ToList();
+            Keyframes.Clear();
+            _parameter.Keyframes.Clear();
+            foreach (var k in sorted)
+            {
+                Keyframes.Add(k);
+                _parameter.Keyframes.Add(k);
+            }
+
+            SelectedKeyframe = keyframe;
+        }
+
+        private void RemoveKeyframe()
+        {
+            if (SelectedKeyframe != null)
+            {
+                Keyframes.Remove(SelectedKeyframe);
+                _parameter.Keyframes.Remove(SelectedKeyframe);
+                SelectedKeyframe = null;
+            }
+        }
+
+        private void UpdateAnimation()
+        {
+            if (Keyframes.Count == 0) return;
+
+            _isUpdatingAnimation = true;
+            var state = _parameter.GetCameraState(CurrentTime);
+            CamX = state.cx;
+            CamY = state.cy;
+            CamZ = state.cz;
+            TargetX = state.tx;
+            TargetY = state.ty;
+            TargetZ = state.tz;
+            _isUpdatingAnimation = false;
             UpdateVisuals();
         }
 
@@ -417,6 +615,7 @@ namespace ObjLoader.ViewModels
 
         public void Zoom(int delta)
         {
+            if (IsPlaying) PausePlayback();
             if (IsPilotView)
             {
                 double speed = _modelScale * 0.1 * (delta > 0 ? 1 : -1);
@@ -434,6 +633,7 @@ namespace ObjLoader.ViewModels
 
         public void StartPan(Point pos)
         {
+            if (IsPlaying) PausePlayback();
             IsTargetFixed = false;
             _isPanningView = true;
             _lastMousePos = pos;
@@ -441,6 +641,7 @@ namespace ObjLoader.ViewModels
 
         public void StartRotate(Point pos)
         {
+            if (IsPlaying) PausePlayback();
             _isRotatingView = true;
             _lastMousePos = pos;
         }
@@ -464,6 +665,7 @@ namespace ObjLoader.ViewModels
 
         public void StartGizmoDrag(Point pos)
         {
+            if (IsPlaying) PausePlayback();
             RecordUndo();
             if (_currentGizmoMode == GizmoMode.View)
             {
@@ -495,6 +697,7 @@ namespace ObjLoader.ViewModels
 
         public void ScrubValue(string axis, double delta)
         {
+            if (IsPlaying) PausePlayback();
             RecordUndo();
             double val = delta * _modelScale * 0.01;
             if (axis == "X") CamX += val;
@@ -538,7 +741,7 @@ namespace ObjLoader.ViewModels
                     case GizmoMode.View: mx = moveVec.X; my = moveVec.Y; mz = moveVec.Z; break;
                 }
 
-                if (IsSnapping) { mx = Math.Round(mx / 0.5) * 0.5; my = Math.Round(my / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; }
+                if (IsSnapping) { mx = Math.Round(mx / 0.5) * 0.5; my = Math.Round(my / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; }
                 if (_isTargetFixed) { CamX += mx; CamY += my; CamZ += mz; }
                 else { TargetX += mx; TargetY += my; TargetZ += mz; }
                 UpdateVisuals();
@@ -586,6 +789,7 @@ namespace ObjLoader.ViewModels
 
         public void MovePilot(double fwd, double right, double up)
         {
+            if (IsPlaying) PausePlayback();
             if (!IsPilotView) return;
             double speed = _modelScale * 0.05;
             var look = Camera.LookDirection; look.Normalize();
@@ -602,6 +806,8 @@ namespace ObjLoader.ViewModels
             _renderService.Dispose();
             _modelResource?.Dispose();
             _cameraLogic.StopAnimation();
+            _playbackTimer.Stop();
+            _parameter.PropertyChanged -= OnParameterPropertyChanged;
         }
     }
 }

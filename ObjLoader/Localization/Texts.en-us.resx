@@ -152,4 +152,13 @@
 <data name="DisplayMode" xml:space="preserve"><value>Display Mode</value></data>
 <data name="InfiniteGrid" xml:space="preserve"><value>Infinite Grid</value></data>
 <data name="TargetFixed" xml:space="preserve"><value>Fixed</value></data>
+<data name="Timeline_Play" xml:space="preserve"><value>再生</value></data>
+<data name="Timeline_Pause" xml:space="preserve"><value>暂停</value></data>
+<data name="Timeline_Stop" xml:space="preserve"><value>停止</value></data>
+<data name="Timeline_AddKey" xml:space="preserve"><value>添加关键帧</value></data>
+<data name="Timeline_RemoveKey" xml:space="preserve"><value>删除关键帧</value></data>
+<data name="Timeline_Easing" xml:space="preserve"><value>缓动</value></data>
+<data name="Timeline_Time" xml:space="preserve"><value>时间</value></data>
+<data name="Timeline_Duration" xml:space="preserve"><value>时长</value></data>
+<data name="Timeline_Seconds" xml:space="preserve"><value>秒</value></data>
 </root>
