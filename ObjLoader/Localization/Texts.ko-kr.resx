@@ -194,4 +194,10 @@
 <data name="Easing_BackInOut" xml:space="preserve"><value>백 (InOut)</value></data>
 <data name="Preset_Standard" xml:space="preserve"><value>표준</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>사용자 지정</value></data>
+<data name="Shader" xml:space="preserve"><value>셰이더</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>glsl</value></data>
+<data name="Shader_Status_Success" xml:space="preserve"><value>컴파일 성공</value></data>
+<data name="Shader_Status_Error" xml:space="preserve"><value>컴파일 오류: {0}</value></data>
+<data name="Shader_Status_Unknown" xml:space="preserve"><value>알 수 없음</value></data>
+<data name="Shader_None" xml:space="preserve"><value>없음</value></data>
 </root>

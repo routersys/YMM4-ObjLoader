@@ -2,6 +2,8 @@
 using ObjLoader.Rendering;
 using ObjLoader.Attributes;
 using ObjLoader.Localization;
+using ObjLoader.Services;
+using ObjLoader.Utilities;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
@@ -12,6 +14,7 @@ using YukkuriMovieMaker.Plugin.Shape;
 using YukkuriMovieMaker.Project;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.IO;
 
 namespace ObjLoader.Plugin
 {
@@ -57,6 +60,11 @@ namespace ObjLoader.Plugin
         [ModelFileSelector(".obj", ".pmx", ".stl", ".glb", ".ply", ".3mf")]
         public string FilePath { get => _filePath; set => Set(ref _filePath, value); }
         private string _filePath = string.Empty;
+
+        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Shader), Description = nameof(Texts.Shader_Desc), ResourceType = typeof(Texts))]
+        [ShaderFileSelector(".hlsl", ".fx", ".shader", ".cg", ".glsl", ".vert", ".frag", ".txt")]
+        public string ShaderFilePath { get => _shaderFilePath; set => Set(ref _shaderFilePath, value); }
+        private string _shaderFilePath = string.Empty;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.BaseColor), ResourceType = typeof(Texts))]
         [ColorPicker]
@@ -241,6 +249,15 @@ namespace ObjLoader.Plugin
             OnPropertyChanged(nameof(TargetX));
             OnPropertyChanged(nameof(TargetY));
             OnPropertyChanged(nameof(TargetZ));
+        }
+
+        public string GetAdaptedShaderSource()
+        {
+            if (string.IsNullOrEmpty(ShaderFilePath) || !File.Exists(ShaderFilePath)) return string.Empty;
+
+            var converter = new HlslShaderConverter();
+            var source = EncodingUtil.ReadAllText(ShaderFilePath);
+            return converter.Convert(source);
         }
     }
 }

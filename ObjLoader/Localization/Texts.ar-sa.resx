@@ -193,4 +193,10 @@
 <data name="Easing_BackInOut" xml:space="preserve"><value>عودة (InOut)</value></data>
 <data name="Preset_Standard" xml:space="preserve"><value>قياسي</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>مخصص</value></data>
+<data name="Shader" xml:space="preserve"><value>مظلل</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>frag</value></data>
+<data name="Shader_Status_Success" xml:space="preserve"><value>نجاح التحويل البرمجي</value></data>
+<data name="Shader_Status_Error" xml:space="preserve"><value>خطأ في التحويل البرمجي: {0}</value></data>
+<data name="Shader_Status_Unknown" xml:space="preserve"><value>مجهول</value></data>
+<data name="Shader_None" xml:space="preserve"><value>لا شيء</value></data>
 </root>

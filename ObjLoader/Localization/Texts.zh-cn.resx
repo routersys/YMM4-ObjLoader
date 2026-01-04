@@ -194,4 +194,10 @@
 <data name="Easing_BackInOut" xml:space="preserve"><value>回退 (InOut)</value></data>
 <data name="Preset_Standard" xml:space="preserve"><value>标准</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>自定义</value></data>
+<data name="Shader" xml:space="preserve"><value>着色器</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>shader</value></data>
+<data name="Shader_Status_Success" xml:space="preserve"><value>编译成功</value></data>
+<data name="Shader_Status_Error" xml:space="preserve"><value>编译错误: {0}</value></data>
+<data name="Shader_Status_Unknown" xml:space="preserve"><value>未知</value></data>
+<data name="Shader_None" xml:space="preserve"><value>无</value></data>
 </root>

@@ -194,4 +194,10 @@
 <data name="Easing_BackInOut" xml:space="preserve"><value>Back InOut</value></data>
 <data name="Preset_Standard" xml:space="preserve"><value>Standard</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>Custom</value></data>
+<data name="Shader" xml:space="preserve"><value>Shader</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>fx</value></data>
+<data name="Shader_Status_Success" xml:space="preserve"><value>Compilation Success</value></data>
+<data name="Shader_Status_Error" xml:space="preserve"><value>Compile Error: {0}</value></data>
+<data name="Shader_Status_Unknown" xml:space="preserve"><value>Unknown</value></data>
+<data name="Shader_None" xml:space="preserve"><value>None</value></data>
 </root>

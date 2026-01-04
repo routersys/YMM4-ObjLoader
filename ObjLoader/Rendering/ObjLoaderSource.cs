@@ -29,6 +29,9 @@ namespace ObjLoader.Rendering
         private readonly RenderTargetManager _renderTargets;
 
         private D2D.ID2D1CommandList? _commandList;
+        private ID3D11VertexShader? _customVertexShader;
+        private ID3D11PixelShader? _customPixelShader;
+        private ID3D11InputLayout? _customInputLayout;
 
         private double _lastX = double.NaN;
         private double _lastY = double.NaN;
@@ -44,6 +47,7 @@ namespace ObjLoader.Rendering
         private double _lastLightY = double.NaN;
         private double _lastLightZ = double.NaN;
         private string _lastFilePath = string.Empty;
+        private string _lastShaderFilePath = string.Empty;
         private Color _lastBaseColor = Colors.Transparent;
         private CoordinateSystem _lastCoordinateSystem = (CoordinateSystem)(-1);
         private RenderCullMode _lastCullMode = (RenderCullMode)(-1);
@@ -135,6 +139,7 @@ namespace ObjLoader.Rendering
 
             var baseColor = _parameter.BaseColor;
             var filePath = _parameter.FilePath?.Trim('"') ?? string.Empty;
+            var shaderFilePath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty;
             var worldIdParam = (int)_parameter.WorldId.GetValue(frame, length, fps);
 
             var settings = PluginSettings.Instance;
@@ -148,6 +153,11 @@ namespace ObjLoader.Rendering
             var shininess = settings.GetShininess(worldIdParam);
 
             _resources.UpdateRasterizerState(cullMode);
+
+            if (_lastShaderFilePath != shaderFilePath)
+            {
+                UpdateCustomShader(shaderFilePath);
+            }
 
             GpuResourceCacheItem? resource = null;
 
@@ -173,12 +183,14 @@ namespace ObjLoader.Rendering
             if (resource == null)
             {
                 EnsureEmptyCommandList();
+                _lastShaderFilePath = shaderFilePath;
                 return;
             }
 
             if (!resized &&
                 _commandList != null &&
                 string.Equals(_lastFilePath, filePath, StringComparison.Ordinal) &&
+                string.Equals(_lastShaderFilePath, shaderFilePath, StringComparison.Ordinal) &&
                 Math.Abs(_lastX - x) < 1e-5 &&
                 Math.Abs(_lastY - y) < 1e-5 &&
                 Math.Abs(_lastZ - z) < 1e-5 &&
@@ -227,6 +239,7 @@ namespace ObjLoader.Rendering
             _lastLightY = lightY;
             _lastLightZ = lightZ;
             _lastFilePath = filePath;
+            _lastShaderFilePath = shaderFilePath;
             _lastBaseColor = baseColor;
             _lastCoordinateSystem = coordSystem;
             _lastCullMode = cullMode;
@@ -241,6 +254,46 @@ namespace ObjLoader.Rendering
             _lastTargetX = targetX;
             _lastTargetY = targetY;
             _lastTargetZ = targetZ;
+        }
+
+        private void UpdateCustomShader(string path)
+        {
+            if (_customVertexShader != null) { _customVertexShader.Dispose(); _customVertexShader = null; }
+            if (_customPixelShader != null) { _customPixelShader.Dispose(); _customPixelShader = null; }
+            if (_customInputLayout != null) { _customInputLayout.Dispose(); _customInputLayout = null; }
+
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                var source = _parameter.GetAdaptedShaderSource();
+                if (string.IsNullOrEmpty(source)) return;
+
+                var vsResult = ShaderStore.Compile(source, "VS", "vs_5_0");
+                if (vsResult.Blob != null)
+                {
+                    using (vsResult.Blob)
+                    {
+                        _customVertexShader = _devices.D3D.Device.CreateVertexShader(vsResult.Blob.AsBytes());
+                        var inputElements = new[] {
+                            new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0),
+                            new InputElementDescription("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
+                            new InputElementDescription("TEXCOORD", 0, Format.R32G32_Float, 24, 0)
+                        };
+                        _customInputLayout = _devices.D3D.Device.CreateInputLayout(inputElements, vsResult.Blob.AsBytes());
+                    }
+                }
+
+                var psResult = ShaderStore.Compile(source, "PS", "ps_5_0");
+                if (psResult.Blob != null)
+                {
+                    using (psResult.Blob)
+                    {
+                        _customPixelShader = _devices.D3D.Device.CreatePixelShader(psResult.Blob.AsBytes());
+                    }
+                }
+            }
+            catch { }
         }
 
         private unsafe GpuResourceCacheItem CreateGpuResource(ObjModel model, string filePath)
@@ -345,7 +398,6 @@ namespace ObjLoader.Rendering
 
             context.RSSetViewport(0, 0, width, height);
 
-            context.IASetInputLayout(_resources.InputLayout);
             context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
             int stride = Unsafe.SizeOf<ObjVertex>();
@@ -353,8 +405,15 @@ namespace ObjLoader.Rendering
             context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { offset });
             context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
 
-            context.VSSetShader(_resources.VertexShader);
-            context.PSSetShader(_resources.PixelShader);
+            var vs = _customVertexShader ?? _resources.VertexShader;
+            var ps = _customPixelShader ?? _resources.PixelShader;
+            var layout = _customVertexShader != null ? _customInputLayout : _resources.InputLayout;
+
+            if (vs == null || ps == null || layout == null) return;
+
+            context.IASetInputLayout(layout);
+            context.VSSetShader(vs);
+            context.PSSetShader(ps);
 
             context.PSSetSamplers(0, new[] { _resources.SamplerState });
 
@@ -497,6 +556,10 @@ namespace ObjLoader.Rendering
 
         public void Dispose()
         {
+            if (_customVertexShader != null) { _customVertexShader.Dispose(); _customVertexShader = null; }
+            if (_customPixelShader != null) { _customPixelShader.Dispose(); _customPixelShader = null; }
+            if (_customInputLayout != null) { _customInputLayout.Dispose(); _customInputLayout = null; }
+
             _resources.Dispose();
             _renderTargets.Dispose();
             _disposer.DisposeAndClear();

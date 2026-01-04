@@ -194,4 +194,10 @@
 <data name="Easing_BackInOut" xml:space="preserve"><value>Back InOut</value></data>
 <data name="Preset_Standard" xml:space="preserve"><value>Estándar</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>Personalizado</value></data>
+<data name="Shader" xml:space="preserve"><value>Sombreador</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>vert</value></data>
+<data name="Shader_Status_Success" xml:space="preserve"><value>Compilación exitosa</value></data>
+<data name="Shader_Status_Error" xml:space="preserve"><value>Error de compilación: {0}</value></data>
+<data name="Shader_Status_Unknown" xml:space="preserve"><value>Desconocido</value></data>
+<data name="Shader_None" xml:space="preserve"><value>Ninguno</value></data>
 </root>

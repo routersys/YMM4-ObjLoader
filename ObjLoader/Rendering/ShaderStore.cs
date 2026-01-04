@@ -1,4 +1,6 @@
-﻿using Vortice.D3DCompiler;
+﻿using System.Text;
+using Vortice.D3DCompiler;
+using Vortice.Direct3D;
 
 namespace ObjLoader.Rendering
 {
@@ -9,6 +11,19 @@ namespace ObjLoader.Rendering
         private static byte[]? _cachedGridPixelShaderByteCode;
         private static byte[]? _cachedGridVertexShaderByteCode;
         private static readonly object _lock = new object();
+
+        public static (Blob? Blob, string? Error) Compile(string source, string entryPoint, string profile)
+        {
+            try
+            {
+                var blob = Compiler.Compile(source, entryPoint, "CustomShader", profile, ShaderFlags.OptimizationLevel3, EffectFlags.None);
+                return (blob, null);
+            }
+            catch (Exception ex)
+            {
+                return (null, ex.Message);
+            }
+        }
 
         public static (byte[] VS, byte[] PS, byte[] GridVS, byte[] GridPS) GetByteCodes()
         {
