@@ -426,8 +426,8 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,20,0">
-                        <Button Content="{x:Static l:Texts.Timeline_Play}" Command="{Binding PlayCommand}" Style="{StaticResource ModernButton}" Visibility="{Binding IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}"/>
-                        <Button Content="{x:Static l:Texts.Timeline_Pause}" Command="{Binding PauseCommand}" Style="{StaticResource ModernButton}" Visibility="{Binding IsPlaying, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <Button Content="{x:Static l:Texts.Timeline_Play}" Command="{Binding PlayCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
+                        <Button Content="{x:Static l:Texts.Timeline_Pause}" Command="{Binding PauseCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
                         <Button Content="{x:Static l:Texts.Timeline_Stop}" Command="{Binding StopCommand}" Style="{StaticResource ModernButton}" Margin="5,0,0,0"/>
                     </StackPanel>
 
