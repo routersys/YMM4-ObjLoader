@@ -10,8 +10,6 @@ using YukkuriMovieMaker.Exo;
 using YukkuriMovieMaker.Player.Video;
 using YukkuriMovieMaker.Plugin.Shape;
 using YukkuriMovieMaker.Project;
-using System.Collections.Generic;
-using System.Linq;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
@@ -38,7 +36,7 @@ namespace ObjLoader.Plugin
         }
 
         private double _time;
-        private EasingType _easing;
+        private EasingData _easing = EasingManager.Presets.FirstOrDefault()?.Clone() ?? new EasingData();
         private double _camX;
         private double _camY;
         private double _camZ;
@@ -47,7 +45,7 @@ namespace ObjLoader.Plugin
         private double _targetZ;
 
         public double Time { get => _time; set => Set(ref _time, value); }
-        public EasingType Easing { get => _easing; set => Set(ref _easing, value); }
+        public EasingData Easing { get => _easing; set => Set(ref _easing, value); }
         public double CamX { get => _camX; set => Set(ref _camX, value); }
         public double CamY { get => _camY; set => Set(ref _camY, value); }
         public double CamZ { get => _camZ; set => Set(ref _camZ, value); }
@@ -218,7 +216,7 @@ namespace ObjLoader.Plugin
             if (prev != null && next != null)
             {
                 double t = (time - prev.Time) / (next.Time - prev.Time);
-                double easedT = ApplyEasing(t, prev.Easing);
+                double easedT = prev.Easing.Evaluate(t);
                 return (
                     Lerp(prev.CamX, next.CamX, easedT),
                     Lerp(prev.CamY, next.CamY, easedT),
@@ -236,21 +234,21 @@ namespace ObjLoader.Plugin
             return a + (b - a) * t;
         }
 
-        private double ApplyEasing(double t, EasingType type)
+        public void SetCameraValues(double cx, double cy, double cz, double tx, double ty, double tz)
         {
-            switch (type)
-            {
-                case EasingType.SineIn: return 1 - Math.Cos((t * Math.PI) / 2);
-                case EasingType.SineOut: return Math.Sin((t * Math.PI) / 2);
-                case EasingType.SineInOut: return -(Math.Cos(Math.PI * t) - 1) / 2;
-                case EasingType.QuadIn: return t * t;
-                case EasingType.QuadOut: return 1 - (1 - t) * (1 - t);
-                case EasingType.QuadInOut: return t < 0.5 ? 2 * t * t : 1 - Math.Pow(-2 * t + 2, 2) / 2;
-                case EasingType.CubicIn: return t * t * t;
-                case EasingType.CubicOut: return 1 - Math.Pow(1 - t, 3);
-                case EasingType.CubicInOut: return t < 0.5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2;
-                default: return t;
-            }
+            CameraX.CopyFrom(new Animation(cx, -100000, 100000));
+            CameraY.CopyFrom(new Animation(cy, -100000, 100000));
+            CameraZ.CopyFrom(new Animation(cz, -100000, 100000));
+            TargetX.CopyFrom(new Animation(tx, -100000, 100000));
+            TargetY.CopyFrom(new Animation(ty, -100000, 100000));
+            TargetZ.CopyFrom(new Animation(tz, -100000, 100000));
+
+            OnPropertyChanged(nameof(CameraX));
+            OnPropertyChanged(nameof(CameraY));
+            OnPropertyChanged(nameof(CameraZ));
+            OnPropertyChanged(nameof(TargetX));
+            OnPropertyChanged(nameof(TargetY));
+            OnPropertyChanged(nameof(TargetZ));
         }
     }
 }

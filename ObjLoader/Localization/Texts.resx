@@ -161,4 +161,10 @@
 <data name="Timeline_Time" xml:space="preserve"><value>時間</value></data>
 <data name="Timeline_Duration" xml:space="preserve"><value>長さ</value></data>
 <data name="Timeline_Seconds" xml:space="preserve"><value>秒</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>プリセット保存</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>プリセット削除</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>名前</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>OK</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>キャンセル</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>初期位置</value></data>
 </root>

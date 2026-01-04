@@ -3,6 +3,7 @@ using ObjLoader.Core;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Services;
+using ObjLoader.Views;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -17,7 +18,6 @@ using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
 using System.ComponentModel;
-using EasingType = ObjLoader.Plugin.EasingType;
 
 namespace ObjLoader.ViewModels
 {
@@ -91,6 +91,7 @@ namespace ObjLoader.ViewModels
         public WriteableBitmap? SceneImage => _renderService.SceneImage;
 
         public ObservableCollection<CameraKeyframe> Keyframes { get; }
+        public ObservableCollection<EasingData> EasingPresets => EasingManager.Presets;
 
         public ActionCommand ResetCommand { get; }
         public ActionCommand UndoCommand { get; }
@@ -101,17 +102,19 @@ namespace ObjLoader.ViewModels
         public ActionCommand StopCommand { get; }
         public ActionCommand AddKeyframeCommand { get; }
         public ActionCommand RemoveKeyframeCommand { get; }
+        public ActionCommand SavePresetCommand { get; }
+        public ActionCommand DeletePresetCommand { get; }
 
         public string HoveredDirectionName { get => _hoveredDirectionName; set => Set(ref _hoveredDirectionName, value); }
         public bool IsTargetFree => !_isTargetFixed;
         public bool IsPilotFrameVisible => _cameraLogic.IsPilotView;
 
-        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
-        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
-        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
-        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
-        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
-        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) UpdateVisuals(); SyncToParameter(); } }
+        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
+        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
+        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
+        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
+        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
+        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
 
         public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
         public double CamXMax { get => _camXMax; set => Set(ref _camXMax, value); }
@@ -179,19 +182,21 @@ namespace ObjLoader.ViewModels
                 OnPropertyChanged(nameof(IsKeyframeSelected));
                 OnPropertyChanged(nameof(SelectedKeyframeEasing));
                 RemoveKeyframeCommand.RaiseCanExecuteChanged();
+                SavePresetCommand.RaiseCanExecuteChanged();
+                DeletePresetCommand.RaiseCanExecuteChanged();
             }
         }
 
         public bool IsKeyframeSelected => SelectedKeyframe != null;
 
-        public EasingType SelectedKeyframeEasing
+        public EasingData? SelectedKeyframeEasing
         {
-            get => SelectedKeyframe?.Easing ?? EasingType.Linear;
+            get => SelectedKeyframe?.Easing;
             set
             {
-                if (SelectedKeyframe != null)
+                if (SelectedKeyframe != null && value != null)
                 {
-                    SelectedKeyframe.Easing = value;
+                    SelectedKeyframe.Easing = value.Clone();
                     OnPropertyChanged();
                     UpdateAnimation();
                 }
@@ -234,6 +239,8 @@ namespace ObjLoader.ViewModels
             StopCommand = new ActionCommand(_ => true, _ => StopPlayback());
             AddKeyframeCommand = new ActionCommand(_ => true, _ => AddKeyframe());
             RemoveKeyframeCommand = new ActionCommand(_ => IsKeyframeSelected, _ => RemoveKeyframe());
+            SavePresetCommand = new ActionCommand(_ => IsKeyframeSelected, _ => SavePreset());
+            DeletePresetCommand = new ActionCommand(_ => IsKeyframeSelected && SelectedKeyframeEasing != null && SelectedKeyframeEasing.IsCustom, _ => DeletePreset());
 
             _playbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
             _playbackTimer.Tick += PlaybackTick;
@@ -303,7 +310,7 @@ namespace ObjLoader.ViewModels
                 TargetX = TargetX,
                 TargetY = TargetY,
                 TargetZ = TargetZ,
-                Easing = EasingType.Linear
+                Easing = EasingManager.Presets.FirstOrDefault()?.Clone() ?? new EasingData()
             };
 
             var existing = Keyframes.FirstOrDefault(k => Math.Abs(k.Time - CurrentTime) < 0.001);
@@ -335,6 +342,26 @@ namespace ObjLoader.ViewModels
                 Keyframes.Remove(SelectedKeyframe);
                 _parameter.Keyframes.Remove(SelectedKeyframe);
                 SelectedKeyframe = null;
+            }
+        }
+
+        private void SavePreset()
+        {
+            if (SelectedKeyframeEasing == null) return;
+            var dialog = new NameDialog();
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.ResultName))
+            {
+                SelectedKeyframeEasing.Name = dialog.ResultName;
+                EasingManager.SavePreset(SelectedKeyframeEasing);
+            }
+        }
+
+        private void DeletePreset()
+        {
+            if (SelectedKeyframeEasing != null && SelectedKeyframeEasing.IsCustom)
+            {
+                EasingManager.DeletePreset(SelectedKeyframeEasing);
+                SelectedKeyframeEasing = EasingManager.Presets.FirstOrDefault();
             }
         }
 
@@ -389,6 +416,7 @@ namespace ObjLoader.ViewModels
                 new Vector3((float)camUp.X, (float)camUp.Y, (float)camUp.Z));
 
             double fovValue = _parameter.Fov.Values[0].Value;
+            if (fovValue < 0.1) fovValue = 0.1;
             if (IsPilotView && Camera.FieldOfView != fovValue) Camera.FieldOfView = fovValue;
             else if (!IsPilotView && Camera.FieldOfView != 45) Camera.FieldOfView = 45;
 
@@ -567,12 +595,7 @@ namespace ObjLoader.ViewModels
 
         private void SyncToParameter()
         {
-            _parameter.CameraX.CopyFrom(new Animation(CamX, -100000, 100000));
-            _parameter.CameraY.CopyFrom(new Animation(CamY, -100000, 100000));
-            _parameter.CameraZ.CopyFrom(new Animation(CamZ, -100000, 100000));
-            _parameter.TargetX.CopyFrom(new Animation(TargetX, -100000, 100000));
-            _parameter.TargetY.CopyFrom(new Animation(TargetY, -100000, 100000));
-            _parameter.TargetZ.CopyFrom(new Animation(TargetZ, -100000, 100000));
+            _parameter.SetCameraValues(CamX, CamY, CamZ, TargetX, TargetY, TargetZ);
         }
 
         public void RecordUndo()
@@ -741,7 +764,7 @@ namespace ObjLoader.ViewModels
                     case GizmoMode.View: mx = moveVec.X; my = moveVec.Y; mz = moveVec.Z; break;
                 }
 
-                if (IsSnapping) { mx = Math.Round(mx / 0.5) * 0.5; my = Math.Round(my / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; }
+                if (IsSnapping) { mx = Math.Round(mx / 0.5) * 0.5; my = Math.Round(my / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; }
                 if (_isTargetFixed) { CamX += mx; CamY += my; CamZ += mz; }
                 else { TargetX += mx; TargetY += my; TargetZ += mz; }
                 UpdateVisuals();

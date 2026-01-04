@@ -161,4 +161,10 @@
 <data name="Timeline_Time" xml:space="preserve"><value>시간</value></data>
 <data name="Timeline_Duration" xml:space="preserve"><value>길이</value></data>
 <data name="Timeline_Seconds" xml:space="preserve"><value>초</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>프리셋 저장</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>프리셋 삭제</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>이름</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>확인</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>취소</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>뷰 초기화</value></data>
 </root>

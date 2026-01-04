@@ -160,4 +160,10 @@
 <data name="Timeline_Time" xml:space="preserve"><value>وقت</value></data>
 <data name="Timeline_Duration" xml:space="preserve"><value>المدة الزمنية</value></data>
 <data name="Timeline_Seconds" xml:space="preserve"><value>ث</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>حفظ الإعداد المسبق</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>حذف الإعداد المسبق</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>اسم</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>موافق</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>إلغاء</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>إعادة تعيين العرض</value></data>
 </root>

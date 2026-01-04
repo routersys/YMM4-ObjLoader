@@ -161,4 +161,10 @@
 <data name="Timeline_Time" xml:space="preserve"><value>时间</value></data>
 <data name="Timeline_Duration" xml:space="preserve"><value>时长</value></data>
 <data name="Timeline_Seconds" xml:space="preserve"><value>秒</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>保存预设</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>删除预设</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>名称</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>确定</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>取消</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>重置视图</value></data>
 </root>

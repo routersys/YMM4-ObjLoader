@@ -161,4 +161,10 @@
 <data name="Timeline_Time" xml:space="preserve"><value>Tiempo</value></data>
 <data name="Timeline_Duration" xml:space="preserve"><value>Duración</value></data>
 <data name="Timeline_Seconds" xml:space="preserve"><value>s</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>Guardar ajuste preestablecido</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>Eliminar ajuste preestablecido</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>Nombre</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>Aceptar</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>Cancelar</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>Restablecer vista</value></data>
 </root>

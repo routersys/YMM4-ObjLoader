@@ -7,6 +7,7 @@
         xmlns:vm="clr-namespace:ObjLoader.ViewModels"
         xmlns:pl="clr-namespace:ObjLoader.Plugin"
         xmlns:conv="clr-namespace:ObjLoader.Converters"
+        xmlns:ctrl="clr-namespace:ObjLoader.Controls"
         xmlns:c="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
@@ -20,11 +21,6 @@
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
             <conv:StringToDoubleConverter x:Key="StringToDoubleConverter"/>
-            <ObjectDataProvider x:Key="EasingTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="pl:EasingType"/>
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
 
             <Style x:Key="ModernTextBox" TargetType="TextBox">
                 <Setter Property="Background" Value="Transparent"/>
@@ -413,43 +409,50 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="220"/>
+                </Grid.ColumnDefinitions>
 
-                <Slider Grid.Row="0" Minimum="0" Maximum="{Binding MaxDuration}" Value="{Binding CurrentTime}" Style="{StaticResource ModernSlider}" Margin="0,0,0,10"/>
+                <Slider Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Minimum="0" Maximum="{Binding MaxDuration}" Value="{Binding CurrentTime}" Style="{StaticResource ModernSlider}" Margin="0,0,0,10"/>
 
-                <Grid Grid.Row="1" Margin="0,0,0,10">
+                <Grid Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,20,0">
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,15,0">
                         <Button Content="{x:Static l:Texts.Timeline_Play}" Command="{Binding PlayCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
                         <Button Content="{x:Static l:Texts.Timeline_Pause}" Command="{Binding PauseCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Timeline_Stop}" Command="{Binding StopCommand}" Style="{StaticResource ModernButton}" Margin="5,0,0,0"/>
+                        <Button Content="{x:Static l:Texts.Timeline_Stop}" Command="{Binding StopCommand}" Style="{StaticResource ModernButton}"/>
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,15,0">
                         <TextBlock Text="{Binding CurrentTime, StringFormat=N2}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold"/>
                         <TextBlock Text=" / " Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
                         <TextBox Text="{Binding MaxDuration, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="50" Style="{StaticResource ModernTextBox}"/>
                         <TextBlock Text="{x:Static l:Texts.Timeline_Seconds}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="2,0,0,0"/>
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Grid.Column="2">
+                    <StackPanel Orientation="Horizontal" Grid.Column="2" VerticalAlignment="Center">
                         <Button Content="{x:Static l:Texts.Timeline_AddKey}" Command="{Binding AddKeyframeCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Timeline_RemoveKey}" Command="{Binding RemoveKeyframeCommand}" Style="{StaticResource ModernButton}"/>
-                    </StackPanel>
+                        <Button Content="{x:Static l:Texts.Timeline_RemoveKey}" Command="{Binding RemoveKeyframeCommand}" Style="{StaticResource ModernButton}" Margin="0,0,15,0"/>
 
-                    <StackPanel Orientation="Horizontal" Grid.Column="4" VerticalAlignment="Center">
                         <TextBlock Text="{x:Static l:Texts.Timeline_Easing}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <ComboBox ItemsSource="{Binding Source={StaticResource EasingTypes}}" SelectedItem="{Binding SelectedKeyframeEasing}" Width="120" IsEnabled="{Binding IsKeyframeSelected}"/>
+                        <ComboBox ItemsSource="{Binding EasingPresets}" SelectedItem="{Binding SelectedKeyframeEasing}" Width="120" IsEnabled="{Binding IsKeyframeSelected}" Margin="0,0,5,0"/>
+                        <Button Command="{Binding SavePresetCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Preset_Save}" Margin="0,0,5,0">
+                            <Path Data="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                        <Button Command="{Binding DeletePresetCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Preset_Delete}">
+                            <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
 
-                <ListView Grid.Row="2" ItemsSource="{Binding Keyframes}" SelectedItem="{Binding SelectedKeyframe}" Height="100" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
+                <ListView Grid.Row="2" Grid.Column="0" ItemsSource="{Binding Keyframes}" SelectedItem="{Binding SelectedKeyframe}" Height="150" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0">
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -464,7 +467,7 @@
                     <ListView.View>
                         <GridView>
                             <GridViewColumn Header="{x:Static l:Texts.Timeline_Time}" DisplayMemberBinding="{Binding Time, StringFormat=N2}" Width="60"/>
-                            <GridViewColumn Header="{x:Static l:Texts.Timeline_Easing}" DisplayMemberBinding="{Binding Easing}" Width="100"/>
+                            <GridViewColumn Header="{x:Static l:Texts.Timeline_Easing}" DisplayMemberBinding="{Binding Easing.Name}" Width="100"/>
                             <GridViewColumn Header="Cam X" DisplayMemberBinding="{Binding CamX, StringFormat=N2}" Width="60"/>
                             <GridViewColumn Header="Cam Y" DisplayMemberBinding="{Binding CamY, StringFormat=N2}" Width="60"/>
                             <GridViewColumn Header="Cam Z" DisplayMemberBinding="{Binding CamZ, StringFormat=N2}" Width="60"/>
@@ -474,6 +477,10 @@
                         </GridView>
                     </ListView.View>
                 </ListView>
+
+                <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Background="#10000000">
+                    <ctrl:EasingGraphEditor Points="{Binding SelectedKeyframeEasing.Points}" IsEnabled="{Binding IsKeyframeSelected}"/>
+                </Border>
             </Grid>
         </Border>
     </Grid>

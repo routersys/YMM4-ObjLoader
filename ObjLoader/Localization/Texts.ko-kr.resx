@@ -161,4 +161,10 @@
 <data name="Timeline_Time" xml:space="preserve"><value>Waktu</value></data>
 <data name="Timeline_Duration" xml:space="preserve"><value>Durasi</value></data>
 <data name="Timeline_Seconds" xml:space="preserve"><value>s</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>Simpan Preset</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>Hapus Preset</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>Nama</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>OK</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>Batal</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>Reset Tampilan</value></data>
 </root>
