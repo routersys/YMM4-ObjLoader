@@ -2,22 +2,30 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:l="clr-namespace:ObjLoader.Localization"
-        Title="{x:Static l:Texts.Dialog_Name}" Height="150" Width="300"
+        Title="{x:Static l:Texts.Dialog_Name}" Height="110" Width="300"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-    <Grid Margin="10">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{x:Static l:Texts.Dialog_Name}" Margin="0,0,0,5" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-        <TextBox x:Name="NameBox" Grid.Row="1" Margin="0,0,0,10"/>
+        <TextBox x:Name="NameBox" Grid.Row="0"
+                 FontSize="18"
+                 VerticalContentAlignment="Center"
+                 HorizontalContentAlignment="Center"
+                 BorderThickness="0"
+                 Padding="5"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-            <Button Content="{x:Static l:Texts.Dialog_Ok}" Click="Ok_Click" Width="80" Margin="0,0,10,0"/>
-            <Button Content="{x:Static l:Texts.Dialog_Cancel}" Click="Cancel_Click" Width="80"/>
-        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0" Content="{x:Static l:Texts.Dialog_Ok}" Click="Ok_Click" BorderThickness="0" Margin="0"/>
+            <Button Grid.Column="1" Content="{x:Static l:Texts.Dialog_Cancel}" Click="Cancel_Click" BorderThickness="0" Margin="0"/>
+        </Grid>
     </Grid>
 </Window>

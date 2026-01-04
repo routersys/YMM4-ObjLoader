@@ -442,7 +442,7 @@
                         <Button Content="{x:Static l:Texts.Timeline_RemoveKey}" Command="{Binding RemoveKeyframeCommand}" Style="{StaticResource ModernButton}" Margin="0,0,15,0"/>
 
                         <TextBlock Text="{x:Static l:Texts.Timeline_Easing}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                        <ComboBox ItemsSource="{Binding EasingPresets}" SelectedItem="{Binding SelectedKeyframeEasing}" Width="120" IsEnabled="{Binding IsKeyframeSelected}" Margin="0,0,5,0"/>
+                        <ComboBox ItemsSource="{Binding EasingPresets}" SelectedItem="{Binding SelectedKeyframeEasing}" Width="120" IsEnabled="{Binding IsKeyframeSelected}" Margin="0,0,5,0" VerticalContentAlignment="Center"/>
                         <Button Command="{Binding SavePresetCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Preset_Save}" Margin="0,0,5,0">
                             <Path Data="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
                         </Button>
