@@ -24,8 +24,8 @@
 
             <Style x:Key="ModernTextBox" TargetType="TextBox">
                 <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
-                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
                 <Setter Property="Padding" Value="4,2"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -37,11 +37,9 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsKeyboardFocused" Value="true">
-                                    <Setter Property="BorderThickness" TargetName="border" Value="1"/>
                                     <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter Property="BorderThickness" TargetName="border" Value="1"/>
                                     <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
@@ -390,12 +388,20 @@
 
                         <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
 
-                        <Button Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Style="{StaticResource ModernButton}" Margin="0,0,0,10"/>
-
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Content="{x:Static l:Texts.Undo}" Command="{Binding UndoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="0,0,5,0"/>
-                            <Button Content="{x:Static l:Texts.Redo}" Command="{Binding RedoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="5,0,0,0"/>
-                        </StackPanel>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
+                            <Button Grid.Column="1" Command="{Binding UndoCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Undo}" Margin="0,0,5,0">
+                                <Path Data="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                            </Button>
+                            <Button Grid.Column="2" Command="{Binding RedoCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Redo}">
+                                <Path Data="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.95,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                            </Button>
+                        </Grid>
 
                     </StackPanel>
                 </ScrollViewer>
@@ -425,9 +431,15 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Orientation="Horizontal" Grid.Column="0" Margin="0,0,15,0">
-                        <Button Content="{x:Static l:Texts.Timeline_Play}" Command="{Binding PlayCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Timeline_Pause}" Command="{Binding PauseCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Timeline_Stop}" Command="{Binding StopCommand}" Style="{StaticResource ModernButton}"/>
+                        <Button Command="{Binding PlayCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Timeline_Play}" Margin="0,0,5,0">
+                            <Path Data="M8,5.14V19.14L19,12.14L8,5.14Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                        <Button Command="{Binding PauseCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Timeline_Pause}" Margin="0,0,5,0">
+                            <Path Data="M14,19H18V5H14M6,19H10V5H6V19Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                        <Button Command="{Binding StopCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Timeline_Stop}">
+                            <Path Data="M18,18H6V6H18V18Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,15,0">
@@ -438,8 +450,12 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Column="2" VerticalAlignment="Center">
-                        <Button Content="{x:Static l:Texts.Timeline_AddKey}" Command="{Binding AddKeyframeCommand}" Style="{StaticResource ModernButton}" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Timeline_RemoveKey}" Command="{Binding RemoveKeyframeCommand}" Style="{StaticResource ModernButton}" Margin="0,0,15,0"/>
+                        <Button Command="{Binding AddKeyframeCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Timeline_AddKey}" Margin="0,0,5,0">
+                            <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
+                        <Button Command="{Binding RemoveKeyframeCommand}" Style="{StaticResource ModernButton}" Padding="4" ToolTip="{x:Static l:Texts.Timeline_RemoveKey}" Margin="0,0,15,0">
+                            <Path Data="M19,13H5V11H19V13Z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Width="14" Height="14" Stretch="Uniform"/>
+                        </Button>
 
                         <TextBlock Text="{x:Static l:Texts.Timeline_Easing}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Margin="0,0,5,0"/>
                         <ComboBox ItemsSource="{Binding EasingPresets}" SelectedItem="{Binding SelectedKeyframeEasing}" Width="120" IsEnabled="{Binding IsKeyframeSelected}" Margin="0,0,5,0" VerticalContentAlignment="Center"/>
