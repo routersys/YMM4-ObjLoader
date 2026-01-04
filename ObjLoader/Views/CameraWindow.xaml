@@ -35,11 +35,11 @@
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsKeyboardFocused" Value="true">
                                     <Setter Property="BorderThickness" TargetName="border" Value="1"/>
-                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/>
                                     <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                 </Trigger>
                                 <Trigger Property="IsMouseOver" Value="true">
-                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/>
+                                    <Setter Property="BorderThickness" TargetName="border" Value="1"/>
+                                    <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
