@@ -29,6 +29,8 @@ namespace ObjLoader.Rendering
                         float DiffuseIntensity;
                         float SpecularIntensity;
                         float Shininess;
+                        float4 GridColor;
+                        float4 GridAxisColor;
                     }
                     struct VS_IN { float3 pos : POSITION; float3 norm : NORMAL; float2 uv : TEXCOORD; };
                     struct PS_IN { float4 pos : SV_POSITION; float3 wPos : TEXCOORD1; float3 norm : NORMAL; float2 uv : TEXCOORD0; };
@@ -60,6 +62,8 @@ namespace ObjLoader.Rendering
                         float DiffuseIntensity;
                         float SpecularIntensity;
                         float Shininess;
+                        float4 GridColor;
+                        float4 GridAxisColor;
                     }
                     Texture2D tex : register(t0);
                     SamplerState sam : register(s0);
@@ -90,7 +94,21 @@ namespace ObjLoader.Rendering
                 if (_cachedGridVertexShaderByteCode == null)
                 {
                     var gridVS = @"
-                    cbuffer CBuf : register(b0) { matrix WorldViewProj; matrix World; float4 CameraPos; }
+                    cbuffer CBuf : register(b0) { 
+                        matrix WorldViewProj; 
+                        matrix World; 
+                        float4 LightPos; 
+                        float4 BaseColor; 
+                        float4 AmbientColor;
+                        float4 LightColor;
+                        float4 CameraPos;
+                        float LightEnabled; 
+                        float DiffuseIntensity;
+                        float SpecularIntensity;
+                        float Shininess;
+                        float4 GridColor;
+                        float4 GridAxisColor;
+                    }
                     struct VS_IN { float3 pos : POSITION; };
                     struct PS_IN { float4 pos : SV_POSITION; float3 wPos : TEXCOORD0; };
                     PS_IN VS(VS_IN input) {
@@ -106,22 +124,39 @@ namespace ObjLoader.Rendering
                 if (_cachedGridPixelShaderByteCode == null)
                 {
                     var gridPS = @"
-                    cbuffer CBuf : register(b0) { matrix WorldViewProj; matrix World; float4 CameraPos; }
+                    cbuffer CBuf : register(b0) { 
+                        matrix WorldViewProj; 
+                        matrix World; 
+                        float4 LightPos; 
+                        float4 BaseColor; 
+                        float4 AmbientColor;
+                        float4 LightColor;
+                        float4 CameraPos;
+                        float LightEnabled; 
+                        float DiffuseIntensity;
+                        float SpecularIntensity;
+                        float Shininess;
+                        float4 GridColor;
+                        float4 GridAxisColor;
+                    }
                     struct PS_IN { float4 pos : SV_POSITION; float3 wPos : TEXCOORD0; };
                     float4 PS(PS_IN input) : SV_Target {
                         float3 pos = input.wPos;
                         float2 coord = pos.xz;
-                        float2 grid = abs(frac(coord - 0.5) - 0.5) / fwidth(coord);
-                        float lineVal = min(grid.x, grid.y);
                         
-                        float4 color = float4(0.5, 0.5, 0.5, 1.0 - min(lineVal, 1.0));
+                        float2 derivative = fwidth(coord);
+                        float2 grid = abs(frac(coord - 0.5) - 0.5) / derivative;
+                        float lineVal = min(grid.x, grid.y);
+                        float gridAlpha = 1.0 - min(lineVal, 1.0);
+                        
+                        float4 color = float4(GridColor.rgb, GridColor.a * gridAlpha);
                         
                         float2 axis = abs(coord);
-                        float2 axisWidth = 1.5 * fwidth(coord);
+                        float2 axisDist = axis / derivative;
+                        float axisLine = min(axisDist.x, axisDist.y);
+                        float axisAlpha = saturate(1.5 - axisLine);
                         
-                        if(axis.x < axisWidth.x || axis.y < axisWidth.y) {
-                            color = float4(0.3, 0.3, 0.3, 1.0);
-                        }
+                        color = lerp(color, GridAxisColor, axisAlpha);
 
                         float dist = length(CameraPos.xz - pos.xz);
                         float scaleX = length(float3(World[0][0], World[0][1], World[0][2]));

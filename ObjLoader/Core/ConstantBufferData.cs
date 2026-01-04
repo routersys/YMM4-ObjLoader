@@ -17,5 +17,7 @@ namespace ObjLoader.Core
         public float DiffuseIntensity;
         public float SpecularIntensity;
         public float Shininess;
+        public Vector4 GridColor;
+        public Vector4 GridAxisColor;
     }
 }

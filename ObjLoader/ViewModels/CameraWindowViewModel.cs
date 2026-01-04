@@ -4,9 +4,7 @@ using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering;
 using ObjLoader.Settings;
-using ObjLoader.Utilities;
 using System.IO;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
@@ -20,7 +18,6 @@ using Vortice.Mathematics;
 using YukkuriMovieMaker.Commons;
 using D3D11 = Vortice.Direct3D11;
 using Matrix4x4 = System.Numerics.Matrix4x4;
-using Quaternion = System.Numerics.Quaternion;
 using Vector3 = System.Numerics.Vector3;
 using Vector4 = System.Numerics.Vector4;
 using ObjLoader.Localization;
@@ -34,6 +31,20 @@ namespace ObjLoader.ViewModels
 
         private double _camX, _camY, _camZ;
         private double _targetX, _targetY, _targetZ;
+
+        private double _camXMin = -10, _camXMax = 10;
+        private double _camYMin = -10, _camYMax = 10;
+        private double _camZMin = -10, _camZMax = 10;
+        private double _targetXMin = -10, _targetXMax = 10;
+        private double _targetYMin = -10, _targetYMax = 10;
+        private double _targetZMin = -10, _targetZMax = 10;
+
+        private string _camXScaleInfo = "";
+        private string _camYScaleInfo = "";
+        private string _camZScaleInfo = "";
+        private string _targetXScaleInfo = "";
+        private string _targetYScaleInfo = "";
+        private string _targetZScaleInfo = "";
 
         private double _viewCenterX, _viewCenterY, _viewCenterZ;
 
@@ -92,12 +103,44 @@ namespace ObjLoader.ViewModels
 
         public string HoveredDirectionName { get => _hoveredDirectionName; set => Set(ref _hoveredDirectionName, value); }
 
-        public double CamX { get => _camX; set { Set(ref _camX, value); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); } }
-        public double CamY { get => _camY; set { Set(ref _camY, value); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); } }
-        public double CamZ { get => _camZ; set { Set(ref _camZ, value); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); } }
-        public double TargetX { get => _targetX; set { Set(ref _targetX, value); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); UpdateViewportCamera(); } }
-        public double TargetY { get => _targetY; set { Set(ref _targetY, value); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); UpdateViewportCamera(); } }
-        public double TargetZ { get => _targetZ; set { Set(ref _targetZ, value); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); UpdateViewportCamera(); } }
+        private System.Windows.Media.Color _themeColor = System.Windows.Media.Colors.White;
+
+        public void UpdateThemeColor(System.Windows.Media.Color color)
+        {
+            _themeColor = color;
+            UpdateD3DScene();
+        }
+
+        public double CamX { get => _camX; set { Set(ref _camX, value); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); } }
+        public double CamY { get => _camY; set { Set(ref _camY, value); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); } }
+        public double CamZ { get => _camZ; set { Set(ref _camZ, value); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); } }
+        public double TargetX { get => _targetX; set { Set(ref _targetX, value); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); UpdateViewportCamera(); } }
+        public double TargetY { get => _targetY; set { Set(ref _targetY, value); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); UpdateViewportCamera(); } }
+        public double TargetZ { get => _targetZ; set { Set(ref _targetZ, value); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); UpdateSceneCameraVisual(); SyncToParameter(); UpdateD3DScene(); UpdateViewportCamera(); } }
+
+        public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
+        public double CamXMax { get => _camXMax; set => Set(ref _camXMax, value); }
+        public string CamXScaleInfo { get => _camXScaleInfo; set => Set(ref _camXScaleInfo, value); }
+
+        public double CamYMin { get => _camYMin; set => Set(ref _camYMin, value); }
+        public double CamYMax { get => _camYMax; set => Set(ref _camYMax, value); }
+        public string CamYScaleInfo { get => _camYScaleInfo; set => Set(ref _camYScaleInfo, value); }
+
+        public double CamZMin { get => _camZMin; set => Set(ref _camZMin, value); }
+        public double CamZMax { get => _camZMax; set => Set(ref _camZMax, value); }
+        public string CamZScaleInfo { get => _camZScaleInfo; set => Set(ref _camZScaleInfo, value); }
+
+        public double TargetXMin { get => _targetXMin; set => Set(ref _targetXMin, value); }
+        public double TargetXMax { get => _targetXMax; set => Set(ref _targetXMax, value); }
+        public string TargetXScaleInfo { get => _targetXScaleInfo; set => Set(ref _targetXScaleInfo, value); }
+
+        public double TargetYMin { get => _targetYMin; set => Set(ref _targetYMin, value); }
+        public double TargetYMax { get => _targetYMax; set => Set(ref _targetYMax, value); }
+        public string TargetYScaleInfo { get => _targetYScaleInfo; set => Set(ref _targetYScaleInfo, value); }
+
+        public double TargetZMin { get => _targetZMin; set => Set(ref _targetZMin, value); }
+        public double TargetZMax { get => _targetZMax; set => Set(ref _targetZMax, value); }
+        public string TargetZScaleInfo { get => _targetZScaleInfo; set => Set(ref _targetZScaleInfo, value); }
 
         public bool IsGridVisible { get => _isGridVisible; set { Set(ref _isGridVisible, value); UpdateD3DScene(); } }
         public bool IsInfiniteGrid { get => _isInfiniteGrid; set { Set(ref _isInfiniteGrid, value); UpdateD3DScene(); } }
@@ -259,8 +302,33 @@ namespace ObjLoader.ViewModels
         {
             if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null) return;
 
+            double brightness = _themeColor.R * 0.299 + _themeColor.G * 0.587 + _themeColor.B * 0.114;
+
+            Color4 clearColor;
+            Vector4 gridColor;
+            Vector4 axisColor;
+
+            if (brightness < 20)
+            {
+                clearColor = new Color4(0.0f, 0.0f, 0.0f, 1.0f);
+                gridColor = new Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+                axisColor = new Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+            }
+            else if (brightness < 128)
+            {
+                clearColor = new Color4(0.13f, 0.13f, 0.13f, 1.0f);
+                gridColor = new Vector4(0.65f, 0.65f, 0.65f, 1.0f);
+                axisColor = new Vector4(0.9f, 0.9f, 0.9f, 1.0f);
+            }
+            else
+            {
+                clearColor = new Color4(0.9f, 0.9f, 0.9f, 1.0f);
+                gridColor = new Vector4(0.4f, 0.4f, 0.4f, 1.0f);
+                axisColor = new Vector4(0.1f, 0.1f, 0.1f, 1.0f);
+            }
+
             _context.OMSetRenderTargets(_rtv, _dsv);
-            _context.ClearRenderTargetView(_rtv, new Color4(0.13f, 0.13f, 0.13f, 1.0f));
+            _context.ClearRenderTargetView(_rtv, clearColor);
             _context.ClearDepthStencilView(_dsv!, DepthStencilClearFlags.Depth, 1.0f, 0);
 
             _context.RSSetState(_isWireframe ? _d3dResources.WireframeRasterizerState : _d3dResources.RasterizerState);
@@ -361,7 +429,9 @@ namespace ObjLoader.ViewModels
                         LightEnabled = 1.0f,
                         DiffuseIntensity = 1.0f,
                         SpecularIntensity = 0.5f,
-                        Shininess = 30.0f
+                        Shininess = 30.0f,
+                        GridColor = gridColor,
+                        GridAxisColor = axisColor
                     };
                     UpdateConstantBuffer(ref cbData);
 
@@ -393,7 +463,14 @@ namespace ObjLoader.ViewModels
                     gridWorld = Matrix4x4.CreateScale(finiteScale);
                 }
 
-                ConstantBufferData gridCb = new ConstantBufferData { WorldViewProj = Matrix4x4.Transpose(gridWorld * view * proj), World = Matrix4x4.Transpose(gridWorld), CameraPos = new Vector4(camPos, 1) };
+                ConstantBufferData gridCb = new ConstantBufferData
+                {
+                    WorldViewProj = Matrix4x4.Transpose(gridWorld * view * proj),
+                    World = Matrix4x4.Transpose(gridWorld),
+                    CameraPos = new Vector4(camPos, 1),
+                    GridColor = gridColor,
+                    GridAxisColor = axisColor
+                };
                 UpdateConstantBuffer(ref gridCb);
                 _context.Draw(6, 0);
 
@@ -491,6 +568,14 @@ namespace ObjLoader.ViewModels
             _modelHeight = maxY - minY;
             if (_modelScale < 0.1) _modelScale = 1.0;
             _viewRadius = _modelScale * 2.5;
+
+            UpdateRange(_camX, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo));
+            UpdateRange(_camY, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo));
+            UpdateRange(_camZ, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo));
+            UpdateRange(_targetX, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo));
+            UpdateRange(_targetY, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo));
+            UpdateRange(_targetZ, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo));
+
             UpdateViewportCamera();
             UpdateD3DScene();
         }
@@ -853,6 +938,29 @@ namespace ObjLoader.ViewModels
             }
         }
 
+        private void UpdateRange(double value, ref double min, ref double max, ref string scaleInfo, string minProp, string maxProp, string infoProp)
+        {
+            double abs = Math.Abs(value);
+            double targetMax = 10;
+
+            if (abs >= 50) targetMax = 100;
+            else if (abs >= 10) targetMax = 50;
+            else targetMax = 10;
+
+            if (Math.Abs(max - targetMax) > 0.001)
+            {
+                max = targetMax;
+                min = -targetMax;
+
+                if (targetMax > 10) scaleInfo = $"x{targetMax / 10:0}";
+                else scaleInfo = "";
+
+                OnPropertyChanged(minProp);
+                OnPropertyChanged(maxProp);
+                OnPropertyChanged(infoProp);
+            }
+        }
+
         private void SyncToParameter()
         {
             _parameter.CameraX.CopyFrom(new Animation(_camX, -100000, 100000));
@@ -1020,8 +1128,17 @@ namespace ObjLoader.ViewModels
 
             if (_isDraggingTarget && _currentGizmoMode != GizmoMode.None)
             {
-                double speed = _modelScale * 0.005;
-                if (IsSnapping) speed = Math.Round(speed * 10) / 10.0;
+                double yOffset = _modelHeight / 2.0;
+                Point3D objPos;
+                if (_isTargetFixed)
+                    objPos = new Point3D(_camX, _camY + yOffset, _camZ);
+                else
+                    objPos = new Point3D(_targetX, _targetY + yOffset, _targetZ);
+
+                double dist = (Camera.Position - objPos).Length;
+                if (dist < 0.001) dist = 0.001;
+                double fovRad = Camera.FieldOfView * Math.PI / 180.0;
+                double speed = (2.0 * dist * Math.Tan(fovRad / 2.0)) / _viewportHeight;
 
                 double mx = 0, my = 0, mz = 0;
 
@@ -1062,10 +1179,13 @@ namespace ObjLoader.ViewModels
             }
             else if (_isSpacePanning)
             {
+                double dist = _viewRadius;
+                double fovRad = Camera.FieldOfView * Math.PI / 180.0;
+                double panSpeed = (2.0 * dist * Math.Tan(fovRad / 2.0)) / _viewportHeight;
+
                 var look = Camera.LookDirection; look.Normalize();
                 var right = Vector3D.CrossProduct(look, Camera.UpDirection); right.Normalize();
                 var up = Vector3D.CrossProduct(right, look); up.Normalize();
-                double panSpeed = _viewRadius * 0.002;
                 var move = (-right * dx * panSpeed) + (up * dy * panSpeed);
                 _viewCenterX += move.X; _viewCenterY += move.Y; _viewCenterZ += move.Z;
                 UpdateViewportCamera();
@@ -1076,10 +1196,13 @@ namespace ObjLoader.ViewModels
                 {
                     if (!_isTargetFixed)
                     {
+                        double dist = _viewRadius;
+                        double fovRad = Camera.FieldOfView * Math.PI / 180.0;
+                        double panSpeed = (2.0 * dist * Math.Tan(fovRad / 2.0)) / _viewportHeight;
+
                         var look = Camera.LookDirection; look.Normalize();
                         var right = Vector3D.CrossProduct(look, Camera.UpDirection); right.Normalize();
                         var up = Vector3D.CrossProduct(right, look); up.Normalize();
-                        double panSpeed = _viewRadius * 0.002;
                         var move = (-right * dx * panSpeed) + (up * dy * panSpeed);
                         _targetX += move.X; _targetY += move.Y; _targetZ += move.Z;
                         OnPropertyChanged(nameof(TargetX)); OnPropertyChanged(nameof(TargetY)); OnPropertyChanged(nameof(TargetZ));

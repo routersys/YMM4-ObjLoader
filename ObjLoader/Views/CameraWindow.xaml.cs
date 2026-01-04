@@ -1,9 +1,12 @@
-﻿using System.Windows;
+﻿using System;
+using System.ComponentModel;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using ObjLoader.ViewModels;
-using System.Windows.Controls;
 
 namespace ObjLoader.Views
 {
@@ -13,11 +16,67 @@ namespace ObjLoader.Views
         private bool _isLabelDragging;
         private string _draggedLabel = "";
 
+        public static readonly DependencyProperty ThemeBrushProperty = DependencyProperty.Register(
+            nameof(ThemeBrush), typeof(Brush), typeof(CameraWindow), new PropertyMetadata(null, OnThemeBrushChanged));
+
+        public Brush ThemeBrush
+        {
+            get => (Brush)GetValue(ThemeBrushProperty);
+            set => SetValue(ThemeBrushProperty, value);
+        }
+
+        private static void OnThemeBrushChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is CameraWindow window && window.DataContext is CameraWindowViewModel vm && e.NewValue is SolidColorBrush brush)
+            {
+                vm.UpdateThemeColor(brush.Color);
+            }
+        }
+
         public CameraWindow()
         {
             InitializeComponent();
             Owner = Application.Current.MainWindow;
-            Closed += (s, e) => (DataContext as IDisposable)?.Dispose();
+            DataContextChanged += OnDataContextChanged;
+            Closed += OnClosed;
+
+            this.SetResourceReference(ThemeBrushProperty, SystemColors.ControlBrushKey);
+        }
+
+        private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue is INotifyPropertyChanged oldVm)
+            {
+                oldVm.PropertyChanged -= OnViewModelPropertyChanged;
+            }
+            if (e.NewValue is INotifyPropertyChanged newVm)
+            {
+                newVm.PropertyChanged += OnViewModelPropertyChanged;
+            }
+            if (e.NewValue is CameraWindowViewModel vm && ThemeBrush is SolidColorBrush brush)
+            {
+                vm.UpdateThemeColor(brush.Color);
+            }
+        }
+
+        private void OnClosed(object? sender, EventArgs e)
+        {
+            if (DataContext is CameraWindowViewModel vm)
+            {
+                vm.PropertyChanged -= OnViewModelPropertyChanged;
+                vm.Dispose();
+            }
+        }
+
+        private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != null && (e.PropertyName.EndsWith("Min") || e.PropertyName.EndsWith("Max")))
+            {
+                if (Mouse.Captured is Thumb)
+                {
+                    Mouse.Capture(null);
+                }
+            }
         }
 
         private void Viewport_MouseWheel(object sender, MouseWheelEventArgs e)

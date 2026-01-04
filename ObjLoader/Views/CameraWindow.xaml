@@ -17,16 +17,147 @@
         <ResourceDictionary>
             <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <conv:StringToDoubleConverter x:Key="StringToDoubleConverter"/>
+
+            <Style x:Key="ModernTextBox" TargetType="TextBox">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TextBox">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                    <Setter Property="BorderThickness" TargetName="border" Value="1"/>
+                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/>
+                                    <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ModernButton" TargetType="Button">
+                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="12,6"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" SnapsToDevicePixels="true" Opacity="0.8">
+                                <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="true">
+                                    <Setter Property="Opacity" TargetName="border" Value="1"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="true">
+                                    <Setter Property="Opacity" TargetName="border" Value="1"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="true">
+                                    <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                    <Setter Property="TextElement.Foreground" TargetName="contentPresenter" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                    <Setter Property="Opacity" TargetName="border" Value="1"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="false">
+                                    <Setter Property="Opacity" TargetName="border" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="ModernSlider" TargetType="Slider">
+                <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderBrush" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Slider">
+                            <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto" MinHeight="{TemplateBinding MinHeight}"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TickBar x:Name="TopTick" Fill="{TemplateBinding Foreground}" Height="4" Margin="0,0,0,2" Placement="Top" Grid.Row="0" Visibility="Collapsed"/>
+                                    <TickBar x:Name="BottomTick" Fill="{TemplateBinding Foreground}" Height="4" Margin="0,2,0,0" Placement="Bottom" Grid.Row="2" Visibility="Collapsed"/>
+                                    <Border x:Name="TrackBackground" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Height="4.0" Margin="5,0" Grid.Row="1" VerticalAlignment="Center">
+                                        <Canvas Margin="-6,-1">
+                                            <Rectangle x:Name="PART_SelectionRange" Fill="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" Height="4.0" Visibility="Hidden"/>
+                                        </Canvas>
+                                    </Border>
+                                    <Track x:Name="PART_Track" Grid.Row="1">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
+                                                <RepeatButton.Template>
+                                                    <ControlTemplate TargetType="RepeatButton">
+                                                        <Rectangle Fill="Transparent"/>
+                                                    </ControlTemplate>
+                                                </RepeatButton.Template>
+                                            </RepeatButton>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static Slider.IncreaseLarge}">
+                                                <RepeatButton.Template>
+                                                    <ControlTemplate TargetType="RepeatButton">
+                                                        <Rectangle Fill="Transparent"/>
+                                                    </ControlTemplate>
+                                                </RepeatButton.Template>
+                                            </RepeatButton>
+                                        </Track.IncreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb x:Name="Thumb" Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" BorderThickness="1" Height="14" VerticalAlignment="Center" Width="14">
+                                                <Thumb.Template>
+                                                    <ControlTemplate TargetType="Thumb">
+                                                        <Grid HorizontalAlignment="Center" UseLayoutRounding="True" VerticalAlignment="Center">
+                                                            <Ellipse x:Name="grip" Fill="{TemplateBinding Background}" Height="14" Width="14"/>
+                                                        </Grid>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="true">
+                                                                <Setter Property="Fill" TargetName="grip" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsDragging" Value="true">
+                                                                <Setter Property="Fill" TargetName="grip" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Thumb.Template>
+                                            </Thumb>
+                                        </Track.Thumb>
+                                    </Track>
+                                </Grid>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="320"/>
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Column="0" Background="#222" ClipToBounds="True"
+        <Grid Grid.Column="0" Background="{DynamicResource {x:Static SystemColors.ControlDarkDarkBrushKey}}" ClipToBounds="True"
               MouseWheel="Viewport_MouseWheel" MouseDown="Viewport_MouseDown" MouseUp="Viewport_MouseUp" MouseMove="Viewport_MouseMove"
               SizeChanged="Viewport_SizeChanged">
 
@@ -116,73 +247,144 @@
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
                 </Viewport3D>
-                <TextBlock Text="{Binding HoveredDirectionName}" Foreground="White" Background="#88000000" Padding="4" 
+                <TextBlock Text="{Binding HoveredDirectionName}" Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" Background="#88000000" Padding="4" 
                            HorizontalAlignment="Center" VerticalAlignment="Bottom" IsHitTestVisible="False"
                            Visibility="{Binding HoveredDirectionName, Converter={x:Static conv:StringVisibilityConverter.Instance}}"/>
             </Grid>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
-                <CheckBox Content="{x:Static l:Texts.Grid}" IsChecked="{Binding IsGridVisible}" Foreground="White" Margin="0,0,10,0"/>
-                <CheckBox Content="{x:Static l:Texts.InfiniteGrid}" IsChecked="{Binding IsInfiniteGrid}" Foreground="White" Margin="0,0,10,0"/>
-                <CheckBox Content="{x:Static l:Texts.Snap}" IsChecked="{Binding IsSnapping}" Foreground="White"/>
+                <CheckBox Content="{x:Static l:Texts.Grid}" IsChecked="{Binding IsGridVisible}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0"/>
+                <CheckBox Content="{x:Static l:Texts.InfiniteGrid}" IsChecked="{Binding IsInfiniteGrid}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,10,0"/>
+                <CheckBox Content="{x:Static l:Texts.Snap}" IsChecked="{Binding IsSnapping}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
                 <ToggleButton Content="{x:Static l:Texts.Wireframe}" IsChecked="{Binding IsWireframe}" Margin="0,0,5,0"/>
                 <ToggleButton Content="{x:Static l:Texts.PilotView}" IsChecked="{Binding IsPilotView}" Margin="0,0,5,0"/>
-                <Button Content="{x:Static l:Texts.Focus}" Command="{Binding FocusCommand}"/>
+                <Button Content="{x:Static l:Texts.Focus}" Command="{Binding FocusCommand}" Style="{StaticResource ModernButton}"/>
             </StackPanel>
         </Grid>
 
-        <Border Grid.Column="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,0,0,0" Padding="10">
+        <Border Grid.Column="1" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,0,0,0" Padding="15">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                    <TextBlock Text="{x:Static l:Texts.CameraPos}" FontWeight="Bold" Margin="0,0,0,5"/>
-                    <DockPanel Margin="0,5">
-                        <TextBlock Text="X" Width="20" VerticalAlignment="Center" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="X"/>
-                        <TextBox Text="{Binding CamX, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
-                    </DockPanel>
-                    <DockPanel Margin="0,5">
-                        <TextBlock Text="Y" Width="20" VerticalAlignment="Center" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Y"/>
-                        <TextBox Text="{Binding CamY, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
-                    </DockPanel>
-                    <DockPanel Margin="0,5">
-                        <TextBlock Text="Z" Width="20" VerticalAlignment="Center" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Z"/>
-                        <TextBox Text="{Binding CamZ, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
-                    </DockPanel>
+                    <TextBlock Text="{x:Static l:Texts.CameraPos}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" Margin="0,0,0,10"/>
 
-                    <Separator Margin="0,10"/>
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="65"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="X"/>
+                        <Slider Grid.Column="1" Value="{Binding CamX}" Minimum="{Binding CamXMin}" Maximum="{Binding CamXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBox Grid.Column="2" Text="{Binding CamX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                    </Grid>
 
-                    <DockPanel Margin="0,0,0,5">
-                        <TextBlock Text="{x:Static l:Texts.CameraTarget}" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="65"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Y"/>
+                        <Slider Grid.Column="1" Value="{Binding CamY}" Minimum="{Binding CamYMin}" Maximum="{Binding CamYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBox Grid.Column="2" Text="{Binding CamY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                    </Grid>
+
+                    <Grid Margin="0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="65"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Z"/>
+                        <Slider Grid.Column="1" Value="{Binding CamZ}" Minimum="{Binding CamZMin}" Maximum="{Binding CamZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                        <TextBox Grid.Column="2" Text="{Binding CamZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                    </Grid>
+
+                    <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
+
+                    <DockPanel Margin="0,0,0,10">
+                        <TextBlock Text="{x:Static l:Texts.CameraTarget}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="{x:Static l:Texts.TargetFixed}" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Static l:Texts.TargetFixed}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <c:ToggleSlider Value="{Binding IsTargetFixed}"/>
                         </StackPanel>
                     </DockPanel>
 
                     <StackPanel IsEnabled="{Binding IsTargetFree}">
-                        <DockPanel Margin="0,5">
-                            <TextBlock Text="X" Width="20" VerticalAlignment="Center"/>
-                            <TextBox Text="{Binding TargetX, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
-                        </DockPanel>
-                        <DockPanel Margin="0,5">
-                            <TextBlock Text="Y" Width="20" VerticalAlignment="Center"/>
-                            <TextBox Text="{Binding TargetY, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
-                        </DockPanel>
-                        <DockPanel Margin="0,5">
-                            <TextBlock Text="Z" Width="20" VerticalAlignment="Center"/>
-                            <TextBox Text="{Binding TargetZ, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}"/>
-                        </DockPanel>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="65"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
+                            <Slider Grid.Column="1" Value="{Binding TargetX}" Minimum="{Binding TargetXMin}" Maximum="{Binding TargetXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Text="{Binding TargetX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                        </Grid>
+
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="65"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
+                            <Slider Grid.Column="1" Value="{Binding TargetY}" Minimum="{Binding TargetYMin}" Maximum="{Binding TargetYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Text="{Binding TargetY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                        </Grid>
+
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="65"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
+                            <Slider Grid.Column="1" Value="{Binding TargetZ}" Minimum="{Binding TargetZMin}" Maximum="{Binding TargetZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
+                            <TextBox Grid.Column="2" Text="{Binding TargetZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                        </Grid>
                     </StackPanel>
 
-                    <Separator Margin="0,10"/>
+                    <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
 
-                    <Button Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Margin="0,10"/>
+                    <Button Content="{x:Static l:Texts.ResetCamera}" Command="{Binding ResetCommand}" Style="{StaticResource ModernButton}" Margin="0,0,0,10"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Content="{x:Static l:Texts.Undo}" Command="{Binding UndoCommand}" Width="80" Margin="0,0,5,0"/>
-                        <Button Content="{x:Static l:Texts.Redo}" Command="{Binding RedoCommand}" Width="80" Margin="5,0,0,0"/>
+                        <Button Content="{x:Static l:Texts.Undo}" Command="{Binding UndoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="0,0,5,0"/>
+                        <Button Content="{x:Static l:Texts.Redo}" Command="{Binding RedoCommand}" Style="{StaticResource ModernButton}" Width="80" Margin="5,0,0,0"/>
                     </StackPanel>
 
                 </StackPanel>
