@@ -167,4 +167,31 @@
 <data name="Dialog_Ok" xml:space="preserve"><value>確定</value></data>
 <data name="Dialog_Cancel" xml:space="preserve"><value>取消</value></data>
 <data name="Editor_ResetView" xml:space="preserve"><value>重置視圖</value></data>
+<data name="Easing_Linear" xml:space="preserve"><value>线性</value></data>
+<data name="Easing_SineIn" xml:space="preserve"><value>正弦 (In)</value></data>
+<data name="Easing_SineOut" xml:space="preserve"><value>正弦 (Out)</value></data>
+<data name="Easing_SineInOut" xml:space="preserve"><value>正弦 (InOut)</value></data>
+<data name="Easing_QuadIn" xml:space="preserve"><value>二次 (In)</value></data>
+<data name="Easing_QuadOut" xml:space="preserve"><value>二次 (Out)</value></data>
+<data name="Easing_QuadInOut" xml:space="preserve"><value>二次 (InOut)</value></data>
+<data name="Easing_CubicIn" xml:space="preserve"><value>三次 (In)</value></data>
+<data name="Easing_CubicOut" xml:space="preserve"><value>三次 (Out)</value></data>
+<data name="Easing_CubicInOut" xml:space="preserve"><value>三次 (InOut)</value></data>
+<data name="Easing_QuartIn" xml:space="preserve"><value>四次 (In)</value></data>
+<data name="Easing_QuartOut" xml:space="preserve"><value>四次 (Out)</value></data>
+<data name="Easing_QuartInOut" xml:space="preserve"><value>四次 (InOut)</value></data>
+<data name="Easing_QuintIn" xml:space="preserve"><value>五次 (In)</value></data>
+<data name="Easing_QuintOut" xml:space="preserve"><value>五次 (Out)</value></data>
+<data name="Easing_QuintInOut" xml:space="preserve"><value>五次 (InOut)</value></data>
+<data name="Easing_ExpoIn" xml:space="preserve"><value>指数 (In)</value></data>
+<data name="Easing_ExpoOut" xml:space="preserve"><value>指数 (Out)</value></data>
+<data name="Easing_ExpoInOut" xml:space="preserve"><value>指数 (InOut)</value></data>
+<data name="Easing_CircIn" xml:space="preserve"><value>圆形 (In)</value></data>
+<data name="Easing_CircOut" xml:space="preserve"><value>圆形 (Out)</value></data>
+<data name="Easing_CircInOut" xml:space="preserve"><value>圆形 (InOut)</value></data>
+<data name="Easing_BackIn" xml:space="preserve"><value>回退 (In)</value></data>
+<data name="Easing_BackOut" xml:space="preserve"><value>回退 (Out)</value></data>
+<data name="Easing_BackInOut" xml:space="preserve"><value>回退 (InOut)</value></data>
+<data name="Preset_Standard" xml:space="preserve"><value>标准</value></data>
+<data name="Preset_Custom" xml:space="preserve"><value>自定义</value></data>
 </root>

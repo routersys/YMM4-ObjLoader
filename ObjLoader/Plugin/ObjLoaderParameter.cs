@@ -15,14 +15,6 @@ using System.Runtime.CompilerServices;
 
 namespace ObjLoader.Plugin
 {
-    public enum EasingType
-    {
-        Linear,
-        SineIn, SineOut, SineInOut,
-        QuadIn, QuadOut, QuadInOut,
-        CubicIn, CubicOut, CubicInOut
-    }
-
     public class CameraKeyframe : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;

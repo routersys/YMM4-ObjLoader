@@ -166,4 +166,31 @@
 <data name="Dialog_Ok" xml:space="preserve"><value>موافق</value></data>
 <data name="Dialog_Cancel" xml:space="preserve"><value>إلغاء</value></data>
 <data name="Editor_ResetView" xml:space="preserve"><value>إعادة تعيين العرض</value></data>
+<data name="Easing_Linear" xml:space="preserve"><value>خطي</value></data>
+<data name="Easing_SineIn" xml:space="preserve"><value>جيب (In)</value></data>
+<data name="Easing_SineOut" xml:space="preserve"><value>جيب (Out)</value></data>
+<data name="Easing_SineInOut" xml:space="preserve"><value>جيب (InOut)</value></data>
+<data name="Easing_QuadIn" xml:space="preserve"><value>رباعي (In)</value></data>
+<data name="Easing_QuadOut" xml:space="preserve"><value>رباعي (Out)</value></data>
+<data name="Easing_QuadInOut" xml:space="preserve"><value>رباعي (InOut)</value></data>
+<data name="Easing_CubicIn" xml:space="preserve"><value>مكعب (In)</value></data>
+<data name="Easing_CubicOut" xml:space="preserve"><value>مكعب (Out)</value></data>
+<data name="Easing_CubicInOut" xml:space="preserve"><value>مكعب (InOut)</value></data>
+<data name="Easing_QuartIn" xml:space="preserve"><value>الرابعة (In)</value></data>
+<data name="Easing_QuartOut" xml:space="preserve"><value>الرابعة (Out)</value></data>
+<data name="Easing_QuartInOut" xml:space="preserve"><value>الرابعة (InOut)</value></data>
+<data name="Easing_QuintIn" xml:space="preserve"><value>الخامسة (In)</value></data>
+<data name="Easing_QuintOut" xml:space="preserve"><value>الخامسة (Out)</value></data>
+<data name="Easing_QuintInOut" xml:space="preserve"><value>الخامسة (InOut)</value></data>
+<data name="Easing_ExpoIn" xml:space="preserve"><value>إكسبو (In)</value></data>
+<data name="Easing_ExpoOut" xml:space="preserve"><value>إكسبو (Out)</value></data>
+<data name="Easing_ExpoInOut" xml:space="preserve"><value>إكسبو (InOut)</value></data>
+<data name="Easing_CircIn" xml:space="preserve"><value>دائري (In)</value></data>
+<data name="Easing_CircOut" xml:space="preserve"><value>دائري (Out)</value></data>
+<data name="Easing_CircInOut" xml:space="preserve"><value>دائري (InOut)</value></data>
+<data name="Easing_BackIn" xml:space="preserve"><value>عودة (In)</value></data>
+<data name="Easing_BackOut" xml:space="preserve"><value>عودة (Out)</value></data>
+<data name="Easing_BackInOut" xml:space="preserve"><value>عودة (InOut)</value></data>
+<data name="Preset_Standard" xml:space="preserve"><value>قياسي</value></data>
+<data name="Preset_Custom" xml:space="preserve"><value>مخصص</value></data>
 </root>

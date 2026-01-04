@@ -167,4 +167,31 @@
 <data name="Dialog_Ok" xml:space="preserve"><value>OK</value></data>
 <data name="Dialog_Cancel" xml:space="preserve"><value>キャンセル</value></data>
 <data name="Editor_ResetView" xml:space="preserve"><value>初期位置</value></data>
+<data name="Easing_Linear" xml:space="preserve"><value>リニア</value></data>
+<data name="Easing_SineIn" xml:space="preserve"><value>サイン (In)</value></data>
+<data name="Easing_SineOut" xml:space="preserve"><value>サイン (Out)</value></data>
+<data name="Easing_SineInOut" xml:space="preserve"><value>サイン (InOut)</value></data>
+<data name="Easing_QuadIn" xml:space="preserve"><value>クアッド (In)</value></data>
+<data name="Easing_QuadOut" xml:space="preserve"><value>クアッド (Out)</value></data>
+<data name="Easing_QuadInOut" xml:space="preserve"><value>クアッド (InOut)</value></data>
+<data name="Easing_CubicIn" xml:space="preserve"><value>キュービック (In)</value></data>
+<data name="Easing_CubicOut" xml:space="preserve"><value>キュービック (Out)</value></data>
+<data name="Easing_CubicInOut" xml:space="preserve"><value>キュービック (InOut)</value></data>
+<data name="Easing_QuartIn" xml:space="preserve"><value>クオート (In)</value></data>
+<data name="Easing_QuartOut" xml:space="preserve"><value>クオート (Out)</value></data>
+<data name="Easing_QuartInOut" xml:space="preserve"><value>クオート (InOut)</value></data>
+<data name="Easing_QuintIn" xml:space="preserve"><value>クイント (In)</value></data>
+<data name="Easing_QuintOut" xml:space="preserve"><value>クイント (Out)</value></data>
+<data name="Easing_QuintInOut" xml:space="preserve"><value>クイント (InOut)</value></data>
+<data name="Easing_ExpoIn" xml:space="preserve"><value>エクスポ (In)</value></data>
+<data name="Easing_ExpoOut" xml:space="preserve"><value>エクスポ (Out)</value></data>
+<data name="Easing_ExpoInOut" xml:space="preserve"><value>エクスポ (InOut)</value></data>
+<data name="Easing_CircIn" xml:space="preserve"><value>サークル (In)</value></data>
+<data name="Easing_CircOut" xml:space="preserve"><value>サークル (Out)</value></data>
+<data name="Easing_CircInOut" xml:space="preserve"><value>サークル (InOut)</value></data>
+<data name="Easing_BackIn" xml:space="preserve"><value>バック (In)</value></data>
+<data name="Easing_BackOut" xml:space="preserve"><value>バック (Out)</value></data>
+<data name="Easing_BackInOut" xml:space="preserve"><value>バック (InOut)</value></data>
+<data name="Preset_Standard" xml:space="preserve"><value>標準</value></data>
+<data name="Preset_Custom" xml:space="preserve"><value>カスタム</value></data>
 </root>

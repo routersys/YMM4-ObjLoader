@@ -167,4 +167,31 @@
 <data name="Dialog_Ok" xml:space="preserve"><value>Aceptar</value></data>
 <data name="Dialog_Cancel" xml:space="preserve"><value>Cancelar</value></data>
 <data name="Editor_ResetView" xml:space="preserve"><value>Restablecer vista</value></data>
+<data name="Easing_Linear" xml:space="preserve"><value>Lineal</value></data>
+<data name="Easing_SineIn" xml:space="preserve"><value>Seno In</value></data>
+<data name="Easing_SineOut" xml:space="preserve"><value>Seno Out</value></data>
+<data name="Easing_SineInOut" xml:space="preserve"><value>Seno InOut</value></data>
+<data name="Easing_QuadIn" xml:space="preserve"><value>Quad In</value></data>
+<data name="Easing_QuadOut" xml:space="preserve"><value>Quad Out</value></data>
+<data name="Easing_QuadInOut" xml:space="preserve"><value>Quad InOut</value></data>
+<data name="Easing_CubicIn" xml:space="preserve"><value>Cúbico In</value></data>
+<data name="Easing_CubicOut" xml:space="preserve"><value>Cúbico Out</value></data>
+<data name="Easing_CubicInOut" xml:space="preserve"><value>Cúbico InOut</value></data>
+<data name="Easing_QuartIn" xml:space="preserve"><value>Quart In</value></data>
+<data name="Easing_QuartOut" xml:space="preserve"><value>Quart Out</value></data>
+<data name="Easing_QuartInOut" xml:space="preserve"><value>Quart InOut</value></data>
+<data name="Easing_QuintIn" xml:space="preserve"><value>Quint In</value></data>
+<data name="Easing_QuintOut" xml:space="preserve"><value>Quint Out</value></data>
+<data name="Easing_QuintInOut" xml:space="preserve"><value>Quint InOut</value></data>
+<data name="Easing_ExpoIn" xml:space="preserve"><value>Expo In</value></data>
+<data name="Easing_ExpoOut" xml:space="preserve"><value>Expo Out</value></data>
+<data name="Easing_ExpoInOut" xml:space="preserve"><value>Expo InOut</value></data>
+<data name="Easing_CircIn" xml:space="preserve"><value>Circ In</value></data>
+<data name="Easing_CircOut" xml:space="preserve"><value>Circ Out</value></data>
+<data name="Easing_CircInOut" xml:space="preserve"><value>Circ InOut</value></data>
+<data name="Easing_BackIn" xml:space="preserve"><value>Back In</value></data>
+<data name="Easing_BackOut" xml:space="preserve"><value>Back Out</value></data>
+<data name="Easing_BackInOut" xml:space="preserve"><value>Back InOut</value></data>
+<data name="Preset_Standard" xml:space="preserve"><value>Estándar</value></data>
+<data name="Preset_Custom" xml:space="preserve"><value>Personalizado</value></data>
 </root>

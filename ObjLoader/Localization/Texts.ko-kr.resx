@@ -167,4 +167,31 @@
 <data name="Dialog_Ok" xml:space="preserve"><value>OK</value></data>
 <data name="Dialog_Cancel" xml:space="preserve"><value>Batal</value></data>
 <data name="Editor_ResetView" xml:space="preserve"><value>Reset Tampilan</value></data>
+<data name="Easing_Linear" xml:space="preserve"><value>선형</value></data>
+<data name="Easing_SineIn" xml:space="preserve"><value>사인 (In)</value></data>
+<data name="Easing_SineOut" xml:space="preserve"><value>사인 (Out)</value></data>
+<data name="Easing_SineInOut" xml:space="preserve"><value>사인 (InOut)</value></data>
+<data name="Easing_QuadIn" xml:space="preserve"><value>쿼드 (In)</value></data>
+<data name="Easing_QuadOut" xml:space="preserve"><value>쿼드 (Out)</value></data>
+<data name="Easing_QuadInOut" xml:space="preserve"><value>쿼드 (InOut)</value></data>
+<data name="Easing_CubicIn" xml:space="preserve"><value>큐빅 (In)</value></data>
+<data name="Easing_CubicOut" xml:space="preserve"><value>큐빅 (Out)</value></data>
+<data name="Easing_CubicInOut" xml:space="preserve"><value>큐빅 (InOut)</value></data>
+<data name="Easing_QuartIn" xml:space="preserve"><value>쿼트 (In)</value></data>
+<data name="Easing_QuartOut" xml:space="preserve"><value>쿼트 (Out)</value></data>
+<data name="Easing_QuartInOut" xml:space="preserve"><value>쿼트 (InOut)</value></data>
+<data name="Easing_QuintIn" xml:space="preserve"><value>퀸트 (In)</value></data>
+<data name="Easing_QuintOut" xml:space="preserve"><value>퀸트 (Out)</value></data>
+<data name="Easing_QuintInOut" xml:space="preserve"><value>퀸트 (InOut)</value></data>
+<data name="Easing_ExpoIn" xml:space="preserve"><value>엑스포 (In)</value></data>
+<data name="Easing_ExpoOut" xml:space="preserve"><value>엑스포 (Out)</value></data>
+<data name="Easing_ExpoInOut" xml:space="preserve"><value>엑스포 (InOut)</value></data>
+<data name="Easing_CircIn" xml:space="preserve"><value>서클 (In)</value></data>
+<data name="Easing_CircOut" xml:space="preserve"><value>서클 (Out)</value></data>
+<data name="Easing_CircInOut" xml:space="preserve"><value>서클 (InOut)</value></data>
+<data name="Easing_BackIn" xml:space="preserve"><value>백 (In)</value></data>
+<data name="Easing_BackOut" xml:space="preserve"><value>백 (Out)</value></data>
+<data name="Easing_BackInOut" xml:space="preserve"><value>백 (InOut)</value></data>
+<data name="Preset_Standard" xml:space="preserve"><value>표준</value></data>
+<data name="Preset_Custom" xml:space="preserve"><value>사용자 지정</value></data>
 </root>
