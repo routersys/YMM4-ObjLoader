@@ -156,7 +156,7 @@ namespace ObjLoader.Parsers
                 }
             }
 
-            var parts = new List<ModelPart> { new ModelPart { TexturePath = texturePath, IndexOffset = 0, IndexCount = indices.Length, BaseColor = Vector4.One } };
+            var parts = new List<ModelPart> { new ModelPart { TexturePath = texturePath, IndexOffset = 0, IndexCount = indices.Length, BaseColor = Vector4.One, Center = center } };
             return new ObjModel
             {
                 Vertices = vertices,

@@ -10,5 +10,6 @@ namespace ObjLoader.Core
         public Vector4 BaseColor;
         public float Metallic;
         public float Roughness;
+        public Vector3 Center;
     }
 }

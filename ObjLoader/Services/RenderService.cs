@@ -29,6 +29,27 @@ namespace ObjLoader.Services
         private int _viewportWidth;
         private int _viewportHeight;
 
+        private readonly List<int> _opaqueParts = new List<int>();
+        private readonly List<int> _transparentParts = new List<int>();
+        private readonly PartSorter _partSorter = new PartSorter();
+
+        private class PartSorter : IComparer<int>
+        {
+            public ModelPart[]? Parts;
+            public System.Numerics.Matrix4x4 World;
+            public System.Numerics.Vector3 CamPos;
+
+            public int Compare(int x, int y)
+            {
+                if (Parts == null) return 0;
+                var centerA = System.Numerics.Vector3.Transform(Parts[x].Center, World);
+                var centerB = System.Numerics.Vector3.Transform(Parts[y].Center, World);
+                var distA = System.Numerics.Vector3.DistanceSquared(CamPos, centerA);
+                var distB = System.Numerics.Vector3.DistanceSquared(CamPos, centerB);
+                return distB.CompareTo(distA);
+            }
+        }
+
         public WriteableBitmap? SceneImage { get; private set; }
         public D3DResources? Resources => _d3dResources;
         public ID3D11Device? Device => _device;
@@ -197,14 +218,22 @@ namespace ObjLoader.Services
                 System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
                 int wId = settings.WorldId;
 
-                var opaqueParts = new List<int>();
-                var transparentParts = new List<int>();
+                _opaqueParts.Clear();
+                _transparentParts.Clear();
                 for (int i = 0; i < modelResource.Parts.Length; i++)
                 {
                     if (modelResource.Parts[i].BaseColor.W < 0.99f)
-                        transparentParts.Add(i);
+                        _transparentParts.Add(i);
                     else
-                        opaqueParts.Add(i);
+                        _opaqueParts.Add(i);
+                }
+
+                if (_transparentParts.Count > 1)
+                {
+                    _partSorter.Parts = modelResource.Parts;
+                    _partSorter.World = world;
+                    _partSorter.CamPos = camPos;
+                    _transparentParts.Sort(_partSorter);
                 }
 
                 void DrawPart(int i)
@@ -252,12 +281,12 @@ namespace ObjLoader.Services
                         _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
                 }
 
-                foreach (var i in opaqueParts)
+                foreach (var i in _opaqueParts)
                 {
                     DrawPart(i);
                 }
 
-                if (transparentParts.Count > 0)
+                if (_transparentParts.Count > 0)
                 {
                     _context.OMSetDepthStencilState(_d3dResources.DepthStencilStateNoWrite);
                     if (!isWireframe)
@@ -265,7 +294,7 @@ namespace ObjLoader.Services
                         _context.RSSetState(_d3dResources.CullNoneRasterizerState);
                     }
 
-                    foreach (var i in transparentParts)
+                    foreach (var i in _transparentParts)
                     {
                         DrawPart(i);
                     }
