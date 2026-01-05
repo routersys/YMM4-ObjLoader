@@ -200,4 +200,83 @@
 <data name="Shader_Status_Error" xml:space="preserve"><value>컴파일 오류: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>알 수 없음</value></data>
 <data name="Shader_None" xml:space="preserve"><value>없음</value></data>
+<data name="Group_Toon" xml:space="preserve"><value>툰</value></data>
+<data name="ToonEnabled" xml:space="preserve"><value>툰 활성화</value></data>
+<data name="ToonEnabled_Desc" xml:space="preserve"><value>툰 셰이딩을 활성화합니다.</value></data>
+<data name="ToonSteps" xml:space="preserve"><value>단계 수</value></data>
+<data name="ToonSteps_Desc" xml:space="preserve"><value>색상 단계 수를 설정합니다.</value></data>
+<data name="ToonSmoothness" xml:space="preserve"><value>매끄러움</value></data>
+<data name="ToonSmoothness_Desc" xml:space="preserve"><value>색상 단계 경계의 부드러움을 설정합니다.</value></data>
+<data name="Group_Rim" xml:space="preserve"><value>림 라이트</value></data>
+<data name="RimEnabled" xml:space="preserve"><value>림 라이트 활성화</value></data>
+<data name="RimEnabled_Desc" xml:space="preserve"><value>림 라이트를 활성화합니다.</value></data>
+<data name="RimColor" xml:space="preserve"><value>림 색상</value></data>
+<data name="RimColor_Desc" xml:space="preserve"><value>림 라이트의 색상을 설정합니다.</value></data>
+<data name="RimIntensity" xml:space="preserve"><value>강도</value></data>
+<data name="RimIntensity_Desc" xml:space="preserve"><value>림 라이트의 강도를 설정합니다.</value></data>
+<data name="RimPower" xml:space="preserve"><value>선명도</value></data>
+<data name="RimPower_Desc" xml:space="preserve"><value>림 라이트의 선명도를 설정합니다.</value></data>
+<data name="Group_Outline" xml:space="preserve"><value>윤곽선</value></data>
+<data name="OutlineEnabled" xml:space="preserve"><value>윤곽선 활성화</value></data>
+<data name="OutlineEnabled_Desc" xml:space="preserve"><value>윤곽선 렌더링을 활성화합니다.</value></data>
+<data name="OutlineColor" xml:space="preserve"><value>윤곽선 색상</value></data>
+<data name="OutlineColor_Desc" xml:space="preserve"><value>윤곽선의 색상을 설정합니다.</value></data>
+<data name="OutlineWidth" xml:space="preserve"><value>두께</value></data>
+<data name="OutlineWidth_Desc" xml:space="preserve"><value>윤곽선의 두께를 설정합니다.</value></data>
+<data name="OutlinePower" xml:space="preserve"><value>임계값</value></data>
+<data name="OutlinePower_Desc" xml:space="preserve"><value>윤곽선 감지 임계값을 설정합니다.</value></data>
+<data name="Group_Fog" xml:space="preserve"><value>안개</value></data>
+<data name="FogEnabled" xml:space="preserve"><value>안개 활성화</value></data>
+<data name="FogEnabled_Desc" xml:space="preserve"><value>안개 효과를 활성화합니다.</value></data>
+<data name="FogColor" xml:space="preserve"><value>안개 색상</value></data>
+<data name="FogColor_Desc" xml:space="preserve"><value>안개 색상을 설정합니다.</value></data>
+<data name="FogStart" xml:space="preserve"><value>시작 거리</value></data>
+<data name="FogStart_Desc" xml:space="preserve"><value>안개가 시작되는 거리를 설정합니다.</value></data>
+<data name="FogEnd" xml:space="preserve"><value>종료 거리</value></data>
+<data name="FogEnd_Desc" xml:space="preserve"><value>안개가 완전히 불투명해지는 거리를 설정합니다.</value></data>
+<data name="FogDensity" xml:space="preserve"><value>밀도</value></data>
+<data name="FogDensity_Desc" xml:space="preserve"><value>안개의 밀도를 설정합니다.</value></data>
+<data name="Group_PostEffect" xml:space="preserve"><value>효과</value></data>
+<data name="Saturation" xml:space="preserve"><value>채도</value></data>
+<data name="Saturation_Desc" xml:space="preserve"><value>채도를 조정합니다.</value></data>
+<data name="Contrast" xml:space="preserve"><value>대비</value></data>
+<data name="Contrast_Desc" xml:space="preserve"><value>대비를 조정합니다.</value></data>
+<data name="Gamma" xml:space="preserve"><value>감마</value></data>
+<data name="Gamma_Desc" xml:space="preserve"><value>감마 보정을 조정합니다.</value></data>
+<data name="BrightnessPost" xml:space="preserve"><value>밝기</value></data>
+<data name="BrightnessPost_Desc" xml:space="preserve"><value>밝기를 조정합니다.</value></data>
+<data name="Group_Vignette" xml:space="preserve"><value>비네트</value></data>
+<data name="VignetteEnabled" xml:space="preserve"><value>활성화</value></data>
+<data name="VignetteEnabled_Desc" xml:space="preserve"><value>비네트 효과를 활성화합니다.</value></data>
+<data name="VignetteColor" xml:space="preserve"><value>비네트 색상</value></data>
+<data name="VignetteColor_Desc" xml:space="preserve"><value>비네트의 색상을 설정합니다.</value></data>
+<data name="VignetteIntensity" xml:space="preserve"><value>강도</value></data>
+<data name="VignetteIntensity_Desc" xml:space="preserve"><value>비네트의 강도를 설정합니다.</value></data>
+<data name="VignetteRadius" xml:space="preserve"><value>반지름</value></data>
+<data name="VignetteRadius_Desc" xml:space="preserve"><value>비네트의 반지름을 설정합니다.</value></data>
+<data name="VignetteSoftness" xml:space="preserve"><value>부드러움</value></data>
+<data name="VignetteSoftness_Desc" xml:space="preserve"><value>비네트 가장자리의 부드러움을 설정합니다.</value></data>
+<data name="Group_Scanline" xml:space="preserve"><value>스캔라인</value></data>
+<data name="ScanlineEnabled" xml:space="preserve"><value>활성화</value></data>
+<data name="ScanlineEnabled_Desc" xml:space="preserve"><value>스캔라인 효과를 활성화합니다.</value></data>
+<data name="ScanlineIntensity" xml:space="preserve"><value>강도</value></data>
+<data name="ScanlineIntensity_Desc" xml:space="preserve"><value>스캔라인의 강도를 설정합니다.</value></data>
+<data name="ScanlineFrequency" xml:space="preserve"><value>주파수</value></data>
+<data name="ScanlineFrequency_Desc" xml:space="preserve"><value>스캔라인의 주파수(라인 수)를 설정합니다.</value></data>
+<data name="Group_Artistic" xml:space="preserve"><value>예술</value></data>
+<data name="ChromAbEnabled" xml:space="preserve"><value>색수차</value></data>
+<data name="ChromAbEnabled_Desc" xml:space="preserve"><value>색수차 효과를 활성화합니다.</value></data>
+<data name="ChromAbIntensity" xml:space="preserve"><value>색수차 강도</value></data>
+<data name="ChromAbIntensity_Desc" xml:space="preserve"><value>색수차의 강도를 설정합니다.</value></data>
+<data name="MonochromeEnabled" xml:space="preserve"><value>흑백</value></data>
+<data name="MonochromeEnabled_Desc" xml:space="preserve"><value>단색 효과를 활성화합니다.</value></data>
+<data name="MonochromeColor" xml:space="preserve"><value>흑백 색상</value></data>
+<data name="MonochromeColor_Desc" xml:space="preserve"><value>단색 효과의 색상을 설정합니다.</value></data>
+<data name="MonochromeMix" xml:space="preserve"><value>혼합량</value></data>
+<data name="MonochromeMix_Desc" xml:space="preserve"><value>단색 효과의 혼합량을 설정합니다.</value></data>
+<data name="PosterizeEnabled" xml:space="preserve"><value>포스터화</value></data>
+<data name="PosterizeEnabled_Desc" xml:space="preserve"><value>포스터화 효과를 활성화합니다.</value></data>
+<data name="PosterizeLevels" xml:space="preserve"><value>단계 수</value></data>
+<data name="PosterizeLevels_Desc" xml:space="preserve"><value>포스터화의 단계 수를 설정합니다.</value></data>
+<data name="WorldId_Desc" xml:space="preserve"><value>설정을 전환할 월드 ID를 지정합니다.</value></data>
 </root>

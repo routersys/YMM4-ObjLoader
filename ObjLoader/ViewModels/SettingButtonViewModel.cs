@@ -18,11 +18,16 @@ namespace ObjLoader.ViewModels
 
         private void OpenSettingWindow()
         {
+            var memento = PluginSettings.Instance.CreateMemento();
             var window = new SettingWindow
             {
                 DataContext = new SettingWindowViewModel(PluginSettings.Instance)
             };
-            window.ShowDialog();
+
+            if (window.ShowDialog() != true)
+            {
+                PluginSettings.Instance.RestoreMemento(memento);
+            }
         }
     }
 }

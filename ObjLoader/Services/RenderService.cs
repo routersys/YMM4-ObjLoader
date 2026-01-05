@@ -194,11 +194,15 @@ namespace ObjLoader.Services
                 var world = normalize * axisConversion * placement;
                 var wvp = world * view * proj;
 
+                System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
+
                 for (int i = 0; i < modelResource.Parts.Length; i++)
                 {
                     var part = modelResource.Parts[i];
                     var texView = modelResource.PartTextures[i];
                     _context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { texView != null ? texView! : _d3dResources.WhiteTextureView! });
+
+                    int wId = settings.WorldId;
 
                     ConstantBufferData cbData = new ConstantBufferData
                     {
@@ -206,15 +210,31 @@ namespace ObjLoader.Services
                         World = System.Numerics.Matrix4x4.Transpose(world),
                         LightPos = new System.Numerics.Vector4(1, 1, 1, 0),
                         BaseColor = part.BaseColor,
-                        AmbientColor = new System.Numerics.Vector4(0.2f, 0.2f, 0.2f, 1),
-                        LightColor = new System.Numerics.Vector4(0.8f, 0.8f, 0.8f, 1),
+                        AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
+                        LightColor = ToVec4(settings.GetLightColor(wId)),
                         CameraPos = new System.Numerics.Vector4(camPos, 1),
-                        LightEnabled = 1.0f,
-                        DiffuseIntensity = 1.0f,
-                        SpecularIntensity = 0.5f,
-                        Shininess = 30.0f,
+                        LightEnabled = parameter.IsLightEnabled ? 1.0f : 0.0f,
+                        DiffuseIntensity = (float)settings.GetDiffuseIntensity(wId),
+                        SpecularIntensity = (float)settings.GetSpecularIntensity(wId),
+                        Shininess = (float)settings.GetShininess(wId),
                         GridColor = gridColor,
-                        GridAxisColor = axisColor
+                        GridAxisColor = axisColor,
+
+                        ToonParams = new System.Numerics.Vector4(settings.ToonEnabled ? 1 : 0, settings.ToonSteps, (float)settings.ToonSmoothness, 0),
+                        RimParams = new System.Numerics.Vector4(settings.RimEnabled ? 1 : 0, (float)settings.RimIntensity, (float)settings.RimPower, 0),
+                        RimColor = ToVec4(settings.RimColor),
+                        OutlineParams = new System.Numerics.Vector4(settings.OutlineEnabled ? 1 : 0, (float)settings.OutlineWidth, (float)settings.OutlinePower, 0),
+                        OutlineColor = ToVec4(settings.OutlineColor),
+                        FogParams = new System.Numerics.Vector4(settings.FogEnabled ? 1 : 0, (float)settings.FogStart, (float)settings.FogEnd, (float)settings.FogDensity),
+                        FogColor = ToVec4(settings.FogColor),
+                        ColorCorrParams = new System.Numerics.Vector4((float)settings.Saturation, (float)settings.Contrast, (float)settings.Gamma, (float)settings.BrightnessPost),
+                        VignetteParams = new System.Numerics.Vector4(settings.VignetteEnabled ? 1 : 0, (float)settings.VignetteIntensity, (float)settings.VignetteRadius, (float)settings.VignetteSoftness),
+                        VignetteColor = ToVec4(settings.VignetteColor),
+                        ScanlineParams = new System.Numerics.Vector4(settings.ScanlineEnabled ? 1 : 0, (float)settings.ScanlineIntensity, (float)settings.ScanlineFrequency, 0),
+                        ChromAbParams = new System.Numerics.Vector4(settings.ChromAbEnabled ? 1 : 0, (float)settings.ChromAbIntensity, 0, 0),
+                        MonoParams = new System.Numerics.Vector4(settings.MonochromeEnabled ? 1 : 0, (float)settings.MonochromeMix, 0, 0),
+                        MonoColor = ToVec4(settings.MonochromeColor),
+                        PosterizeParams = new System.Numerics.Vector4(settings.PosterizeEnabled ? 1 : 0, settings.PosterizeLevels, 0, 0)
                     };
                     UpdateConstantBuffer(ref cbData);
 

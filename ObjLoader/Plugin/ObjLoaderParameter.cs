@@ -15,6 +15,8 @@ using YukkuriMovieMaker.Project;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.IO;
+using System.Windows;
+using ObjLoader.Settings;
 
 namespace ObjLoader.Plugin
 {
@@ -159,6 +161,10 @@ namespace ObjLoader.Plugin
         public double Duration { get => _duration; set => Set(ref _duration, value); }
         private double _duration = 10.0;
 
+        [Display(AutoGenerateField = false)]
+        public Animation SettingsVersion { get; } = new Animation(0, 0, 100000000);
+        private int _versionCounter = 0;
+
         public ObjLoaderParameter() : this(null) { }
         public ObjLoaderParameter(SharedDataStore? sharedData) : base(sharedData)
         {
@@ -169,6 +175,7 @@ namespace ObjLoader.Plugin
                 _isLightEnabled = false;
                 Scale = new Animation(100.0, 0, 100000);
             }
+            WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(PluginSettings.Instance, nameof(INotifyPropertyChanged.PropertyChanged), OnPluginSettingsChanged);
         }
 
         public override IShapeSource CreateShapeSource(IGraphicsDevicesAndContext devices)
@@ -188,7 +195,7 @@ namespace ObjLoader.Plugin
 
         protected override IEnumerable<IAnimatable> GetAnimatables()
         {
-            return new[] { ScreenWidth, ScreenHeight, X, Y, Z, Scale, RotationX, RotationY, RotationZ, Fov, LightX, LightY, LightZ, WorldId, CameraX, CameraY, CameraZ, TargetX, TargetY, TargetZ };
+            return new[] { ScreenWidth, ScreenHeight, X, Y, Z, Scale, RotationX, RotationY, RotationZ, Fov, LightX, LightY, LightZ, WorldId, CameraX, CameraY, CameraZ, TargetX, TargetY, TargetZ, SettingsVersion };
         }
 
         protected override void LoadSharedData(SharedDataStore store)
@@ -258,6 +265,16 @@ namespace ObjLoader.Plugin
             var converter = new HlslShaderConverter();
             var source = EncodingUtil.ReadAllText(ShaderFilePath);
             return converter.Convert(source);
+        }
+
+        private void OnPluginSettingsChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            Application.Current?.Dispatcher.Invoke(() =>
+            {
+                _versionCounter++;
+                SettingsVersion.CopyFrom(new Animation(_versionCounter, 0, 100000000));
+                OnPropertyChanged(string.Empty);
+            });
         }
     }
 }

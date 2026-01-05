@@ -199,4 +199,83 @@
 <data name="Shader_Status_Error" xml:space="preserve"><value>خطأ في التحويل البرمجي: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>مجهول</value></data>
 <data name="Shader_None" xml:space="preserve"><value>لا شيء</value></data>
+<data name="Group_Toon" xml:space="preserve"><value>تون</value></data>
+<data name="ToonEnabled" xml:space="preserve"><value>تمكين تون</value></data>
+<data name="ToonEnabled_Desc" xml:space="preserve"><value>يمكّن تظليل تون.</value></data>
+<data name="ToonSteps" xml:space="preserve"><value>خطوات</value></data>
+<data name="ToonSteps_Desc" xml:space="preserve"><value>يحدد عدد نطاقات الألوان.</value></data>
+<data name="ToonSmoothness" xml:space="preserve"><value>نعومة</value></data>
+<data name="ToonSmoothness_Desc" xml:space="preserve"><value>يحدد نعومة حدود نطاقات الألوان.</value></data>
+<data name="Group_Rim" xml:space="preserve"><value>ضوء الحافة</value></data>
+<data name="RimEnabled" xml:space="preserve"><value>تمكين الحافة</value></data>
+<data name="RimEnabled_Desc" xml:space="preserve"><value>يمكّن إضاءة الحافة.</value></data>
+<data name="RimColor" xml:space="preserve"><value>لون الحافة</value></data>
+<data name="RimColor_Desc" xml:space="preserve"><value>يحدد لون ضوء الحافة.</value></data>
+<data name="RimIntensity" xml:space="preserve"><value>كثافة</value></data>
+<data name="RimIntensity_Desc" xml:space="preserve"><value>يحدد كثافة ضوء الحافة.</value></data>
+<data name="RimPower" xml:space="preserve"><value>قوة</value></data>
+<data name="RimPower_Desc" xml:space="preserve"><value>يحدد حدة ضوء الحافة.</value></data>
+<data name="Group_Outline" xml:space="preserve"><value>مخطط تفصيلي</value></data>
+<data name="OutlineEnabled" xml:space="preserve"><value>تمكين المخطط التفصيلي</value></data>
+<data name="OutlineEnabled_Desc" xml:space="preserve"><value>يمكّن تصيير المخطط التفصيلي.</value></data>
+<data name="OutlineColor" xml:space="preserve"><value>لون المخطط التفصيلي</value></data>
+<data name="OutlineColor_Desc" xml:space="preserve"><value>يحدد لون المخطط التفصيلي.</value></data>
+<data name="OutlineWidth" xml:space="preserve"><value>عرض</value></data>
+<data name="OutlineWidth_Desc" xml:space="preserve"><value>يحدد عرض المخطط التفصيلي.</value></data>
+<data name="OutlinePower" xml:space="preserve"><value>عتبة</value></data>
+<data name="OutlinePower_Desc" xml:space="preserve"><value>يحدد عتبة اكتشاف المخطط التفصيلي.</value></data>
+<data name="Group_Fog" xml:space="preserve"><value>ضباب</value></data>
+<data name="FogEnabled" xml:space="preserve"><value>تمكين الضباب</value></data>
+<data name="FogEnabled_Desc" xml:space="preserve"><value>يمكّن تأثير الضباب.</value></data>
+<data name="FogColor" xml:space="preserve"><value>لون الضباب</value></data>
+<data name="FogColor_Desc" xml:space="preserve"><value>يحدد لون الضباب.</value></data>
+<data name="FogStart" xml:space="preserve"><value>بداية</value></data>
+<data name="FogStart_Desc" xml:space="preserve"><value>يحدد المسافة التي يبدأ عندها الضباب.</value></data>
+<data name="FogEnd" xml:space="preserve"><value>نهاية</value></data>
+<data name="FogEnd_Desc" xml:space="preserve"><value>يحدد المسافة التي يكون فيها الضباب معتمًا تمامًا.</value></data>
+<data name="FogDensity" xml:space="preserve"><value>كثافة</value></data>
+<data name="FogDensity_Desc" xml:space="preserve"><value>يحدد كثافة الضباب.</value></data>
+<data name="Group_PostEffect" xml:space="preserve"><value>تأثيرات</value></data>
+<data name="Saturation" xml:space="preserve"><value>تشبع</value></data>
+<data name="Saturation_Desc" xml:space="preserve"><value>يضبط تشبع اللون.</value></data>
+<data name="Contrast" xml:space="preserve"><value>تباين</value></data>
+<data name="Contrast_Desc" xml:space="preserve"><value>يضبط التباين.</value></data>
+<data name="Gamma" xml:space="preserve"><value>غاما</value></data>
+<data name="Gamma_Desc" xml:space="preserve"><value>يضبط تصحيح غاما.</value></data>
+<data name="BrightnessPost" xml:space="preserve"><value>سطوع</value></data>
+<data name="BrightnessPost_Desc" xml:space="preserve"><value>يضبط السطوع.</value></data>
+<data name="Group_Vignette" xml:space="preserve"><value>تظليل</value></data>
+<data name="VignetteEnabled" xml:space="preserve"><value>تمكين</value></data>
+<data name="VignetteEnabled_Desc" xml:space="preserve"><value>يمكّن تأثير التظليل.</value></data>
+<data name="VignetteColor" xml:space="preserve"><value>لون التظليل</value></data>
+<data name="VignetteColor_Desc" xml:space="preserve"><value>يحدد لون التظليل.</value></data>
+<data name="VignetteIntensity" xml:space="preserve"><value>كثافة</value></data>
+<data name="VignetteIntensity_Desc" xml:space="preserve"><value>يحدد كثافة التظليل.</value></data>
+<data name="VignetteRadius" xml:space="preserve"><value>نصف القطر</value></data>
+<data name="VignetteRadius_Desc" xml:space="preserve"><value>يحدد نصف قطر التظليل.</value></data>
+<data name="VignetteSoftness" xml:space="preserve"><value>نعومة</value></data>
+<data name="VignetteSoftness_Desc" xml:space="preserve"><value>يحدد نعومة حواف التظليل.</value></data>
+<data name="Group_Scanline" xml:space="preserve"><value>خط المسح</value></data>
+<data name="ScanlineEnabled" xml:space="preserve"><value>تمكين</value></data>
+<data name="ScanlineEnabled_Desc" xml:space="preserve"><value>يمكّن تأثير خط المسح.</value></data>
+<data name="ScanlineIntensity" xml:space="preserve"><value>كثافة</value></data>
+<data name="ScanlineIntensity_Desc" xml:space="preserve"><value>يحدد كثافة خطوط المسح.</value></data>
+<data name="ScanlineFrequency" xml:space="preserve"><value>تردد</value></data>
+<data name="ScanlineFrequency_Desc" xml:space="preserve"><value>يحدد تردد (عدد خطوط) خطوط المسح.</value></data>
+<data name="Group_Artistic" xml:space="preserve"><value>فني</value></data>
+<data name="ChromAbEnabled" xml:space="preserve"><value>انحراف لوني</value></data>
+<data name="ChromAbEnabled_Desc" xml:space="preserve"><value>يمكّن تأثير الانحراف اللوني.</value></data>
+<data name="ChromAbIntensity" xml:space="preserve"><value>كثافة CA</value></data>
+<data name="ChromAbIntensity_Desc" xml:space="preserve"><value>يحدد كثافة الانحراف اللوني.</value></data>
+<data name="MonochromeEnabled" xml:space="preserve"><value>أحادي اللون</value></data>
+<data name="MonochromeEnabled_Desc" xml:space="preserve"><value>يمكّن التأثير الأحادي اللون.</value></data>
+<data name="MonochromeColor" xml:space="preserve"><value>لون أحادي</value></data>
+<data name="MonochromeColor_Desc" xml:space="preserve"><value>يحدد اللون للتأثير الأحادي اللون.</value></data>
+<data name="MonochromeMix" xml:space="preserve"><value>مزج أحادي</value></data>
+<data name="MonochromeMix_Desc" xml:space="preserve"><value>يحدد مقدار المزج للتأثير الأحادي اللون.</value></data>
+<data name="PosterizeEnabled" xml:space="preserve"><value>ملصق</value></data>
+<data name="PosterizeEnabled_Desc" xml:space="preserve"><value>يمكّن تأثير الملصق.</value></data>
+<data name="PosterizeLevels" xml:space="preserve"><value>مستويات</value></data>
+<data name="PosterizeLevels_Desc" xml:space="preserve"><value>يحدد عدد المستويات للملصق.</value></data>
+<data name="WorldId_Desc" xml:space="preserve"><value>يحدد معرف العالم لتبديل الإعدادات.</value></data>
 </root>

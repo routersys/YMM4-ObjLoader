@@ -62,6 +62,7 @@ namespace ObjLoader.Rendering
         private double _lastTargetX = double.NaN;
         private double _lastTargetY = double.NaN;
         private double _lastTargetZ = double.NaN;
+        private double _lastSettingsVersion = double.NaN;
 
         static ObjLoaderSource()
         {
@@ -117,6 +118,7 @@ namespace ObjLoader.Rendering
             var lightX = _parameter.LightX.GetValue(frame, length, fps);
             var lightY = _parameter.LightY.GetValue(frame, length, fps);
             var lightZ = _parameter.LightZ.GetValue(frame, length, fps);
+            var settingsVersion = _parameter.SettingsVersion.GetValue(frame, length, fps);
 
             double camX, camY, camZ, targetX, targetY, targetZ;
 
@@ -217,12 +219,13 @@ namespace ObjLoader.Rendering
                 Math.Abs(_lastCamZ - camZ) < 1e-5 &&
                 Math.Abs(_lastTargetX - targetX) < 1e-5 &&
                 Math.Abs(_lastTargetY - targetY) < 1e-5 &&
-                Math.Abs(_lastTargetZ - targetZ) < 1e-5)
+                Math.Abs(_lastTargetZ - targetZ) < 1e-5 &&
+                Math.Abs(_lastSettingsVersion - settingsVersion) < 1e-5)
             {
                 return;
             }
 
-            RenderToTexture(resource, sw, sh, x, y, z, scale, rx, ry, rz, fov, lightX, lightY, lightZ, baseColor, coordSystem, ambientColor, lightColor, diffuseIntensity, specularIntensity, shininess, camX, camY, camZ, targetX, targetY, targetZ);
+            RenderToTexture(resource, sw, sh, x, y, z, scale, rx, ry, rz, fov, lightX, lightY, lightZ, baseColor, coordSystem, ambientColor, lightColor, diffuseIntensity, specularIntensity, shininess, camX, camY, camZ, targetX, targetY, targetZ, worldIdParam);
             CreateCommandList();
 
             _lastX = x;
@@ -254,6 +257,7 @@ namespace ObjLoader.Rendering
             _lastTargetX = targetX;
             _lastTargetY = targetY;
             _lastTargetZ = targetZ;
+            _lastSettingsVersion = settingsVersion;
         }
 
         private void UpdateCustomShader(string path)
@@ -382,7 +386,7 @@ namespace ObjLoader.Rendering
             return item;
         }
 
-        private void RenderToTexture(GpuResourceCacheItem resource, int width, int height, double x, double y, double z, double scale, double rx, double ry, double rz, double fov, double lightX, double lightY, double lightZ, Color baseColor, CoordinateSystem coordSystem, Color ambientColor, Color lightColor, double diffuseIntensity, double specularIntensity, double shininess, double camX, double camY, double camZ, double targetX, double targetY, double targetZ)
+        private void RenderToTexture(GpuResourceCacheItem resource, int width, int height, double x, double y, double z, double scale, double rx, double ry, double rz, double fov, double lightX, double lightY, double lightZ, Color baseColor, CoordinateSystem coordSystem, Color ambientColor, Color lightColor, double diffuseIntensity, double specularIntensity, double shininess, double camX, double camY, double camZ, double targetX, double targetY, double targetZ, int worldId)
         {
             if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
 
@@ -472,6 +476,9 @@ namespace ObjLoader.Rendering
             var lCol = new Vector4(lightColor.ScR, lightColor.ScG, lightColor.ScB, lightColor.ScA);
             var camPos = new Vector4(cameraPosition, 1.0f);
 
+            var settings = PluginSettings.Instance;
+            System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
+
             for (int i = 0; i < resource.Parts.Length; i++)
             {
                 var part = resource.Parts[i];
@@ -495,7 +502,23 @@ namespace ObjLoader.Rendering
                     LightEnabled = _parameter.IsLightEnabled ? 1.0f : 0.0f,
                     DiffuseIntensity = (float)diffuseIntensity,
                     SpecularIntensity = (float)specularIntensity,
-                    Shininess = (float)shininess
+                    Shininess = (float)shininess,
+
+                    ToonParams = new System.Numerics.Vector4(settings.ToonEnabled ? 1 : 0, settings.ToonSteps, (float)settings.ToonSmoothness, 0),
+                    RimParams = new System.Numerics.Vector4(settings.RimEnabled ? 1 : 0, (float)settings.RimIntensity, (float)settings.RimPower, 0),
+                    RimColor = ToVec4(settings.RimColor),
+                    OutlineParams = new System.Numerics.Vector4(settings.OutlineEnabled ? 1 : 0, (float)settings.OutlineWidth, (float)settings.OutlinePower, 0),
+                    OutlineColor = ToVec4(settings.OutlineColor),
+                    FogParams = new System.Numerics.Vector4(settings.FogEnabled ? 1 : 0, (float)settings.FogStart, (float)settings.FogEnd, (float)settings.FogDensity),
+                    FogColor = ToVec4(settings.FogColor),
+                    ColorCorrParams = new System.Numerics.Vector4((float)settings.Saturation, (float)settings.Contrast, (float)settings.Gamma, (float)settings.BrightnessPost),
+                    VignetteParams = new System.Numerics.Vector4(settings.VignetteEnabled ? 1 : 0, (float)settings.VignetteIntensity, (float)settings.VignetteRadius, (float)settings.VignetteSoftness),
+                    VignetteColor = ToVec4(settings.VignetteColor),
+                    ScanlineParams = new System.Numerics.Vector4(settings.ScanlineEnabled ? 1 : 0, (float)settings.ScanlineIntensity, (float)settings.ScanlineFrequency, 0),
+                    ChromAbParams = new System.Numerics.Vector4(settings.ChromAbEnabled ? 1 : 0, (float)settings.ChromAbIntensity, 0, 0),
+                    MonoParams = new System.Numerics.Vector4(settings.MonochromeEnabled ? 1 : 0, (float)settings.MonochromeMix, 0, 0),
+                    MonoColor = ToVec4(settings.MonochromeColor),
+                    PosterizeParams = new System.Numerics.Vector4(settings.PosterizeEnabled ? 1 : 0, settings.PosterizeLevels, 0, 0)
                 };
 
                 D3D11.MappedSubresource mapped;

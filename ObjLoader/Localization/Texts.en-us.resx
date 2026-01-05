@@ -200,4 +200,83 @@
 <data name="Shader_Status_Error" xml:space="preserve"><value>Compile Error: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>Unknown</value></data>
 <data name="Shader_None" xml:space="preserve"><value>None</value></data>
+<data name="Group_Toon" xml:space="preserve"><value>Toon</value></data>
+<data name="ToonEnabled" xml:space="preserve"><value>Enable Toon</value></data>
+<data name="ToonEnabled_Desc" xml:space="preserve"><value>Enables toon shading.</value></data>
+<data name="ToonSteps" xml:space="preserve"><value>Steps</value></data>
+<data name="ToonSteps_Desc" xml:space="preserve"><value>Sets the number of color bands.</value></data>
+<data name="ToonSmoothness" xml:space="preserve"><value>Smoothness</value></data>
+<data name="ToonSmoothness_Desc" xml:space="preserve"><value>Sets the smoothness of the color bands boundaries.</value></data>
+<data name="Group_Rim" xml:space="preserve"><value>Rim Light</value></data>
+<data name="RimEnabled" xml:space="preserve"><value>Enable Rim</value></data>
+<data name="RimEnabled_Desc" xml:space="preserve"><value>Enables rim lighting.</value></data>
+<data name="RimColor" xml:space="preserve"><value>Rim Color</value></data>
+<data name="RimColor_Desc" xml:space="preserve"><value>Sets the color of the rim light.</value></data>
+<data name="RimIntensity" xml:space="preserve"><value>Intensity</value></data>
+<data name="RimIntensity_Desc" xml:space="preserve"><value>Sets the intensity of the rim light.</value></data>
+<data name="RimPower" xml:space="preserve"><value>Power</value></data>
+<data name="RimPower_Desc" xml:space="preserve"><value>Sets the sharpness of the rim light.</value></data>
+<data name="Group_Outline" xml:space="preserve"><value>Outline</value></data>
+<data name="OutlineEnabled" xml:space="preserve"><value>Enable Outline</value></data>
+<data name="OutlineEnabled_Desc" xml:space="preserve"><value>Enables outline rendering.</value></data>
+<data name="OutlineColor" xml:space="preserve"><value>Outline Color</value></data>
+<data name="OutlineColor_Desc" xml:space="preserve"><value>Sets the color of the outline.</value></data>
+<data name="OutlineWidth" xml:space="preserve"><value>Width</value></data>
+<data name="OutlineWidth_Desc" xml:space="preserve"><value>Sets the width of the outline.</value></data>
+<data name="OutlinePower" xml:space="preserve"><value>Threshold</value></data>
+<data name="OutlinePower_Desc" xml:space="preserve"><value>Sets the threshold for outline detection.</value></data>
+<data name="Group_Fog" xml:space="preserve"><value>Fog</value></data>
+<data name="FogEnabled" xml:space="preserve"><value>Enable Fog</value></data>
+<data name="FogEnabled_Desc" xml:space="preserve"><value>Enables fog effect.</value></data>
+<data name="FogColor" xml:space="preserve"><value>Fog Color</value></data>
+<data name="FogColor_Desc" xml:space="preserve"><value>Sets the color of the fog.</value></data>
+<data name="FogStart" xml:space="preserve"><value>Start</value></data>
+<data name="FogStart_Desc" xml:space="preserve"><value>Sets the distance where fog starts.</value></data>
+<data name="FogEnd" xml:space="preserve"><value>End</value></data>
+<data name="FogEnd_Desc" xml:space="preserve"><value>Sets the distance where fog is completely opaque.</value></data>
+<data name="FogDensity" xml:space="preserve"><value>Density</value></data>
+<data name="FogDensity_Desc" xml:space="preserve"><value>Sets the density of the fog.</value></data>
+<data name="Group_PostEffect" xml:space="preserve"><value>Effects</value></data>
+<data name="Saturation" xml:space="preserve"><value>Saturation</value></data>
+<data name="Saturation_Desc" xml:space="preserve"><value>Adjusts the color saturation.</value></data>
+<data name="Contrast" xml:space="preserve"><value>Contrast</value></data>
+<data name="Contrast_Desc" xml:space="preserve"><value>Adjusts the contrast.</value></data>
+<data name="Gamma" xml:space="preserve"><value>Gamma</value></data>
+<data name="Gamma_Desc" xml:space="preserve"><value>Adjusts the gamma correction.</value></data>
+<data name="BrightnessPost" xml:space="preserve"><value>Brightness</value></data>
+<data name="BrightnessPost_Desc" xml:space="preserve"><value>Adjusts the brightness.</value></data>
+<data name="Group_Vignette" xml:space="preserve"><value>Vignette</value></data>
+<data name="VignetteEnabled" xml:space="preserve"><value>Enable</value></data>
+<data name="VignetteEnabled_Desc" xml:space="preserve"><value>Enables vignette effect.</value></data>
+<data name="VignetteColor" xml:space="preserve"><value>Vignette Color</value></data>
+<data name="VignetteColor_Desc" xml:space="preserve"><value>Sets the color of the vignette.</value></data>
+<data name="VignetteIntensity" xml:space="preserve"><value>Intensity</value></data>
+<data name="VignetteIntensity_Desc" xml:space="preserve"><value>Sets the intensity of the vignette.</value></data>
+<data name="VignetteRadius" xml:space="preserve"><value>Radius</value></data>
+<data name="VignetteRadius_Desc" xml:space="preserve"><value>Sets the radius of the vignette.</value></data>
+<data name="VignetteSoftness" xml:space="preserve"><value>Softness</value></data>
+<data name="VignetteSoftness_Desc" xml:space="preserve"><value>Sets the softness of the vignette edges.</value></data>
+<data name="Group_Scanline" xml:space="preserve"><value>Scanline</value></data>
+<data name="ScanlineEnabled" xml:space="preserve"><value>Enable</value></data>
+<data name="ScanlineEnabled_Desc" xml:space="preserve"><value>Enables scanline effect.</value></data>
+<data name="ScanlineIntensity" xml:space="preserve"><value>Intensity</value></data>
+<data name="ScanlineIntensity_Desc" xml:space="preserve"><value>Sets the intensity of the scanlines.</value></data>
+<data name="ScanlineFrequency" xml:space="preserve"><value>Frequency</value></data>
+<data name="ScanlineFrequency_Desc" xml:space="preserve"><value>Sets the frequency (number of lines) of the scanlines.</value></data>
+<data name="Group_Artistic" xml:space="preserve"><value>Artistic</value></data>
+<data name="ChromAbEnabled" xml:space="preserve"><value>Chromatic Aberration</value></data>
+<data name="ChromAbEnabled_Desc" xml:space="preserve"><value>Enables chromatic aberration effect.</value></data>
+<data name="ChromAbIntensity" xml:space="preserve"><value>CA Intensity</value></data>
+<data name="ChromAbIntensity_Desc" xml:space="preserve"><value>Sets the intensity of chromatic aberration.</value></data>
+<data name="MonochromeEnabled" xml:space="preserve"><value>Monochrome</value></data>
+<data name="MonochromeEnabled_Desc" xml:space="preserve"><value>Enables monochrome effect.</value></data>
+<data name="MonochromeColor" xml:space="preserve"><value>Mono Color</value></data>
+<data name="MonochromeColor_Desc" xml:space="preserve"><value>Sets the color for monochrome effect.</value></data>
+<data name="MonochromeMix" xml:space="preserve"><value>Mono Mix</value></data>
+<data name="MonochromeMix_Desc" xml:space="preserve"><value>Sets the mix amount of monochrome effect.</value></data>
+<data name="PosterizeEnabled" xml:space="preserve"><value>Posterize</value></data>
+<data name="PosterizeEnabled_Desc" xml:space="preserve"><value>Enables posterization effect.</value></data>
+<data name="PosterizeLevels" xml:space="preserve"><value>Levels</value></data>
+<data name="PosterizeLevels_Desc" xml:space="preserve"><value>Sets the number of levels for posterization.</value></data>
+<data name="WorldId_Desc" xml:space="preserve"><value>Specifies the World ID to switch settings.</value></data>
 </root>
