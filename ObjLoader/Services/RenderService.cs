@@ -195,14 +195,23 @@ namespace ObjLoader.Services
                 var wvp = world * view * proj;
 
                 System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
+                int wId = settings.WorldId;
 
+                var opaqueParts = new List<int>();
+                var transparentParts = new List<int>();
                 for (int i = 0; i < modelResource.Parts.Length; i++)
+                {
+                    if (modelResource.Parts[i].BaseColor.W < 0.99f)
+                        transparentParts.Add(i);
+                    else
+                        opaqueParts.Add(i);
+                }
+
+                void DrawPart(int i)
                 {
                     var part = modelResource.Parts[i];
                     var texView = modelResource.PartTextures[i];
-                    _context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { texView != null ? texView! : _d3dResources.WhiteTextureView! });
-
-                    int wId = settings.WorldId;
+                    _context!.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { texView != null ? texView! : _d3dResources!.WhiteTextureView! });
 
                     ConstantBufferData cbData = new ConstantBufferData
                     {
@@ -219,7 +228,6 @@ namespace ObjLoader.Services
                         Shininess = (float)settings.GetShininess(wId),
                         GridColor = gridColor,
                         GridAxisColor = axisColor,
-
                         ToonParams = new System.Numerics.Vector4(settings.ToonEnabled ? 1 : 0, settings.ToonSteps, (float)settings.ToonSmoothness, 0),
                         RimParams = new System.Numerics.Vector4(settings.RimEnabled ? 1 : 0, (float)settings.RimIntensity, (float)settings.RimPower, 0),
                         RimColor = ToVec4(settings.RimColor),
@@ -242,6 +250,31 @@ namespace ObjLoader.Services
                         _context.DrawIndexed(Math.Max(part.IndexCount / 16, 32), part.IndexOffset, 0);
                     else
                         _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                }
+
+                foreach (var i in opaqueParts)
+                {
+                    DrawPart(i);
+                }
+
+                if (transparentParts.Count > 0)
+                {
+                    _context.OMSetDepthStencilState(_d3dResources.DepthStencilStateNoWrite);
+                    if (!isWireframe)
+                    {
+                        _context.RSSetState(_d3dResources.CullNoneRasterizerState);
+                    }
+
+                    foreach (var i in transparentParts)
+                    {
+                        DrawPart(i);
+                    }
+
+                    _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
+                    if (!isWireframe)
+                    {
+                        _context.RSSetState(_d3dResources.RasterizerState);
+                    }
                 }
             }
 

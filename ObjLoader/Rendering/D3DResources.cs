@@ -17,11 +17,13 @@ namespace ObjLoader.Rendering
         public ID3D11InputLayout GridInputLayout { get; }
         public ID3D11Buffer ConstantBuffer { get; }
         public ID3D11DepthStencilState DepthStencilState { get; }
+        public ID3D11DepthStencilState DepthStencilStateNoWrite { get; }
         public ID3D11SamplerState SamplerState { get; }
         public ID3D11BlendState BlendState { get; }
         public ID3D11BlendState GridBlendState { get; }
         public ID3D11ShaderResourceView WhiteTextureView { get; }
         public ID3D11Device Device { get; }
+        public ID3D11RasterizerState CullNoneRasterizerState { get; }
 
         private ID3D11RasterizerState? _rasterizerState;
         public ID3D11RasterizerState RasterizerState
@@ -87,6 +89,18 @@ namespace ObjLoader.Rendering
             var depthDesc = new DepthStencilDescription(true, DepthWriteMask.All, ComparisonFunction.LessEqual);
             DepthStencilState = device.CreateDepthStencilState(depthDesc);
             _disposer.Collect(DepthStencilState);
+
+            var depthDescNoWrite = new DepthStencilDescription(true, DepthWriteMask.Zero, ComparisonFunction.LessEqual);
+            DepthStencilStateNoWrite = device.CreateDepthStencilState(depthDescNoWrite);
+            _disposer.Collect(DepthStencilStateNoWrite);
+
+            var rasterDescCullNone = new RasterizerDescription(CullMode.None, FillMode.Solid)
+            {
+                MultisampleEnable = true,
+                AntialiasedLineEnable = true
+            };
+            CullNoneRasterizerState = device.CreateRasterizerState(rasterDescCullNone);
+            _disposer.Collect(CullNoneRasterizerState);
 
             var sampDesc = new SamplerDescription(Filter.MinMagMipLinear, TextureAddressMode.Wrap, TextureAddressMode.Wrap, TextureAddressMode.Wrap, 0, 1, ComparisonFunction.Always, new Vortice.Mathematics.Color4(0, 0, 0, 0), 0, float.MaxValue);
             SamplerState = device.CreateSamplerState(sampDesc);
