@@ -23,6 +23,68 @@
 	  <None Remove="bin\**" />
 	  <Page Remove="bin\**" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<HlslShader Include="Shaders\**\*.hlsl" />
+	</ItemGroup>
+
+	<ItemDefinitionGroup>
+		<HlslShader>
+			<ShaderType>ps_5_0</ShaderType>
+			<EntryPoint>main</EntryPoint>
+			<ObjectFileOutput>$(IntermediateOutputPath)Shaders\%(RelativeDir)%(Filename).cso</ObjectFileOutput>
+		</HlslShader>
+	</ItemDefinitionGroup>
+
+	<ItemGroup>
+		<HlslShader Update="Shaders\ObjLoaderVS.hlsl">
+			<ShaderType>vs_5_0</ShaderType>
+			<EntryPoint>VS</EntryPoint>
+		</HlslShader>
+		<HlslShader Update="Shaders\GridVS.hlsl">
+			<ShaderType>vs_5_0</ShaderType>
+			<EntryPoint>VS</EntryPoint>
+		</HlslShader>
+
+		<HlslShader Update="Shaders\ObjLoaderPS.hlsl">
+			<ShaderType>ps_5_0</ShaderType>
+			<EntryPoint>PS</EntryPoint>
+		</HlslShader>
+		<HlslShader Update="Shaders\GridPS.hlsl">
+			<ShaderType>ps_5_0</ShaderType>
+			<EntryPoint>PS</EntryPoint>
+		</HlslShader>
+	</ItemGroup>
+
+	<Target Name="CompileHLSLShaders"
+			BeforeTargets="PrepareForBuild"
+			Inputs="@(HlslShader)"
+			Outputs="@(HlslShader->'%(ObjectFileOutput)')">
+
+		<Message Text="Compiling HLSL Shader: %(HlslShader.Identity) [Type: %(HlslShader.ShaderType), Entry: %(HlslShader.EntryPoint)]" Importance="high" />
+
+		<Error Text="fxc.exe not found at path: $(FxcPath)" Condition="!Exists('$(FxcPath)') AND '$(FxcPath)' != 'fxc.exe'" />
+
+		<MakeDir Directories="$([System.IO.Path]::GetDirectoryName('%(HlslShader.ObjectFileOutput)'))" />
+
+		<Exec Command="&quot;$(FxcPath)&quot; /nologo /T %(HlslShader.ShaderType) /E %(HlslShader.EntryPoint) /Fo &quot;%(HlslShader.ObjectFileOutput)&quot; &quot;%(HlslShader.FullPath)&quot;"
+			  Condition="Exists('%(HlslShader.FullPath)')" />
+	</Target>
+
+	<Target Name="IncludeCompiledShaders"
+			AfterTargets="CompileHLSLShaders"
+			BeforeTargets="PrepareResources">
+
+		<ItemGroup>
+			<CompiledShaders Include="$(IntermediateOutputPath)Shaders\**\*.cso" />
+
+			<EmbeddedResource Include="@(CompiledShaders)">
+				<LogicalName>$(RootNamespace).Shaders.$([System.String]::new('%(RelativeDir)').Replace('\', '.').Replace('/', '.'))%(Filename)%(Extension)</LogicalName>
+			</EmbeddedResource>
+		</ItemGroup>
+
+		<Message Text="Embedded Shader Resource: %(EmbeddedResource.LogicalName)" Importance="low" />
+	</Target>
 	
 	<ItemGroup>
 		<Reference Include="AvalonDock">
