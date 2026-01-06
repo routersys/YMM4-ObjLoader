@@ -283,4 +283,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>ملفات نموذج 3D</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>ملف Blender (مهمل)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>ملفات التظليل</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>إعدادات Assimp</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>تحميل OBJ باستخدام Assimp</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>يستخدم Assimp لتحميل ملفات OBJ.</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>تحميل GLB باستخدام Assimp</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>يستخدم Assimp لتحميل ملفات GLB/GLTF.</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>تحميل PLY باستخدام Assimp</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>يستخدم Assimp لتحميل ملفات PLY.</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>تحميل STL باستخدام Assimp</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>يستخدم Assimp لتحميل ملفات STL.</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>تحميل 3MF باستخدام Assimp</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>يستخدم Assimp لتحميل ملفات 3MF.</value></data>
 </root>

@@ -284,4 +284,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>Archivos de modelo 3D</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Archivo Blender (Obsoleto)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>Archivos de sombreador</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Configuración de Assimp</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>Cargar OBJ con Assimp</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos OBJ.</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>Cargar GLB con Assimp</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos GLB/GLTF.</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>Cargar PLY con Assimp</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos PLY.</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>Cargar STL con Assimp</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos STL.</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>Cargar 3MF con Assimp</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos 3MF.</value></data>
 </root>

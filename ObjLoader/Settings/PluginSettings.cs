@@ -40,6 +40,12 @@ namespace ObjLoader.Settings
         private CoordinateSystem _coordinateSystem = CoordinateSystem.RightHandedYUp;
         private RenderCullMode _cullMode = RenderCullMode.None;
 
+        private bool _assimpObj = false;
+        private bool _assimpGlb = false;
+        private bool _assimpPly = false;
+        private bool _assimpStl = false;
+        private bool _assimp3mf = false;
+
         private const int MaxWorlds = 10;
         private int _worldId = 0;
 
@@ -98,6 +104,11 @@ namespace ObjLoader.Settings
         {
             public CoordinateSystem CoordinateSystem;
             public RenderCullMode CullMode;
+            public bool AssimpObj;
+            public bool AssimpGlb;
+            public bool AssimpPly;
+            public bool AssimpStl;
+            public bool Assimp3mf;
             public int WorldId;
             public List<Color> AmbientColors = new();
             public List<Color> LightColors = new();
@@ -147,6 +158,11 @@ namespace ObjLoader.Settings
             {
                 CoordinateSystem = _coordinateSystem,
                 CullMode = _cullMode,
+                AssimpObj = _assimpObj,
+                AssimpGlb = _assimpGlb,
+                AssimpPly = _assimpPly,
+                AssimpStl = _assimpStl,
+                Assimp3mf = _assimp3mf,
                 WorldId = _worldId,
                 AmbientColors = new List<Color>(_ambientColors),
                 LightColors = new List<Color>(_lightColors),
@@ -195,6 +211,11 @@ namespace ObjLoader.Settings
         {
             _coordinateSystem = m.CoordinateSystem;
             _cullMode = m.CullMode;
+            _assimpObj = m.AssimpObj;
+            _assimpGlb = m.AssimpGlb;
+            _assimpPly = m.AssimpPly;
+            _assimpStl = m.AssimpStl;
+            _assimp3mf = m.Assimp3mf;
             _worldId = m.WorldId;
 
             _ambientColors = RestoreList(m.AmbientColors, Color.FromRgb(50, 50, 50));
@@ -468,11 +489,32 @@ namespace ObjLoader.Settings
         [IntSpinnerSetting("Artistic", nameof(Texts.PosterizeLevels), 2, 255, EnableBy = nameof(PosterizeEnabled), Description = nameof(Texts.PosterizeLevels_Desc), ResourceType = typeof(Texts))]
         public int PosterizeLevels { get => _posterizeLevels[_worldId]; set { if (_posterizeLevels[_worldId] != value) { _posterizeLevels[_worldId] = value; OnPropertyChanged(); } } }
 
+        [SettingGroup("Assimp", nameof(Texts.Group_Assimp), Order = 11, Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
+        [BoolSetting("Assimp", nameof(Texts.Assimp_Obj), Description = nameof(Texts.Assimp_Obj_Desc), ResourceType = typeof(Texts))]
+        public bool AssimpObj { get => _assimpObj; set => SetProperty(ref _assimpObj, value); }
+
+        [BoolSetting("Assimp", nameof(Texts.Assimp_Glb), Description = nameof(Texts.Assimp_Glb_Desc), ResourceType = typeof(Texts))]
+        public bool AssimpGlb { get => _assimpGlb; set => SetProperty(ref _assimpGlb, value); }
+
+        [BoolSetting("Assimp", nameof(Texts.Assimp_Ply), Description = nameof(Texts.Assimp_Ply_Desc), ResourceType = typeof(Texts))]
+        public bool AssimpPly { get => _assimpPly; set => SetProperty(ref _assimpPly, value); }
+
+        [BoolSetting("Assimp", nameof(Texts.Assimp_Stl), Description = nameof(Texts.Assimp_Stl_Desc), ResourceType = typeof(Texts))]
+        public bool AssimpStl { get => _assimpStl; set => SetProperty(ref _assimpStl, value); }
+
+        [BoolSetting("Assimp", nameof(Texts.Assimp_3mf), Description = nameof(Texts.Assimp_3mf_Desc), ResourceType = typeof(Texts))]
+        public bool Assimp3mf { get => _assimp3mf; set => SetProperty(ref _assimp3mf, value); }
+
         [SettingButton(nameof(Texts.ResetDefaults), Placement = SettingButtonPlacement.BottomLeft, Order = 0, ResourceType = typeof(Texts))]
         public void ResetDefaults()
         {
             CoordinateSystem = CoordinateSystem.RightHandedYUp;
             CullMode = RenderCullMode.None;
+            AssimpObj = false;
+            AssimpGlb = false;
+            AssimpPly = false;
+            AssimpStl = false;
+            Assimp3mf = false;
             AmbientColor = Color.FromRgb(50, 50, 50);
             LightColor = Colors.White;
             DiffuseIntensity = 1.0;

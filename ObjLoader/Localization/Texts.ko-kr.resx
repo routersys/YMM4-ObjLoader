@@ -284,4 +284,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>3D 모델 파일</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender 파일 (비권장)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>셰이더 파일</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Assimp 설정</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>Assimp로 OBJ 로드</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>OBJ 파일 로드에 Assimp를 사용합니다.</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>Assimp로 GLB 로드</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>GLB/GLTF 파일 로드에 Assimp를 사용합니다.</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>Assimp로 PLY 로드</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>PLY 파일 로드에 Assimp를 사용합니다.</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>Assimp로 STL 로드</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>STL 파일 로드에 Assimp를 사용합니다.</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>Assimp로 3MF 로드</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>3MF 파일 로드에 Assimp를 사용합니다.</value></data>
 </root>

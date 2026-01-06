@@ -284,4 +284,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>3D 模型檔案</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender 檔案 (不推薦)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>著色器檔案</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Assimp設定</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>使用 Assimp 載入 OBJ</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>使用 Assimp 讀取 OBJ 檔案。</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>使用 Assimp 載入 GLB</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>使用 Assimp 讀取 GLB/GLTF 檔案。</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>使用 Assimp 載入 PLY</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>使用 Assimp 讀取 PLY 檔案。</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>使用 Assimp 載入 STL</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>使用 Assimp 讀取 STL 檔案。</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>使用 Assimp 載入 3MF</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>使用 Assimp 讀取 3MF 檔案。</value></data>
 </root>

@@ -2,6 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Cache;
 using ObjLoader.Utilities;
+using ObjLoader.Settings;
 
 namespace ObjLoader.Parsers
 {
@@ -36,7 +37,28 @@ namespace ObjLoader.Parsers
             }
 
             var ext = Path.GetExtension(path).ToLowerInvariant();
-            var parser = _parsers.FirstOrDefault(p => p.CanParse(ext));
+
+            bool forceAssimp = false;
+            if (ext == ".obj") forceAssimp = PluginSettings.Instance.AssimpObj;
+            else if (ext == ".glb" || ext == ".gltf") forceAssimp = PluginSettings.Instance.AssimpGlb;
+            else if (ext == ".ply") forceAssimp = PluginSettings.Instance.AssimpPly;
+            else if (ext == ".stl") forceAssimp = PluginSettings.Instance.AssimpStl;
+            else if (ext == ".3mf") forceAssimp = PluginSettings.Instance.Assimp3mf;
+
+            IModelParser? parser = null;
+            if (forceAssimp)
+            {
+                parser = _parsers.OfType<AssimpParser>().FirstOrDefault();
+                if (parser != null && !parser.CanParse(ext))
+                {
+                    parser = null;
+                }
+            }
+
+            if (parser == null)
+            {
+                parser = _parsers.FirstOrDefault(p => p.CanParse(ext));
+            }
 
             var model = parser?.Parse(path) ?? new ObjModel();
 

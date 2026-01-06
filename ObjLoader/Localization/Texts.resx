@@ -284,4 +284,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>3D モデルファイル</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender ファイル (非推奨)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>シェーダーファイル</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Assimp設定</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>OBJをAssimpで読み込む</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>OBJファイルの読み込みにAssimpを使用します。</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>GLBをAssimpで読み込む</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>GLB/GLTFファイルの読み込みにAssimpを使用します。</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>PLYをAssimpで読み込む</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>PLYファイルの読み込みにAssimpを使用します。</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>STLをAssimpで読み込む</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>STLファイルの読み込みにAssimpを使用します。</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>3MFをAssimpで読み込む</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>3MFファイルの読み込みにAssimpを使用します。</value></data>
 </root>

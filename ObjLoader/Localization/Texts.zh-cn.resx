@@ -284,4 +284,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>3D 模型文件</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender 文件 (不推荐)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>着色器文件</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Assimp设置</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>使用 Assimp 加载 OBJ</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>使用 Assimp 读取 OBJ 文件。</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>使用 Assimp 加载 GLB</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>使用 Assimp 读取 GLB/GLTF 文件。</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>使用 Assimp 加载 PLY</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>使用 Assimp 读取 PLY 文件。</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>使用 Assimp 加载 STL</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>使用 Assimp 读取 STL 文件。</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>使用 Assimp 加载 3MF</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>使用 Assimp 读取 3MF 文件。</value></data>
 </root>

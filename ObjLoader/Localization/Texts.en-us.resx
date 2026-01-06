@@ -284,4 +284,15 @@
 <data name="Filter_3DModelFiles" xml:space="preserve"><value>3D Model Files</value></data>
 <data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender File (Deprecated)</value></data>
 <data name="Filter_ShaderFiles" xml:space="preserve"><value>Shader Files</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Assimp Settings</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>Load OBJ with Assimp</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>Uses Assimp to load OBJ files.</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>Load GLB with Assimp</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>Uses Assimp to load GLB/GLTF files.</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>Load PLY with Assimp</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>Uses Assimp to load PLY files.</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>Load STL with Assimp</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>Uses Assimp to load STL files.</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>Load 3MF with Assimp</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>Uses Assimp to load 3MF files.</value></data>
 </root>

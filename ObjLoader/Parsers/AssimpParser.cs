@@ -13,7 +13,8 @@ namespace ObjLoader.Parsers
             ".blend", ".dae", ".fbx", ".x", ".3ds", ".dxf", ".ifc", ".ase", ".ac", ".ms3d", ".cob", ".scn", ".bvh",
             ".csm", ".xml", ".irrmesh", ".irr", ".mdl", ".md2", ".md3", ".pk3", ".mdc", ".md5mesh", ".smd", ".vta",
             ".ogex", ".3d", ".b3d", ".q3d", ".q3s", ".nff", ".off", ".raw", ".ter", ".hmp", ".ndo", ".lwo", ".lws",
-            ".lxo", ".xgl", ".zgl"
+            ".lxo", ".xgl", ".zgl",
+            ".obj", ".glb", ".gltf", ".ply", ".stl", ".3mf"
         };
 
         public bool CanParse(string extension)

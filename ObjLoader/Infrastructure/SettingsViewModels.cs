@@ -343,7 +343,18 @@ namespace ObjLoader.Infrastructure
                     method.Invoke(target, null);
                     if (param is Window window)
                     {
-                        action?.Invoke(window);
+                        if (attr.Type == SettingButtonType.OK)
+                        {
+                            window.DialogResult = true;
+                        }
+                        else if (attr.Type == SettingButtonType.Cancel)
+                        {
+                            window.DialogResult = false;
+                        }
+                        else
+                        {
+                            action?.Invoke(window);
+                        }
                     }
                 });
         }
