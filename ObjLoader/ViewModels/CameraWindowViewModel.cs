@@ -109,12 +109,12 @@ namespace ObjLoader.ViewModels
         public bool IsTargetFree => !_isTargetFixed;
         public bool IsPilotFrameVisible => _cameraLogic.IsPilotView;
 
-        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
-        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
-        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
-        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
-        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
-        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); } } }
+        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamX = value; } } }
+        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamY = value; } } }
+        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamZ = value; } } }
+        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetX = value; } } }
+        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetY = value; } } }
+        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetZ = value; } } }
 
         public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
         public double CamXMax { get => _camXMax; set => Set(ref _camXMax, value); }
@@ -149,6 +149,10 @@ namespace ObjLoader.ViewModels
             {
                 if (Set(ref _currentTime, value))
                 {
+                    if (SelectedKeyframe != null && Math.Abs(SelectedKeyframe.Time - value) > 0.001)
+                    {
+                        SelectedKeyframe = null;
+                    }
                     UpdateAnimation();
                 }
             }
@@ -179,8 +183,13 @@ namespace ObjLoader.ViewModels
             set
             {
                 Set(ref _selectedKeyframe, value);
+                if (_selectedKeyframe != null)
+                {
+                    CurrentTime = _selectedKeyframe.Time;
+                }
                 OnPropertyChanged(nameof(IsKeyframeSelected));
                 OnPropertyChanged(nameof(SelectedKeyframeEasing));
+                AddKeyframeCommand.RaiseCanExecuteChanged();
                 RemoveKeyframeCommand.RaiseCanExecuteChanged();
                 SavePresetCommand.RaiseCanExecuteChanged();
                 DeletePresetCommand.RaiseCanExecuteChanged();
@@ -237,7 +246,7 @@ namespace ObjLoader.ViewModels
             PlayCommand = new ActionCommand(_ => !IsPlaying, _ => StartPlayback());
             PauseCommand = new ActionCommand(_ => IsPlaying, _ => PausePlayback());
             StopCommand = new ActionCommand(_ => true, _ => StopPlayback());
-            AddKeyframeCommand = new ActionCommand(_ => true, _ => AddKeyframe());
+            AddKeyframeCommand = new ActionCommand(_ => !IsKeyframeSelected, _ => AddKeyframe());
             RemoveKeyframeCommand = new ActionCommand(_ => IsKeyframeSelected, _ => RemoveKeyframe());
             SavePresetCommand = new ActionCommand(_ => IsKeyframeSelected, _ => SavePreset());
             DeletePresetCommand = new ActionCommand(_ => IsKeyframeSelected && SelectedKeyframeEasing != null && SelectedKeyframeEasing.IsCustom, _ => DeletePreset());
@@ -425,7 +434,7 @@ namespace ObjLoader.ViewModels
             float vFovRad = 2.0f * (float)Math.Atan(Math.Tan(hFovRad / 2.0f) / aspect);
             var proj = Matrix4x4.CreatePerspectiveFieldOfView(vFovRad, aspect, 0.1f, 10000.0f);
 
-            bool isInteracting = _isRotatingView || _isPanningView || _isDraggingTarget || _isSpacePanning;
+            bool isInteracting = false;
 
             _renderService.Render(
                 _modelResource,
