@@ -196,96 +196,108 @@ namespace ObjLoader.Settings
             _coordinateSystem = m.CoordinateSystem;
             _cullMode = m.CullMode;
             _worldId = m.WorldId;
-            _ambientColors = new List<Color>(m.AmbientColors);
-            _lightColors = new List<Color>(m.LightColors);
-            _diffuseIntensities = new List<double>(m.DiffuseIntensities);
-            _specularIntensities = new List<double>(m.SpecularIntensities);
-            _shininesses = new List<double>(m.Shininesses);
-            _toonEnabled = new List<bool>(m.ToonEnabled);
-            _toonSteps = new List<int>(m.ToonSteps);
-            _toonSmoothness = new List<double>(m.ToonSmoothness);
-            _outlineEnabled = new List<bool>(m.OutlineEnabled);
-            _outlineColor = new List<Color>(m.OutlineColor);
-            _outlineWidth = new List<double>(m.OutlineWidth);
-            _outlinePower = new List<double>(m.OutlinePower);
-            _rimEnabled = new List<bool>(m.RimEnabled);
-            _rimColor = new List<Color>(m.RimColor);
-            _rimIntensity = new List<double>(m.RimIntensity);
-            _rimPower = new List<double>(m.RimPower);
-            _fogEnabled = new List<bool>(m.FogEnabled);
-            _fogColor = new List<Color>(m.FogColor);
-            _fogStart = new List<double>(m.FogStart);
-            _fogEnd = new List<double>(m.FogEnd);
-            _fogDensity = new List<double>(m.FogDensity);
-            _saturation = new List<double>(m.Saturation);
-            _contrast = new List<double>(m.Contrast);
-            _gamma = new List<double>(m.Gamma);
-            _brightnessPost = new List<double>(m.BrightnessPost);
-            _vignetteEnabled = new List<bool>(m.VignetteEnabled);
-            _vignetteColor = new List<Color>(m.VignetteColor);
-            _vignetteIntensity = new List<double>(m.VignetteIntensity);
-            _vignetteRadius = new List<double>(m.VignetteRadius);
-            _vignetteSoftness = new List<double>(m.VignetteSoftness);
-            _chromAbEnabled = new List<bool>(m.ChromAbEnabled);
-            _chromAbIntensity = new List<double>(m.ChromAbIntensity);
-            _scanlineEnabled = new List<bool>(m.ScanlineEnabled);
-            _scanlineIntensity = new List<double>(m.ScanlineIntensity);
-            _scanlineFrequency = new List<double>(m.ScanlineFrequency);
-            _monochromeEnabled = new List<bool>(m.MonochromeEnabled);
-            _monochromeColor = new List<Color>(m.MonochromeColor);
-            _monochromeMix = new List<double>(m.MonochromeMix);
-            _posterizeEnabled = new List<bool>(m.PosterizeEnabled);
-            _posterizeLevels = new List<int>(m.PosterizeLevels);
+
+            _ambientColors = RestoreList(m.AmbientColors, Color.FromRgb(50, 50, 50));
+            _lightColors = RestoreList(m.LightColors, Colors.White);
+            _diffuseIntensities = RestoreList(m.DiffuseIntensities, 1.0);
+            _specularIntensities = RestoreList(m.SpecularIntensities, 0.5);
+            _shininesses = RestoreList(m.Shininesses, 20.0);
+            _toonEnabled = RestoreList(m.ToonEnabled, false);
+            _toonSteps = RestoreList(m.ToonSteps, 4);
+            _toonSmoothness = RestoreList(m.ToonSmoothness, 0.05);
+            _outlineEnabled = RestoreList(m.OutlineEnabled, false);
+            _outlineColor = RestoreList(m.OutlineColor, Colors.Black);
+            _outlineWidth = RestoreList(m.OutlineWidth, 1.0);
+            _outlinePower = RestoreList(m.OutlinePower, 2.0);
+            _rimEnabled = RestoreList(m.RimEnabled, false);
+            _rimColor = RestoreList(m.RimColor, Colors.White);
+            _rimIntensity = RestoreList(m.RimIntensity, 1.0);
+            _rimPower = RestoreList(m.RimPower, 3.0);
+            _fogEnabled = RestoreList(m.FogEnabled, false);
+            _fogColor = RestoreList(m.FogColor, Colors.Gray);
+            _fogStart = RestoreList(m.FogStart, 10.0);
+            _fogEnd = RestoreList(m.FogEnd, 100.0);
+            _fogDensity = RestoreList(m.FogDensity, 1.0);
+            _saturation = RestoreList(m.Saturation, 1.0);
+            _contrast = RestoreList(m.Contrast, 1.0);
+            _gamma = RestoreList(m.Gamma, 1.0);
+            _brightnessPost = RestoreList(m.BrightnessPost, 0.0);
+            _vignetteEnabled = RestoreList(m.VignetteEnabled, false);
+            _vignetteColor = RestoreList(m.VignetteColor, Colors.Black);
+            _vignetteIntensity = RestoreList(m.VignetteIntensity, 0.5);
+            _vignetteRadius = RestoreList(m.VignetteRadius, 0.8);
+            _vignetteSoftness = RestoreList(m.VignetteSoftness, 0.3);
+            _chromAbEnabled = RestoreList(m.ChromAbEnabled, false);
+            _chromAbIntensity = RestoreList(m.ChromAbIntensity, 0.005);
+            _scanlineEnabled = RestoreList(m.ScanlineEnabled, false);
+            _scanlineIntensity = RestoreList(m.ScanlineIntensity, 0.2);
+            _scanlineFrequency = RestoreList(m.ScanlineFrequency, 100.0);
+            _monochromeEnabled = RestoreList(m.MonochromeEnabled, false);
+            _monochromeColor = RestoreList(m.MonochromeColor, Colors.White);
+            _monochromeMix = RestoreList(m.MonochromeMix, 1.0);
+            _posterizeEnabled = RestoreList(m.PosterizeEnabled, false);
+            _posterizeLevels = RestoreList(m.PosterizeLevels, 8);
 
             OnPropertyChanged(string.Empty);
         }
 
-        public override void Initialize()
+        private List<T> RestoreList<T>(List<T>? source, T defaultValue)
         {
-            EnsureCount(_ambientColors, Color.FromRgb(50, 50, 50));
-            EnsureCount(_lightColors, Colors.White);
-            EnsureCount(_diffuseIntensities, 1.0);
-            EnsureCount(_specularIntensities, 0.5);
-            EnsureCount(_shininesses, 20.0);
-            EnsureCount(_toonEnabled, false);
-            EnsureCount(_toonSteps, 4);
-            EnsureCount(_toonSmoothness, 0.05);
-            EnsureCount(_outlineEnabled, false);
-            EnsureCount(_outlineColor, Colors.Black);
-            EnsureCount(_outlineWidth, 1.0);
-            EnsureCount(_outlinePower, 2.0);
-            EnsureCount(_rimEnabled, false);
-            EnsureCount(_rimColor, Colors.White);
-            EnsureCount(_rimIntensity, 1.0);
-            EnsureCount(_rimPower, 3.0);
-            EnsureCount(_fogEnabled, false);
-            EnsureCount(_fogColor, Colors.Gray);
-            EnsureCount(_fogStart, 10.0);
-            EnsureCount(_fogEnd, 100.0);
-            EnsureCount(_fogDensity, 1.0);
-            EnsureCount(_saturation, 1.0);
-            EnsureCount(_contrast, 1.0);
-            EnsureCount(_gamma, 1.0);
-            EnsureCount(_brightnessPost, 0.0);
-            EnsureCount(_vignetteEnabled, false);
-            EnsureCount(_vignetteColor, Colors.Black);
-            EnsureCount(_vignetteIntensity, 0.5);
-            EnsureCount(_vignetteRadius, 0.8);
-            EnsureCount(_vignetteSoftness, 0.3);
-            EnsureCount(_chromAbEnabled, false);
-            EnsureCount(_chromAbIntensity, 0.005);
-            EnsureCount(_scanlineEnabled, false);
-            EnsureCount(_scanlineIntensity, 0.2);
-            EnsureCount(_scanlineFrequency, 100.0);
-            EnsureCount(_monochromeEnabled, false);
-            EnsureCount(_monochromeColor, Colors.White);
-            EnsureCount(_monochromeMix, 1.0);
-            EnsureCount(_posterizeEnabled, false);
-            EnsureCount(_posterizeLevels, 8);
+            var list = source != null ? new List<T>(source) : new List<T>();
+            if (list.Count < MaxWorlds)
+            {
+                list.AddRange(Enumerable.Repeat(defaultValue, MaxWorlds - list.Count));
+            }
+            return list;
         }
 
-        private void EnsureCount<T>(List<T> list, T defaultValue)
+        public override void Initialize()
         {
+            EnsureCount(ref _ambientColors, Color.FromRgb(50, 50, 50));
+            EnsureCount(ref _lightColors, Colors.White);
+            EnsureCount(ref _diffuseIntensities, 1.0);
+            EnsureCount(ref _specularIntensities, 0.5);
+            EnsureCount(ref _shininesses, 20.0);
+            EnsureCount(ref _toonEnabled, false);
+            EnsureCount(ref _toonSteps, 4);
+            EnsureCount(ref _toonSmoothness, 0.05);
+            EnsureCount(ref _outlineEnabled, false);
+            EnsureCount(ref _outlineColor, Colors.Black);
+            EnsureCount(ref _outlineWidth, 1.0);
+            EnsureCount(ref _outlinePower, 2.0);
+            EnsureCount(ref _rimEnabled, false);
+            EnsureCount(ref _rimColor, Colors.White);
+            EnsureCount(ref _rimIntensity, 1.0);
+            EnsureCount(ref _rimPower, 3.0);
+            EnsureCount(ref _fogEnabled, false);
+            EnsureCount(ref _fogColor, Colors.Gray);
+            EnsureCount(ref _fogStart, 10.0);
+            EnsureCount(ref _fogEnd, 100.0);
+            EnsureCount(ref _fogDensity, 1.0);
+            EnsureCount(ref _saturation, 1.0);
+            EnsureCount(ref _contrast, 1.0);
+            EnsureCount(ref _gamma, 1.0);
+            EnsureCount(ref _brightnessPost, 0.0);
+            EnsureCount(ref _vignetteEnabled, false);
+            EnsureCount(ref _vignetteColor, Colors.Black);
+            EnsureCount(ref _vignetteIntensity, 0.5);
+            EnsureCount(ref _vignetteRadius, 0.8);
+            EnsureCount(ref _vignetteSoftness, 0.3);
+            EnsureCount(ref _chromAbEnabled, false);
+            EnsureCount(ref _chromAbIntensity, 0.005);
+            EnsureCount(ref _scanlineEnabled, false);
+            EnsureCount(ref _scanlineIntensity, 0.2);
+            EnsureCount(ref _scanlineFrequency, 100.0);
+            EnsureCount(ref _monochromeEnabled, false);
+            EnsureCount(ref _monochromeColor, Colors.White);
+            EnsureCount(ref _monochromeMix, 1.0);
+            EnsureCount(ref _posterizeEnabled, false);
+            EnsureCount(ref _posterizeLevels, 8);
+        }
+
+        private void EnsureCount<T>(ref List<T> list, T defaultValue)
+        {
+            if (list == null) list = new List<T>();
             if (list.Count < MaxWorlds)
             {
                 list.AddRange(Enumerable.Repeat(defaultValue, MaxWorlds - list.Count));

@@ -80,10 +80,23 @@ namespace ObjLoader.Rendering
             ConstantBuffer = device.CreateBuffer(cbDesc);
             _disposer.Collect(ConstantBuffer);
 
+            var rasterDescCullNone = new RasterizerDescription(CullMode.None, FillMode.Solid)
+            {
+                MultisampleEnable = true,
+                AntialiasedLineEnable = true
+            };
+            CullNoneRasterizerState = device.CreateRasterizerState(rasterDescCullNone);
+            _disposer.Collect(CullNoneRasterizerState);
+
             _currentCullMode = RenderCullMode.None;
             RasterizerState = CreateRasterizerState(_currentCullMode, false);
+
+            if (RasterizerState != CullNoneRasterizerState)
+            {
+                _disposer.Collect(RasterizerState);
+            }
+
             WireframeRasterizerState = CreateRasterizerState(RenderCullMode.Back, true);
-            _disposer.Collect(RasterizerState);
             _disposer.Collect(WireframeRasterizerState);
 
             var depthDesc = new DepthStencilDescription(true, DepthWriteMask.All, ComparisonFunction.LessEqual);
@@ -93,14 +106,6 @@ namespace ObjLoader.Rendering
             var depthDescNoWrite = new DepthStencilDescription(true, DepthWriteMask.Zero, ComparisonFunction.LessEqual);
             DepthStencilStateNoWrite = device.CreateDepthStencilState(depthDescNoWrite);
             _disposer.Collect(DepthStencilStateNoWrite);
-
-            var rasterDescCullNone = new RasterizerDescription(CullMode.None, FillMode.Solid)
-            {
-                MultisampleEnable = true,
-                AntialiasedLineEnable = true
-            };
-            CullNoneRasterizerState = device.CreateRasterizerState(rasterDescCullNone);
-            _disposer.Collect(CullNoneRasterizerState);
 
             var sampDesc = new SamplerDescription(Filter.MinMagMipLinear, TextureAddressMode.Wrap, TextureAddressMode.Wrap, TextureAddressMode.Wrap, 0, 1, ComparisonFunction.Always, new Vortice.Mathematics.Color4(0, 0, 0, 0), 0, float.MaxValue);
             SamplerState = device.CreateSamplerState(sampDesc);
@@ -165,15 +170,28 @@ namespace ObjLoader.Rendering
         {
             if (_currentCullMode != mode)
             {
-                _disposer.RemoveAndDispose(ref _rasterizerState);
+                if (_rasterizerState != CullNoneRasterizerState)
+                {
+                    _disposer.RemoveAndDispose(ref _rasterizerState);
+                }
+
                 _currentCullMode = mode;
                 RasterizerState = CreateRasterizerState(mode, false);
-                _disposer.Collect(RasterizerState);
+
+                if (RasterizerState != CullNoneRasterizerState)
+                {
+                    _disposer.Collect(RasterizerState);
+                }
             }
         }
 
         private ID3D11RasterizerState CreateRasterizerState(RenderCullMode mode, bool wireframe)
         {
+            if (mode == RenderCullMode.None && !wireframe && CullNoneRasterizerState != null)
+            {
+                return CullNoneRasterizerState;
+            }
+
             CullMode cull = mode switch
             {
                 RenderCullMode.Front => CullMode.Front,
