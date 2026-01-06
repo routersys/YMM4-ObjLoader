@@ -10,6 +10,7 @@ namespace ObjLoader.ViewModels
     public class ShaderFileSelectorViewModel : Bindable
     {
         private readonly ItemProperty _property;
+        private readonly string _filter;
         private readonly string[] _extensions;
         private bool _isSelecting;
         private int _notificationTrigger;
@@ -75,10 +76,11 @@ namespace ObjLoader.ViewModels
 
         public ICommand SelectFileCommand { get; }
 
-        public ShaderFileSelectorViewModel(ItemProperty property, string[] extensions)
+        public ShaderFileSelectorViewModel(ItemProperty property, string filter, IEnumerable<string> extensions)
         {
             _property = property;
-            _extensions = extensions;
+            _filter = filter;
+            _extensions = extensions.Select(e => e.ToLowerInvariant()).ToArray();
             SelectFileCommand = new ActionCommand(_ => true, _ => SelectFile());
 
             UpdateFileList();
@@ -86,10 +88,9 @@ namespace ObjLoader.ViewModels
 
         private void SelectFile()
         {
-            var filter = string.Join(";", _extensions.Select(e => "*" + e));
             var dialog = new OpenFileDialog
             {
-                Filter = $"Shader Files|{filter}|All Files|*.*",
+                Filter = _filter,
                 FileName = FilePath
             };
 

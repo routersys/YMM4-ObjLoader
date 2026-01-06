@@ -59,12 +59,17 @@ namespace ObjLoader.Plugin
         private bool _isSettingWindowOpen;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.File), Description = nameof(Texts.File_Desc), ResourceType = typeof(Texts))]
-        [ModelFileSelector(".obj", ".pmx", ".stl", ".glb", ".gltf", ".ply", ".3mf", ".blend", ".dae", ".fbx", ".x", ".3ds", ".dxf", ".ifc", ".lwo", ".lws", ".lxo", ".ac", ".ms3d", ".cob", ".scn", ".bvh", ".mdl", ".md2", ".md3", ".pk3", ".mdc", ".md5mesh", ".smd", ".vta", ".ogex", ".3d", ".b3d", ".q3d", ".q3s", ".nff", ".off", ".raw", ".ter", ".hmp", ".ndo", ".xgl", ".zgl", ".xml", ".ase")]
+        [ModelFileSelector(
+            nameof(Texts.Filter_3DModelFiles),
+            ".obj", ".pmx", ".stl", ".glb", ".gltf", ".ply", ".3mf", ".dae", ".fbx", ".x", ".3ds", ".dxf", ".ifc", ".lwo", ".lws", ".lxo", ".ac", ".ms3d", ".cob", ".scn", ".bvh", ".mdl", ".md2", ".md3", ".pk3", ".mdc", ".md5mesh", ".smd", ".vta", ".ogex", ".3d", ".b3d", ".q3d", ".q3s", ".nff", ".off", ".raw", ".ter", ".hmp", ".ndo", ".xgl", ".zgl", ".xml", ".ase",
+            nameof(Texts.Filter_BlenderDeprecated),
+            ".blend"
+            )]
         public string FilePath { get => _filePath; set => Set(ref _filePath, value); }
         private string _filePath = string.Empty;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Shader), Description = nameof(Texts.Shader_Desc), ResourceType = typeof(Texts))]
-        [ShaderFileSelector(".hlsl", ".fx", ".shader", ".cg", ".glsl", ".vert", ".frag", ".txt")]
+        [ShaderFileSelector(nameof(Texts.Filter_ShaderFiles), ".hlsl", ".fx", ".shader", ".cg", ".glsl", ".vert", ".frag", ".txt")]
         public string ShaderFilePath { get => _shaderFilePath; set => Set(ref _shaderFilePath, value); }
         private string _shaderFilePath = string.Empty;
 

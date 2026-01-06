@@ -279,4 +279,9 @@
 <data name="PosterizeLevels" xml:space="preserve"><value>Levels</value></data>
 <data name="PosterizeLevels_Desc" xml:space="preserve"><value>Sets the number of levels for posterization.</value></data>
 <data name="WorldId_Desc" xml:space="preserve"><value>Specifies the World ID to switch settings.</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Visual C++ Redistributable Missing</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>Visual C++ 2015-2022 Redistributable (x64) is not installed. Some features may not work correctly. Please install it.</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>3D Model Files</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender File (Deprecated)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>Shader Files</value></data>
 </root>

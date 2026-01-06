@@ -279,4 +279,9 @@
 <data name="PosterizeLevels" xml:space="preserve"><value>Niveles</value></data>
 <data name="PosterizeLevels_Desc" xml:space="preserve"><value>Establece el número de niveles para la posterización.</value></data>
 <data name="WorldId_Desc" xml:space="preserve"><value>Especifica el ID del mundo para cambiar la configuración.</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Falta Visual C++ Redistributable</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>Visual C++ 2015-2022 Redistributable (x64) no está instalado. Es posible que algunas funciones no funcionen correctamente. Por favor instálelo.</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>Archivos de modelo 3D</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Archivo Blender (Obsoleto)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>Archivos de sombreador</value></data>
 </root>

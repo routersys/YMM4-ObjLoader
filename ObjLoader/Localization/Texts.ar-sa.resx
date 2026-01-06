@@ -278,4 +278,9 @@
 <data name="PosterizeLevels" xml:space="preserve"><value>مستويات</value></data>
 <data name="PosterizeLevels_Desc" xml:space="preserve"><value>يحدد عدد المستويات للملصق.</value></data>
 <data name="WorldId_Desc" xml:space="preserve"><value>يحدد معرف العالم لتبديل الإعدادات.</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Visual C++ Redistributable مفقود</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>Visual C++ 2015-2022 Redistributable (x64) غير مثبت. قد لا تعمل بعض الميزات بشكل صحيح. الرجاء تثبيته.</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>ملفات نموذج 3D</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>ملف Blender (مهمل)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>ملفات التظليل</value></data>
 </root>

@@ -279,4 +279,9 @@
 <data name="PosterizeLevels" xml:space="preserve"><value>色の段階数</value></data>
 <data name="PosterizeLevels_Desc" xml:space="preserve"><value>色の段階数を設定します。数値が小さいほど極端な色使いになります。</value></data>
 <data name="WorldId_Desc" xml:space="preserve"><value>設定を切り替えるワールドIDを指定します。</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Visual C++ 再頒布可能パッケージ不足</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>Visual C++ 2015-2022 再頒布可能パッケージ (x64) がインストールされていません。機能が正しく動作しない可能性があります。インストールしてください。</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>3D モデルファイル</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender ファイル (非推奨)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>シェーダーファイル</value></data>
 </root>

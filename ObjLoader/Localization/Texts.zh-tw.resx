@@ -279,4 +279,9 @@
 <data name="PosterizeLevels" xml:space="preserve"><value>色階數</value></data>
 <data name="PosterizeLevels_Desc" xml:space="preserve"><value>設定色調分離的色階數。</value></data>
 <data name="WorldId_Desc" xml:space="preserve"><value>指定要切換設定的世界ID。</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Visual C++ 可轉散發套件遺失</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>未安裝 Visual C++ 2015-2022 可轉散發套件 (x64)。某些功能可能無法正常運作。請安裝。</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>3D 模型檔案</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender 檔案 (不推薦)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>著色器檔案</value></data>
 </root>

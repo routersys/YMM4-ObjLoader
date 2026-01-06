@@ -10,6 +10,7 @@ namespace ObjLoader.ViewModels
     public class ModelFileSelectorViewModel : Bindable
     {
         private readonly ItemProperty _property;
+        private readonly string _filter;
         private readonly string[] _extensions;
         private readonly ObjModelLoader _loader;
         private bool _isSelecting;
@@ -45,10 +46,11 @@ namespace ObjLoader.ViewModels
 
         public ICommand SelectFileCommand { get; }
 
-        public ModelFileSelectorViewModel(ItemProperty property, string[] extensions)
+        public ModelFileSelectorViewModel(ItemProperty property, string filter, IEnumerable<string> extensions)
         {
             _property = property;
-            _extensions = extensions;
+            _filter = filter;
+            _extensions = extensions.Select(e => e.ToLowerInvariant()).ToArray();
             _loader = new ObjModelLoader();
             SelectFileCommand = new ActionCommand(_ => true, _ => SelectFile());
             UpdateFileList();
@@ -56,10 +58,9 @@ namespace ObjLoader.ViewModels
 
         private void SelectFile()
         {
-            var filter = string.Join(";", _extensions.Select(e => "*" + e));
             var dialog = new OpenFileDialog
             {
-                Filter = $"3D Model Files|{filter}|All Files|*.*",
+                Filter = _filter,
                 FileName = FilePath
             };
 

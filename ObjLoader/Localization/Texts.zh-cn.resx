@@ -279,4 +279,9 @@
 <data name="PosterizeLevels" xml:space="preserve"><value>色阶数</value></data>
 <data name="PosterizeLevels_Desc" xml:space="preserve"><value>设置色调分离的色阶数。</value></data>
 <data name="WorldId_Desc" xml:space="preserve"><value>指定要切换设置的世界ID。</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Visual C++ 可再发行组件丢失</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>未安装 Visual C++ 2015-2022 可再发行组件 (x64)。某些功能可能无法正常工作。请安装。</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>3D 模型文件</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>Blender 文件 (不推荐)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>着色器文件</value></data>
 </root>
