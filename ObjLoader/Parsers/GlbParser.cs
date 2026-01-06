@@ -315,6 +315,9 @@ namespace ObjLoader.Parsers
 
                     int vertexOffset = allVertices.Count;
 
+                    Vector3 partMin = new Vector3(float.MaxValue);
+                    Vector3 partMax = new Vector3(float.MinValue);
+
                     for (int i = 0; i < positions.Length; i++)
                     {
                         var p = Vector3.Transform(positions[i], transform);
@@ -323,6 +326,9 @@ namespace ObjLoader.Parsers
                         {
                             n = Vector3.TransformNormal(normals[i], transform);
                         }
+
+                        partMin = Vector3.Min(partMin, p);
+                        partMax = Vector3.Max(partMax, p);
 
                         var v = new ObjVertex
                         {
@@ -397,7 +403,8 @@ namespace ObjLoader.Parsers
                         IndexCount = allIndices.Count - startIndex,
                         BaseColor = baseColor,
                         Metallic = metallic,
-                        Roughness = roughness
+                        Roughness = roughness,
+                        Center = positions.Length > 0 ? (partMin + partMax) * 0.5f : Vector3.Zero
                     });
                 }
             }

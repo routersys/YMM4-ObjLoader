@@ -146,12 +146,26 @@ namespace ObjLoader.Parsers
                 string texPath = "";
                 if (texIdx >= 0 && texIdx < tCount) texPath = texturePaths[texIdx];
 
+                Vector3 partMin = new Vector3(float.MaxValue);
+                Vector3 partMax = new Vector3(float.MinValue);
+                for (int k = 0; k < faceCount; k++)
+                {
+                    int vIdx = indices[indexOffset + k];
+                    if (vIdx >= 0 && vIdx < vertices.Length)
+                    {
+                        var p = vertices[vIdx].Position;
+                        partMin = Vector3.Min(partMin, p);
+                        partMax = Vector3.Max(partMax, p);
+                    }
+                }
+
                 parts.Add(new ModelPart
                 {
                     TexturePath = texPath,
                     IndexOffset = indexOffset,
                     IndexCount = faceCount,
-                    BaseColor = diff
+                    BaseColor = diff,
+                    Center = faceCount > 0 ? (partMin + partMax) * 0.5f : Vector3.Zero
                 });
 
                 indexOffset += faceCount;

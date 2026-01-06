@@ -66,6 +66,8 @@ namespace ObjLoader.Parsers
                                 part.TexturePath = texPath;
                             }
                         }
+
+                        part.Center = model.ModelCenter;
                         model.Parts[i] = part;
                     }
                 }
@@ -117,6 +119,7 @@ namespace ObjLoader.Parsers
                         bw.Write(p.IndexOffset);
                         bw.Write(p.IndexCount);
                         bw.Write(p.BaseColor.X); bw.Write(p.BaseColor.Y); bw.Write(p.BaseColor.Z); bw.Write(p.BaseColor.W);
+                        bw.Write(p.Center.X); bw.Write(p.Center.Y); bw.Write(p.Center.Z);
                     }
                 }
             }
@@ -160,7 +163,8 @@ namespace ObjLoader.Parsers
                         TexturePath = br.ReadString(),
                         IndexOffset = br.ReadInt32(),
                         IndexCount = br.ReadInt32(),
-                        BaseColor = new Vector4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle())
+                        BaseColor = new Vector4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle()),
+                        Center = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle())
                     });
                 }
 
@@ -249,7 +253,8 @@ namespace ObjLoader.Parsers
                         TexturePath = _textureFile,
                         IndexOffset = 0,
                         IndexCount = indices.Count,
-                        BaseColor = Vector4.One
+                        BaseColor = Vector4.One,
+                        Center = center
                     }
                 };
 

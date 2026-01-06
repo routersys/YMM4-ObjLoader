@@ -163,7 +163,7 @@ namespace ObjLoader.Parsers
 
             var verts = vertices.ToArray();
             ModelHelper.CalculateBounds(verts, out Vector3 c, out float s);
-            var parts = new List<ModelPart> { new ModelPart { TexturePath = string.Empty, IndexOffset = 0, IndexCount = indices.Length, BaseColor = Vector4.One } };
+            var parts = new List<ModelPart> { new ModelPart { TexturePath = string.Empty, IndexOffset = 0, IndexCount = indices.Length, BaseColor = Vector4.One, Center = c } };
             return new ObjModel { Vertices = verts, Indices = indices, Parts = parts, ModelCenter = c, ModelScale = s };
         }
     }

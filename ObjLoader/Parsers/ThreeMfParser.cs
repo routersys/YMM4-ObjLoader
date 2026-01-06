@@ -90,7 +90,7 @@ namespace ObjLoader.Parsers
                 var iArray = inds.ToArray();
                 ModelHelper.CalculateNormals(vArray, iArray);
                 ModelHelper.CalculateBounds(vArray, out Vector3 c, out float s);
-                var parts = new List<ModelPart> { new ModelPart { TexturePath = string.Empty, IndexOffset = 0, IndexCount = iArray.Length, BaseColor = Vector4.One } };
+                var parts = new List<ModelPart> { new ModelPart { TexturePath = string.Empty, IndexOffset = 0, IndexCount = iArray.Length, BaseColor = Vector4.One, Center = c } };
                 return new ObjModel { Vertices = vArray, Indices = iArray, Parts = parts, ModelCenter = c, ModelScale = s };
             }
             catch
