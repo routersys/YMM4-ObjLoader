@@ -34,7 +34,8 @@ namespace ObjLoader.Parsers
                            PostProcessSteps.CalculateTangentSpace |
                            PostProcessSteps.MakeLeftHanded |
                            PostProcessSteps.FlipWindingOrder |
-                           PostProcessSteps.GlobalScale;
+                           PostProcessSteps.GlobalScale |
+                           PostProcessSteps.ValidateDataStructure;
 
                 var scene = context.ImportFile(path, steps);
                 if (scene == null || !scene.HasMeshes) return new ObjModel();
@@ -79,11 +80,21 @@ namespace ObjLoader.Parsers
                     var mesh = scene.Meshes[meshIndex];
                     int vertexOffset = vertices.Count;
 
+                    int uvChannelIndex = 0;
+                    for (int c = 0; c < mesh.TextureCoordinateChannelCount; c++)
+                    {
+                        if (mesh.HasTextureCoords(c))
+                        {
+                            uvChannelIndex = c;
+                            break;
+                        }
+                    }
+
                     for (int i = 0; i < mesh.VertexCount; i++)
                     {
                         var vRaw = mesh.Vertices[i];
                         var nRaw = mesh.HasNormals ? mesh.Normals[i] : new Vector3D(0, 0, 0);
-                        var tRaw = mesh.HasTextureCoords(0) ? mesh.TextureCoordinateChannels[0][i] : new Vector3D(0, 0, 0);
+                        var tRaw = mesh.HasTextureCoords(uvChannelIndex) ? mesh.TextureCoordinateChannels[uvChannelIndex][i] : new Vector3D(0, 0, 0);
                         var cRaw = mesh.HasVertexColors(0) ? mesh.VertexColorChannels[0][i] : new Color4D(1, 1, 1, 1);
 
                         var pos = Vector3.Transform(new Vector3(vRaw.X, vRaw.Y, vRaw.Z), globalTransform);
@@ -117,69 +128,18 @@ namespace ObjLoader.Parsers
                         if (mat.HasColorDiffuse)
                         {
                             var md = mat.ColorDiffuse;
-                            if (md.R > 0 || md.G > 0 || md.B > 0)
-                            {
-                                baseColor = new Vector4(md.R, md.G, md.B, md.A);
-                            }
+                            baseColor = new Vector4(md.R, md.G, md.B, md.A);
                         }
 
-                        if (mat.HasTextureDiffuse)
+                        var texTypes = new[] { TextureType.Diffuse, (TextureType)12, TextureType.Unknown, TextureType.Emissive };
+                        foreach (var type in texTypes)
                         {
-                            var slot = mat.TextureDiffuse;
-                            var rawPath = slot.FilePath;
-
-                            if (!string.IsNullOrEmpty(rawPath))
+                            if (mat.GetMaterialTextureCount(type) > 0)
                             {
-                                if (rawPath.StartsWith("*"))
+                                if (mat.GetMaterialTexture(type, 0, out var slot))
                                 {
-                                    if (int.TryParse(rawPath.Substring(1), out int texIndex) && texIndex >= 0 && texIndex < scene.TextureCount)
-                                    {
-                                        var embeddedTex = scene.Textures[texIndex];
-                                        var ext = ".png";
-                                        if (!string.IsNullOrEmpty(embeddedTex.CompressedFormatHint))
-                                        {
-                                            ext = "." + embeddedTex.CompressedFormatHint;
-                                        }
-
-                                        var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{ext}");
-
-                                        if (embeddedTex.IsCompressed)
-                                        {
-                                            File.WriteAllBytes(tempPath, embeddedTex.CompressedData);
-                                            texPath = tempPath;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    var cleanPath = rawPath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
-                                    var fileName = Path.GetFileName(cleanPath);
-
-                                    var candidates = new List<string>
-                                    {
-                                        rawPath,
-                                        cleanPath
-                                    };
-
-                                    if (!Path.IsPathRooted(cleanPath))
-                                    {
-                                        candidates.Add(Path.Combine(modelDir, cleanPath));
-                                    }
-
-                                    candidates.Add(Path.Combine(modelDir, fileName));
-                                    candidates.Add(Path.Combine(modelDir, "textures", fileName));
-                                    candidates.Add(Path.Combine(modelDir, "Textures", fileName));
-                                    candidates.Add(Path.Combine(modelDir, "texture", fileName));
-                                    candidates.Add(Path.Combine(modelDir, "Texture", fileName));
-
-                                    foreach (var p in candidates)
-                                    {
-                                        if (File.Exists(p))
-                                        {
-                                            texPath = p;
-                                            break;
-                                        }
-                                    }
+                                    texPath = FindTexture(scene, slot, modelDir);
+                                    if (!string.IsNullOrEmpty(texPath)) break;
                                 }
                             }
                         }
@@ -202,6 +162,108 @@ namespace ObjLoader.Parsers
             {
                 ProcessNode(child, globalTransform, scene, vertices, indices, parts, modelDir);
             }
+        }
+
+        private string FindTexture(Scene scene, TextureSlot slot, string modelDir)
+        {
+            var rawPath = slot.FilePath;
+            if (string.IsNullOrEmpty(rawPath)) return string.Empty;
+
+            if (rawPath.StartsWith("*"))
+            {
+                if (int.TryParse(rawPath.Substring(1), out int texIndex) && texIndex >= 0 && texIndex < scene.TextureCount)
+                {
+                    var embeddedTex = scene.Textures[texIndex];
+                    var ext = ".png";
+                    if (!string.IsNullOrEmpty(embeddedTex.CompressedFormatHint))
+                    {
+                        ext = "." + embeddedTex.CompressedFormatHint;
+                    }
+
+                    var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}{ext}");
+
+                    if (embeddedTex.IsCompressed)
+                    {
+                        File.WriteAllBytes(tempPath, embeddedTex.CompressedData);
+                        return tempPath;
+                    }
+                    else
+                    {
+
+                    }
+                }
+                return string.Empty;
+            }
+
+            var cleanPath = rawPath;
+            try
+            {
+                cleanPath = Uri.UnescapeDataString(rawPath);
+            }
+            catch { }
+
+            if (cleanPath.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+            {
+                cleanPath = cleanPath.Substring(7);
+                if (Path.DirectorySeparatorChar == '\\' && cleanPath.StartsWith("/") && cleanPath.Length > 2 && cleanPath[2] == ':')
+                {
+                    cleanPath = cleanPath.Substring(1);
+                }
+            }
+
+            cleanPath = cleanPath.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+            var candidates = new List<string>();
+            candidates.Add(cleanPath);
+            if (rawPath != cleanPath) candidates.Add(rawPath);
+
+            var fileName = Path.GetFileName(cleanPath);
+
+            if (!string.IsNullOrEmpty(modelDir))
+            {
+                try { candidates.Add(Path.Combine(modelDir, cleanPath)); } catch { }
+
+                if (!string.IsNullOrEmpty(fileName))
+                {
+                    candidates.Add(Path.Combine(modelDir, fileName));
+
+                    var subDirs = new[] { "textures", "Textures", "images", "Images", "texture", "Texture", "tex", "Tex" };
+                    foreach (var sub in subDirs)
+                    {
+                        candidates.Add(Path.Combine(modelDir, sub, fileName));
+                    }
+
+                    var parentDir = Directory.GetParent(modelDir)?.FullName;
+                    if (parentDir != null)
+                    {
+                        candidates.Add(Path.Combine(parentDir, fileName));
+                        foreach (var sub in subDirs)
+                        {
+                            candidates.Add(Path.Combine(parentDir, sub, fileName));
+                        }
+                    }
+                }
+            }
+
+            foreach (var p in candidates)
+            {
+                if (File.Exists(p)) return p;
+            }
+
+            if (!string.IsNullOrEmpty(fileName) && !string.IsNullOrEmpty(modelDir))
+            {
+                var noExt = Path.GetFileNameWithoutExtension(fileName);
+                var altExts = new[] { ".png", ".jpg", ".jpeg", ".bmp", ".tga", ".tif", ".tiff", ".dds" };
+
+                foreach (var ext in altExts)
+                {
+                    var newName = noExt + ext;
+                    var tryPath = Path.Combine(modelDir, newName);
+                    if (File.Exists(tryPath)) return tryPath;
+                }
+            }
+
+            return string.Empty;
         }
 
         private Matrix4x4 ToNumerics(Assimp.Matrix4x4 m)
