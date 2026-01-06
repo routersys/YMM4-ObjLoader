@@ -59,7 +59,7 @@ namespace ObjLoader.Plugin
         private bool _isSettingWindowOpen;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.File), Description = nameof(Texts.File_Desc), ResourceType = typeof(Texts))]
-        [ModelFileSelector(".obj", ".pmx", ".stl", ".glb", ".ply", ".3mf")]
+        [ModelFileSelector(".obj", ".pmx", ".stl", ".glb", ".gltf", ".ply", ".3mf", ".blend", ".dae", ".fbx", ".x", ".3ds", ".dxf", ".ifc", ".lwo", ".lws", ".lxo", ".ac", ".ms3d", ".cob", ".scn", ".bvh", ".mdl", ".md2", ".md3", ".pk3", ".mdc", ".md5mesh", ".smd", ".vta", ".ogex", ".3d", ".b3d", ".q3d", ".q3s", ".nff", ".off", ".raw", ".ter", ".hmp", ".ndo", ".xgl", ".zgl", ".xml", ".ase")]
         public string FilePath { get => _filePath; set => Set(ref _filePath, value); }
         private string _filePath = string.Empty;
 

@@ -37,6 +37,10 @@
 	</ItemDefinitionGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="AssimpNet" Version="4.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<HlslShader Update="Shaders\ObjLoaderVS.hlsl">
 			<ShaderType>vs_5_0</ShaderType>
 			<EntryPoint>VS</EntryPoint>
@@ -56,10 +60,7 @@
 		</HlslShader>
 	</ItemGroup>
 
-	<Target Name="CompileHLSLShaders"
-			BeforeTargets="PrepareForBuild"
-			Inputs="@(HlslShader)"
-			Outputs="@(HlslShader->'%(ObjectFileOutput)')">
+	<Target Name="CompileHLSLShaders" BeforeTargets="PrepareForBuild" Inputs="@(HlslShader)" Outputs="@(HlslShader->'%(ObjectFileOutput)')">
 
 		<Message Text="Compiling HLSL Shader: %(HlslShader.Identity) [Type: %(HlslShader.ShaderType), Entry: %(HlslShader.EntryPoint)]" Importance="high" />
 
@@ -67,13 +68,10 @@
 
 		<MakeDir Directories="$([System.IO.Path]::GetDirectoryName('%(HlslShader.ObjectFileOutput)'))" />
 
-		<Exec Command="&quot;$(FxcPath)&quot; /nologo /T %(HlslShader.ShaderType) /E %(HlslShader.EntryPoint) /Fo &quot;%(HlslShader.ObjectFileOutput)&quot; &quot;%(HlslShader.FullPath)&quot;"
-			  Condition="Exists('%(HlslShader.FullPath)')" />
+		<Exec Command="&quot;$(FxcPath)&quot; /nologo /T %(HlslShader.ShaderType) /E %(HlslShader.EntryPoint) /Fo &quot;%(HlslShader.ObjectFileOutput)&quot; &quot;%(HlslShader.FullPath)&quot;" Condition="Exists('%(HlslShader.FullPath)')" />
 	</Target>
 
-	<Target Name="IncludeCompiledShaders"
-			AfterTargets="CompileHLSLShaders"
-			BeforeTargets="PrepareResources">
+	<Target Name="IncludeCompiledShaders" AfterTargets="CompileHLSLShaders" BeforeTargets="PrepareResources">
 
 		<ItemGroup>
 			<CompiledShaders Include="$(IntermediateOutputPath)Shaders\**\*.cso" />

@@ -20,7 +20,8 @@ namespace ObjLoader.Parsers
                 new GlbParser(),
                 new ThreeMfParser(),
                 new PlyParser(),
-                new WavefrontObjParser()
+                new WavefrontObjParser(),
+                new AssimpParser()
             };
         }
 
