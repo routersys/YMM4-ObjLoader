@@ -3,7 +3,6 @@ using ObjLoader.Rendering;
 using ObjLoader.Attributes;
 using ObjLoader.Localization;
 using ObjLoader.Services;
-using ObjLoader.Utilities;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
@@ -13,46 +12,16 @@ using YukkuriMovieMaker.Player.Video;
 using YukkuriMovieMaker.Plugin.Shape;
 using YukkuriMovieMaker.Project;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.IO;
 using System.Windows;
 using ObjLoader.Settings;
 
 namespace ObjLoader.Plugin
 {
-    public class CameraKeyframe : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        protected bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
-        }
-
-        private double _time;
-        private EasingData _easing = EasingManager.Presets.FirstOrDefault()?.Clone() ?? new EasingData();
-        private double _camX;
-        private double _camY;
-        private double _camZ;
-        private double _targetX;
-        private double _targetY;
-        private double _targetZ;
-
-        public double Time { get => _time; set => Set(ref _time, value); }
-        public EasingData Easing { get => _easing; set => Set(ref _easing, value); }
-        public double CamX { get => _camX; set => Set(ref _camX, value); }
-        public double CamY { get => _camY; set => Set(ref _camY, value); }
-        public double CamZ { get => _camZ; set => Set(ref _camZ, value); }
-        public double TargetX { get => _targetX; set => Set(ref _targetX, value); }
-        public double TargetY { get => _targetY; set => Set(ref _targetY, value); }
-        public double TargetZ { get => _targetZ; set => Set(ref _targetZ, value); }
-    }
-
     public class ObjLoaderParameter : ShapeParameterBase
     {
+        private readonly CameraService _cameraService = new CameraService();
+        private readonly ShaderService _shaderService = new ShaderService();
+
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
         [SettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
         public bool IsSettingWindowOpen { get => _isSettingWindowOpen; set => Set(ref _isSettingWindowOpen, value); }
@@ -217,33 +186,7 @@ namespace ObjLoader.Plugin
 
         public (double cx, double cy, double cz, double tx, double ty, double tz) GetCameraState(double time)
         {
-            if (Keyframes == null || Keyframes.Count == 0) return (0, 0, 0, 0, 0, 0);
-
-            var sorted = Keyframes.OrderBy(k => k.Time).ToList();
-            var prev = sorted.LastOrDefault(k => k.Time <= time);
-            var next = sorted.FirstOrDefault(k => k.Time > time);
-
-            if (prev == null && next != null) return (next.CamX, next.CamY, next.CamZ, next.TargetX, next.TargetY, next.TargetZ);
-            if (prev != null && next == null) return (prev.CamX, prev.CamY, prev.CamZ, prev.TargetX, prev.TargetY, prev.TargetZ);
-            if (prev != null && next != null)
-            {
-                double t = (time - prev.Time) / (next.Time - prev.Time);
-                double easedT = prev.Easing.Evaluate(t);
-                return (
-                    Lerp(prev.CamX, next.CamX, easedT),
-                    Lerp(prev.CamY, next.CamY, easedT),
-                    Lerp(prev.CamZ, next.CamZ, easedT),
-                    Lerp(prev.TargetX, next.TargetX, easedT),
-                    Lerp(prev.TargetY, next.TargetY, easedT),
-                    Lerp(prev.TargetZ, next.TargetZ, easedT)
-                );
-            }
-            return (0, 0, 0, 0, 0, 0);
-        }
-
-        private double Lerp(double a, double b, double t)
-        {
-            return a + (b - a) * t;
+            return _cameraService.CalculateCameraState(Keyframes, time);
         }
 
         public void SetCameraValues(double cx, double cy, double cz, double tx, double ty, double tz)
@@ -265,11 +208,7 @@ namespace ObjLoader.Plugin
 
         public string GetAdaptedShaderSource()
         {
-            if (string.IsNullOrEmpty(ShaderFilePath) || !File.Exists(ShaderFilePath)) return string.Empty;
-
-            var converter = new HlslShaderConverter();
-            var source = EncodingUtil.ReadAllText(ShaderFilePath);
-            return converter.Convert(source);
+            return _shaderService.LoadAndAdaptShader(ShaderFilePath);
         }
 
         private void OnPluginSettingsChanged(object? sender, PropertyChangedEventArgs e)
