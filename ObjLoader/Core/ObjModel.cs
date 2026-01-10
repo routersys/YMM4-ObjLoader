@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace ObjLoader.Core
 {
@@ -11,5 +9,7 @@ namespace ObjLoader.Core
         public List<ModelPart> Parts { get; set; } = new List<ModelPart>();
         public Vector3 ModelCenter { get; set; }
         public float ModelScale { get; set; } = 1.0f;
+        public string Name { get; set; } = string.Empty;
+        public string Comment { get; set; } = string.Empty;
     }
 }

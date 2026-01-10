@@ -13,6 +13,8 @@ namespace ObjLoader.ViewModels
         public string FileName { get; }
         public string FullPath => _path;
 
+        public bool IsThumbnailEnabled { get; }
+
         public ImageSource? Thumbnail
         {
             get
@@ -46,11 +48,12 @@ namespace ObjLoader.ViewModels
             }
         }
 
-        public ModelFileItem(string fileName, string fullPath, Func<string, byte[]> loader)
+        public ModelFileItem(string fileName, string fullPath, Func<string, byte[]> loader, bool isThumbnailEnabled)
         {
             FileName = fileName;
             _path = fullPath;
             _loader = loader;
+            IsThumbnailEnabled = isThumbnailEnabled;
         }
     }
 }

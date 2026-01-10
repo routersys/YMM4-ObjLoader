@@ -21,6 +21,13 @@ namespace ObjLoader.Parsers
             byte globalCount = br.ReadByte();
             var globals = br.ReadBytes(globalCount);
 
+            if (globals.Length < 8)
+            {
+                var newGlobals = new byte[8];
+                Array.Copy(globals, newGlobals, globals.Length);
+                globals = newGlobals;
+            }
+
             Encoding encoding = globals[0] == 0 ? Encoding.Unicode : Encoding.UTF8;
             int addUvCount = globals[1];
             int vertexIdxSize = globals[2];
@@ -31,13 +38,16 @@ namespace ObjLoader.Parsers
             int rigidIdxSize = globals[7];
 
             int len = br.ReadInt32();
-            fs.Seek(len, SeekOrigin.Current);
+            string name = encoding.GetString(br.ReadBytes(len)).Trim().Replace("\0", "");
+
             len = br.ReadInt32();
-            fs.Seek(len, SeekOrigin.Current);
+            string nameEn = encoding.GetString(br.ReadBytes(len));
+
             len = br.ReadInt32();
-            fs.Seek(len, SeekOrigin.Current);
+            string comment = encoding.GetString(br.ReadBytes(len)).Trim().Replace("\0", "");
+
             len = br.ReadInt32();
-            fs.Seek(len, SeekOrigin.Current);
+            string commentEn = encoding.GetString(br.ReadBytes(len));
 
             int vCount = br.ReadInt32();
             var vertices = GC.AllocateUninitializedArray<ObjVertex>(vCount, true);
@@ -48,15 +58,25 @@ namespace ObjLoader.Parsers
                 Vector3 n = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                 Vector2 uv = new Vector2(br.ReadSingle(), br.ReadSingle());
 
+                if (addUvCount > 0)
+                {
+                    int skip = addUvCount * 16;
+                    for (int k = 0; k < skip; k++) br.ReadByte();
+                }
+
                 byte weightType = br.ReadByte();
+                int weightSkip = 0;
                 switch (weightType)
                 {
-                    case 0: fs.Seek(boneIdxSize, SeekOrigin.Current); break;
-                    case 1: fs.Seek(boneIdxSize * 2 + 4, SeekOrigin.Current); break;
-                    case 2: fs.Seek(boneIdxSize * 4 + 16, SeekOrigin.Current); break;
-                    case 3: fs.Seek(boneIdxSize * 2 + 4 + 36, SeekOrigin.Current); break;
-                    case 4: fs.Seek(boneIdxSize * 4 + 16, SeekOrigin.Current); break;
+                    case 0: weightSkip = boneIdxSize; break;
+                    case 1: weightSkip = boneIdxSize * 2 + 4; break;
+                    case 2: weightSkip = boneIdxSize * 4 + 16; break;
+                    case 3: weightSkip = boneIdxSize * 2 + 4 + 36; break;
+                    case 4: weightSkip = boneIdxSize * 4 + 16; break;
                 }
+
+                for (int k = 0; k < weightSkip; k++) br.ReadByte();
+
                 float edge = br.ReadSingle();
                 vertices[i] = new ObjVertex { Position = p, Normal = n, TexCoord = uv };
             }
@@ -101,9 +121,9 @@ namespace ObjLoader.Parsers
             for (int i = 0; i < mCount; i++)
             {
                 len = br.ReadInt32();
-                fs.Seek(len, SeekOrigin.Current);
+                var mName = br.ReadBytes(len);
                 len = br.ReadInt32();
-                fs.Seek(len, SeekOrigin.Current);
+                var mNameEn = br.ReadBytes(len);
 
                 Vector4 diff = new Vector4(br.ReadSingle(), br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
                 Vector3 spec = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
@@ -139,7 +159,7 @@ namespace ObjLoader.Parsers
                 }
 
                 len = br.ReadInt32();
-                fs.Seek(len, SeekOrigin.Current);
+                var memo = br.ReadBytes(len);
 
                 int faceCount = br.ReadInt32();
 
@@ -148,14 +168,18 @@ namespace ObjLoader.Parsers
 
                 Vector3 partMin = new Vector3(float.MaxValue);
                 Vector3 partMax = new Vector3(float.MinValue);
-                for (int k = 0; k < faceCount; k++)
+
+                if (indexOffset + faceCount <= indices.Length)
                 {
-                    int vIdx = indices[indexOffset + k];
-                    if (vIdx >= 0 && vIdx < vertices.Length)
+                    for (int k = 0; k < faceCount; k++)
                     {
-                        var p = vertices[vIdx].Position;
-                        partMin = Vector3.Min(partMin, p);
-                        partMax = Vector3.Max(partMax, p);
+                        int vIdx = indices[indexOffset + k];
+                        if (vIdx >= 0 && vIdx < vertices.Length)
+                        {
+                            var p = vertices[vIdx].Position;
+                            partMin = Vector3.Min(partMin, p);
+                            partMax = Vector3.Max(partMax, p);
+                        }
                     }
                 }
 
@@ -172,7 +196,7 @@ namespace ObjLoader.Parsers
             }
 
             ModelHelper.CalculateBounds(vertices, out Vector3 c, out float s);
-            return new ObjModel { Vertices = vertices, Indices = indices, Parts = parts, ModelCenter = c, ModelScale = s };
+            return new ObjModel { Vertices = vertices, Indices = indices, Parts = parts, ModelCenter = c, ModelScale = s, Name = name, Comment = comment };
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Vortice.Direct3D;
@@ -174,6 +175,17 @@ namespace ObjLoader.Rendering
             if (resource == null)
             {
                 var model = _loader.Load(filePath);
+
+                if (!string.IsNullOrWhiteSpace(model.Comment))
+                {
+                    string title = !string.IsNullOrWhiteSpace(model.Name) ? model.Name : Path.GetFileName(filePath);
+                    string msg = model.Comment;
+                    Application.Current?.Dispatcher?.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+                    {
+                        MessageBox.Show(msg, title);
+                    }));
+                }
+
                 if (model.Vertices.Length > 0)
                 {
                     resource = CreateGpuResource(model, filePath);

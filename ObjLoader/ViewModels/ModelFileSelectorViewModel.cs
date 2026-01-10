@@ -83,7 +83,7 @@ namespace ObjLoader.ViewModels
                     Files.Clear();
                     if (!string.IsNullOrEmpty(FilePath))
                     {
-                        var item = CreateItem(FilePath);
+                        var item = CreateItem(FilePath, true);
                         if (item != null) Files.Add(item);
                     }
                     return;
@@ -98,20 +98,30 @@ namespace ObjLoader.ViewModels
 
                 foreach (var file in files)
                 {
+                    var isSelected = file.Equals(FilePath, StringComparison.OrdinalIgnoreCase);
+
                     if (currentFiles.TryGetValue(file, out var existing))
                     {
-                        Files.Add(existing);
+                        if (existing.IsThumbnailEnabled == isSelected)
+                        {
+                            Files.Add(existing);
+                        }
+                        else
+                        {
+                            var item = CreateItem(file, isSelected);
+                            if (item != null) Files.Add(item);
+                        }
                     }
                     else
                     {
-                        var item = CreateItem(file);
+                        var item = CreateItem(file, isSelected);
                         if (item != null) Files.Add(item);
                     }
                 }
 
                 if (!string.IsNullOrEmpty(FilePath) && !Files.Any(x => x.FullPath.Equals(FilePath, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var item = CreateItem(FilePath);
+                    var item = CreateItem(FilePath, true);
                     if (item != null) Files.Add(item);
                 }
 
@@ -123,10 +133,10 @@ namespace ObjLoader.ViewModels
             }
         }
 
-        private ModelFileItem? CreateItem(string path)
+        private ModelFileItem? CreateItem(string path, bool isSelected)
         {
             if (!File.Exists(path)) return null;
-            return new ModelFileItem(Path.GetFileName(path), path, _loader.GetThumbnail);
+            return new ModelFileItem(Path.GetFileName(path), path, isSelected ? _loader.GetThumbnail : _ => Array.Empty<byte>(), isSelected);
         }
     }
 }
