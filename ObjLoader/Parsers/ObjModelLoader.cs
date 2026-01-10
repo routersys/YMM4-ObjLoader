@@ -18,6 +18,7 @@ namespace ObjLoader.Parsers
             {
                 new StlParser(),
                 new PmxParser(),
+                new PmdParser(),
                 new GlbParser(),
                 new ThreeMfParser(),
                 new PlyParser(),
