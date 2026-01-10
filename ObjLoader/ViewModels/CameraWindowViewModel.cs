@@ -5,29 +5,30 @@ using ObjLoader.Plugin;
 using ObjLoader.Services;
 using ObjLoader.Views;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using System.Windows.Threading;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
-using System.ComponentModel;
 
 namespace ObjLoader.ViewModels
 {
-    public class CameraWindowViewModel : Bindable, IDisposable
+    public class CameraWindowViewModel : Bindable, IDisposable, ICameraManipulator
     {
         private readonly ObjLoaderParameter _parameter;
         private readonly ObjModelLoader _loader;
         private readonly RenderService _renderService;
         private readonly CameraLogic _cameraLogic;
         private readonly UndoStack<(double cx, double cy, double cz, double tx, double ty, double tz)> _undoStack;
+        private readonly CameraAnimationManager _animationManager;
+        private readonly CameraInteractionManager _interactionManager;
 
         private double _camXMin = -10, _camXMax = 10;
         private double _camYMin = -10, _camYMax = 10;
@@ -51,26 +52,16 @@ namespace ObjLoader.ViewModels
         private bool _isSnapping = false;
         private bool _isTargetFixed = true;
 
-        private Point _lastMousePos;
-        private bool _isRotatingView;
-        private bool _isPanningView;
-        private bool _isDraggingTarget;
-        private bool _isSpacePanning;
-        private string _hoveredDirectionName = "";
-        private Geometry3D? _hoveredGeometry;
-
-        private enum GizmoMode { None, X, Y, Z, XY, YZ, ZX, View }
-        private GizmoMode _currentGizmoMode = GizmoMode.None;
-
         private GpuResourceCacheItem? _modelResource;
         private System.Windows.Media.Color _themeColor = System.Windows.Media.Colors.White;
 
         private double _currentTime = 0;
         private double _maxDuration = 10.0;
-        private bool _isPlaying = false;
-        private DispatcherTimer _playbackTimer;
         private CameraKeyframe? _selectedKeyframe;
         private bool _isUpdatingAnimation;
+
+        private GeometryModel3D[] _cubeFaces;
+        private GeometryModel3D[] _cubeCorners;
 
         public PerspectiveCamera Camera { get; } = new PerspectiveCamera { FieldOfView = 45, NearPlaneDistance = 0.01, FarPlaneDistance = 100000 };
         public PerspectiveCamera GizmoCamera { get; } = new PerspectiveCamera { FieldOfView = 45, NearPlaneDistance = 0.1, FarPlaneDistance = 100 };
@@ -83,10 +74,7 @@ namespace ObjLoader.ViewModels
         public MeshGeometry3D GizmoXYGeometry { get; } = new MeshGeometry3D();
         public MeshGeometry3D GizmoYZGeometry { get; } = new MeshGeometry3D();
         public MeshGeometry3D GizmoZXGeometry { get; } = new MeshGeometry3D();
-
         public Model3DGroup ViewCubeModel { get; private set; }
-        private GeometryModel3D[] _cubeFaces;
-        private GeometryModel3D[] _cubeCorners;
 
         public WriteableBitmap? SceneImage => _renderService.SceneImage;
 
@@ -105,7 +93,12 @@ namespace ObjLoader.ViewModels
         public ActionCommand SavePresetCommand { get; }
         public ActionCommand DeletePresetCommand { get; }
 
-        public string HoveredDirectionName { get => _hoveredDirectionName; set => Set(ref _hoveredDirectionName, value); }
+        public string HoveredDirectionName
+        {
+            get => _interactionManager.HoveredDirectionName;
+            set => OnPropertyChanged();
+        }
+
         public bool IsTargetFree => !_isTargetFixed;
         public bool IsPilotFrameVisible => _cameraLogic.IsPilotView;
 
@@ -115,6 +108,15 @@ namespace ObjLoader.ViewModels
         public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetX = value; } } }
         public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetY = value; } } }
         public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetZ = value; } } }
+
+        public double ViewCenterX { get => _cameraLogic.ViewCenterX; set => _cameraLogic.ViewCenterX = value; }
+        public double ViewCenterY { get => _cameraLogic.ViewCenterY; set => _cameraLogic.ViewCenterY = value; }
+        public double ViewCenterZ { get => _cameraLogic.ViewCenterZ; set => _cameraLogic.ViewCenterZ = value; }
+        public double ViewRadius { get => _cameraLogic.ViewRadius; set => _cameraLogic.ViewRadius = value; }
+        public double ViewTheta { get => _cameraLogic.ViewTheta; set => _cameraLogic.ViewTheta = value; }
+        public double ViewPhi { get => _cameraLogic.ViewPhi; set => _cameraLogic.ViewPhi = value; }
+        public double ModelHeight => _modelHeight;
+        public int ViewportHeight => _viewportHeight;
 
         public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
         public double CamXMax { get => _camXMax; set => Set(ref _camXMax, value); }
@@ -166,14 +168,14 @@ namespace ObjLoader.ViewModels
 
         public bool IsPlaying
         {
-            get => _isPlaying;
+            get => _animationManager.IsPlaying;
             set
             {
-                if (Set(ref _isPlaying, value))
-                {
-                    PlayCommand.RaiseCanExecuteChanged();
-                    PauseCommand.RaiseCanExecuteChanged();
-                }
+                if (value) _animationManager.Start();
+                else _animationManager.Pause();
+                OnPropertyChanged();
+                PlayCommand.RaiseCanExecuteChanged();
+                PauseCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -219,6 +221,8 @@ namespace ObjLoader.ViewModels
             _renderService = new RenderService();
             _cameraLogic = new CameraLogic();
             _undoStack = new UndoStack<(double, double, double, double, double, double)>();
+            _animationManager = new CameraAnimationManager();
+            _interactionManager = new CameraInteractionManager(this);
 
             _cameraLogic.CamX = _parameter.CameraX.Values[0].Value;
             _cameraLogic.CamY = _parameter.CameraY.Values[0].Value;
@@ -231,6 +235,7 @@ namespace ObjLoader.ViewModels
             _cameraLogic.ViewCenterZ = _cameraLogic.TargetZ;
 
             _cameraLogic.Updated += UpdateVisuals;
+            _animationManager.Tick += PlaybackTick;
 
             Keyframes = new ObservableCollection<CameraKeyframe>(_parameter.Keyframes);
 
@@ -243,16 +248,13 @@ namespace ObjLoader.ViewModels
             RedoCommand = new ActionCommand(_ => _undoStack.CanRedo, _ => PerformRedo());
             FocusCommand = new ActionCommand(_ => true, _ => PerformFocus());
 
-            PlayCommand = new ActionCommand(_ => !IsPlaying, _ => StartPlayback());
-            PauseCommand = new ActionCommand(_ => IsPlaying, _ => PausePlayback());
+            PlayCommand = new ActionCommand(_ => !IsPlaying, _ => _animationManager.Start());
+            PauseCommand = new ActionCommand(_ => IsPlaying, _ => _animationManager.Pause());
             StopCommand = new ActionCommand(_ => true, _ => StopPlayback());
             AddKeyframeCommand = new ActionCommand(_ => !IsKeyframeSelected, _ => AddKeyframe());
             RemoveKeyframeCommand = new ActionCommand(_ => IsKeyframeSelected, _ => RemoveKeyframe());
             SavePresetCommand = new ActionCommand(_ => IsKeyframeSelected, _ => SavePreset());
             DeletePresetCommand = new ActionCommand(_ => IsKeyframeSelected && SelectedKeyframeEasing != null && SelectedKeyframeEasing.IsCustom, _ => DeletePreset());
-
-            _playbackTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-            _playbackTimer.Tick += PlaybackTick;
 
             _parameter.PropertyChanged += OnParameterPropertyChanged;
             MaxDuration = _parameter.Duration;
@@ -272,35 +274,23 @@ namespace ObjLoader.ViewModels
             }
         }
 
-        private void StartPlayback()
-        {
-            if (_isPlaying) return;
-            if (CurrentTime >= MaxDuration) CurrentTime = 0;
-            IsPlaying = true;
-            _playbackTimer.Start();
-        }
-
-        private void PausePlayback()
-        {
-            IsPlaying = false;
-            _playbackTimer.Stop();
-        }
-
         private void StopPlayback()
         {
-            IsPlaying = false;
-            _playbackTimer.Stop();
+            _animationManager.Stop();
+            OnPropertyChanged(nameof(IsPlaying));
             CurrentTime = 0;
+            PlayCommand.RaiseCanExecuteChanged();
+            PauseCommand.RaiseCanExecuteChanged();
         }
 
         private void PlaybackTick(object? sender, EventArgs e)
         {
-            if (!_isPlaying) return;
             double nextTime = CurrentTime + 0.016;
             if (nextTime >= MaxDuration)
             {
                 CurrentTime = MaxDuration;
-                PausePlayback();
+                _animationManager.Pause();
+                OnPropertyChanged(nameof(IsPlaying));
             }
             else
             {
@@ -400,12 +390,13 @@ namespace ObjLoader.ViewModels
         {
             _viewportWidth = width;
             _viewportHeight = height;
+            if (height > 0) _aspectRatio = (double)width / height;
             _renderService.Resize(width, height);
             OnPropertyChanged(nameof(SceneImage));
-            UpdateD3DScene();
+            UpdateVisuals();
         }
 
-        private void UpdateVisuals()
+        public void UpdateVisuals()
         {
             _cameraLogic.UpdateViewport(Camera, GizmoCamera, _modelHeight);
             UpdateSceneCameraVisual();
@@ -453,7 +444,7 @@ namespace ObjLoader.ViewModels
 
         private void UpdateSceneCameraVisual()
         {
-            bool isInteracting = _currentGizmoMode != GizmoMode.None || _isRotatingView || _isPanningView;
+            bool isInteracting = !string.IsNullOrEmpty(HoveredDirectionName);
             double yOffset = _modelHeight / 2.0;
             var camPos = new Point3D(CamX, CamY + yOffset, CamZ);
             var targetPos = new Point3D(TargetX, TargetY + yOffset, TargetZ);
@@ -553,41 +544,6 @@ namespace ObjLoader.ViewModels
             _cameraLogic.AnimateView(Math.PI / 4, Math.PI / 4);
         }
 
-        public void HandleGizmoMove(object? modelHit)
-        {
-            if (modelHit is GeometryModel3D gm && gm.GetValue(FrameworkElement.TagProperty) is string name) HoveredDirectionName = name;
-            else HoveredDirectionName = "";
-            CheckGizmoHit(modelHit);
-        }
-
-        public void HandleViewCubeClick(object? modelHit)
-        {
-            if (modelHit == null) return;
-            int faceIdx = Array.IndexOf(_cubeFaces, modelHit);
-            if (faceIdx >= 0)
-            {
-                if (faceIdx == 0) _cameraLogic.AnimateView(Math.PI / 2, Math.PI / 2);
-                else if (faceIdx == 1) _cameraLogic.AnimateView(-Math.PI / 2, Math.PI / 2);
-                else if (faceIdx == 2) _cameraLogic.AnimateView(0, 0.01);
-                else if (faceIdx == 3) _cameraLogic.AnimateView(0, Math.PI - 0.01);
-                else if (faceIdx == 4) _cameraLogic.AnimateView(0, Math.PI / 2);
-                else if (faceIdx == 5) _cameraLogic.AnimateView(Math.PI, Math.PI / 2);
-                return;
-            }
-            int cornerIdx = Array.IndexOf(_cubeCorners, modelHit);
-            if (cornerIdx >= 0)
-            {
-                if (cornerIdx == 0) _cameraLogic.AnimateView(Math.PI / 4, 0.955);
-                else if (cornerIdx == 1) _cameraLogic.AnimateView(-Math.PI / 4, 0.955);
-                else if (cornerIdx == 2) _cameraLogic.AnimateView(3 * Math.PI / 4, 0.955);
-                else if (cornerIdx == 3) _cameraLogic.AnimateView(-3 * Math.PI / 4, 0.955);
-                else if (cornerIdx == 4) _cameraLogic.AnimateView(Math.PI / 4, 2.186);
-                else if (cornerIdx == 5) _cameraLogic.AnimateView(-Math.PI / 4, 2.186);
-                else if (cornerIdx == 6) _cameraLogic.AnimateView(3 * Math.PI / 4, 2.186);
-                else if (cornerIdx == 7) _cameraLogic.AnimateView(-3 * Math.PI / 4, 2.186);
-            }
-        }
-
         private void UpdateRange(double value, ref double min, ref double max, ref string scaleInfo, string minProp, string maxProp, string infoProp)
         {
             double abs = Math.Abs(value);
@@ -602,7 +558,7 @@ namespace ObjLoader.ViewModels
             }
         }
 
-        private void SyncToParameter()
+        public void SyncToParameter()
         {
             _parameter.SetCameraValues(CamX, CamY, CamZ, TargetX, TargetY, TargetZ);
         }
@@ -645,192 +601,71 @@ namespace ObjLoader.ViewModels
             UpdateVisuals();
         }
 
+        public void AnimateView(double theta, double phi)
+        {
+            _cameraLogic.AnimateView(theta, phi);
+        }
+
         public void Zoom(int delta)
         {
-            if (IsPlaying) PausePlayback();
-            if (IsPilotView)
-            {
-                double speed = _modelScale * 0.1 * (delta > 0 ? 1 : -1);
-                var dir = Camera.LookDirection; dir.Normalize();
-                CamX += dir.X * speed; CamY += dir.Y * speed; CamZ += dir.Z * speed;
-                UpdateVisuals(); SyncToParameter();
-            }
-            else
-            {
-                _cameraLogic.ViewRadius -= delta * (_modelScale * 0.005);
-                if (_cameraLogic.ViewRadius < _modelScale * 0.01) _cameraLogic.ViewRadius = _modelScale * 0.01;
-                UpdateVisuals();
-            }
+            if (IsPlaying) _animationManager.Pause();
+            _interactionManager.Zoom(delta, IsPilotView, _modelScale);
         }
 
         public void StartPan(Point pos)
         {
-            if (IsPlaying) PausePlayback();
-            IsTargetFixed = false;
-            _isPanningView = true;
-            _lastMousePos = pos;
+            if (IsPlaying) _animationManager.Pause();
+            _interactionManager.StartPan(pos);
         }
 
         public void StartRotate(Point pos)
         {
-            if (IsPlaying) PausePlayback();
-            _isRotatingView = true;
-            _lastMousePos = pos;
+            if (IsPlaying) _animationManager.Pause();
+            _interactionManager.StartRotate(pos);
+        }
+
+        public void HandleGizmoMove(object? modelHit)
+        {
+            _interactionManager.HandleGizmoMove(modelHit, GizmoXGeometry, GizmoYGeometry, GizmoZGeometry, GizmoXYGeometry, GizmoYZGeometry, GizmoZXGeometry, CameraVisualGeometry, TargetVisualGeometry);
+            OnPropertyChanged(nameof(HoveredDirectionName));
         }
 
         public void CheckGizmoHit(object? modelHit)
         {
-            _currentGizmoMode = GizmoMode.None;
-            _hoveredGeometry = null;
-            if (modelHit is GeometryModel3D gm)
-            {
-                _hoveredGeometry = gm.Geometry;
-                if (gm.Geometry == GizmoXGeometry) _currentGizmoMode = GizmoMode.X;
-                else if (gm.Geometry == GizmoYGeometry) _currentGizmoMode = GizmoMode.Y;
-                else if (gm.Geometry == GizmoZGeometry) _currentGizmoMode = GizmoMode.Z;
-                else if (gm.Geometry == GizmoXYGeometry) _currentGizmoMode = GizmoMode.XY;
-                else if (gm.Geometry == GizmoYZGeometry) _currentGizmoMode = GizmoMode.YZ;
-                else if (gm.Geometry == GizmoZXGeometry) _currentGizmoMode = GizmoMode.ZX;
-                else if (gm.Geometry == TargetVisualGeometry || gm.Geometry == CameraVisualGeometry) _currentGizmoMode = GizmoMode.View;
-            }
+            HandleGizmoMove(modelHit);
+        }
+
+        public void HandleViewCubeClick(object? modelHit)
+        {
+            _interactionManager.HandleViewCubeClick(modelHit, _cubeFaces, _cubeCorners);
         }
 
         public void StartGizmoDrag(Point pos)
         {
-            if (IsPlaying) PausePlayback();
-            RecordUndo();
-            if (_currentGizmoMode == GizmoMode.View)
-            {
-                if (_hoveredGeometry == CameraVisualGeometry) IsTargetFixed = true;
-                else if (_hoveredGeometry == TargetVisualGeometry) IsTargetFixed = false;
-            }
-            if (_currentGizmoMode != GizmoMode.None)
-            {
-                _isDraggingTarget = true;
-                _lastMousePos = pos;
-            }
-            else
-            {
-                _isSpacePanning = true;
-                _lastMousePos = pos;
-            }
+            if (IsPlaying) _animationManager.Pause();
+            _interactionManager.StartGizmoDrag(pos, CameraVisualGeometry, TargetVisualGeometry);
         }
 
         public void EndDrag()
         {
-            _isRotatingView = false;
-            _isPanningView = false;
-            _isDraggingTarget = false;
-            _isSpacePanning = false;
-            _currentGizmoMode = GizmoMode.None;
-            SyncToParameter();
-            UpdateVisuals();
+            _interactionManager.EndDrag();
         }
 
         public void ScrubValue(string axis, double delta)
         {
-            if (IsPlaying) PausePlayback();
-            RecordUndo();
-            double val = delta * _modelScale * 0.01;
-            if (axis == "X") CamX += val;
-            else if (axis == "Y") CamY += val;
-            else if (axis == "Z") CamZ += val;
-            UpdateVisuals();
+            if (IsPlaying) _animationManager.Pause();
+            _interactionManager.ScrubValue(axis, delta, _modelScale);
         }
 
         public void Move(Point pos)
         {
-            var dx = pos.X - _lastMousePos.X;
-            var dy = pos.Y - _lastMousePos.Y;
-            _lastMousePos = pos;
-
-            if (_isDraggingTarget && _currentGizmoMode != GizmoMode.None)
-            {
-                double yOffset = _modelHeight / 2.0;
-                Point3D objPos;
-                if (_isTargetFixed) objPos = new Point3D(CamX, CamY + yOffset, CamZ);
-                else objPos = new Point3D(TargetX, TargetY + yOffset, TargetZ);
-
-                double dist = (Camera.Position - objPos).Length;
-                if (dist < 0.001) dist = 0.001;
-                double fovRad = Camera.FieldOfView * Math.PI / 180.0;
-                double speed = (2.0 * dist * Math.Tan(fovRad / 2.0)) / _viewportHeight;
-
-                double mx = 0, my = 0, mz = 0;
-                var camDir = Camera.LookDirection; camDir.Normalize();
-                var camRight = Vector3D.CrossProduct(camDir, Camera.UpDirection); camRight.Normalize();
-                var camUp = Vector3D.CrossProduct(camRight, camDir); camUp.Normalize();
-                var moveVec = camRight * dx * speed + (-camUp) * dy * speed;
-
-                switch (_currentGizmoMode)
-                {
-                    case GizmoMode.X: mx = moveVec.X; break;
-                    case GizmoMode.Y: my = moveVec.Y; break;
-                    case GizmoMode.Z: mz = moveVec.Z; break;
-                    case GizmoMode.XY: mx = moveVec.X; my = moveVec.Y; break;
-                    case GizmoMode.YZ: my = moveVec.Y; mz = moveVec.Z; break;
-                    case GizmoMode.ZX: mx = moveVec.X; mz = moveVec.Z; break;
-                    case GizmoMode.View: mx = moveVec.X; my = moveVec.Y; mz = moveVec.Z; break;
-                }
-
-                if (IsSnapping) { mx = Math.Round(mx / 0.5) * 0.5; my = Math.Round(my / 0.5) * 0.5; mz = Math.Round(mz / 0.5) * 0.5; }
-                if (_isTargetFixed) { CamX += mx; CamY += my; CamZ += mz; }
-                else { TargetX += mx; TargetY += my; TargetZ += mz; }
-                UpdateVisuals();
-            }
-            else if (_isSpacePanning)
-            {
-                double dist = _cameraLogic.ViewRadius;
-                double fovRad = Camera.FieldOfView * Math.PI / 180.0;
-                double panSpeed = (2.0 * dist * Math.Tan(fovRad / 2.0)) / _viewportHeight;
-                var look = Camera.LookDirection; look.Normalize();
-                var right = Vector3D.CrossProduct(look, Camera.UpDirection); right.Normalize();
-                var up = Vector3D.CrossProduct(right, look); up.Normalize();
-                var move = (-right * dx * panSpeed) + (up * dy * panSpeed);
-                _cameraLogic.ViewCenterX += move.X; _cameraLogic.ViewCenterY += move.Y; _cameraLogic.ViewCenterZ += move.Z;
-                UpdateVisuals();
-            }
-            else if (_isRotatingView || _isPanningView)
-            {
-                if (_isPanningView)
-                {
-                    if (!_isTargetFixed)
-                    {
-                        double dist = _cameraLogic.ViewRadius;
-                        double fovRad = Camera.FieldOfView * Math.PI / 180.0;
-                        double panSpeed = (2.0 * dist * Math.Tan(fovRad / 2.0)) / _viewportHeight;
-                        var look = Camera.LookDirection; look.Normalize();
-                        var right = Vector3D.CrossProduct(look, Camera.UpDirection); right.Normalize();
-                        var up = Vector3D.CrossProduct(right, look); up.Normalize();
-                        var move = (-right * dx * panSpeed) + (up * dy * panSpeed);
-                        TargetX += move.X; TargetY += move.Y; TargetZ += move.Z;
-                        UpdateVisuals();
-                    }
-                }
-                else
-                {
-                    _cameraLogic.ViewTheta += dx * 0.01;
-                    _cameraLogic.ViewPhi -= dy * 0.01;
-                    if (_cameraLogic.ViewPhi < 0.01) _cameraLogic.ViewPhi = 0.01;
-                    if (_cameraLogic.ViewPhi > Math.PI - 0.01) _cameraLogic.ViewPhi = Math.PI - 0.01;
-                    if (IsSnapping) _cameraLogic.ViewTheta = Math.Round(_cameraLogic.ViewTheta / (Math.PI / 12)) * (Math.PI / 12);
-                    UpdateVisuals();
-                }
-            }
+            _interactionManager.Move(pos);
         }
 
         public void MovePilot(double fwd, double right, double up)
         {
-            if (IsPlaying) PausePlayback();
-            if (!IsPilotView) return;
-            double speed = _modelScale * 0.05;
-            var look = Camera.LookDirection; look.Normalize();
-            var r = Vector3D.CrossProduct(look, Camera.UpDirection); r.Normalize();
-            var u = Vector3D.CrossProduct(r, look); u.Normalize();
-            var move = look * fwd * speed + r * right * speed + u * up * speed;
-            CamX += move.X; CamY += move.Y; CamZ += move.Z;
-            TargetX += move.X; TargetY += move.Y; TargetZ += move.Z;
-            UpdateVisuals();
+            if (IsPlaying) _animationManager.Pause();
+            _interactionManager.MovePilot(fwd, right, up, IsPilotView, _modelScale);
         }
 
         public void Dispose()
@@ -838,7 +673,7 @@ namespace ObjLoader.ViewModels
             _renderService.Dispose();
             _modelResource?.Dispose();
             _cameraLogic.StopAnimation();
-            _playbackTimer.Stop();
+            _animationManager.Dispose();
             _parameter.PropertyChanged -= OnParameterPropertyChanged;
         }
     }
