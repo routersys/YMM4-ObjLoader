@@ -355,7 +355,46 @@ namespace ObjLoader.Settings
             {
                 if (SetProperty(ref _worldId, value))
                 {
-                    OnPropertyChanged(string.Empty);
+                    OnPropertyChanged(nameof(AmbientColor));
+                    OnPropertyChanged(nameof(DiffuseIntensity));
+                    OnPropertyChanged(nameof(SpecularIntensity));
+                    OnPropertyChanged(nameof(Shininess));
+                    OnPropertyChanged(nameof(LightColor));
+                    OnPropertyChanged(nameof(ToonEnabled));
+                    OnPropertyChanged(nameof(ToonSteps));
+                    OnPropertyChanged(nameof(ToonSmoothness));
+                    OnPropertyChanged(nameof(RimEnabled));
+                    OnPropertyChanged(nameof(RimColor));
+                    OnPropertyChanged(nameof(RimIntensity));
+                    OnPropertyChanged(nameof(RimPower));
+                    OnPropertyChanged(nameof(OutlineEnabled));
+                    OnPropertyChanged(nameof(OutlineColor));
+                    OnPropertyChanged(nameof(OutlineWidth));
+                    OnPropertyChanged(nameof(OutlinePower));
+                    OnPropertyChanged(nameof(FogEnabled));
+                    OnPropertyChanged(nameof(FogColor));
+                    OnPropertyChanged(nameof(FogStart));
+                    OnPropertyChanged(nameof(FogEnd));
+                    OnPropertyChanged(nameof(FogDensity));
+                    OnPropertyChanged(nameof(Saturation));
+                    OnPropertyChanged(nameof(Contrast));
+                    OnPropertyChanged(nameof(Gamma));
+                    OnPropertyChanged(nameof(BrightnessPost));
+                    OnPropertyChanged(nameof(VignetteEnabled));
+                    OnPropertyChanged(nameof(VignetteColor));
+                    OnPropertyChanged(nameof(VignetteIntensity));
+                    OnPropertyChanged(nameof(VignetteRadius));
+                    OnPropertyChanged(nameof(VignetteSoftness));
+                    OnPropertyChanged(nameof(ScanlineEnabled));
+                    OnPropertyChanged(nameof(ScanlineIntensity));
+                    OnPropertyChanged(nameof(ScanlineFrequency));
+                    OnPropertyChanged(nameof(ChromAbEnabled));
+                    OnPropertyChanged(nameof(ChromAbIntensity));
+                    OnPropertyChanged(nameof(MonochromeEnabled));
+                    OnPropertyChanged(nameof(MonochromeColor));
+                    OnPropertyChanged(nameof(MonochromeMix));
+                    OnPropertyChanged(nameof(PosterizeEnabled));
+                    OnPropertyChanged(nameof(PosterizeLevels));
                 }
             }
         }
