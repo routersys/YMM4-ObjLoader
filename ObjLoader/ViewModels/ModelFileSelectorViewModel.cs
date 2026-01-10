@@ -16,6 +16,8 @@ namespace ObjLoader.ViewModels
         private bool _isSelecting;
         private int _notificationTrigger;
 
+        public bool IsResetting { get; set; }
+
         public ObservableCollection<ModelFileItem> Files { get; } = new ObservableCollection<ModelFileItem>();
 
         public ModelFileItem? SelectedFile
@@ -23,7 +25,7 @@ namespace ObjLoader.ViewModels
             get => Files.FirstOrDefault(x => x.FullPath.Equals(FilePath, StringComparison.OrdinalIgnoreCase));
             set
             {
-                if (_isSelecting || value == null || value.FullPath == FilePath) return;
+                if (_isSelecting || IsResetting || value == null || value.FullPath == FilePath) return;
                 FilePath = value.FullPath;
             }
         }

@@ -15,6 +15,8 @@ namespace ObjLoader.ViewModels
         private bool _isSelecting;
         private int _notificationTrigger;
 
+        public bool IsResetting { get; set; }
+
         public ObservableCollection<ShaderFileItem> Files { get; } = new ObservableCollection<ShaderFileItem>();
 
         public ShaderFileItem? SelectedFile
@@ -44,7 +46,7 @@ namespace ObjLoader.ViewModels
             }
             set
             {
-                if (_isSelecting || value == null) return;
+                if (_isSelecting || IsResetting || value == null) return;
 
                 if (value.IsNone)
                 {
