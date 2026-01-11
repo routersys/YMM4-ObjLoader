@@ -131,7 +131,13 @@ namespace ObjLoader.Plugin
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation LightZ { get; } = new Animation(-100, -100000, 100000);
 
-        public List<CameraKeyframe> Keyframes { get; set; } = new List<CameraKeyframe>();
+        [Display(AutoGenerateField = false)]
+        public List<CameraKeyframe> Keyframes
+        {
+            get => _keyframes;
+            set => Set(ref _keyframes, value);
+        }
+        private List<CameraKeyframe> _keyframes = new List<CameraKeyframe>();
 
         public double Duration { get => _duration; set => Set(ref _duration, value); }
         private double _duration = 10.0;

@@ -17,6 +17,7 @@ using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
+using System.Collections.Generic;
 
 namespace ObjLoader.ViewModels
 {
@@ -320,22 +321,16 @@ namespace ObjLoader.ViewModels
             if (existing != null)
             {
                 Keyframes.Remove(existing);
-                _parameter.Keyframes.Remove(existing);
             }
 
             Keyframes.Add(keyframe);
-            _parameter.Keyframes.Add(keyframe);
 
             var sorted = Keyframes.OrderBy(k => k.Time).ToList();
             Keyframes.Clear();
-            _parameter.Keyframes.Clear();
-            foreach (var k in sorted)
-            {
-                Keyframes.Add(k);
-                _parameter.Keyframes.Add(k);
-            }
+            foreach (var k in sorted) Keyframes.Add(k);
 
             SelectedKeyframe = keyframe;
+            _parameter.Keyframes = new List<CameraKeyframe>(Keyframes);
         }
 
         private void RemoveKeyframe()
@@ -343,8 +338,22 @@ namespace ObjLoader.ViewModels
             if (SelectedKeyframe != null)
             {
                 Keyframes.Remove(SelectedKeyframe);
-                _parameter.Keyframes.Remove(SelectedKeyframe);
                 SelectedKeyframe = null;
+
+                if (Keyframes.Count == 0)
+                {
+                    CamX = 0;
+                    CamY = 0;
+                    CamZ = -_modelScale * 2.5;
+                    TargetX = 0;
+                    TargetY = 0;
+                    TargetZ = 0;
+                }
+
+                _parameter.Keyframes = new List<CameraKeyframe>(Keyframes);
+
+                UpdateAnimation();
+                SyncToParameter();
             }
         }
 
