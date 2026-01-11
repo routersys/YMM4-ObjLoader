@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Reflection;
 using ObjLoader.Core;
 using ObjLoader.Cache;
 using ObjLoader.Utilities;
@@ -8,6 +9,21 @@ namespace ObjLoader.Parsers
 {
     public class ObjModelLoader
     {
+        private const string DefaultPluginVersion = "1.0.0";
+        private static readonly string PluginVersion;
+
+        static ObjModelLoader()
+        {
+            try
+            {
+                PluginVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? DefaultPluginVersion;
+            }
+            catch
+            {
+                PluginVersion = DefaultPluginVersion;
+            }
+        }
+
         private readonly List<IModelParser> _parsers;
         private readonly ModelCache _cache;
 
@@ -27,16 +43,8 @@ namespace ObjLoader.Parsers
             };
         }
 
-        public ObjModel Load(string path)
+        private IModelParser? GetParser(string path)
         {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return new ObjModel();
-
-            var fileInfo = new FileInfo(path);
-            if (_cache.TryLoad(path, fileInfo.LastWriteTimeUtc, out var cachedModel))
-            {
-                return cachedModel;
-            }
-
             var ext = Path.GetExtension(path).ToLowerInvariant();
 
             bool forceAssimp = false;
@@ -61,12 +69,28 @@ namespace ObjLoader.Parsers
                 parser = _parsers.FirstOrDefault(p => p.CanParse(ext));
             }
 
+            return parser;
+        }
+
+        public ObjModel Load(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return new ObjModel();
+
+            var parser = GetParser(path);
+            var parserId = parser?.GetType().Name ?? string.Empty;
+
+            var fileInfo = new FileInfo(path);
+            if (_cache.TryLoad(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion, out var cachedModel))
+            {
+                return cachedModel;
+            }
+
             var model = parser?.Parse(path) ?? new ObjModel();
 
             if (model.Vertices.Length > 0)
             {
                 var thumb = ThumbnailUtil.CreateThumbnail(model);
-                _cache.Save(path, model, thumb, fileInfo.LastWriteTimeUtc);
+                _cache.Save(path, model, thumb, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
             }
 
             return model;
@@ -76,12 +100,15 @@ namespace ObjLoader.Parsers
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return Array.Empty<byte>();
 
+            var parser = GetParser(path);
+            var parserId = parser?.GetType().Name ?? string.Empty;
+
             var fileInfo = new FileInfo(path);
-            var thumb = _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc);
+            var thumb = _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
             if (thumb.Length > 0) return thumb;
 
             var model = Load(path);
-            return _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc);
+            return _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
         }
     }
 }

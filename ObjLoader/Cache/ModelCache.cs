@@ -7,7 +7,10 @@ namespace ObjLoader.Cache
 {
     public class ModelCache
     {
-        public bool TryLoad(string path, DateTime originalTimestamp, out ObjModel model)
+        private const int Signature = 0x4A424F04;
+        private const int Version = 3;
+
+        public bool TryLoad(string path, DateTime originalTimestamp, string parserId, string pluginVersion, out ObjModel model)
         {
             model = new ObjModel();
             var cachePath = path + ".bin";
@@ -19,7 +22,7 @@ namespace ObjLoader.Cache
 
             try
             {
-                model = LoadBinary(cachePath);
+                model = LoadBinary(cachePath, path, parserId, pluginVersion);
                 return model.Vertices.Length > 0;
             }
             catch
@@ -28,7 +31,7 @@ namespace ObjLoader.Cache
             }
         }
 
-        public byte[] GetThumbnail(string path, DateTime originalTimestamp)
+        public byte[] GetThumbnail(string path, DateTime originalTimestamp, string parserId, string pluginVersion)
         {
             var cachePath = path + ".bin";
             if (!File.Exists(cachePath)) return Array.Empty<byte>();
@@ -41,8 +44,18 @@ namespace ObjLoader.Cache
                 using var fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 using var br = new BinaryReader(fs);
 
-                if (br.ReadInt32() != 0x4A424F04) return Array.Empty<byte>();
+                if (br.ReadInt32() != Signature) return Array.Empty<byte>();
+                if (br.ReadInt32() != Version) return Array.Empty<byte>();
                 br.ReadInt64();
+
+                var storedPath = br.ReadString();
+                if (!string.Equals(path, storedPath, StringComparison.OrdinalIgnoreCase)) return Array.Empty<byte>();
+
+                var storedParserId = br.ReadString();
+                if (!string.Equals(parserId, storedParserId, StringComparison.Ordinal)) return Array.Empty<byte>();
+
+                var storedPluginVersion = br.ReadString();
+                if (!string.Equals(pluginVersion, storedPluginVersion, StringComparison.Ordinal)) return Array.Empty<byte>();
 
                 int thumbLen = br.ReadInt32();
                 if (thumbLen > 0)
@@ -55,22 +68,26 @@ namespace ObjLoader.Cache
             return Array.Empty<byte>();
         }
 
-        public void Save(string path, ObjModel model, byte[] thumbnail, DateTime originalTimestamp)
+        public void Save(string path, ObjModel model, byte[] thumbnail, DateTime originalTimestamp, string parserId, string pluginVersion)
         {
             try
             {
-                SaveBinary(path + ".bin", model, thumbnail, originalTimestamp);
+                SaveBinary(path + ".bin", path, model, thumbnail, originalTimestamp, parserId, pluginVersion);
             }
             catch { }
         }
 
-        private unsafe void SaveBinary(string cachePath, ObjModel model, byte[] thumbnail, DateTime originalTimestamp)
+        private unsafe void SaveBinary(string cachePath, string originalPath, ObjModel model, byte[] thumbnail, DateTime originalTimestamp, string parserId, string pluginVersion)
         {
             using var fs = new FileStream(cachePath, FileMode.Create, FileAccess.Write, FileShare.None);
             using var bw = new BinaryWriter(fs);
 
-            bw.Write(0x4A424F04);
+            bw.Write(Signature);
+            bw.Write(Version);
             bw.Write(originalTimestamp.ToBinary());
+            bw.Write(originalPath);
+            bw.Write(parserId);
+            bw.Write(pluginVersion);
 
             bw.Write(thumbnail.Length);
             if (thumbnail.Length > 0)
@@ -113,13 +130,23 @@ namespace ObjLoader.Cache
             }
         }
 
-        private unsafe ObjModel LoadBinary(string cachePath)
+        private unsafe ObjModel LoadBinary(string cachePath, string originalPath, string parserId, string pluginVersion)
         {
             using var fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             using var br = new BinaryReader(fs);
 
-            if (br.ReadInt32() != 0x4A424F04) throw new Exception();
+            if (br.ReadInt32() != Signature) throw new Exception();
+            if (br.ReadInt32() != Version) throw new Exception();
             br.ReadInt64();
+
+            var storedPath = br.ReadString();
+            if (!string.Equals(originalPath, storedPath, StringComparison.OrdinalIgnoreCase)) throw new Exception();
+
+            var storedParserId = br.ReadString();
+            if (!string.Equals(parserId, storedParserId, StringComparison.Ordinal)) throw new Exception();
+
+            var storedPluginVersion = br.ReadString();
+            if (!string.Equals(pluginVersion, storedPluginVersion, StringComparison.Ordinal)) throw new Exception();
 
             int thumbLen = br.ReadInt32();
             if (thumbLen > 0) fs.Seek(thumbLen, SeekOrigin.Current);
