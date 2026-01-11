@@ -249,8 +249,8 @@ namespace ObjLoader.ViewModels
             RedoCommand = new ActionCommand(_ => _undoStack.CanRedo, _ => PerformRedo());
             FocusCommand = new ActionCommand(_ => true, _ => PerformFocus());
 
-            PlayCommand = new ActionCommand(_ => !IsPlaying, _ => _animationManager.Start());
-            PauseCommand = new ActionCommand(_ => IsPlaying, _ => _animationManager.Pause());
+            PlayCommand = new ActionCommand(_ => !IsPlaying, _ => IsPlaying = true);
+            PauseCommand = new ActionCommand(_ => IsPlaying, _ => IsPlaying = false);
             StopCommand = new ActionCommand(_ => true, _ => StopPlayback());
             AddKeyframeCommand = new ActionCommand(_ => !IsKeyframeSelected, _ => AddKeyframe());
             RemoveKeyframeCommand = new ActionCommand(_ => IsKeyframeSelected, _ => RemoveKeyframe());
