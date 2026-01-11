@@ -1,43 +1,71 @@
-﻿using System.Collections.ObjectModel;
-using System.IO;
-using System.Xml.Serialization;
-using ObjLoader.Localization;
+﻿using ObjLoader.Localization;
+using System.Collections.ObjectModel;
+using YukkuriMovieMaker.Plugin;
 
 namespace ObjLoader.Plugin
 {
-    public static class EasingManager
+    public class EasingManager : SettingsBase<EasingManager>
     {
-        private static string UserEasingDir => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "User", "Easings");
-        public static ObservableCollection<EasingData> Presets { get; } = new ObservableCollection<EasingData>();
+        public override string Name => Texts.PluginName;
+        public override SettingsCategory Category => SettingsCategory.None;
+        public override bool HasSettingView => false;
+        public override object? SettingView => null;
 
-        static EasingManager()
-        {
-            LoadPresets();
-        }
+        public static EasingManager Instance => Default;
 
-        public static void LoadPresets()
+        public ObservableCollection<EasingData> UserPresets { get; set; } = new ObservableCollection<EasingData>();
+
+        private ObservableCollection<EasingData> _items = new ObservableCollection<EasingData>();
+        public ObservableCollection<EasingData> Items => _items;
+
+        public static ObservableCollection<EasingData> Presets => Instance.Items;
+
+        public override void Initialize()
         {
-            Presets.Clear();
+            _items.Clear();
             foreach (EasingType type in Enum.GetValues(typeof(EasingType)))
             {
-                Presets.Add(CreatePreset(type));
+                _items.Add(CreatePreset(type));
             }
 
-            if (!Directory.Exists(UserEasingDir)) return;
+            if (UserPresets == null) UserPresets = new ObservableCollection<EasingData>();
 
-            foreach (var file in Directory.GetFiles(UserEasingDir, "*.xml"))
+            foreach (var item in UserPresets)
             {
-                try
+                item.IsCustom = true;
+                _items.Add(item);
+            }
+        }
+
+        public static void SavePreset(EasingData data)
+        {
+            var newData = data.Clone();
+            newData.IsCustom = true;
+
+            var existing = Instance.UserPresets.FirstOrDefault(x => x.Name == newData.Name);
+            if (existing != null)
+            {
+                Instance.UserPresets.Remove(existing);
+                var item = Instance.Items.FirstOrDefault(x => x.Name == newData.Name && x.IsCustom);
+                if (item != null) Instance.Items.Remove(item);
+            }
+
+            Instance.UserPresets.Add(newData);
+            Instance.Items.Add(newData);
+            Instance.Save();
+        }
+
+        public static void DeletePreset(EasingData data)
+        {
+            if (data.IsCustom)
+            {
+                var existing = Instance.UserPresets.FirstOrDefault(x => x.Name == data.Name);
+                if (existing != null)
                 {
-                    var serializer = new XmlSerializer(typeof(EasingData));
-                    using var stream = new FileStream(file, FileMode.Open);
-                    if (serializer.Deserialize(stream) is EasingData data)
-                    {
-                        data.IsCustom = true;
-                        Presets.Add(data);
-                    }
+                    Instance.UserPresets.Remove(existing);
+                    Instance.Items.Remove(data);
+                    Instance.Save();
                 }
-                catch { }
             }
         }
 
@@ -166,36 +194,6 @@ namespace ObjLoader.Plugin
             data.Points.Add(p0);
             data.Points.Add(p1);
             return data;
-        }
-
-        public static void SavePreset(EasingData data)
-        {
-            if (!Directory.Exists(UserEasingDir)) Directory.CreateDirectory(UserEasingDir);
-
-            var newData = data.Clone();
-            newData.IsCustom = true;
-
-            string path = Path.Combine(UserEasingDir, $"{SanitizeFileName(newData.Name)}.xml");
-            var serializer = new XmlSerializer(typeof(EasingData));
-            using var stream = new FileStream(path, FileMode.Create);
-            serializer.Serialize(stream, newData);
-
-            Presets.Add(newData);
-        }
-
-        public static void DeletePreset(EasingData data)
-        {
-            if (data.IsCustom)
-            {
-                string path = Path.Combine(UserEasingDir, $"{SanitizeFileName(data.Name)}.xml");
-                if (File.Exists(path)) File.Delete(path);
-            }
-            Presets.Remove(data);
-        }
-
-        private static string SanitizeFileName(string name)
-        {
-            return string.Join("_", name.Split(Path.GetInvalidFileNameChars()));
         }
     }
 }
