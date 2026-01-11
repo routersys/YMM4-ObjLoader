@@ -59,6 +59,240 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
 <data name="CurrentCulture" xml:space="preserve"><value>id-id</value></data>
+<data name="PluginName" xml:space="preserve"><value>Model OBJ</value></data>
+<data name="CoordinateSystem" xml:space="preserve"><value>Sistem Koordinat</value></data>
+<data name="CoordinateSystem_Desc" xml:space="preserve"><value>Mengatur orientasi sumbu koordinat saat memuat model.</value></data>
+<data name="CoordinateSystem_RightHandedYUp" xml:space="preserve"><value>Tangan Kanan Y-Up (Bawaan)</value></data>
+<data name="CoordinateSystem_RightHandedZUp" xml:space="preserve"><value>Tangan Kanan Z-Up</value></data>
+<data name="CoordinateSystem_LeftHandedYUp" xml:space="preserve"><value>Tangan Kiri Y-Up</value></data>
+<data name="CoordinateSystem_LeftHandedZUp" xml:space="preserve"><value>Tangan Kiri Z-Up</value></data>
+<data name="CullMode" xml:space="preserve"><value>Mode Culling</value></data>
+<data name="CullMode_Desc" xml:space="preserve"><value>Mengatur mode culling saat merender.</value></data>
+<data name="CullMode_None" xml:space="preserve"><value>Tidak ada</value></data>
+<data name="CullMode_Front" xml:space="preserve"><value>Depan</value></data>
+<data name="CullMode_Back" xml:space="preserve"><value>Belakang</value></data>
+<data name="Group_Global" xml:space="preserve"><value>Pengaturan Global</value></data>
+<data name="Group_Lighting" xml:space="preserve"><value>Pencahayaan</value></data>
+<data name="AmbientColor" xml:space="preserve"><value>Warna Ambient</value></data>
+<data name="AmbientColor_Desc" xml:space="preserve"><value>Mengatur warna cahaya ambient.</value></data>
+<data name="DiffuseIntensity" xml:space="preserve"><value>Intensitas Difus</value></data>
+<data name="DiffuseIntensity_Desc" xml:space="preserve"><value>Mengatur intensitas pantulan difus cahaya.</value></data>
+<data name="SpecularIntensity" xml:space="preserve"><value>Intensitas Specular</value></data>
+<data name="SpecularIntensity_Desc" xml:space="preserve"><value>Mengatur intensitas pantulan specular (highlight).</value></data>
+<data name="Shininess" xml:space="preserve"><value>Shininess</value></data>
+<data name="Shininess_Desc" xml:space="preserve"><value>Mengatur ketajaman highlight. Nilai lebih tinggi membuat lebih tajam.</value></data>
+<data name="Group_Environment" xml:space="preserve"><value>Lingkungan</value></data>
+<data name="LightColor" xml:space="preserve"><value>Warna Cahaya</value></data>
+<data name="LightColor_Desc" xml:space="preserve"><value>Mengatur warna sumber cahaya.</value></data>
+<data name="ResetDefaults" xml:space="preserve"><value>Kembalikan ke Default</value></data>
+<data name="OK" xml:space="preserve"><value>OK</value></data>
+<data name="Cancel" xml:space="preserve"><value>Batal</value></data>
+<data name="Group_Model" xml:space="preserve"><value>Model</value></data>
+<data name="Setting" xml:space="preserve"><value>Pengaturan</value></data>
+<data name="File" xml:space="preserve"><value>File</value></data>
 <data name="File_Desc" xml:space="preserve"><value>pmx</value></data>
+<data name="BaseColor" xml:space="preserve"><value>Warna Dasar</value></data>
+<data name="Projection" xml:space="preserve"><value>Proyeksi</value></data>
+<data name="Group_Display" xml:space="preserve"><value>Tampilan</value></data>
+<data name="ScreenWidth" xml:space="preserve"><value>Lebar Layar</value></data>
+<data name="ScreenHeight" xml:space="preserve"><value>Tinggi Layar</value></data>
+<data name="Group_Placement" xml:space="preserve"><value>Penempatan</value></data>
+<data name="X" xml:space="preserve"><value>Posisi X</value></data>
+<data name="Y" xml:space="preserve"><value>Posisi Y</value></data>
+<data name="Z" xml:space="preserve"><value>Posisi Z</value></data>
+<data name="Fov" xml:space="preserve"><value>Sudut Pandang</value></data>
+<data name="Scale" xml:space="preserve"><value>Skala</value></data>
+<data name="RotationX" xml:space="preserve"><value>Rotasi X</value></data>
+<data name="RotationY" xml:space="preserve"><value>Rotasi Y</value></data>
+<data name="RotationZ" xml:space="preserve"><value>Rotasi Z</value></data>
+<data name="ResetTrigger" xml:space="preserve"><value>Reset</value></data>
+<data name="Group_Light" xml:space="preserve"><value>Lampu</value></data>
+<data name="IsLightEnabled" xml:space="preserve"><value>Diaktifkan</value></data>
+<data name="LightX" xml:space="preserve"><value>Posisi X</value></data>
+<data name="LightY" xml:space="preserve"><value>Posisi Y</value></data>
+<data name="LightZ" xml:space="preserve"><value>Posisi Z</value></data>
+<data name="Projection_Parallel" xml:space="preserve"><value>Proyeksi Paralel</value></data>
+<data name="Projection_Perspective" xml:space="preserve"><value>Proyeksi Perspektif</value></data>
+<data name="ResetTransform" xml:space="preserve"><value>Reset Transform</value></data>
+<data name="SettingsTitle" xml:space="preserve"><value>Pengaturan</value></data>
+<data name="On" xml:space="preserve"><value>Nyala</value></data>
+<data name="Off" xml:space="preserve"><value>Mati</value></data>
+<data name="UpdateAvailableTitle" xml:space="preserve"><value>Pembaruan Tersedia</value></data>
+<data name="UpdateAvailableMessage" xml:space="preserve"><value>Versi baru ({0}) tersedia. Buka halaman unduhan?</value></data>
+<data name="DracoNotSupported" xml:space="preserve"><value>Kompresi Draco tidak didukung</value></data>
+<data name="WorldId" xml:space="preserve"><value>ID Dunia</value></data>
+<data name="CameraSettings" xml:space="preserve"><value>Pengaturan Kamera</value></data>
+<data name="OpenCameraWindow" xml:space="preserve"><value>Posisi Kamera</value></data>
+<data name="Grid" xml:space="preserve"><value>Grid</value></data>
+<data name="ResetCamera" xml:space="preserve"><value>Reset Kamera</value></data>
+<data name="CameraPos" xml:space="preserve"><value>Posisi Kamera</value></data>
+<data name="CameraTarget" xml:space="preserve"><value>Target</value></data>
+<data name="ViewRight" xml:space="preserve"><value>Kanan</value></data>
+<data name="ViewLeft" xml:space="preserve"><value>Kiri</value></data>
+<data name="ViewTop" xml:space="preserve"><value>Atas</value></data>
+<data name="ViewBottom" xml:space="preserve"><value>Bawah</value></data>
+<data name="ViewFront" xml:space="preserve"><value>Depan</value></data>
+<data name="ViewBack" xml:space="preserve"><value>Belakang</value></data>
+<data name="CornerFRT" xml:space="preserve"><value>Depan Kanan Atas</value></data>
+<data name="CornerFLT" xml:space="preserve"><value>Depan Kiri Atas</value></data>
+<data name="CornerBRT" xml:space="preserve"><value>Belakang Kanan Atas</value></data>
+<data name="CornerBLT" xml:space="preserve"><value>Belakang Kiri Atas</value></data>
+<data name="CornerFRB" xml:space="preserve"><value>Depan Kanan Bawah</value></data>
+<data name="CornerFLB" xml:space="preserve"><value>Depan Kiri Bawah</value></data>
+<data name="CornerBRB" xml:space="preserve"><value>Belakang Kanan Bawah</value></data>
+<data name="CornerBLB" xml:space="preserve"><value>Belakang Kiri Bawah</value></data>
+<data name="PilotView" xml:space="preserve"><value>Tampilan Pilot</value></data>
+<data name="Wireframe" xml:space="preserve"><value>Wireframe</value></data>
+<data name="Snap" xml:space="preserve"><value>Snap</value></data>
+<data name="Focus" xml:space="preserve"><value>Fokus (F)</value></data>
+<data name="Undo" xml:space="preserve"><value>Urungkan</value></data>
+<data name="Redo" xml:space="preserve"><value>Ulangi</value></data>
+<data name="Solid" xml:space="preserve"><value>Padat</value></data>
+<data name="Flat" xml:space="preserve"><value>Datar</value></data>
+<data name="DisplayMode" xml:space="preserve"><value>Mode Tampilan</value></data>
+<data name="InfiniteGrid" xml:space="preserve"><value>Grid Tak Terbatas</value></data>
+<data name="TargetFixed" xml:space="preserve"><value>Tetap</value></data>
+<data name="Timeline_Play" xml:space="preserve"><value>Putar</value></data>
+<data name="Timeline_Pause" xml:space="preserve"><value>Jeda</value></data>
+<data name="Timeline_Stop" xml:space="preserve"><value>Berhenti</value></data>
+<data name="Timeline_AddKey" xml:space="preserve"><value>Tambah Keyframe</value></data>
+<data name="Timeline_RemoveKey" xml:space="preserve"><value>Hapus Keyframe</value></data>
+<data name="Timeline_Easing" xml:space="preserve"><value>Easing</value></data>
+<data name="Timeline_Time" xml:space="preserve"><value>Waktu</value></data>
+<data name="Timeline_Duration" xml:space="preserve"><value>Durasi</value></data>
+<data name="Timeline_Seconds" xml:space="preserve"><value>s</value></data>
+<data name="Preset_Save" xml:space="preserve"><value>Simpan Preset</value></data>
+<data name="Preset_Delete" xml:space="preserve"><value>Hapus Preset</value></data>
+<data name="Dialog_Name" xml:space="preserve"><value>Nama</value></data>
+<data name="Dialog_Ok" xml:space="preserve"><value>OK</value></data>
+<data name="Dialog_Cancel" xml:space="preserve"><value>Batal</value></data>
+<data name="Editor_ResetView" xml:space="preserve"><value>Reset Tampilan</value></data>
+<data name="Easing_Linear" xml:space="preserve"><value>Linear</value></data>
+<data name="Easing_SineIn" xml:space="preserve"><value>Sine In</value></data>
+<data name="Easing_SineOut" xml:space="preserve"><value>Sine Out</value></data>
+<data name="Easing_SineInOut" xml:space="preserve"><value>Sine InOut</value></data>
+<data name="Easing_QuadIn" xml:space="preserve"><value>Quad In</value></data>
+<data name="Easing_QuadOut" xml:space="preserve"><value>Quad Out</value></data>
+<data name="Easing_QuadInOut" xml:space="preserve"><value>Quad InOut</value></data>
+<data name="Easing_CubicIn" xml:space="preserve"><value>Cubic In</value></data>
+<data name="Easing_CubicOut" xml:space="preserve"><value>Cubic Out</value></data>
+<data name="Easing_CubicInOut" xml:space="preserve"><value>Cubic InOut</value></data>
+<data name="Easing_QuartIn" xml:space="preserve"><value>Quart In</value></data>
+<data name="Easing_QuartOut" xml:space="preserve"><value>Quart Out</value></data>
+<data name="Easing_QuartInOut" xml:space="preserve"><value>Quart InOut</value></data>
+<data name="Easing_QuintIn" xml:space="preserve"><value>Quint In</value></data>
+<data name="Easing_QuintOut" xml:space="preserve"><value>Quint Out</value></data>
+<data name="Easing_QuintInOut" xml:space="preserve"><value>Quint InOut</value></data>
+<data name="Easing_ExpoIn" xml:space="preserve"><value>Expo In</value></data>
+<data name="Easing_ExpoOut" xml:space="preserve"><value>Expo Out</value></data>
+<data name="Easing_ExpoInOut" xml:space="preserve"><value>Expo InOut</value></data>
+<data name="Easing_CircIn" xml:space="preserve"><value>Circ In</value></data>
+<data name="Easing_CircOut" xml:space="preserve"><value>Circ Out</value></data>
+<data name="Easing_CircInOut" xml:space="preserve"><value>Circ InOut</value></data>
+<data name="Easing_BackIn" xml:space="preserve"><value>Back In</value></data>
+<data name="Easing_BackOut" xml:space="preserve"><value>Back Out</value></data>
+<data name="Easing_BackInOut" xml:space="preserve"><value>Back InOut</value></data>
+<data name="Preset_Standard" xml:space="preserve"><value>Standar</value></data>
+<data name="Preset_Custom" xml:space="preserve"><value>Kustom</value></data>
+<data name="Shader" xml:space="preserve"><value>Shader</value></data>
 <data name="Shader_Desc" xml:space="preserve"><value>txt)</value></data>
+<data name="Shader_Status_Success" xml:space="preserve"><value>Kompilasi Berhasil</value></data>
+<data name="Shader_Status_Error" xml:space="preserve"><value>Kesalahan kompilasi: {0}</value></data>
+<data name="Shader_Status_Unknown" xml:space="preserve"><value>Tidak diketahui</value></data>
+<data name="Shader_None" xml:space="preserve"><value>Tidak ada</value></data>
+<data name="Group_Toon" xml:space="preserve"><value>Toon</value></data>
+<data name="ToonEnabled" xml:space="preserve"><value>Aktifkan Toon</value></data>
+<data name="ToonEnabled_Desc" xml:space="preserve"><value>Mengaktifkan toon shading.</value></data>
+<data name="ToonSteps" xml:space="preserve"><value>Langkah</value></data>
+<data name="ToonSteps_Desc" xml:space="preserve"><value>Mengatur jumlah tingkatan warna. Nilai kecil membuat tampilan lebih kartun.</value></data>
+<data name="ToonSmoothness" xml:space="preserve"><value>Kelancaran</value></data>
+<data name="ToonSmoothness_Desc" xml:space="preserve"><value>Mengatur seberapa halus batas tingkatan warna.</value></data>
+<data name="Group_Rim" xml:space="preserve"><value>Rim Light</value></data>
+<data name="RimEnabled" xml:space="preserve"><value>Aktifkan Rim</value></data>
+<data name="RimEnabled_Desc" xml:space="preserve"><value>Menambahkan cahaya di tepi model untuk menonjolkan bentuk.</value></data>
+<data name="RimColor" xml:space="preserve"><value>Warna Rim</value></data>
+<data name="RimColor_Desc" xml:space="preserve"><value>Mengatur warna rim light.</value></data>
+<data name="RimIntensity" xml:space="preserve"><value>Intensitas</value></data>
+<data name="RimIntensity_Desc" xml:space="preserve"><value>Mengatur kecerahan rim light.</value></data>
+<data name="RimPower" xml:space="preserve"><value>Kekuatan</value></data>
+<data name="RimPower_Desc" xml:space="preserve"><value>Mengatur ketajaman rim light.</value></data>
+<data name="Group_Outline" xml:space="preserve"><value>Outline</value></data>
+<data name="OutlineEnabled" xml:space="preserve"><value>Aktifkan Outline</value></data>
+<data name="OutlineEnabled_Desc" xml:space="preserve"><value>Menggambar garis di batas dalam model.</value></data>
+<data name="OutlineColor" xml:space="preserve"><value>Warna Outline</value></data>
+<data name="OutlineColor_Desc" xml:space="preserve"><value>Mengatur warna outline.</value></data>
+<data name="OutlineWidth" xml:space="preserve"><value>Lebar Garis</value></data>
+<data name="OutlineWidth_Desc" xml:space="preserve"><value>Mengatur ketebalan garis outline.</value></data>
+<data name="OutlinePower" xml:space="preserve"><value>Ambang</value></data>
+<data name="OutlinePower_Desc" xml:space="preserve"><value>Mengatur seberapa jelas batas outline.</value></data>
+<data name="Group_Fog" xml:space="preserve"><value>Kabut</value></data>
+<data name="FogEnabled" xml:space="preserve"><value>Aktifkan Kabut</value></data>
+<data name="FogEnabled_Desc" xml:space="preserve"><value>Mengaktifkan efek kabut.</value></data>
+<data name="FogColor" xml:space="preserve"><value>Warna Kabut</value></data>
+<data name="FogColor_Desc" xml:space="preserve"><value>Mengatur warna kabut.</value></data>
+<data name="FogStart" xml:space="preserve"><value>Mulai</value></data>
+<data name="FogStart_Desc" xml:space="preserve"><value>Mengatur jarak mulai kabut dari kamera.</value></data>
+<data name="FogEnd" xml:space="preserve"><value>Akhir</value></data>
+<data name="FogEnd_Desc" xml:space="preserve"><value>Mengatur jarak di mana kabut sepenuhnya pekat.</value></data>
+<data name="FogDensity" xml:space="preserve"><value>Kepadatan</value></data>
+<data name="FogDensity_Desc" xml:space="preserve"><value>Mengatur kepadatan kabut.</value></data>
+<data name="Group_PostEffect" xml:space="preserve"><value>Efek</value></data>
+<data name="Saturation" xml:space="preserve"><value>Saturasi</value></data>
+<data name="Saturation_Desc" xml:space="preserve"><value>Mengatur saturasi warna. 0 menjadi hitam putih.</value></data>
+<data name="Contrast" xml:space="preserve"><value>Kontras</value></data>
+<data name="Contrast_Desc" xml:space="preserve"><value>Mengatur kontras.</value></data>
+<data name="Gamma" xml:space="preserve"><value>Gamma</value></data>
+<data name="Gamma_Desc" xml:space="preserve"><value>Mengatur koreksi gamma.</value></data>
+<data name="BrightnessPost" xml:space="preserve"><value>Kecerahan</value></data>
+<data name="BrightnessPost_Desc" xml:space="preserve"><value>Mengatur kecerahan keseluruhan layar.</value></data>
+<data name="Group_Vignette" xml:space="preserve"><value>Vignette</value></data>
+<data name="VignetteEnabled" xml:space="preserve"><value>Aktifkan</value></data>
+<data name="VignetteEnabled_Desc" xml:space="preserve"><value>Menggelapkan sudut layar untuk suasana.</value></data>
+<data name="VignetteColor" xml:space="preserve"><value>Warna Vignette</value></data>
+<data name="VignetteColor_Desc" xml:space="preserve"><value>Mengatur warna vignette.</value></data>
+<data name="VignetteIntensity" xml:space="preserve"><value>Intensitas</value></data>
+<data name="VignetteIntensity_Desc" xml:space="preserve"><value>Mengatur intensitas vignette.</value></data>
+<data name="VignetteRadius" xml:space="preserve"><value>Radius</value></data>
+<data name="VignetteRadius_Desc" xml:space="preserve"><value>Mengatur radius vignette.</value></data>
+<data name="VignetteSoftness" xml:space="preserve"><value>Kelunakan</value></data>
+<data name="VignetteSoftness_Desc" xml:space="preserve"><value>Mengatur kelembutan tepi vignette.</value></data>
+<data name="Group_Scanline" xml:space="preserve"><value>Scanline</value></data>
+<data name="ScanlineEnabled" xml:space="preserve"><value>Aktifkan</value></data>
+<data name="ScanlineEnabled_Desc" xml:space="preserve"><value>Menambahkan garis horizontal seperti TV tabung.</value></data>
+<data name="ScanlineIntensity" xml:space="preserve"><value>Intensitas</value></data>
+<data name="ScanlineIntensity_Desc" xml:space="preserve"><value>Mengatur kegelapan garis scanline.</value></data>
+<data name="ScanlineFrequency" xml:space="preserve"><value>Frekuensi</value></data>
+<data name="ScanlineFrequency_Desc" xml:space="preserve"><value>Mengatur kepadatan garis scanline.</value></data>
+<data name="Group_Artistic" xml:space="preserve"><value>Artistik</value></data>
+<data name="ChromAbEnabled" xml:space="preserve"><value>Aberrasi kromatik</value></data>
+<data name="ChromAbEnabled_Desc" xml:space="preserve"><value>Mengaktifkan efek aberasi kromatik.</value></data>
+<data name="ChromAbIntensity" xml:space="preserve"><value>Intensitas CA</value></data>
+<data name="ChromAbIntensity_Desc" xml:space="preserve"><value>Mengatur intensitas aberasi kromatik.</value></data>
+<data name="MonochromeEnabled" xml:space="preserve"><value>Monokrom</value></data>
+<data name="MonochromeEnabled_Desc" xml:space="preserve"><value>Mengubah layar menjadi monokrom.</value></data>
+<data name="MonochromeColor" xml:space="preserve"><value>Warna Mono</value></data>
+<data name="MonochromeColor_Desc" xml:space="preserve"><value>Mengatur warna filter monokrom.</value></data>
+<data name="MonochromeMix" xml:space="preserve"><value>Campuran Mono</value></data>
+<data name="MonochromeMix_Desc" xml:space="preserve"><value>Mengatur seberapa banyak campuran antara warna asli dan filter mono.</value></data>
+<data name="PosterizeEnabled" xml:space="preserve"><value>Posterize</value></data>
+<data name="PosterizeEnabled_Desc" xml:space="preserve"><value>Mengurangi jumlah warna untuk efek ilustrasi.</value></data>
+<data name="PosterizeLevels" xml:space="preserve"><value>Tingkat</value></data>
+<data name="PosterizeLevels_Desc" xml:space="preserve"><value>Mengatur jumlah tingkat posterize.</value></data>
+<data name="WorldId_Desc" xml:space="preserve"><value>Menentukan ID dunia untuk mengganti pengaturan.</value></data>
+<data name="VCRedist_Title" xml:space="preserve"><value>Visual C++ Redistributable Hilang</value></data>
+<data name="VCRedist_Message" xml:space="preserve"><value>Visual C++ 2015-2022 Redistributable (x64) belum terpasang. Beberapa fitur mungkin tidak berfungsi. Harap pasang.</value></data>
+<data name="Filter_3DModelFiles" xml:space="preserve"><value>File Model 3D</value></data>
+<data name="Filter_BlenderDeprecated" xml:space="preserve"><value>File Blender (Tidak Disarankan)</value></data>
+<data name="Filter_ShaderFiles" xml:space="preserve"><value>File Shader</value></data>
+<data name="Group_Assimp" xml:space="preserve"><value>Pengaturan Assimp</value></data>
+<data name="Assimp_Obj" xml:space="preserve"><value>Muat OBJ dengan Assimp</value></data>
+<data name="Assimp_Obj_Desc" xml:space="preserve"><value>Menggunakan Assimp untuk memuat file OBJ.</value></data>
+<data name="Assimp_Glb" xml:space="preserve"><value>Muat GLB dengan Assimp</value></data>
+<data name="Assimp_Glb_Desc" xml:space="preserve"><value>Menggunakan Assimp untuk memuat file GLB/GLTF.</value></data>
+<data name="Assimp_Ply" xml:space="preserve"><value>Muat PLY dengan Assimp</value></data>
+<data name="Assimp_Ply_Desc" xml:space="preserve"><value>Menggunakan Assimp untuk memuat file PLY.</value></data>
+<data name="Assimp_Stl" xml:space="preserve"><value>Muat STL dengan Assimp</value></data>
+<data name="Assimp_Stl_Desc" xml:space="preserve"><value>Menggunakan Assimp untuk memuat file STL.</value></data>
+<data name="Assimp_3mf" xml:space="preserve"><value>Muat 3MF dengan Assimp</value></data>
+<data name="Assimp_3mf_Desc" xml:space="preserve"><value>Menggunakan Assimp untuk memuat file 3MF.</value></data>
 </root>

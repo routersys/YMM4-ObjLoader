@@ -104,7 +104,7 @@
 <data name="Scale" xml:space="preserve"><value>배율</value></data>
 <data name="RotationX" xml:space="preserve"><value>회전 X</value></data>
 <data name="RotationY" xml:space="preserve"><value>회전 Y</value></data>
-<data name="RotationZ" xml:space="preserve"><value>Rotación Z</value></data>
+<data name="RotationZ" xml:space="preserve"><value>회전 Z</value></data>
 <data name="ResetTrigger" xml:space="preserve"><value>재설정</value></data>
 <data name="Group_Light" xml:space="preserve"><value>조명</value></data>
 <data name="IsLightEnabled" xml:space="preserve"><value>활성화</value></data>

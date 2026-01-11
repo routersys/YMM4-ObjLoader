@@ -104,6 +104,7 @@
 <data name="Scale" xml:space="preserve"><value>مقياس</value></data>
 <data name="RotationX" xml:space="preserve"><value>تدوير س</value></data>
 <data name="RotationY" xml:space="preserve"><value>تدوير ص</value></data>
+<data name="RotationZ" xml:space="preserve"><value>تدوير ع</value></data>
 <data name="ResetTrigger" xml:space="preserve"><value>إعادة تعيين</value></data>
 <data name="Group_Light" xml:space="preserve"><value>ضوء</value></data>
 <data name="IsLightEnabled" xml:space="preserve"><value>ممكن</value></data>

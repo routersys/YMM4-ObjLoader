@@ -80,7 +80,7 @@
 <data name="SpecularIntensity" xml:space="preserve"><value>镜面反射强度</value></data>
 <data name="SpecularIntensity_Desc" xml:space="preserve"><value>设置光的镜面反射（高光）强度。</value></data>
 <data name="Shininess" xml:space="preserve"><value>光泽度</value></data>
-<data name="Shininess_Desc" xml:space="preserve"><value>设置高光的锐度。值越大越锐利。</value></data>
+<data name="Shininess_Desc" xml:space="preserve"><value>设置高光的锐度。值越大越銳利。</value></data>
 <data name="Group_Environment" xml:space="preserve"><value>环境</value></data>
 <data name="LightColor" xml:space="preserve"><value>光源颜色</value></data>
 <data name="LightColor_Desc" xml:space="preserve"><value>设置光源的颜色。</value></data>

@@ -80,7 +80,7 @@
 <data name="SpecularIntensity" xml:space="preserve"><value>鏡面反射強度</value></data>
 <data name="SpecularIntensity_Desc" xml:space="preserve"><value>設定光的鏡面反射（高光）強度。</value></data>
 <data name="Shininess" xml:space="preserve"><value>光澤度</value></data>
-<data name="Shininess_Desc" xml:space="preserve"><value>設定高光的銳利度。值越大越銳利。</value></data>
+<data name="Shininess_Desc" xml:space="preserve"><value>設定高光的銳利度。値越大越銳利。</value></data>
 <data name="Group_Environment" xml:space="preserve"><value>環境</value></data>
 <data name="LightColor" xml:space="preserve"><value>光源顏色</value></data>
 <data name="LightColor_Desc" xml:space="preserve"><value>設定光源的顏色。</value></data>
@@ -104,7 +104,7 @@
 <data name="Scale" xml:space="preserve"><value>縮放</value></data>
 <data name="RotationX" xml:space="preserve"><value>旋轉 X</value></data>
 <data name="RotationY" xml:space="preserve"><value>旋轉 Y</value></data>
-<data name="RotationZ" xml:space="preserve"><value>회전 Z</value></data>
+<data name="RotationZ" xml:space="preserve"><value>回転 Z</value></data>
 <data name="ResetTrigger" xml:space="preserve"><value>重置</value></data>
 <data name="Group_Light" xml:space="preserve"><value>燈光</value></data>
 <data name="IsLightEnabled" xml:space="preserve"><value>啟用</value></data>
