@@ -1,4 +1,5 @@
-﻿using ObjLoader.Settings;
+﻿using ObjLoader.Plugin;
+using ObjLoader.Settings;
 using ObjLoader.Views;
 using YukkuriMovieMaker.Commons;
 
@@ -14,6 +15,8 @@ namespace ObjLoader.ViewModels
                 _ => true,
                 _ => OpenSettingWindow()
             );
+
+            VersionChecker.CheckVersion();
         }
 
         private void OpenSettingWindow()
