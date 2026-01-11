@@ -45,6 +45,7 @@ namespace ObjLoader.Settings
         private bool _assimpPly = false;
         private bool _assimpStl = false;
         private bool _assimp3mf = false;
+        private bool _assimpPmx = false;
 
         private const int MaxWorlds = 10;
         private int _worldId = 0;
@@ -109,6 +110,7 @@ namespace ObjLoader.Settings
             public bool AssimpPly;
             public bool AssimpStl;
             public bool Assimp3mf;
+            public bool AssimpPmx;
             public int WorldId;
             public List<Color> AmbientColors = new();
             public List<Color> LightColors = new();
@@ -163,6 +165,7 @@ namespace ObjLoader.Settings
                 AssimpPly = _assimpPly,
                 AssimpStl = _assimpStl,
                 Assimp3mf = _assimp3mf,
+                AssimpPmx = _assimpPmx,
                 WorldId = _worldId,
                 AmbientColors = new List<Color>(_ambientColors),
                 LightColors = new List<Color>(_lightColors),
@@ -216,6 +219,7 @@ namespace ObjLoader.Settings
             _assimpPly = m.AssimpPly;
             _assimpStl = m.AssimpStl;
             _assimp3mf = m.Assimp3mf;
+            _assimpPmx = m.AssimpPmx;
             _worldId = m.WorldId;
 
             _ambientColors = RestoreList(m.AmbientColors, Color.FromRgb(50, 50, 50));
@@ -544,6 +548,9 @@ namespace ObjLoader.Settings
         [BoolSetting("Assimp", nameof(Texts.Assimp_3mf), Description = nameof(Texts.Assimp_3mf_Desc), ResourceType = typeof(Texts))]
         public bool Assimp3mf { get => _assimp3mf; set => SetProperty(ref _assimp3mf, value); }
 
+        [BoolSetting("Assimp", nameof(Texts.Assimp_Pmx), Description = nameof(Texts.Assimp_Pmx_Desc), ResourceType = typeof(Texts))]
+        public bool AssimpPmx { get => _assimpPmx; set => SetProperty(ref _assimpPmx, value); }
+
         [SettingButton(nameof(Texts.ResetDefaults), Placement = SettingButtonPlacement.BottomLeft, Order = 0, ResourceType = typeof(Texts))]
         public void ResetDefaults()
         {
@@ -554,6 +561,7 @@ namespace ObjLoader.Settings
             AssimpPly = false;
             AssimpStl = false;
             Assimp3mf = false;
+            AssimpPmx = false;
             AmbientColor = Color.FromRgb(50, 50, 50);
             LightColor = Colors.White;
             DiffuseIntensity = 1.0;

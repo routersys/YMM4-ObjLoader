@@ -295,4 +295,6 @@
 <data name="Assimp_Stl_Desc" xml:space="preserve"><value>STLファイルの読み込みにAssimpを使用します。</value></data>
 <data name="Assimp_3mf" xml:space="preserve"><value>3MFをAssimpで読み込む</value></data>
 <data name="Assimp_3mf_Desc" xml:space="preserve"><value>3MFファイルの読み込みにAssimpを使用します。</value></data>
+<data name="Assimp_Pmx" xml:space="preserve"><value>PMXをAssimpで読み込む</value></data>
+<data name="Assimp_Pmx_Desc" xml:space="preserve"><value>PMXファイルの読み込みにAssimpを使用します。</value></data>
 </root>

@@ -53,6 +53,7 @@ namespace ObjLoader.Parsers
             else if (ext == ".ply") forceAssimp = PluginSettings.Instance.AssimpPly;
             else if (ext == ".stl") forceAssimp = PluginSettings.Instance.AssimpStl;
             else if (ext == ".3mf") forceAssimp = PluginSettings.Instance.Assimp3mf;
+            else if (ext == ".pmx") forceAssimp = PluginSettings.Instance.AssimpPmx;
 
             IModelParser? parser = null;
             if (forceAssimp)

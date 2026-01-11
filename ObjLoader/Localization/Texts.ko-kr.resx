@@ -295,4 +295,6 @@
 <data name="Assimp_Stl_Desc" xml:space="preserve"><value>STL 파일 로드에 Assimp를 사용합니다.</value></data>
 <data name="Assimp_3mf" xml:space="preserve"><value>Assimp로 3MF 로드</value></data>
 <data name="Assimp_3mf_Desc" xml:space="preserve"><value>3MF 파일 로드에 Assimp를 사용합니다.</value></data>
+<data name="Assimp_Pmx" xml:space="preserve"><value>Assimp로 PMX 로드</value></data>
+<data name="Assimp_Pmx_Desc" xml:space="preserve"><value>PMX 파일 로드에 Assimp를 사용합니다.</value></data>
 </root>

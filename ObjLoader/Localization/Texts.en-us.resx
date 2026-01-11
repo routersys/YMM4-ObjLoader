@@ -295,4 +295,6 @@
 <data name="Assimp_Stl_Desc" xml:space="preserve"><value>Uses Assimp to load STL files.</value></data>
 <data name="Assimp_3mf" xml:space="preserve"><value>Load 3MF with Assimp</value></data>
 <data name="Assimp_3mf_Desc" xml:space="preserve"><value>Uses Assimp to load 3MF files.</value></data>
+<data name="Assimp_Pmx" xml:space="preserve"><value>Load PMX with Assimp</value></data>
+<data name="Assimp_Pmx_Desc" xml:space="preserve"><value>Uses Assimp to load PMX files.</value></data>
 </root>
