@@ -272,6 +272,10 @@ namespace ObjLoader.ViewModels
             {
                 MaxDuration = _parameter.Duration;
             }
+            else if (e.PropertyName == nameof(ObjLoaderParameter.CurrentFrame))
+            {
+
+            }
         }
 
         private void StopPlayback()
@@ -366,17 +370,19 @@ namespace ObjLoader.ViewModels
 
         private void UpdateAnimation()
         {
-            if (Keyframes.Count == 0) return;
+            if (Keyframes.Count > 0)
+            {
+                _isUpdatingAnimation = true;
+                var state = _parameter.GetCameraState(CurrentTime);
+                CamX = state.cx;
+                CamY = state.cy;
+                CamZ = state.cz;
+                TargetX = state.tx;
+                TargetY = state.ty;
+                TargetZ = state.tz;
+                _isUpdatingAnimation = false;
+            }
 
-            _isUpdatingAnimation = true;
-            var state = _parameter.GetCameraState(CurrentTime);
-            CamX = state.cx;
-            CamY = state.cy;
-            CamZ = state.cz;
-            TargetX = state.tx;
-            TargetY = state.ty;
-            TargetZ = state.tz;
-            _isUpdatingAnimation = false;
             UpdateVisuals();
         }
 
@@ -427,6 +433,9 @@ namespace ObjLoader.ViewModels
 
             bool isInteracting = false;
 
+            int fps = _parameter.CurrentFPS > 0 ? _parameter.CurrentFPS : 60;
+            double currentFrame = _currentTime * fps;
+
             _renderService.Render(
                 _modelResource,
                 view,
@@ -439,7 +448,8 @@ namespace ObjLoader.ViewModels
                 _modelScale,
                 _modelHeight,
                 _parameter,
-                isInteracting);
+                isInteracting,
+                currentFrame);
         }
 
         private void UpdateSceneCameraVisual()

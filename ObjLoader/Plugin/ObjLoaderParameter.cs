@@ -14,6 +14,7 @@ using YukkuriMovieMaker.Project;
 using System.ComponentModel;
 using System.Windows;
 using ObjLoader.Settings;
+using System.Runtime.Serialization;
 
 namespace ObjLoader.Plugin
 {
@@ -138,6 +139,24 @@ namespace ObjLoader.Plugin
         [Display(AutoGenerateField = false)]
         public Animation SettingsVersion { get; } = new Animation(0, 0, 100000000);
         private int _versionCounter = 0;
+
+        [Display(AutoGenerateField = false)]
+        [IgnoreDataMember]
+        public double CurrentFrame
+        {
+            get => _currentFrame;
+            set => Set(ref _currentFrame, value);
+        }
+        private double _currentFrame;
+
+        [Display(AutoGenerateField = false)]
+        [IgnoreDataMember]
+        public int CurrentFPS
+        {
+            get => _currentFps;
+            set => Set(ref _currentFps, value);
+        }
+        private int _currentFps = 60;
 
         public ObjLoaderParameter() : this(null) { }
         public ObjLoaderParameter(SharedDataStore? sharedData) : base(sharedData)

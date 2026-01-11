@@ -140,7 +140,8 @@ namespace ObjLoader.Services
             double modelScale,
             double modelHeight,
             ObjLoaderParameter parameter,
-            bool isInteracting)
+            bool isInteracting,
+            double currentFrame)
         {
             if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
 
@@ -203,13 +204,17 @@ namespace ObjLoader.Services
                     case CoordinateSystem.LeftHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
                 }
 
-                float scale = (float)(parameter.Scale.Values[0].Value / 100.0);
-                float rx = (float)(parameter.RotationX.Values[0].Value * Math.PI / 180.0);
-                float ry = (float)(parameter.RotationY.Values[0].Value * Math.PI / 180.0);
-                float rz = (float)(parameter.RotationZ.Values[0].Value * Math.PI / 180.0);
-                float tx = (float)parameter.X.Values[0].Value;
-                float ty = (float)parameter.Y.Values[0].Value;
-                float tz = (float)parameter.Z.Values[0].Value;
+                int fps = parameter.CurrentFPS > 0 ? parameter.CurrentFPS : 60;
+                int len = (int)(parameter.Duration * fps);
+                double frame = currentFrame;
+
+                float scale = (float)(parameter.Scale.GetValue((long)frame, len, fps) / 100.0);
+                float rx = (float)(parameter.RotationX.GetValue((long)frame, len, fps) * Math.PI / 180.0);
+                float ry = (float)(parameter.RotationY.GetValue((long)frame, len, fps) * Math.PI / 180.0);
+                float rz = (float)(parameter.RotationZ.GetValue((long)frame, len, fps) * Math.PI / 180.0);
+                float tx = (float)parameter.X.GetValue((long)frame, len, fps);
+                float ty = (float)parameter.Y.GetValue((long)frame, len, fps);
+                float tz = (float)parameter.Z.GetValue((long)frame, len, fps);
 
                 var placement = System.Numerics.Matrix4x4.CreateScale(scale) * System.Numerics.Matrix4x4.CreateRotationZ(rz) * System.Numerics.Matrix4x4.CreateRotationX(rx) * System.Numerics.Matrix4x4.CreateRotationY(ry) * System.Numerics.Matrix4x4.CreateTranslation(tx, ty, tz);
                 var world = normalize * axisConversion * placement;
