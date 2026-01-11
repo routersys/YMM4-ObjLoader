@@ -99,10 +99,12 @@ namespace ObjLoader.ViewModels
                 foreach (var file in files)
                 {
                     var isSelected = file.Equals(FilePath, StringComparison.OrdinalIgnoreCase);
+                    var hasCache = File.Exists(file + ".bin");
+                    var isThumbnailEnabled = isSelected || hasCache;
 
                     if (currentFiles.TryGetValue(file, out var existing))
                     {
-                        if (existing.IsThumbnailEnabled == isSelected)
+                        if (existing.IsThumbnailEnabled == isThumbnailEnabled)
                         {
                             Files.Add(existing);
                         }
@@ -136,7 +138,9 @@ namespace ObjLoader.ViewModels
         private ModelFileItem? CreateItem(string path, bool isSelected)
         {
             if (!File.Exists(path)) return null;
-            return new ModelFileItem(Path.GetFileName(path), path, isSelected ? _loader.GetThumbnail : _ => Array.Empty<byte>(), isSelected);
+            var hasCache = File.Exists(path + ".bin");
+            var isThumbnailEnabled = isSelected || hasCache;
+            return new ModelFileItem(Path.GetFileName(path), path, isThumbnailEnabled ? _loader.GetThumbnail : _ => Array.Empty<byte>(), isThumbnailEnabled);
         }
     }
 }
