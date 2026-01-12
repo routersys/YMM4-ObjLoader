@@ -1,34 +1,11 @@
 ﻿using ObjLoader.Infrastructure;
 using ObjLoader.Localization;
-using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using YukkuriMovieMaker.Plugin;
 
 namespace ObjLoader.Settings
 {
-    public enum CoordinateSystem
-    {
-        [Display(Name = nameof(Texts.CoordinateSystem_RightHandedYUp), ResourceType = typeof(Texts))]
-        RightHandedYUp,
-        [Display(Name = nameof(Texts.CoordinateSystem_RightHandedZUp), ResourceType = typeof(Texts))]
-        RightHandedZUp,
-        [Display(Name = nameof(Texts.CoordinateSystem_LeftHandedYUp), ResourceType = typeof(Texts))]
-        LeftHandedYUp,
-        [Display(Name = nameof(Texts.CoordinateSystem_LeftHandedZUp), ResourceType = typeof(Texts))]
-        LeftHandedZUp
-    }
-
-    public enum RenderCullMode
-    {
-        [Display(Name = nameof(Texts.CullMode_None), ResourceType = typeof(Texts))]
-        None,
-        [Display(Name = nameof(Texts.CullMode_Front), ResourceType = typeof(Texts))]
-        Front,
-        [Display(Name = nameof(Texts.CullMode_Back), ResourceType = typeof(Texts))]
-        Back
-    }
-
     public class PluginSettings : SettingsBase<PluginSettings>
     {
         public override string Name => Texts.PluginName;
@@ -36,6 +13,8 @@ namespace ObjLoader.Settings
         public override bool HasSettingView => false;
         public override object? SettingView => null;
         public static PluginSettings Instance => Default;
+
+        private const int MaxWorlds = 10;
 
         private CoordinateSystem _coordinateSystem = CoordinateSystem.RightHandedYUp;
         private RenderCullMode _cullMode = RenderCullMode.None;
@@ -47,7 +26,6 @@ namespace ObjLoader.Settings
         private bool _assimp3mf = false;
         private bool _assimpPmx = false;
 
-        private const int MaxWorlds = 10;
         private int _worldId = 0;
 
         private List<Color> _ambientColors = Enumerable.Repeat(Color.FromRgb(50, 50, 50), MaxWorlds).ToList();
@@ -101,62 +79,111 @@ namespace ObjLoader.Settings
         private List<bool> _posterizeEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
         private List<int> _posterizeLevels = Enumerable.Repeat(8, MaxWorlds).ToList();
 
-        public class Memento
+        public List<string> AmbientColorsHex
         {
-            public CoordinateSystem CoordinateSystem;
-            public RenderCullMode CullMode;
-            public bool AssimpObj;
-            public bool AssimpGlb;
-            public bool AssimpPly;
-            public bool AssimpStl;
-            public bool Assimp3mf;
-            public bool AssimpPmx;
-            public int WorldId;
-            public List<Color> AmbientColors = new();
-            public List<Color> LightColors = new();
-            public List<double> DiffuseIntensities = new();
-            public List<double> SpecularIntensities = new();
-            public List<double> Shininesses = new();
-            public List<bool> ToonEnabled = new();
-            public List<int> ToonSteps = new();
-            public List<double> ToonSmoothness = new();
-            public List<bool> OutlineEnabled = new();
-            public List<Color> OutlineColor = new();
-            public List<double> OutlineWidth = new();
-            public List<double> OutlinePower = new();
-            public List<bool> RimEnabled = new();
-            public List<Color> RimColor = new();
-            public List<double> RimIntensity = new();
-            public List<double> RimPower = new();
-            public List<bool> FogEnabled = new();
-            public List<Color> FogColor = new();
-            public List<double> FogStart = new();
-            public List<double> FogEnd = new();
-            public List<double> FogDensity = new();
-            public List<double> Saturation = new();
-            public List<double> Contrast = new();
-            public List<double> Gamma = new();
-            public List<double> BrightnessPost = new();
-            public List<bool> VignetteEnabled = new();
-            public List<Color> VignetteColor = new();
-            public List<double> VignetteIntensity = new();
-            public List<double> VignetteRadius = new();
-            public List<double> VignetteSoftness = new();
-            public List<bool> ChromAbEnabled = new();
-            public List<double> ChromAbIntensity = new();
-            public List<bool> ScanlineEnabled = new();
-            public List<double> ScanlineIntensity = new();
-            public List<double> ScanlineFrequency = new();
-            public List<bool> MonochromeEnabled = new();
-            public List<Color> MonochromeColor = new();
-            public List<double> MonochromeMix = new();
-            public List<bool> PosterizeEnabled = new();
-            public List<int> PosterizeLevels = new();
+            get => _ambientColors.Select(c => c.ToString()).ToList();
+            set => _ambientColors = ConvertHexListToColors(value, Color.FromRgb(50, 50, 50));
+        }
+        public List<string> LightColorsHex
+        {
+            get => _lightColors.Select(c => c.ToString()).ToList();
+            set => _lightColors = ConvertHexListToColors(value, Colors.White);
+        }
+        public List<double> DiffuseIntensities { get => _diffuseIntensities; set { _diffuseIntensities = value; EnsureCount(ref _diffuseIntensities, 1.0); } }
+        public List<double> SpecularIntensities { get => _specularIntensities; set { _specularIntensities = value; EnsureCount(ref _specularIntensities, 0.5); } }
+        public List<double> Shininesses { get => _shininesses; set { _shininesses = value; EnsureCount(ref _shininesses, 20.0); } }
+
+        public List<bool> ToonEnabledList { get => _toonEnabled; set { _toonEnabled = value; EnsureCount(ref _toonEnabled, false); } }
+        public List<int> ToonStepsList { get => _toonSteps; set { _toonSteps = value; EnsureCount(ref _toonSteps, 4); } }
+        public List<double> ToonSmoothnessList { get => _toonSmoothness; set { _toonSmoothness = value; EnsureCount(ref _toonSmoothness, 0.05); } }
+
+        public List<bool> OutlineEnabledList { get => _outlineEnabled; set { _outlineEnabled = value; EnsureCount(ref _outlineEnabled, false); } }
+        public List<string> OutlineColorHex
+        {
+            get => _outlineColor.Select(c => c.ToString()).ToList();
+            set => _outlineColor = ConvertHexListToColors(value, Colors.Black);
+        }
+        public List<double> OutlineWidthList { get => _outlineWidth; set { _outlineWidth = value; EnsureCount(ref _outlineWidth, 1.0); } }
+        public List<double> OutlinePowerList { get => _outlinePower; set { _outlinePower = value; EnsureCount(ref _outlinePower, 2.0); } }
+
+        public List<bool> RimEnabledList { get => _rimEnabled; set { _rimEnabled = value; EnsureCount(ref _rimEnabled, false); } }
+        public List<string> RimColorHex
+        {
+            get => _rimColor.Select(c => c.ToString()).ToList();
+            set => _rimColor = ConvertHexListToColors(value, Colors.White);
+        }
+        public List<double> RimIntensityList { get => _rimIntensity; set { _rimIntensity = value; EnsureCount(ref _rimIntensity, 1.0); } }
+        public List<double> RimPowerList { get => _rimPower; set { _rimPower = value; EnsureCount(ref _rimPower, 3.0); } }
+
+        public List<bool> FogEnabledList { get => _fogEnabled; set { _fogEnabled = value; EnsureCount(ref _fogEnabled, false); } }
+        public List<string> FogColorHex
+        {
+            get => _fogColor.Select(c => c.ToString()).ToList();
+            set => _fogColor = ConvertHexListToColors(value, Colors.Gray);
+        }
+        public List<double> FogStartList { get => _fogStart; set { _fogStart = value; EnsureCount(ref _fogStart, 10.0); } }
+        public List<double> FogEndList { get => _fogEnd; set { _fogEnd = value; EnsureCount(ref _fogEnd, 100.0); } }
+        public List<double> FogDensityList { get => _fogDensity; set { _fogDensity = value; EnsureCount(ref _fogDensity, 1.0); } }
+
+        public List<double> SaturationList { get => _saturation; set { _saturation = value; EnsureCount(ref _saturation, 1.0); } }
+        public List<double> ContrastList { get => _contrast; set { _contrast = value; EnsureCount(ref _contrast, 1.0); } }
+        public List<double> GammaList { get => _gamma; set { _gamma = value; EnsureCount(ref _gamma, 1.0); } }
+        public List<double> BrightnessPostList { get => _brightnessPost; set { _brightnessPost = value; EnsureCount(ref _brightnessPost, 0.0); } }
+
+        public List<bool> VignetteEnabledList { get => _vignetteEnabled; set { _vignetteEnabled = value; EnsureCount(ref _vignetteEnabled, false); } }
+        public List<string> VignetteColorHex
+        {
+            get => _vignetteColor.Select(c => c.ToString()).ToList();
+            set => _vignetteColor = ConvertHexListToColors(value, Colors.Black);
+        }
+        public List<double> VignetteIntensityList { get => _vignetteIntensity; set { _vignetteIntensity = value; EnsureCount(ref _vignetteIntensity, 0.5); } }
+        public List<double> VignetteRadiusList { get => _vignetteRadius; set { _vignetteRadius = value; EnsureCount(ref _vignetteRadius, 0.8); } }
+        public List<double> VignetteSoftnessList { get => _vignetteSoftness; set { _vignetteSoftness = value; EnsureCount(ref _vignetteSoftness, 0.3); } }
+
+        public List<bool> ChromAbEnabledList { get => _chromAbEnabled; set { _chromAbEnabled = value; EnsureCount(ref _chromAbEnabled, false); } }
+        public List<double> ChromAbIntensityList { get => _chromAbIntensity; set { _chromAbIntensity = value; EnsureCount(ref _chromAbIntensity, 0.005); } }
+
+        public List<bool> ScanlineEnabledList { get => _scanlineEnabled; set { _scanlineEnabled = value; EnsureCount(ref _scanlineEnabled, false); } }
+        public List<double> ScanlineIntensityList { get => _scanlineIntensity; set { _scanlineIntensity = value; EnsureCount(ref _scanlineIntensity, 0.2); } }
+        public List<double> ScanlineFrequencyList { get => _scanlineFrequency; set { _scanlineFrequency = value; EnsureCount(ref _scanlineFrequency, 100.0); } }
+
+        public List<bool> MonochromeEnabledList { get => _monochromeEnabled; set { _monochromeEnabled = value; EnsureCount(ref _monochromeEnabled, false); } }
+        public List<string> MonochromeColorHex
+        {
+            get => _monochromeColor.Select(c => c.ToString()).ToList();
+            set => _monochromeColor = ConvertHexListToColors(value, Colors.White);
+        }
+        public List<double> MonochromeMixList { get => _monochromeMix; set { _monochromeMix = value; EnsureCount(ref _monochromeMix, 1.0); } }
+
+        public List<bool> PosterizeEnabledList { get => _posterizeEnabled; set { _posterizeEnabled = value; EnsureCount(ref _posterizeEnabled, false); } }
+        public List<int> PosterizeLevelsList { get => _posterizeLevels; set { _posterizeLevels = value; EnsureCount(ref _posterizeLevels, 8); } }
+
+        private List<Color> ConvertHexListToColors(List<string>? hexList, Color defaultValue)
+        {
+            var list = new List<Color>();
+            if (hexList != null)
+            {
+                foreach (var s in hexList)
+                {
+                    try
+                    {
+                        var c = ColorConverter.ConvertFromString(s);
+                        if (c is Color color) list.Add(color);
+                        else list.Add(defaultValue);
+                    }
+                    catch
+                    {
+                        list.Add(defaultValue);
+                    }
+                }
+            }
+            EnsureCount(ref list, defaultValue);
+            return list;
         }
 
-        public Memento CreateMemento()
+        public PluginSettingsMemento CreateMemento()
         {
-            return new Memento
+            return new PluginSettingsMemento
             {
                 CoordinateSystem = _coordinateSystem,
                 CullMode = _cullMode,
@@ -210,7 +237,7 @@ namespace ObjLoader.Settings
             };
         }
 
-        public void RestoreMemento(Memento m)
+        public void RestoreMemento(PluginSettingsMemento m)
         {
             _coordinateSystem = m.CoordinateSystem;
             _cullMode = m.CullMode;
@@ -269,10 +296,7 @@ namespace ObjLoader.Settings
         private List<T> RestoreList<T>(List<T>? source, T defaultValue)
         {
             var list = source != null ? new List<T>(source) : new List<T>();
-            if (list.Count < MaxWorlds)
-            {
-                list.AddRange(Enumerable.Repeat(defaultValue, MaxWorlds - list.Count));
-            }
+            EnsureCount(ref list, defaultValue);
             return list;
         }
 
@@ -334,6 +358,52 @@ namespace ObjLoader.Settings
         public double GetDiffuseIntensity(int id) => _diffuseIntensities[Math.Clamp(id, 0, MaxWorlds - 1)];
         public double GetSpecularIntensity(int id) => _specularIntensities[Math.Clamp(id, 0, MaxWorlds - 1)];
         public double GetShininess(int id) => _shininesses[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetToonEnabled(int id) => _toonEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public int GetToonSteps(int id) => _toonSteps[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetToonSmoothness(int id) => _toonSmoothness[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetRimEnabled(int id) => _rimEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public Color GetRimColor(int id) => _rimColor[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetRimIntensity(int id) => _rimIntensity[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetRimPower(int id) => _rimPower[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetOutlineEnabled(int id) => _outlineEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public Color GetOutlineColor(int id) => _outlineColor[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetOutlineWidth(int id) => _outlineWidth[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetOutlinePower(int id) => _outlinePower[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetFogEnabled(int id) => _fogEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public Color GetFogColor(int id) => _fogColor[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetFogStart(int id) => _fogStart[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetFogEnd(int id) => _fogEnd[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetFogDensity(int id) => _fogDensity[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public double GetSaturation(int id) => _saturation[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetContrast(int id) => _contrast[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetGamma(int id) => _gamma[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetBrightnessPost(int id) => _brightnessPost[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetVignetteEnabled(int id) => _vignetteEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public Color GetVignetteColor(int id) => _vignetteColor[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetVignetteIntensity(int id) => _vignetteIntensity[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetVignetteRadius(int id) => _vignetteRadius[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetVignetteSoftness(int id) => _vignetteSoftness[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetChromAbEnabled(int id) => _chromAbEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetChromAbIntensity(int id) => _chromAbIntensity[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetScanlineEnabled(int id) => _scanlineEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetScanlineIntensity(int id) => _scanlineIntensity[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetScanlineFrequency(int id) => _scanlineFrequency[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetMonochromeEnabled(int id) => _monochromeEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public Color GetMonochromeColor(int id) => _monochromeColor[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public double GetMonochromeMix(int id) => _monochromeMix[Math.Clamp(id, 0, MaxWorlds - 1)];
+
+        public bool GetPosterizeEnabled(int id) => _posterizeEnabled[Math.Clamp(id, 0, MaxWorlds - 1)];
+        public int GetPosterizeLevels(int id) => _posterizeLevels[Math.Clamp(id, 0, MaxWorlds - 1)];
+
 
         [SettingGroup("Global", nameof(Texts.Group_Global), Order = 0, Icon = "M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,12.5A0.5,0.5 0 0,1 11.5,12A0.5,0.5 0 0,1 12,11.5A0.5,0.5 0 0,1 12.5,12A0.5,0.5 0 0,1 12,12.5M12,7.2C9.9,7.2 8.2,8.9 8.2,11C8.2,14 12,17.5 12,17.5C12,17.5 15.8,14 15.8,11C15.8,8.9 14.1,7.2 12,7.2Z", ResourceType = typeof(Texts))]
         [EnumSetting("Global", nameof(Texts.CoordinateSystem), Description = nameof(Texts.CoordinateSystem_Desc), ResourceType = typeof(Texts))]
@@ -562,46 +632,48 @@ namespace ObjLoader.Settings
             AssimpStl = false;
             Assimp3mf = false;
             AssimpPmx = false;
-            AmbientColor = Color.FromRgb(50, 50, 50);
-            LightColor = Colors.White;
-            DiffuseIntensity = 1.0;
-            SpecularIntensity = 0.5;
-            Shininess = 20.0;
-            ToonEnabled = false;
-            ToonSteps = 4;
-            ToonSmoothness = 0.05;
-            RimEnabled = false;
-            RimColor = Colors.White;
-            RimIntensity = 1.0;
-            RimPower = 3.0;
-            OutlineEnabled = false;
-            OutlineColor = Colors.Black;
-            OutlineWidth = 1.0;
-            OutlinePower = 2.0;
-            FogEnabled = false;
-            FogColor = Colors.Gray;
-            FogStart = 10.0;
-            FogEnd = 100.0;
-            FogDensity = 1.0;
-            Saturation = 1.0;
-            Contrast = 1.0;
-            Gamma = 1.0;
-            BrightnessPost = 0.0;
-            VignetteEnabled = false;
-            VignetteColor = Colors.Black;
-            VignetteIntensity = 0.5;
-            VignetteRadius = 0.8;
-            VignetteSoftness = 0.3;
-            ChromAbEnabled = false;
-            ChromAbIntensity = 0.005;
-            ScanlineEnabled = false;
-            ScanlineIntensity = 0.2;
-            ScanlineFrequency = 100.0;
-            MonochromeEnabled = false;
-            MonochromeColor = Colors.White;
-            MonochromeMix = 1.0;
-            PosterizeEnabled = false;
-            PosterizeLevels = 8;
+            _ambientColors = Enumerable.Repeat(Color.FromRgb(50, 50, 50), MaxWorlds).ToList();
+            _lightColors = Enumerable.Repeat(Colors.White, MaxWorlds).ToList();
+            _diffuseIntensities = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _specularIntensities = Enumerable.Repeat(0.5, MaxWorlds).ToList();
+            _shininesses = Enumerable.Repeat(20.0, MaxWorlds).ToList();
+            _toonEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _toonSteps = Enumerable.Repeat(4, MaxWorlds).ToList();
+            _toonSmoothness = Enumerable.Repeat(0.05, MaxWorlds).ToList();
+            _rimEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _rimColor = Enumerable.Repeat(Colors.White, MaxWorlds).ToList();
+            _rimIntensity = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _rimPower = Enumerable.Repeat(3.0, MaxWorlds).ToList();
+            _outlineEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _outlineColor = Enumerable.Repeat(Colors.Black, MaxWorlds).ToList();
+            _outlineWidth = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _outlinePower = Enumerable.Repeat(2.0, MaxWorlds).ToList();
+            _fogEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _fogColor = Enumerable.Repeat(Colors.Gray, MaxWorlds).ToList();
+            _fogStart = Enumerable.Repeat(10.0, MaxWorlds).ToList();
+            _fogEnd = Enumerable.Repeat(100.0, MaxWorlds).ToList();
+            _fogDensity = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _saturation = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _contrast = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _gamma = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _brightnessPost = Enumerable.Repeat(0.0, MaxWorlds).ToList();
+            _vignetteEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _vignetteColor = Enumerable.Repeat(Colors.Black, MaxWorlds).ToList();
+            _vignetteIntensity = Enumerable.Repeat(0.5, MaxWorlds).ToList();
+            _vignetteRadius = Enumerable.Repeat(0.8, MaxWorlds).ToList();
+            _vignetteSoftness = Enumerable.Repeat(0.3, MaxWorlds).ToList();
+            _chromAbEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _chromAbIntensity = Enumerable.Repeat(0.005, MaxWorlds).ToList();
+            _scanlineEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _scanlineIntensity = Enumerable.Repeat(0.2, MaxWorlds).ToList();
+            _scanlineFrequency = Enumerable.Repeat(100.0, MaxWorlds).ToList();
+            _monochromeEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _monochromeColor = Enumerable.Repeat(Colors.White, MaxWorlds).ToList();
+            _monochromeMix = Enumerable.Repeat(1.0, MaxWorlds).ToList();
+            _posterizeEnabled = Enumerable.Repeat(false, MaxWorlds).ToList();
+            _posterizeLevels = Enumerable.Repeat(8, MaxWorlds).ToList();
+
+            OnPropertyChanged(string.Empty);
         }
 
         [SettingButton(nameof(Texts.OK), Placement = SettingButtonPlacement.BottomRight, Type = SettingButtonType.OK, Order = 100, ResourceType = typeof(Texts))]

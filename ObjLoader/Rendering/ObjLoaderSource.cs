@@ -64,6 +64,7 @@ namespace ObjLoader.Rendering
         private double _lastTargetY = double.NaN;
         private double _lastTargetZ = double.NaN;
         private double _lastSettingsVersion = double.NaN;
+        private int _lastWorldId = -1;
 
         static ObjLoaderSource()
         {
@@ -232,7 +233,8 @@ namespace ObjLoader.Rendering
                 Math.Abs(_lastTargetX - targetX) < 1e-5 &&
                 Math.Abs(_lastTargetY - targetY) < 1e-5 &&
                 Math.Abs(_lastTargetZ - targetZ) < 1e-5 &&
-                Math.Abs(_lastSettingsVersion - settingsVersion) < 1e-5)
+                Math.Abs(_lastSettingsVersion - settingsVersion) < 1e-5 &&
+                _lastWorldId == worldIdParam)
             {
                 return;
             }
@@ -270,6 +272,7 @@ namespace ObjLoader.Rendering
             _lastTargetY = targetY;
             _lastTargetZ = targetZ;
             _lastSettingsVersion = settingsVersion;
+            _lastWorldId = worldIdParam;
         }
 
         private void UpdateCustomShader(string path)
@@ -516,21 +519,21 @@ namespace ObjLoader.Rendering
                     SpecularIntensity = (float)specularIntensity,
                     Shininess = (float)shininess,
 
-                    ToonParams = new System.Numerics.Vector4(settings.ToonEnabled ? 1 : 0, settings.ToonSteps, (float)settings.ToonSmoothness, 0),
-                    RimParams = new System.Numerics.Vector4(settings.RimEnabled ? 1 : 0, (float)settings.RimIntensity, (float)settings.RimPower, 0),
-                    RimColor = ToVec4(settings.RimColor),
-                    OutlineParams = new System.Numerics.Vector4(settings.OutlineEnabled ? 1 : 0, (float)settings.OutlineWidth, (float)settings.OutlinePower, 0),
-                    OutlineColor = ToVec4(settings.OutlineColor),
-                    FogParams = new System.Numerics.Vector4(settings.FogEnabled ? 1 : 0, (float)settings.FogStart, (float)settings.FogEnd, (float)settings.FogDensity),
-                    FogColor = ToVec4(settings.FogColor),
-                    ColorCorrParams = new System.Numerics.Vector4((float)settings.Saturation, (float)settings.Contrast, (float)settings.Gamma, (float)settings.BrightnessPost),
-                    VignetteParams = new System.Numerics.Vector4(settings.VignetteEnabled ? 1 : 0, (float)settings.VignetteIntensity, (float)settings.VignetteRadius, (float)settings.VignetteSoftness),
-                    VignetteColor = ToVec4(settings.VignetteColor),
-                    ScanlineParams = new System.Numerics.Vector4(settings.ScanlineEnabled ? 1 : 0, (float)settings.ScanlineIntensity, (float)settings.ScanlineFrequency, 0),
-                    ChromAbParams = new System.Numerics.Vector4(settings.ChromAbEnabled ? 1 : 0, (float)settings.ChromAbIntensity, 0, 0),
-                    MonoParams = new System.Numerics.Vector4(settings.MonochromeEnabled ? 1 : 0, (float)settings.MonochromeMix, 0, 0),
-                    MonoColor = ToVec4(settings.MonochromeColor),
-                    PosterizeParams = new System.Numerics.Vector4(settings.PosterizeEnabled ? 1 : 0, settings.PosterizeLevels, 0, 0)
+                    ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(worldId) ? 1 : 0, settings.GetToonSteps(worldId), (float)settings.GetToonSmoothness(worldId), 0),
+                    RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(worldId) ? 1 : 0, (float)settings.GetRimIntensity(worldId), (float)settings.GetRimPower(worldId), 0),
+                    RimColor = ToVec4(settings.GetRimColor(worldId)),
+                    OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(worldId) ? 1 : 0, (float)settings.GetOutlineWidth(worldId), (float)settings.GetOutlinePower(worldId), 0),
+                    OutlineColor = ToVec4(settings.GetOutlineColor(worldId)),
+                    FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(worldId) ? 1 : 0, (float)settings.GetFogStart(worldId), (float)settings.GetFogEnd(worldId), (float)settings.GetFogDensity(worldId)),
+                    FogColor = ToVec4(settings.GetFogColor(worldId)),
+                    ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(worldId), (float)settings.GetContrast(worldId), (float)settings.GetGamma(worldId), (float)settings.GetBrightnessPost(worldId)),
+                    VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(worldId) ? 1 : 0, (float)settings.GetVignetteIntensity(worldId), (float)settings.GetVignetteRadius(worldId), (float)settings.GetVignetteSoftness(worldId)),
+                    VignetteColor = ToVec4(settings.GetVignetteColor(worldId)),
+                    ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(worldId) ? 1 : 0, (float)settings.GetScanlineIntensity(worldId), (float)settings.GetScanlineFrequency(worldId), 0),
+                    ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(worldId) ? 1 : 0, (float)settings.GetChromAbIntensity(worldId), 0, 0),
+                    MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(worldId) ? 1 : 0, (float)settings.GetMonochromeMix(worldId), 0, 0),
+                    MonoColor = ToVec4(settings.GetMonochromeColor(worldId)),
+                    PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(worldId) ? 1 : 0, settings.GetPosterizeLevels(worldId), 0, 0)
                 };
 
                 D3D11.MappedSubresource mapped;
