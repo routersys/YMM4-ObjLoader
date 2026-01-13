@@ -1,4 +1,5 @@
-﻿using ObjLoader.ViewModels;
+﻿using ObjLoader.Plugin;
+using ObjLoader.ViewModels;
 using ObjLoader.Views;
 using System.Windows;
 using YukkuriMovieMaker.Commons;
@@ -16,7 +17,11 @@ namespace ObjLoader.Attributes
         {
             if (control is SettingButton button)
             {
-                button.DataContext = new SettingButtonViewModel();
+                var parameter = itemProperties[0].GetValue<ObjLoaderParameter>();
+                if (parameter != null)
+                {
+                    button.DataContext = new SettingButtonViewModel(parameter);
+                }
             }
         }
 

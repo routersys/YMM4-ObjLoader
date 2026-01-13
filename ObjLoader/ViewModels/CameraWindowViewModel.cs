@@ -17,7 +17,6 @@ using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
-using System.Collections.Generic;
 
 namespace ObjLoader.ViewModels
 {
@@ -53,7 +52,7 @@ namespace ObjLoader.ViewModels
         private bool _isSnapping = false;
         private bool _isTargetFixed = true;
 
-        private GpuResourceCacheItem? _modelResource;
+        private Dictionary<string, (GpuResourceCacheItem Resource, double Height)> _modelResources = new Dictionary<string, (GpuResourceCacheItem, double)>();
         private System.Windows.Media.Color _themeColor = System.Windows.Media.Colors.White;
 
         private double _currentTime = 0;
@@ -441,12 +440,75 @@ namespace ObjLoader.ViewModels
             var proj = Matrix4x4.CreatePerspectiveFieldOfView(vFovRad, aspect, 0.1f, 10000.0f);
 
             bool isInteracting = false;
-
             int fps = _parameter.CurrentFPS > 0 ? _parameter.CurrentFPS : 60;
             double currentFrame = _currentTime * fps;
+            int len = (int)(_parameter.Duration * fps);
+
+            var layers = new List<LayerRenderData>();
+            int activeIndex = _parameter.SelectedLayerIndex;
+
+            for (int i = 0; i < _parameter.Layers.Count; i++)
+            {
+                var layer = _parameter.Layers[i];
+                if (!layer.IsVisible) continue;
+
+                string filePath = layer.FilePath?.Trim('"') ?? string.Empty;
+                if (string.IsNullOrEmpty(filePath) || !_modelResources.ContainsKey(filePath)) continue;
+
+                var (resource, height) = _modelResources[filePath];
+                bool isActive = (i == activeIndex);
+
+                double x, y, z, scale, rx, ry, rz;
+                bool lightEnabled;
+                Color baseColor;
+                int worldId;
+
+                if (isActive)
+                {
+                    x = _parameter.X.GetValue((long)currentFrame, len, fps);
+                    y = _parameter.Y.GetValue((long)currentFrame, len, fps);
+                    z = _parameter.Z.GetValue((long)currentFrame, len, fps);
+                    scale = _parameter.Scale.GetValue((long)currentFrame, len, fps);
+                    rx = _parameter.RotationX.GetValue((long)currentFrame, len, fps);
+                    ry = _parameter.RotationY.GetValue((long)currentFrame, len, fps);
+                    rz = _parameter.RotationZ.GetValue((long)currentFrame, len, fps);
+                    lightEnabled = _parameter.IsLightEnabled;
+                    baseColor = _parameter.BaseColor;
+                    worldId = (int)_parameter.WorldId.GetValue((long)currentFrame, len, fps);
+                }
+                else
+                {
+                    x = layer.X.GetValue((long)currentFrame, len, fps);
+                    y = layer.Y.GetValue((long)currentFrame, len, fps);
+                    z = layer.Z.GetValue((long)currentFrame, len, fps);
+                    scale = layer.Scale.GetValue((long)currentFrame, len, fps);
+                    rx = layer.RotationX.GetValue((long)currentFrame, len, fps);
+                    ry = layer.RotationY.GetValue((long)currentFrame, len, fps);
+                    rz = layer.RotationZ.GetValue((long)currentFrame, len, fps);
+                    lightEnabled = layer.IsLightEnabled;
+                    baseColor = layer.BaseColor;
+                    worldId = (int)layer.WorldId.GetValue((long)currentFrame, len, fps);
+                }
+
+                layers.Add(new LayerRenderData
+                {
+                    Resource = resource,
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    Scale = scale,
+                    Rx = rx,
+                    Ry = ry,
+                    Rz = rz,
+                    BaseColor = baseColor,
+                    LightEnabled = lightEnabled,
+                    WorldId = worldId,
+                    HeightOffset = height / 2.0
+                });
+            }
 
             _renderService.Render(
-                _modelResource,
+                layers,
                 view,
                 proj,
                 new Vector3((float)camPos.X, (float)camPos.Y, (float)camPos.Z),
@@ -455,10 +517,7 @@ namespace ObjLoader.ViewModels
                 _isGridVisible,
                 _isInfiniteGrid,
                 _modelScale,
-                _modelHeight,
-                _parameter,
-                isInteracting,
-                currentFrame);
+                isInteracting);
         }
 
         private void UpdateSceneCameraVisual()
@@ -486,60 +545,89 @@ namespace ObjLoader.ViewModels
 
         private unsafe void LoadModel()
         {
-            var path = _parameter.FilePath;
-            if (string.IsNullOrEmpty(path)) return;
-            var model = _loader.Load(path);
-            if (model.Vertices.Length == 0) return;
+            foreach (var entry in _modelResources) entry.Value.Resource.Dispose();
+            _modelResources.Clear();
 
-            var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
-            ID3D11Buffer vb;
-            fixed (ObjVertex* p = model.Vertices) vb = _renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
-
-            var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
-            ID3D11Buffer ib;
-            fixed (int* p = model.Indices) ib = _renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
-
-            var parts = model.Parts.ToArray();
-            var partTextures = new ID3D11ShaderResourceView?[parts.Length];
-            for (int i = 0; i < parts.Length; i++)
+            var paths = new HashSet<string>();
+            foreach (var layer in _parameter.Layers)
             {
-                if (File.Exists(parts[i].TexturePath))
+                if (!string.IsNullOrWhiteSpace(layer.FilePath))
+                    paths.Add(layer.FilePath.Trim('"'));
+            }
+            if (!string.IsNullOrWhiteSpace(_parameter.FilePath))
+                paths.Add(_parameter.FilePath.Trim('"'));
+
+            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
+            bool hasModel = false;
+
+            foreach (var path in paths)
+            {
+                if (_modelResources.ContainsKey(path)) continue;
+                if (!File.Exists(path)) continue;
+
+                var model = _loader.Load(path);
+                if (model.Vertices.Length == 0) continue;
+
+                var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
+                ID3D11Buffer vb;
+                fixed (ObjVertex* p = model.Vertices) vb = _renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
+
+                var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
+                ID3D11Buffer ib;
+                fixed (int* p = model.Indices) ib = _renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
+
+                var parts = model.Parts.ToArray();
+                var partTextures = new ID3D11ShaderResourceView?[parts.Length];
+                for (int i = 0; i < parts.Length; i++)
                 {
-                    try
+                    if (File.Exists(parts[i].TexturePath))
                     {
-                        var bytes = File.ReadAllBytes(parts[i].TexturePath);
-                        using var ms = new MemoryStream(bytes);
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = ms;
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-                        var conv = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-                        var pixels = new byte[conv.PixelWidth * conv.PixelHeight * 4];
-                        conv.CopyPixels(pixels, conv.PixelWidth * 4, 0);
-                        var tDesc = new Texture2DDescription { Width = conv.PixelWidth, Height = conv.PixelHeight, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
-                        fixed (byte* p = pixels) { using var t = _renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, conv.PixelWidth * 4) }); partTextures[i] = _renderService.Device.CreateShaderResourceView(t); }
+                        try
+                        {
+                            var bytes = File.ReadAllBytes(parts[i].TexturePath);
+                            using var ms = new MemoryStream(bytes);
+                            var bitmap = new BitmapImage();
+                            bitmap.BeginInit();
+                            bitmap.StreamSource = ms;
+                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                            bitmap.EndInit();
+                            bitmap.Freeze();
+                            var conv = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+                            var pixels = new byte[conv.PixelWidth * conv.PixelHeight * 4];
+                            conv.CopyPixels(pixels, conv.PixelWidth * 4, 0);
+                            var tDesc = new Texture2DDescription { Width = conv.PixelWidth, Height = conv.PixelHeight, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
+                            fixed (byte* p = pixels) { using var t = _renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, conv.PixelWidth * 4) }); partTextures[i] = _renderService.Device.CreateShaderResourceView(t); }
+                        }
+                        catch { }
                     }
-                    catch { }
                 }
-            }
-            _modelResource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
+                var resource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
 
-            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-            foreach (var v in model.Vertices)
-            {
-                double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                if (x < minX) minX = x; if (x > maxX) maxX = x;
-                double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                if (y < minY) minY = y; if (y > maxY) maxY = y;
-                double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-                if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+                double localMinY = double.MaxValue, localMaxY = double.MinValue;
+                foreach (var v in model.Vertices)
+                {
+                    double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
+                    if (x < minX) minX = x; if (x > maxX) maxX = x;
+                    double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
+                    if (y < minY) minY = y; if (y > maxY) maxY = y;
+                    if (y < localMinY) localMinY = y; if (y > localMaxY) localMaxY = y;
+                    double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
+                    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+                }
+
+                double height = localMaxY - localMinY;
+                _modelResources[path] = (resource, height);
+                hasModel = true;
             }
-            _modelScale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
-            _modelHeight = maxY - minY;
-            if (_modelScale < 0.1) _modelScale = 1.0;
-            _cameraLogic.ViewRadius = _modelScale * 2.5;
+
+            if (hasModel)
+            {
+                _modelScale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
+                _modelHeight = maxY - minY;
+                if (_modelScale < 0.1) _modelScale = 1.0;
+                _cameraLogic.ViewRadius = _modelScale * 2.5;
+            }
 
             UpdateRange(CamX, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo));
             UpdateRange(CamY, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo));
@@ -690,7 +778,8 @@ namespace ObjLoader.ViewModels
         public void Dispose()
         {
             _renderService.Dispose();
-            _modelResource?.Dispose();
+            foreach (var entry in _modelResources) entry.Value.Resource.Dispose();
+            _modelResources.Clear();
             _cameraLogic.StopAnimation();
             _animationManager.Dispose();
             _parameter.PropertyChanged -= OnParameterPropertyChanged;

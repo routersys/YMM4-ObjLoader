@@ -2,7 +2,6 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Threading;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Vortice.Direct3D;
@@ -34,37 +33,28 @@ namespace ObjLoader.Rendering
         private ID3D11PixelShader? _customPixelShader;
         private ID3D11InputLayout? _customInputLayout;
 
-        private double _lastX = double.NaN;
-        private double _lastY = double.NaN;
-        private double _lastZ = double.NaN;
-        private double _lastScale = double.NaN;
-        private double _lastRx = double.NaN;
-        private double _lastRy = double.NaN;
-        private double _lastRz = double.NaN;
-        private double _lastFov = double.NaN;
-        private ProjectionType _lastProjection = (ProjectionType)(-1);
-        private bool _lastLightEnabled = false;
-        private double _lastLightX = double.NaN;
-        private double _lastLightY = double.NaN;
-        private double _lastLightZ = double.NaN;
-        private string _lastFilePath = string.Empty;
-        private string _lastShaderFilePath = string.Empty;
-        private Color _lastBaseColor = Colors.Transparent;
-        private CoordinateSystem _lastCoordinateSystem = (CoordinateSystem)(-1);
-        private RenderCullMode _lastCullMode = (RenderCullMode)(-1);
-        private Color _lastAmbientColor = Colors.Transparent;
-        private Color _lastLightColor = Colors.Transparent;
-        private double _lastDiffuseIntensity = double.NaN;
-        private double _lastSpecularIntensity = double.NaN;
-        private double _lastShininess = double.NaN;
+        private double _lastSettingsVersion = double.NaN;
         private double _lastCamX = double.NaN;
         private double _lastCamY = double.NaN;
         private double _lastCamZ = double.NaN;
         private double _lastTargetX = double.NaN;
         private double _lastTargetY = double.NaN;
         private double _lastTargetZ = double.NaN;
-        private double _lastSettingsVersion = double.NaN;
-        private int _lastWorldId = -1;
+
+        private Dictionary<string, LayerState> _layerStates = new Dictionary<string, LayerState>();
+
+        private struct LayerState
+        {
+            public double X, Y, Z, Scale, Rx, Ry, Rz, Fov, LightX, LightY, LightZ, Diffuse, Specular, Shininess;
+            public bool IsLightEnabled;
+            public string FilePath, ShaderFilePath;
+            public Color BaseColor, Ambient, Light;
+            public ProjectionType Projection;
+            public CoordinateSystem CoordSystem;
+            public RenderCullMode CullMode;
+            public int WorldId;
+            public bool IsVisible;
+        }
 
         static ObjLoaderSource()
         {
@@ -97,6 +87,12 @@ namespace ObjLoader.Rendering
         public void Update(TimelineItemSourceDescription desc)
         {
             _parameter.Duration = (double)desc.ItemDuration.Frame / desc.FPS;
+            _parameter.EnsureLayers();
+
+            if (!_parameter.IsSwitchingLayer)
+            {
+                _parameter.SyncActiveLayer();
+            }
 
             var frame = desc.ItemPosition.Frame;
             var length = desc.ItemDuration.Frame;
@@ -109,21 +105,7 @@ namespace ObjLoader.Rendering
 
             bool resized = _renderTargets.EnsureSize(_devices, sw, sh);
 
-            var x = _parameter.X.GetValue(frame, length, fps);
-            var y = _parameter.Y.GetValue(frame, length, fps);
-            var z = _parameter.Z.GetValue(frame, length, fps);
-            var scale = _parameter.Scale.GetValue(frame, length, fps);
-            var rx = _parameter.RotationX.GetValue(frame, length, fps);
-            var ry = _parameter.RotationY.GetValue(frame, length, fps);
-            var rz = _parameter.RotationZ.GetValue(frame, length, fps);
-            var fov = _parameter.Fov.GetValue(frame, length, fps);
-            var lightX = _parameter.LightX.GetValue(frame, length, fps);
-            var lightY = _parameter.LightY.GetValue(frame, length, fps);
-            var lightZ = _parameter.LightZ.GetValue(frame, length, fps);
-            var settingsVersion = _parameter.SettingsVersion.GetValue(frame, length, fps);
-
             double camX, camY, camZ, targetX, targetY, targetZ;
-
             if (_parameter.Keyframes.Count > 0)
             {
                 double time = (double)frame / fps;
@@ -141,130 +123,133 @@ namespace ObjLoader.Rendering
                 targetZ = _parameter.TargetZ.GetValue(frame, length, fps);
             }
 
-            var baseColor = _parameter.BaseColor;
-            var filePath = _parameter.FilePath?.Trim('"') ?? string.Empty;
-            var shaderFilePath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty;
-            var worldIdParam = (int)_parameter.WorldId.GetValue(frame, length, fps);
-
+            var settingsVersion = _parameter.SettingsVersion.GetValue(frame, length, fps);
             var settings = PluginSettings.Instance;
-            var coordSystem = settings.CoordinateSystem;
-            var cullMode = settings.CullMode;
 
-            var ambientColor = settings.GetAmbientColor(worldIdParam);
-            var lightColor = settings.GetLightColor(worldIdParam);
-            var diffuseIntensity = settings.GetDiffuseIntensity(worldIdParam);
-            var specularIntensity = settings.GetSpecularIntensity(worldIdParam);
-            var shininess = settings.GetShininess(worldIdParam);
+            _resources.UpdateRasterizerState(settings.CullMode);
 
-            _resources.UpdateRasterizerState(cullMode);
+            bool needsRedraw = resized || _commandList == null;
 
-            if (_lastShaderFilePath != shaderFilePath)
+            if (Math.Abs(_lastCamX - camX) > 1e-5 || Math.Abs(_lastCamY - camY) > 1e-5 || Math.Abs(_lastCamZ - camZ) > 1e-5 ||
+                Math.Abs(_lastTargetX - targetX) > 1e-5 || Math.Abs(_lastTargetY - targetY) > 1e-5 || Math.Abs(_lastTargetZ - targetZ) > 1e-5 ||
+                Math.Abs(_lastSettingsVersion - settingsVersion) > 1e-5)
             {
-                UpdateCustomShader(shaderFilePath);
+                needsRedraw = true;
             }
 
-            GpuResourceCacheItem? resource = null;
+            var layersToRender = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)>();
 
-            if (GpuResourceCache.TryGetValue(filePath, out var cached))
+            for (int i = 0; i < _parameter.Layers.Count; i++)
             {
-                if (cached != null && cached.Device == _devices.D3D.Device)
-                {
-                    resource = cached;
-                }
-            }
+                var layer = _parameter.Layers[i];
+                if (!layer.IsVisible) continue;
 
-            if (resource == null)
-            {
-                var model = _loader.Load(filePath);
+                string filePath = layer.FilePath?.Trim('"') ?? string.Empty;
+                if (string.IsNullOrEmpty(filePath)) continue;
 
-                if (!string.IsNullOrWhiteSpace(model.Comment))
+                string shaderPath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty;
+                Color baseColor = layer.BaseColor;
+                bool lightEnabled = layer.IsLightEnabled;
+                ProjectionType projection = layer.Projection;
+
+                double x = layer.X.GetValue(frame, length, fps);
+                double y = layer.Y.GetValue(frame, length, fps);
+                double z = layer.Z.GetValue(frame, length, fps);
+                double scale = layer.Scale.GetValue(frame, length, fps);
+                double rx = layer.RotationX.GetValue(frame, length, fps);
+                double ry = layer.RotationY.GetValue(frame, length, fps);
+                double rz = layer.RotationZ.GetValue(frame, length, fps);
+                double fov = layer.Fov.GetValue(frame, length, fps);
+                double lx = layer.LightX.GetValue(frame, length, fps);
+                double ly = layer.LightY.GetValue(frame, length, fps);
+                double lz = layer.LightZ.GetValue(frame, length, fps);
+                int worldId = (int)layer.WorldId.GetValue(frame, length, fps);
+
+                var currentState = new LayerState
                 {
-                    string title = !string.IsNullOrWhiteSpace(model.Name) ? model.Name : Path.GetFileName(filePath);
-                    string msg = model.Comment;
-                    Application.Current?.Dispatcher?.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() =>
+                    X = x,
+                    Y = y,
+                    Z = z,
+                    Scale = scale,
+                    Rx = rx,
+                    Ry = ry,
+                    Rz = rz,
+                    Fov = fov,
+                    LightX = lx,
+                    LightY = ly,
+                    LightZ = lz,
+                    IsLightEnabled = lightEnabled,
+                    FilePath = filePath,
+                    ShaderFilePath = shaderPath,
+                    BaseColor = baseColor,
+                    WorldId = worldId,
+                    Projection = projection,
+                    CoordSystem = settings.CoordinateSystem,
+                    CullMode = settings.CullMode,
+                    Ambient = settings.GetAmbientColor(worldId),
+                    Light = settings.GetLightColor(worldId),
+                    Diffuse = settings.GetDiffuseIntensity(worldId),
+                    Specular = settings.GetSpecularIntensity(worldId),
+                    Shininess = settings.GetShininess(worldId),
+                    IsVisible = true
+                };
+
+                if (!needsRedraw)
+                {
+                    if (!_layerStates.TryGetValue(layer.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref currentState))
                     {
-                        MessageBox.Show(msg, title);
-                    }));
+                        needsRedraw = true;
+                    }
                 }
 
-                if (model.Vertices.Length > 0)
+                _layerStates[layer.Guid] = currentState;
+
+                GpuResourceCacheItem? resource = null;
+                if (GpuResourceCache.TryGetValue(filePath, out var cached))
                 {
-                    resource = CreateGpuResource(model, filePath);
-                    model = null;
-                    GC.Collect(2, GCCollectionMode.Optimized);
+                    if (cached != null && cached.Device == _devices.D3D.Device)
+                    {
+                        resource = cached;
+                    }
+                }
+
+                if (resource == null)
+                {
+                    var model = _loader.Load(filePath);
+                    if (model.Vertices.Length > 0)
+                    {
+                        resource = CreateGpuResource(model, filePath);
+                        model = null;
+                        GC.Collect(2, GCCollectionMode.Optimized);
+                    }
+                }
+
+                if (resource != null)
+                {
+                    layersToRender.Add((layer, resource, currentState));
                 }
             }
 
-            if (resource == null)
+            if (!needsRedraw && _layerStates.Count != layersToRender.Count)
             {
-                EnsureEmptyCommandList();
-                _lastShaderFilePath = shaderFilePath;
-                return;
+                needsRedraw = true;
             }
 
-            if (!resized &&
-                _commandList != null &&
-                string.Equals(_lastFilePath, filePath, StringComparison.Ordinal) &&
-                string.Equals(_lastShaderFilePath, shaderFilePath, StringComparison.Ordinal) &&
-                Math.Abs(_lastX - x) < 1e-5 &&
-                Math.Abs(_lastY - y) < 1e-5 &&
-                Math.Abs(_lastZ - z) < 1e-5 &&
-                Math.Abs(_lastScale - scale) < 1e-5 &&
-                Math.Abs(_lastRx - rx) < 1e-5 &&
-                Math.Abs(_lastRy - ry) < 1e-5 &&
-                Math.Abs(_lastRz - rz) < 1e-5 &&
-                Math.Abs(_lastFov - fov) < 1e-5 &&
-                _lastProjection == _parameter.Projection &&
-                _lastLightEnabled == _parameter.IsLightEnabled &&
-                Math.Abs(_lastLightX - lightX) < 1e-5 &&
-                Math.Abs(_lastLightY - lightY) < 1e-5 &&
-                Math.Abs(_lastLightZ - lightZ) < 1e-5 &&
-                _lastBaseColor == baseColor &&
-                _lastCoordinateSystem == coordSystem &&
-                _lastCullMode == cullMode &&
-                _lastAmbientColor == ambientColor &&
-                _lastLightColor == lightColor &&
-                Math.Abs(_lastDiffuseIntensity - diffuseIntensity) < 1e-5 &&
-                Math.Abs(_lastSpecularIntensity - specularIntensity) < 1e-5 &&
-                Math.Abs(_lastShininess - shininess) < 1e-5 &&
-                Math.Abs(_lastCamX - camX) < 1e-5 &&
-                Math.Abs(_lastCamY - camY) < 1e-5 &&
-                Math.Abs(_lastCamZ - camZ) < 1e-5 &&
-                Math.Abs(_lastTargetX - targetX) < 1e-5 &&
-                Math.Abs(_lastTargetY - targetY) < 1e-5 &&
-                Math.Abs(_lastTargetZ - targetZ) < 1e-5 &&
-                Math.Abs(_lastSettingsVersion - settingsVersion) < 1e-5 &&
-                _lastWorldId == worldIdParam)
+            if (needsRedraw)
+            {
+                var currentGuids = new HashSet<string>(_parameter.Layers.Select(l => l.Guid));
+                var keysToRemove = _layerStates.Keys.Where(k => !currentGuids.Contains(k)).ToList();
+                foreach (var k in keysToRemove) _layerStates.Remove(k);
+            }
+
+            if (!needsRedraw)
             {
                 return;
             }
 
-            RenderToTexture(resource, sw, sh, x, y, z, scale, rx, ry, rz, fov, lightX, lightY, lightZ, baseColor, coordSystem, ambientColor, lightColor, diffuseIntensity, specularIntensity, shininess, camX, camY, camZ, targetX, targetY, targetZ, worldIdParam);
+            RenderToTexture(layersToRender, sw, sh, camX, camY, camZ, targetX, targetY, targetZ);
             CreateCommandList();
 
-            _lastX = x;
-            _lastY = y;
-            _lastZ = z;
-            _lastScale = scale;
-            _lastRx = rx;
-            _lastRy = ry;
-            _lastRz = rz;
-            _lastFov = fov;
-            _lastProjection = _parameter.Projection;
-            _lastLightEnabled = _parameter.IsLightEnabled;
-            _lastLightX = lightX;
-            _lastLightY = lightY;
-            _lastLightZ = lightZ;
-            _lastFilePath = filePath;
-            _lastShaderFilePath = shaderFilePath;
-            _lastBaseColor = baseColor;
-            _lastCoordinateSystem = coordSystem;
-            _lastCullMode = cullMode;
-            _lastAmbientColor = ambientColor;
-            _lastLightColor = lightColor;
-            _lastDiffuseIntensity = diffuseIntensity;
-            _lastSpecularIntensity = specularIntensity;
-            _lastShininess = shininess;
             _lastCamX = camX;
             _lastCamY = camY;
             _lastCamZ = camZ;
@@ -272,7 +257,18 @@ namespace ObjLoader.Rendering
             _lastTargetY = targetY;
             _lastTargetZ = targetZ;
             _lastSettingsVersion = settingsVersion;
-            _lastWorldId = worldIdParam;
+        }
+
+        private bool AreStatesEqual(ref LayerState a, ref LayerState b)
+        {
+            return Math.Abs(a.X - b.X) < 1e-5 && Math.Abs(a.Y - b.Y) < 1e-5 && Math.Abs(a.Z - b.Z) < 1e-5 &&
+                   Math.Abs(a.Scale - b.Scale) < 1e-5 && Math.Abs(a.Rx - b.Rx) < 1e-5 && Math.Abs(a.Ry - b.Ry) < 1e-5 && Math.Abs(a.Rz - b.Rz) < 1e-5 &&
+                   Math.Abs(a.Fov - b.Fov) < 1e-5 && Math.Abs(a.LightX - b.LightX) < 1e-5 && Math.Abs(a.LightY - b.LightY) < 1e-5 && Math.Abs(a.LightZ - b.LightZ) < 1e-5 &&
+                   a.IsLightEnabled == b.IsLightEnabled && string.Equals(a.FilePath, b.FilePath, StringComparison.Ordinal) &&
+                   string.Equals(a.ShaderFilePath, b.ShaderFilePath, StringComparison.Ordinal) && a.BaseColor == b.BaseColor &&
+                   a.Projection == b.Projection && a.CoordSystem == b.CoordSystem && a.CullMode == b.CullMode &&
+                   a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < 1e-5 &&
+                   Math.Abs(a.Specular - b.Specular) < 1e-5 && Math.Abs(a.Shininess - b.Shininess) < 1e-5 && a.WorldId == b.WorldId;
         }
 
         private void UpdateCustomShader(string path)
@@ -401,7 +397,7 @@ namespace ObjLoader.Rendering
             return item;
         }
 
-        private void RenderToTexture(GpuResourceCacheItem resource, int width, int height, double x, double y, double z, double scale, double rx, double ry, double rz, double fov, double lightX, double lightY, double lightZ, Color baseColor, CoordinateSystem coordSystem, Color ambientColor, Color lightColor, double diffuseIntensity, double specularIntensity, double shininess, double camX, double camY, double camZ, double targetX, double targetY, double targetZ, int worldId)
+        private void RenderToTexture(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, int width, int height, double camX, double camY, double camZ, double targetX, double targetY, double targetZ)
         {
             if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
 
@@ -416,138 +412,144 @@ namespace ObjLoader.Rendering
             context.OMSetBlendState(_resources.BlendState, new Vortice.Mathematics.Color4(0, 0, 0, 0), -1);
 
             context.RSSetViewport(0, 0, width, height);
-
             context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
-            int stride = Unsafe.SizeOf<ObjVertex>();
-            int offset = 0;
-            context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { offset });
-            context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
+            string lastShaderPath = string.Empty;
 
-            var vs = _customVertexShader ?? _resources.VertexShader;
-            var ps = _customPixelShader ?? _resources.PixelShader;
-            var layout = _customVertexShader != null ? _customInputLayout : _resources.InputLayout;
-
-            if (vs == null || ps == null || layout == null) return;
-
-            context.IASetInputLayout(layout);
-            context.VSSetShader(vs);
-            context.PSSetShader(ps);
-
-            context.PSSetSamplers(0, new[] { _resources.SamplerState });
-
-            var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
-
-            Matrix4x4 axisConversion = Matrix4x4.Identity;
-            switch (coordSystem)
+            foreach (var item in layers)
             {
-                case CoordinateSystem.RightHandedZUp:
-                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
-                    break;
-                case CoordinateSystem.LeftHandedYUp:
-                    axisConversion = Matrix4x4.CreateScale(1, 1, -1);
-                    break;
-                case CoordinateSystem.LeftHandedZUp:
-                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
-                    break;
-            }
+                var state = item.State;
+                var resource = item.Resource;
+                var settings = PluginSettings.Instance;
 
-            var rotation = Matrix4x4.CreateRotationX((float)(rx * Math.PI / 180.0)) *
-                           Matrix4x4.CreateRotationY((float)(ry * Math.PI / 180.0)) *
-                           Matrix4x4.CreateRotationZ((float)(rz * Math.PI / 180.0));
-            var userScale = Matrix4x4.CreateScale((float)(scale / 100.0));
-            var userTranslation = Matrix4x4.CreateTranslation((float)x, (float)y, (float)z);
-
-            var world = normalize * axisConversion * rotation * userScale * userTranslation;
-
-            Matrix4x4 view, proj;
-            float aspect = (float)width / height;
-            Vector3 cameraPosition;
-
-            if (_parameter.Projection == ProjectionType.Parallel)
-            {
-                cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
-                var target = new Vector3((float)targetX, (float)targetY, (float)targetZ);
-                if (cameraPosition == target) cameraPosition.Z -= 2.0f;
-
-                view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
-                float orthoSize = 2.0f;
-                proj = Matrix4x4.CreateOrthographic(orthoSize * aspect, orthoSize, 0.1f, 1000.0f);
-            }
-            else
-            {
-                cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
-                var target = new Vector3((float)targetX, (float)targetY, (float)targetZ);
-                if (cameraPosition == target) cameraPosition.Z -= 2.5f;
-
-                view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
-                float radFov = (float)(Math.Max(1, Math.Min(179, fov)) * Math.PI / 180.0);
-                proj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, 0.1f, 1000.0f);
-            }
-
-            var wvp = world * view * proj;
-            var lightPos = new Vector4((float)lightX, (float)lightY, (float)lightZ, 1.0f);
-            var amb = new Vector4(ambientColor.ScR, ambientColor.ScG, ambientColor.ScB, ambientColor.ScA);
-            var lCol = new Vector4(lightColor.ScR, lightColor.ScG, lightColor.ScB, lightColor.ScA);
-            var camPos = new Vector4(cameraPosition, 1.0f);
-
-            var settings = PluginSettings.Instance;
-            System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
-
-            for (int i = 0; i < resource.Parts.Length; i++)
-            {
-                var part = resource.Parts[i];
-                var texView = resource.PartTextures[i];
-                bool hasTexture = texView != null;
-
-                context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { hasTexture ? texView! : _resources.WhiteTextureView! });
-
-                var uiColorVec = hasTexture ? Vector4.One : new Vector4(baseColor.ScR, baseColor.ScG, baseColor.ScB, baseColor.ScA);
-                var partColor = part.BaseColor * uiColorVec;
-
-                ConstantBufferData cbData = new ConstantBufferData
+                if (state.ShaderFilePath != lastShaderPath)
                 {
-                    WorldViewProj = Matrix4x4.Transpose(wvp),
-                    World = Matrix4x4.Transpose(world),
-                    LightPos = lightPos,
-                    BaseColor = partColor,
-                    AmbientColor = amb,
-                    LightColor = lCol,
-                    CameraPos = camPos,
-                    LightEnabled = _parameter.IsLightEnabled ? 1.0f : 0.0f,
-                    DiffuseIntensity = (float)diffuseIntensity,
-                    SpecularIntensity = (float)specularIntensity,
-                    Shininess = (float)shininess,
-
-                    ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(worldId) ? 1 : 0, settings.GetToonSteps(worldId), (float)settings.GetToonSmoothness(worldId), 0),
-                    RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(worldId) ? 1 : 0, (float)settings.GetRimIntensity(worldId), (float)settings.GetRimPower(worldId), 0),
-                    RimColor = ToVec4(settings.GetRimColor(worldId)),
-                    OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(worldId) ? 1 : 0, (float)settings.GetOutlineWidth(worldId), (float)settings.GetOutlinePower(worldId), 0),
-                    OutlineColor = ToVec4(settings.GetOutlineColor(worldId)),
-                    FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(worldId) ? 1 : 0, (float)settings.GetFogStart(worldId), (float)settings.GetFogEnd(worldId), (float)settings.GetFogDensity(worldId)),
-                    FogColor = ToVec4(settings.GetFogColor(worldId)),
-                    ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(worldId), (float)settings.GetContrast(worldId), (float)settings.GetGamma(worldId), (float)settings.GetBrightnessPost(worldId)),
-                    VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(worldId) ? 1 : 0, (float)settings.GetVignetteIntensity(worldId), (float)settings.GetVignetteRadius(worldId), (float)settings.GetVignetteSoftness(worldId)),
-                    VignetteColor = ToVec4(settings.GetVignetteColor(worldId)),
-                    ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(worldId) ? 1 : 0, (float)settings.GetScanlineIntensity(worldId), (float)settings.GetScanlineFrequency(worldId), 0),
-                    ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(worldId) ? 1 : 0, (float)settings.GetChromAbIntensity(worldId), 0, 0),
-                    MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(worldId) ? 1 : 0, (float)settings.GetMonochromeMix(worldId), 0, 0),
-                    MonoColor = ToVec4(settings.GetMonochromeColor(worldId)),
-                    PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(worldId) ? 1 : 0, settings.GetPosterizeLevels(worldId), 0, 0)
-                };
-
-                D3D11.MappedSubresource mapped;
-                context.Map(_resources.ConstantBuffer, 0, D3D11.MapMode.WriteDiscard, D3D11.MapFlags.None, out mapped);
-                unsafe
-                {
-                    Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
+                    UpdateCustomShader(state.ShaderFilePath);
+                    lastShaderPath = state.ShaderFilePath;
                 }
-                context.Unmap(_resources.ConstantBuffer, 0);
 
-                context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
-                context.PSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
+                var vs = _customVertexShader ?? _resources.VertexShader;
+                var ps = _customPixelShader ?? _resources.PixelShader;
+                var layout = _customVertexShader != null ? _customInputLayout : _resources.InputLayout;
 
-                context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                if (vs == null || ps == null || layout == null) continue;
+
+                context.IASetInputLayout(layout);
+                context.VSSetShader(vs);
+                context.PSSetShader(ps);
+                context.PSSetSamplers(0, new[] { _resources.SamplerState });
+
+                Matrix4x4 axisConversion = Matrix4x4.Identity;
+                switch (state.CoordSystem)
+                {
+                    case CoordinateSystem.RightHandedZUp:
+                        axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
+                        break;
+                    case CoordinateSystem.LeftHandedYUp:
+                        axisConversion = Matrix4x4.CreateScale(1, 1, -1);
+                        break;
+                    case CoordinateSystem.LeftHandedZUp:
+                        axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
+                        break;
+                }
+
+                var rotation = Matrix4x4.CreateRotationX((float)(state.Rx * Math.PI / 180.0)) *
+                               Matrix4x4.CreateRotationY((float)(state.Ry * Math.PI / 180.0)) *
+                               Matrix4x4.CreateRotationZ((float)(state.Rz * Math.PI / 180.0));
+                var userScale = Matrix4x4.CreateScale((float)(state.Scale / 100.0));
+                var userTranslation = Matrix4x4.CreateTranslation((float)state.X, (float)state.Y, (float)state.Z);
+
+                var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
+                var world = normalize * axisConversion * rotation * userScale * userTranslation;
+
+                Matrix4x4 view, proj;
+                float aspect = (float)width / height;
+                Vector3 cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
+                var target = new Vector3((float)targetX, (float)targetY, (float)targetZ);
+
+                if (state.Projection == ProjectionType.Parallel)
+                {
+                    if (cameraPosition == target) cameraPosition.Z -= 2.0f;
+                    view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
+                    float orthoSize = 2.0f;
+                    proj = Matrix4x4.CreateOrthographic(orthoSize * aspect, orthoSize, 0.1f, 1000.0f);
+                }
+                else
+                {
+                    if (cameraPosition == target) cameraPosition.Z -= 2.5f;
+                    view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
+                    float radFov = (float)(Math.Max(1, Math.Min(179, state.Fov)) * Math.PI / 180.0);
+                    proj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, 0.1f, 1000.0f);
+                }
+
+                var wvp = world * view * proj;
+                var lightPos = new Vector4((float)state.LightX, (float)state.LightY, (float)state.LightZ, 1.0f);
+                var amb = new Vector4(state.Ambient.ScR, state.Ambient.ScG, state.Ambient.ScB, state.Ambient.ScA);
+                var lCol = new Vector4(state.Light.ScR, state.Light.ScG, state.Light.ScB, state.Light.ScA);
+                var camPos = new Vector4(cameraPosition, 1.0f);
+                System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
+
+                int stride = Unsafe.SizeOf<ObjVertex>();
+                context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { 0 });
+                context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
+
+                int wId = state.WorldId;
+
+                for (int i = 0; i < resource.Parts.Length; i++)
+                {
+                    var part = resource.Parts[i];
+                    var texView = resource.PartTextures[i];
+                    bool hasTexture = texView != null;
+
+                    context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { hasTexture ? texView! : _resources.WhiteTextureView! });
+
+                    var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
+                    var partColor = part.BaseColor * uiColorVec;
+
+                    ConstantBufferData cbData = new ConstantBufferData
+                    {
+                        WorldViewProj = Matrix4x4.Transpose(wvp),
+                        World = Matrix4x4.Transpose(world),
+                        LightPos = lightPos,
+                        BaseColor = partColor,
+                        AmbientColor = amb,
+                        LightColor = lCol,
+                        CameraPos = camPos,
+                        LightEnabled = state.IsLightEnabled ? 1.0f : 0.0f,
+                        DiffuseIntensity = (float)state.Diffuse,
+                        SpecularIntensity = (float)state.Specular,
+                        Shininess = (float)state.Shininess,
+
+                        ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(wId) ? 1 : 0, settings.GetToonSteps(wId), (float)settings.GetToonSmoothness(wId), 0),
+                        RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(wId) ? 1 : 0, (float)settings.GetRimIntensity(wId), (float)settings.GetRimPower(wId), 0),
+                        RimColor = ToVec4(settings.GetRimColor(wId)),
+                        OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(wId) ? 1 : 0, (float)settings.GetOutlineWidth(wId), (float)settings.GetOutlinePower(wId), 0),
+                        OutlineColor = ToVec4(settings.GetOutlineColor(wId)),
+                        FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(wId) ? 1 : 0, (float)settings.GetFogStart(wId), (float)settings.GetFogEnd(wId), (float)settings.GetFogDensity(wId)),
+                        FogColor = ToVec4(settings.GetFogColor(wId)),
+                        ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(wId), (float)settings.GetContrast(wId), (float)settings.GetGamma(wId), (float)settings.GetBrightnessPost(wId)),
+                        VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(wId) ? 1 : 0, (float)settings.GetVignetteIntensity(wId), (float)settings.GetVignetteRadius(wId), (float)settings.GetVignetteSoftness(wId)),
+                        VignetteColor = ToVec4(settings.GetVignetteColor(wId)),
+                        ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(wId) ? 1 : 0, (float)settings.GetScanlineIntensity(wId), (float)settings.GetScanlineFrequency(wId), 0),
+                        ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
+                        MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
+                        MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
+                        PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0)
+                    };
+
+                    D3D11.MappedSubresource mapped;
+                    context.Map(_resources.ConstantBuffer, 0, D3D11.MapMode.WriteDiscard, D3D11.MapFlags.None, out mapped);
+                    unsafe
+                    {
+                        Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
+                    }
+                    context.Unmap(_resources.ConstantBuffer, 0);
+
+                    context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
+                    context.PSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
+
+                    context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                }
             }
 
             context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, (ID3D11DepthStencilView?)null);

@@ -6,8 +6,8 @@
              xmlns:local="clr-namespace:ObjLoader.ViewModels"
              mc:Ignorable="d" 
              HorizontalAlignment="Left"
-             d:DesignHeight="30" d:DesignWidth="30">
-    <Grid>
+             d:DesignHeight="30" d:DesignWidth="60">
+    <StackPanel Orientation="Horizontal">
         <Button Command="{Binding OpenSettingWindowCommand}"
                 Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
                 Padding="5">
@@ -15,5 +15,13 @@
                   Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
                   Stretch="Uniform"/>
         </Button>
-    </Grid>
+        <Button Command="{Binding OpenLayerWindowCommand}"
+                Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                Padding="5"
+                Margin="0,0,0,0">
+            <Path Data="M12,2 L2,7 L12,12 L22,7 Z M2,17 L12,22 L22,17 L22,15 L12,20 L2,15 Z M2,12 L12,17 L22,12 L22,10 L12,15 L2,10 Z"
+                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                  Stretch="Uniform"/>
+        </Button>
+    </StackPanel>
 </UserControl>

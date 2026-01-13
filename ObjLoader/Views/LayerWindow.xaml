@@ -1,0 +1,57 @@
+﻿<Window x:Class="ObjLoader.Views.LayerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:l="clr-namespace:ObjLoader.Localization"
+        mc:Ignorable="d"
+        Title="{x:Static l:Texts.LayerSettings}" Height="300" Width="250"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+        Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ListBox Grid.Row="0" ItemsSource="{Binding Layers}" SelectedItem="{Binding SelectedLayer}"
+                 HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Height="40">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Source="{Binding Thumbnail}" Margin="2"/>
+                        <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" Margin="5,0,0,0" TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <UniformGrid Grid.Row="1" Rows="1" Height="30">
+            <Button ToolTip="{x:Static l:Texts.Layer_Add}" Command="{Binding AddLayerCommand}" Margin="0" Padding="8">
+                <Path Data="M0,0 M24,24 M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" 
+                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                      Stretch="Uniform"/>
+            </Button>
+            <Button ToolTip="{x:Static l:Texts.Layer_Remove}" Command="{Binding RemoveLayerCommand}" Margin="0" Padding="8">
+                <Path Data="M0,0 M24,24 M19,13H5V11H19V13Z" 
+                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                      Stretch="Uniform"/>
+            </Button>
+            <Button ToolTip="{x:Static l:Texts.Layer_MoveUp}" Command="{Binding MoveUpLayerCommand}" Margin="0" Padding="8">
+                <Path Data="M0,0 M24,24 M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z" 
+                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                      Stretch="Uniform"/>
+            </Button>
+            <Button ToolTip="{x:Static l:Texts.Layer_MoveDown}" Command="{Binding MoveDownLayerCommand}" Margin="0" Padding="8">
+                <Path Data="M0,0 M24,24 M7.41,8.59L12,13.17L16.59,8.59L18,10L12,16L6,10L7.41,8.59Z" 
+                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" 
+                      Stretch="Uniform"/>
+            </Button>
+        </UniformGrid>
+    </Grid>
+</Window>

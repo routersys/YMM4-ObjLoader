@@ -297,4 +297,10 @@
 <data name="Assimp_3mf_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos 3MF.</value></data>
 <data name="Assimp_Pmx" xml:space="preserve"><value>Cargar PMX con Assimp</value></data>
 <data name="Assimp_Pmx_Desc" xml:space="preserve"><value>Utiliza Assimp para cargar archivos PMX.</value></data>
+<data name="LayerSettings" xml:space="preserve"><value>Capas</value></data>
+<data name="Layer_Add" xml:space="preserve"><value>Añadir capa</value></data>
+<data name="Layer_Remove" xml:space="preserve"><value>Eliminar capa</value></data>
+<data name="Layer_MoveUp" xml:space="preserve"><value>Mover arriba</value></data>
+<data name="Layer_MoveDown" xml:space="preserve"><value>Mover abajo</value></data>
+<data name="Layer_New" xml:space="preserve"><value>Nueva capa</value></data>
 </root>

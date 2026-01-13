@@ -297,4 +297,10 @@
 <data name="Assimp_3mf_Desc" xml:space="preserve"><value>使用 Assimp 讀取 3MF 檔案。</value></data>
 <data name="Assimp_Pmx" xml:space="preserve"><value>使用 Assimp 載入 PMX</value></data>
 <data name="Assimp_Pmx_Desc" xml:space="preserve"><value>使用 Assimp 讀取 PMX 檔案。</value></data>
+<data name="LayerSettings" xml:space="preserve"><value>圖層</value></data>
+<data name="Layer_Add" xml:space="preserve"><value>新增圖層</value></data>
+<data name="Layer_Remove" xml:space="preserve"><value>刪除圖層</value></data>
+<data name="Layer_MoveUp" xml:space="preserve"><value>上移</value></data>
+<data name="Layer_MoveDown" xml:space="preserve"><value>下移</value></data>
+<data name="Layer_New" xml:space="preserve"><value>新建圖層</value></data>
 </root>

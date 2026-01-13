@@ -1,6 +1,5 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
-using ObjLoader.Plugin;
 using ObjLoader.Rendering;
 using ObjLoader.Settings;
 using System.Runtime.CompilerServices;
@@ -14,6 +13,18 @@ using D3D11MapFlags = Vortice.Direct3D11.MapFlags;
 
 namespace ObjLoader.Services
 {
+    internal struct LayerRenderData
+    {
+        public GpuResourceCacheItem Resource;
+        public double X, Y, Z;
+        public double Scale;
+        public double Rx, Ry, Rz;
+        public System.Windows.Media.Color BaseColor;
+        public bool LightEnabled;
+        public int WorldId;
+        public double HeightOffset;
+    }
+
     internal class RenderService : IDisposable
     {
         private ID3D11Device? _device;
@@ -30,23 +41,22 @@ namespace ObjLoader.Services
         private int _viewportHeight;
 
         private readonly List<int> _opaqueParts = new List<int>();
-        private readonly List<int> _transparentParts = new List<int>();
+        private readonly List<TransparentPart> _transparentParts = new List<TransparentPart>();
         private readonly PartSorter _partSorter = new PartSorter();
 
-        private class PartSorter : IComparer<int>
+        private class TransparentPart
         {
-            public ModelPart[]? Parts;
-            public System.Numerics.Matrix4x4 World;
-            public System.Numerics.Vector3 CamPos;
+            public int LayerIndex;
+            public int PartIndex;
+            public float DistanceSq;
+        }
 
-            public int Compare(int x, int y)
+        private class PartSorter : IComparer<TransparentPart>
+        {
+            public int Compare(TransparentPart? x, TransparentPart? y)
             {
-                if (Parts == null) return 0;
-                var centerA = System.Numerics.Vector3.Transform(Parts[x].Center, World);
-                var centerB = System.Numerics.Vector3.Transform(Parts[y].Center, World);
-                var distA = System.Numerics.Vector3.DistanceSquared(CamPos, centerA);
-                var distB = System.Numerics.Vector3.DistanceSquared(CamPos, centerB);
-                return distB.CompareTo(distA);
+                if (x == null || y == null) return 0;
+                return y.DistanceSq.CompareTo(x.DistanceSq);
             }
         }
 
@@ -129,7 +139,7 @@ namespace ObjLoader.Services
         }
 
         public void Render(
-            GpuResourceCacheItem? modelResource,
+            List<LayerRenderData> layers,
             System.Numerics.Matrix4x4 view,
             System.Numerics.Matrix4x4 proj,
             System.Numerics.Vector3 camPos,
@@ -137,11 +147,8 @@ namespace ObjLoader.Services
             bool isWireframe,
             bool isGridVisible,
             bool isInfiniteGrid,
-            double modelScale,
-            double modelHeight,
-            ObjLoaderParameter parameter,
-            bool isInteracting,
-            double currentFrame)
+            double gridScale,
+            bool isInteracting)
         {
             if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
 
@@ -178,137 +185,99 @@ namespace ObjLoader.Services
             _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
             _context.RSSetViewport(0, 0, _viewportWidth, _viewportHeight);
 
-            if (modelResource != null)
+            _transparentParts.Clear();
+            var layerWorlds = new System.Numerics.Matrix4x4[layers.Count];
+            var layerWvps = new System.Numerics.Matrix4x4[layers.Count];
+
+            var settings = PluginSettings.Instance;
+            System.Numerics.Matrix4x4 axisConversion = System.Numerics.Matrix4x4.Identity;
+            switch (settings.CoordinateSystem)
             {
-                _context.IASetInputLayout(_d3dResources.InputLayout);
-                _context.IASetPrimitiveTopology(isInteracting ? PrimitiveTopology.PointList : PrimitiveTopology.TriangleList);
+                case CoordinateSystem.RightHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)); break;
+                case CoordinateSystem.LeftHandedYUp: axisConversion = System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
+                case CoordinateSystem.LeftHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
+            }
+
+            for (int i = 0; i < layers.Count; i++)
+            {
+                var layer = layers[i];
+                var modelResource = layer.Resource;
+
+                var normalize = System.Numerics.Matrix4x4.CreateTranslation(-modelResource.ModelCenter) * System.Numerics.Matrix4x4.CreateScale(modelResource.ModelScale);
+                normalize *= System.Numerics.Matrix4x4.CreateTranslation(0, (float)layer.HeightOffset, 0);
+
+                float scale = (float)(layer.Scale / 100.0);
+                float rx = (float)(layer.Rx * Math.PI / 180.0);
+                float ry = (float)(layer.Ry * Math.PI / 180.0);
+                float rz = (float)(layer.Rz * Math.PI / 180.0);
+                float tx = (float)layer.X;
+                float ty = (float)layer.Y;
+                float tz = (float)layer.Z;
+
+                var placement = System.Numerics.Matrix4x4.CreateScale(scale) * System.Numerics.Matrix4x4.CreateRotationZ(rz) * System.Numerics.Matrix4x4.CreateRotationX(rx) * System.Numerics.Matrix4x4.CreateRotationY(ry) * System.Numerics.Matrix4x4.CreateTranslation(tx, ty, tz);
+
+                var world = normalize * axisConversion * placement;
+                var wvp = world * view * proj;
+
+                layerWorlds[i] = world;
+                layerWvps[i] = wvp;
+            }
+
+            _context.VSSetShader(_d3dResources.VertexShader);
+            _context.PSSetShader(_d3dResources.PixelShader);
+            _context.PSSetSamplers(0, new[] { _d3dResources.SamplerState });
+            _context.IASetInputLayout(_d3dResources.InputLayout);
+            _context.IASetPrimitiveTopology(isInteracting ? PrimitiveTopology.PointList : PrimitiveTopology.TriangleList);
+
+            for (int i = 0; i < layers.Count; i++)
+            {
+                var layer = layers[i];
+                var modelResource = layer.Resource;
+                var world = layerWorlds[i];
+                var wvp = layerWvps[i];
+                int wId = layer.WorldId;
 
                 int stride = Unsafe.SizeOf<ObjVertex>();
                 _context.IASetVertexBuffers(0, 1, new[] { modelResource.VertexBuffer }, new[] { stride }, new[] { 0 });
                 _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
 
-                _context.VSSetShader(_d3dResources.VertexShader);
-                _context.PSSetShader(_d3dResources.PixelShader);
-                _context.PSSetSamplers(0, new[] { _d3dResources.SamplerState });
-
-                float heightOffset = (float)(modelHeight / 2.0);
-                var normalize = System.Numerics.Matrix4x4.CreateTranslation(-modelResource.ModelCenter) * System.Numerics.Matrix4x4.CreateScale(modelResource.ModelScale);
-                normalize *= System.Numerics.Matrix4x4.CreateTranslation(0, heightOffset, 0);
-
-                System.Numerics.Matrix4x4 axisConversion = System.Numerics.Matrix4x4.Identity;
-                var settings = PluginSettings.Instance;
-                switch (settings.CoordinateSystem)
+                for (int p = 0; p < modelResource.Parts.Length; p++)
                 {
-                    case CoordinateSystem.RightHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)); break;
-                    case CoordinateSystem.LeftHandedYUp: axisConversion = System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
-                    case CoordinateSystem.LeftHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
-                }
-
-                int fps = parameter.CurrentFPS > 0 ? parameter.CurrentFPS : 60;
-                int len = (int)(parameter.Duration * fps);
-                double frame = currentFrame;
-
-                float scale = (float)(parameter.Scale.GetValue((long)frame, len, fps) / 100.0);
-                float rx = (float)(parameter.RotationX.GetValue((long)frame, len, fps) * Math.PI / 180.0);
-                float ry = (float)(parameter.RotationY.GetValue((long)frame, len, fps) * Math.PI / 180.0);
-                float rz = (float)(parameter.RotationZ.GetValue((long)frame, len, fps) * Math.PI / 180.0);
-                float tx = (float)parameter.X.GetValue((long)frame, len, fps);
-                float ty = (float)parameter.Y.GetValue((long)frame, len, fps);
-                float tz = (float)parameter.Z.GetValue((long)frame, len, fps);
-
-                var placement = System.Numerics.Matrix4x4.CreateScale(scale) * System.Numerics.Matrix4x4.CreateRotationZ(rz) * System.Numerics.Matrix4x4.CreateRotationX(rx) * System.Numerics.Matrix4x4.CreateRotationY(ry) * System.Numerics.Matrix4x4.CreateTranslation(tx, ty, tz);
-                var world = normalize * axisConversion * placement;
-                var wvp = world * view * proj;
-
-                System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
-                int wId = settings.WorldId;
-
-                _opaqueParts.Clear();
-                _transparentParts.Clear();
-                for (int i = 0; i < modelResource.Parts.Length; i++)
-                {
-                    if (modelResource.Parts[i].BaseColor.W < 0.99f)
-                        _transparentParts.Add(i);
+                    var part = modelResource.Parts[p];
+                    if (part.BaseColor.W < 0.99f)
+                    {
+                        var center = System.Numerics.Vector3.Transform(part.Center, world);
+                        float distSq = System.Numerics.Vector3.DistanceSquared(camPos, center);
+                        _transparentParts.Add(new TransparentPart { LayerIndex = i, PartIndex = p, DistanceSq = distSq });
+                    }
                     else
-                        _opaqueParts.Add(i);
-                }
-
-                if (_transparentParts.Count > 1)
-                {
-                    _partSorter.Parts = modelResource.Parts;
-                    _partSorter.World = world;
-                    _partSorter.CamPos = camPos;
-                    _transparentParts.Sort(_partSorter);
-                }
-
-                void DrawPart(int i)
-                {
-                    var part = modelResource.Parts[i];
-                    var texView = modelResource.PartTextures[i];
-                    _context!.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { texView != null ? texView! : _d3dResources!.WhiteTextureView! });
-
-                    ConstantBufferData cbData = new ConstantBufferData
                     {
-                        WorldViewProj = System.Numerics.Matrix4x4.Transpose(wvp),
-                        World = System.Numerics.Matrix4x4.Transpose(world),
-                        LightPos = new System.Numerics.Vector4(1, 1, 1, 0),
-                        BaseColor = part.BaseColor,
-                        AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
-                        LightColor = ToVec4(settings.GetLightColor(wId)),
-                        CameraPos = new System.Numerics.Vector4(camPos, 1),
-                        LightEnabled = parameter.IsLightEnabled ? 1.0f : 0.0f,
-                        DiffuseIntensity = (float)settings.GetDiffuseIntensity(wId),
-                        SpecularIntensity = (float)settings.GetSpecularIntensity(wId),
-                        Shininess = (float)settings.GetShininess(wId),
-                        GridColor = gridColor,
-                        GridAxisColor = axisColor,
-                        ToonParams = new System.Numerics.Vector4(settings.ToonEnabled ? 1 : 0, settings.ToonSteps, (float)settings.ToonSmoothness, 0),
-                        RimParams = new System.Numerics.Vector4(settings.RimEnabled ? 1 : 0, (float)settings.RimIntensity, (float)settings.RimPower, 0),
-                        RimColor = ToVec4(settings.RimColor),
-                        OutlineParams = new System.Numerics.Vector4(settings.OutlineEnabled ? 1 : 0, (float)settings.OutlineWidth, (float)settings.OutlinePower, 0),
-                        OutlineColor = ToVec4(settings.OutlineColor),
-                        FogParams = new System.Numerics.Vector4(settings.FogEnabled ? 1 : 0, (float)settings.FogStart, (float)settings.FogEnd, (float)settings.FogDensity),
-                        FogColor = ToVec4(settings.FogColor),
-                        ColorCorrParams = new System.Numerics.Vector4((float)settings.Saturation, (float)settings.Contrast, (float)settings.Gamma, (float)settings.BrightnessPost),
-                        VignetteParams = new System.Numerics.Vector4(settings.VignetteEnabled ? 1 : 0, (float)settings.VignetteIntensity, (float)settings.VignetteRadius, (float)settings.VignetteSoftness),
-                        VignetteColor = ToVec4(settings.VignetteColor),
-                        ScanlineParams = new System.Numerics.Vector4(settings.ScanlineEnabled ? 1 : 0, (float)settings.ScanlineIntensity, (float)settings.ScanlineFrequency, 0),
-                        ChromAbParams = new System.Numerics.Vector4(settings.ChromAbEnabled ? 1 : 0, (float)settings.ChromAbIntensity, 0, 0),
-                        MonoParams = new System.Numerics.Vector4(settings.MonochromeEnabled ? 1 : 0, (float)settings.MonochromeMix, 0, 0),
-                        MonoColor = ToVec4(settings.MonochromeColor),
-                        PosterizeParams = new System.Numerics.Vector4(settings.PosterizeEnabled ? 1 : 0, settings.PosterizeLevels, 0, 0)
-                    };
-                    UpdateConstantBuffer(ref cbData);
-
-                    if (isInteracting)
-                        _context.DrawIndexed(Math.Max(part.IndexCount / 16, 32), part.IndexOffset, 0);
-                    else
-                        _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
-                }
-
-                foreach (var i in _opaqueParts)
-                {
-                    DrawPart(i);
-                }
-
-                if (_transparentParts.Count > 0)
-                {
-                    _context.OMSetDepthStencilState(_d3dResources.DepthStencilStateNoWrite);
-                    if (!isWireframe)
-                    {
-                        _context.RSSetState(_d3dResources.CullNoneRasterizerState);
+                        DrawPart(layer, modelResource, p, world, wvp, wId, gridColor, axisColor, isInteracting);
                     }
+                }
+            }
 
-                    foreach (var i in _transparentParts)
-                    {
-                        DrawPart(i);
-                    }
+            if (_transparentParts.Count > 0)
+            {
+                _transparentParts.Sort(_partSorter);
 
-                    _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
-                    if (!isWireframe)
-                    {
-                        _context.RSSetState(_d3dResources.RasterizerState);
-                    }
+                _context.OMSetDepthStencilState(_d3dResources.DepthStencilStateNoWrite);
+                if (!isWireframe)
+                {
+                    _context.RSSetState(_d3dResources.CullNoneRasterizerState);
+                }
+
+                foreach (var tp in _transparentParts)
+                {
+                    var layer = layers[tp.LayerIndex];
+                    var resource = layer.Resource;
+                    DrawPart(layer, resource, tp.PartIndex, layerWorlds[tp.LayerIndex], layerWvps[tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting);
+                }
+
+                _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
+                if (!isWireframe)
+                {
+                    _context.RSSetState(_d3dResources.RasterizerState);
                 }
             }
 
@@ -324,7 +293,7 @@ namespace ObjLoader.Services
                 System.Numerics.Matrix4x4 gridWorld = System.Numerics.Matrix4x4.Identity;
                 if (!isInfiniteGrid)
                 {
-                    float finiteScale = (float)(modelScale * 50.0 / 1000.0);
+                    float finiteScale = (float)(gridScale * 50.0 / 1000.0);
                     if (finiteScale < 0.001f) finiteScale = 0.001f;
                     gridWorld = System.Numerics.Matrix4x4.CreateScale(finiteScale);
                 }
@@ -366,6 +335,57 @@ namespace ObjLoader.Services
             {
                 _context.Unmap(_stagingTexture, 0);
             }
+        }
+
+        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, System.Numerics.Matrix4x4 world, System.Numerics.Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting)
+        {
+            if (_context == null || _d3dResources == null) return;
+
+            var settings = PluginSettings.Instance;
+            var part = resource.Parts[partIndex];
+            var texView = resource.PartTextures[partIndex];
+            _context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { texView != null ? texView! : _d3dResources.WhiteTextureView! });
+
+            System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
+
+            ConstantBufferData cbData = new ConstantBufferData
+            {
+                WorldViewProj = System.Numerics.Matrix4x4.Transpose(wvp),
+                World = System.Numerics.Matrix4x4.Transpose(world),
+                LightPos = new System.Numerics.Vector4(1, 1, 1, 0),
+                BaseColor = part.BaseColor,
+                AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
+                LightColor = ToVec4(settings.GetLightColor(wId)),
+                CameraPos = new System.Numerics.Vector4(0, 0, 0, 1),
+                LightEnabled = layer.LightEnabled ? 1.0f : 0.0f,
+                DiffuseIntensity = (float)settings.GetDiffuseIntensity(wId),
+                SpecularIntensity = (float)settings.GetSpecularIntensity(wId),
+                Shininess = (float)settings.GetShininess(wId),
+                GridColor = gridColor,
+                GridAxisColor = axisColor,
+                ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(wId) ? 1 : 0, settings.GetToonSteps(wId), (float)settings.GetToonSmoothness(wId), 0),
+                RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(wId) ? 1 : 0, (float)settings.GetRimIntensity(wId), (float)settings.GetRimPower(wId), 0),
+                RimColor = ToVec4(settings.GetRimColor(wId)),
+                OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(wId) ? 1 : 0, (float)settings.GetOutlineWidth(wId), (float)settings.GetOutlinePower(wId), 0),
+                OutlineColor = ToVec4(settings.GetOutlineColor(wId)),
+                FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(wId) ? 1 : 0, (float)settings.GetFogStart(wId), (float)settings.GetFogEnd(wId), (float)settings.GetFogDensity(wId)),
+                FogColor = ToVec4(settings.GetFogColor(wId)),
+                ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(wId), (float)settings.GetContrast(wId), (float)settings.GetGamma(wId), (float)settings.GetBrightnessPost(wId)),
+                VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(wId) ? 1 : 0, (float)settings.GetVignetteIntensity(wId), (float)settings.GetVignetteRadius(wId), (float)settings.GetVignetteSoftness(wId)),
+                VignetteColor = ToVec4(settings.GetVignetteColor(wId)),
+                ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(wId) ? 1 : 0, (float)settings.GetScanlineIntensity(wId), (float)settings.GetScanlineFrequency(wId), 0),
+                ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
+                MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
+                MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
+                PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0)
+            };
+
+            UpdateConstantBuffer(ref cbData);
+
+            if (isInteracting)
+                _context.DrawIndexed(Math.Max(part.IndexCount / 16, 32), part.IndexOffset, 0);
+            else
+                _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
         }
 
         private void UpdateConstantBuffer(ref ConstantBufferData data)

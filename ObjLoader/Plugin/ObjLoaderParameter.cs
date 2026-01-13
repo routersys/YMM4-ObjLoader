@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Windows;
 using ObjLoader.Settings;
 using System.Runtime.Serialization;
+using System.Collections.ObjectModel;
 
 namespace ObjLoader.Plugin
 {
@@ -22,11 +23,12 @@ namespace ObjLoader.Plugin
     {
         private readonly CameraService _cameraService = new CameraService();
         private readonly ShaderService _shaderService = new ShaderService();
+        private readonly ILayerManager _layerManager;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
         [SettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
-        public bool IsSettingWindowOpen { get => _isSettingWindowOpen; set => Set(ref _isSettingWindowOpen, value); }
-        private bool _isSettingWindowOpen;
+        [IgnoreDataMember]
+        public ObjLoaderParameter Self => this;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.File), Description = nameof(Texts.File_Desc), ResourceType = typeof(Texts))]
         [ModelFileSelector(
@@ -164,17 +166,49 @@ namespace ObjLoader.Plugin
         }
         private int _currentFps = 60;
 
+        [Display(AutoGenerateField = false)]
+        public ObservableCollection<LayerData> Layers => _layerManager.Layers;
+
+        [IgnoreDataMember]
+        public bool IsSwitchingLayer => _layerManager.IsSwitchingLayer;
+
+        [Display(AutoGenerateField = false)]
+        public int SelectedLayerIndex
+        {
+            get => _layerManager.SelectedLayerIndex;
+            set
+            {
+                if (_layerManager.SelectedLayerIndex == value) return;
+                _layerManager.ChangeLayer(value, this);
+                OnPropertyChanged(nameof(SelectedLayerIndex));
+            }
+        }
+
         public ObjLoaderParameter() : this(null) { }
         public ObjLoaderParameter(SharedDataStore? sharedData) : base(sharedData)
         {
+            _layerManager = new LayerManager();
+
             if (sharedData == null)
             {
                 _baseColor = Colors.White;
                 _projection = ProjectionType.Parallel;
                 _isLightEnabled = false;
                 Scale = new Animation(100.0, 0, 100000);
+
+                _layerManager.Initialize(this);
             }
             WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(PluginSettings.Instance, nameof(INotifyPropertyChanged.PropertyChanged), OnPluginSettingsChanged);
+        }
+
+        public void EnsureLayers()
+        {
+            _layerManager.EnsureLayers(this);
+        }
+
+        public void SyncActiveLayer()
+        {
+            _layerManager.SaveActiveLayer(this);
         }
 
         public override IShapeSource CreateShapeSource(IGraphicsDevicesAndContext devices)
@@ -202,11 +236,19 @@ namespace ObjLoader.Plugin
             var data = store.Load<ObjLoaderParameterSharedData>();
             if (data is null) return;
             data.CopyTo(this);
+            if (data.Layers != null)
+            {
+                _layerManager.LoadSharedData(data.Layers);
+            }
+            _layerManager.Initialize(this);
         }
 
         protected override void SaveSharedData(SharedDataStore store)
         {
-            store.Save(new ObjLoaderParameterSharedData(this));
+            _layerManager.SaveActiveLayer(this);
+            var data = new ObjLoaderParameterSharedData(this);
+            data.Layers = new List<LayerData>(Layers);
+            store.Save(data);
         }
 
         public (double cx, double cy, double cz, double tx, double ty, double tz) GetCameraState(double time)

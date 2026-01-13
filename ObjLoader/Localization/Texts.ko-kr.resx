@@ -297,4 +297,10 @@
 <data name="Assimp_3mf_Desc" xml:space="preserve"><value>3MF 파일 로드에 Assimp를 사용합니다.</value></data>
 <data name="Assimp_Pmx" xml:space="preserve"><value>Assimp로 PMX 로드</value></data>
 <data name="Assimp_Pmx_Desc" xml:space="preserve"><value>PMX 파일 로드에 Assimp를 사용합니다.</value></data>
+<data name="LayerSettings" xml:space="preserve"><value>레이어</value></data>
+<data name="Layer_Add" xml:space="preserve"><value>레이어 추가</value></data>
+<data name="Layer_Remove" xml:space="preserve"><value>레이어 삭제</value></data>
+<data name="Layer_MoveUp" xml:space="preserve"><value>위로 이동</value></data>
+<data name="Layer_MoveDown" xml:space="preserve"><value>아래로 이동</value></data>
+<data name="Layer_New" xml:space="preserve"><value>새 레이어</value></data>
 </root>

@@ -7,6 +7,7 @@ namespace ObjLoader.Plugin
     internal class ObjLoaderParameterSharedData
     {
         public string FilePath { get; }
+        public string ShaderFilePath { get; }
         public Color BaseColor { get; }
         public ProjectionType Projection { get; }
         public Animation ScreenWidth { get; } = new Animation(1920, 1, 8192);
@@ -30,9 +31,13 @@ namespace ObjLoader.Plugin
         public Animation TargetY { get; } = new Animation(0, -100000, 100000);
         public Animation TargetZ { get; } = new Animation(0, -100000, 100000);
 
+        public List<LayerData> Layers { get; set; } = new List<LayerData>();
+        public int SelectedLayerIndex { get; }
+
         public ObjLoaderParameterSharedData(ObjLoaderParameter parameter)
         {
             FilePath = parameter.FilePath;
+            ShaderFilePath = parameter.ShaderFilePath;
             BaseColor = parameter.BaseColor;
             Projection = parameter.Projection;
             ScreenWidth.CopyFrom(parameter.ScreenWidth);
@@ -55,11 +60,16 @@ namespace ObjLoader.Plugin
             TargetX.CopyFrom(parameter.TargetX);
             TargetY.CopyFrom(parameter.TargetY);
             TargetZ.CopyFrom(parameter.TargetZ);
+
+            if (parameter.Layers != null)
+                Layers.AddRange(parameter.Layers.Select(l => l.Clone()));
+            SelectedLayerIndex = parameter.SelectedLayerIndex;
         }
 
         public void CopyTo(ObjLoaderParameter parameter)
         {
             parameter.FilePath = FilePath;
+            parameter.ShaderFilePath = ShaderFilePath;
             parameter.BaseColor = BaseColor;
             parameter.Projection = Projection;
             parameter.ScreenWidth.CopyFrom(ScreenWidth);
@@ -82,6 +92,16 @@ namespace ObjLoader.Plugin
             parameter.TargetX.CopyFrom(TargetX);
             parameter.TargetY.CopyFrom(TargetY);
             parameter.TargetZ.CopyFrom(TargetZ);
+
+            parameter.Layers.Clear();
+            if (Layers != null)
+            {
+                foreach (var layer in Layers)
+                {
+                    parameter.Layers.Add(layer.Clone());
+                }
+            }
+            parameter.SelectedLayerIndex = SelectedLayerIndex;
         }
     }
 }
