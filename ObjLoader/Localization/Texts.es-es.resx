@@ -303,4 +303,6 @@
 <data name="Layer_MoveUp" xml:space="preserve"><value>Mover arriba</value></data>
 <data name="Layer_MoveDown" xml:space="preserve"><value>Mover abajo</value></data>
 <data name="Layer_New" xml:space="preserve"><value>Nueva capa</value></data>
+<data name="UpdateNotificationTitle" xml:space="preserve"><value>Notificación de actualización de ObjLoader</value></data>
+<data name="UpdateNotificationMessage" xml:space="preserve"><value>Hay una nueva versión ({0}) disponible.\n¿Desea abrir la página de distribución?</value></data>
 </root>

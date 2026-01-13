@@ -303,4 +303,6 @@
 <data name="Layer_MoveUp" xml:space="preserve"><value>위로 이동</value></data>
 <data name="Layer_MoveDown" xml:space="preserve"><value>아래로 이동</value></data>
 <data name="Layer_New" xml:space="preserve"><value>새 레이어</value></data>
+<data name="UpdateNotificationTitle" xml:space="preserve"><value>ObjLoader 업데이트 알림</value></data>
+<data name="UpdateNotificationMessage" xml:space="preserve"><value>새 버전 ({0})을 사용할 수 있습니다.\n배포 페이지를 여시겠습니까?</value></data>
 </root>

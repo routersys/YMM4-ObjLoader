@@ -303,4 +303,6 @@
 <data name="Layer_MoveUp" xml:space="preserve"><value>Pindah ke Atas</value></data>
 <data name="Layer_MoveDown" xml:space="preserve"><value>Pindah ke Bawah</value></data>
 <data name="Layer_New" xml:space="preserve"><value>Layer Baru</value></data>
+<data name="UpdateNotificationTitle" xml:space="preserve"><value>Pemberitahuan Pembaruan ObjLoader</value></data>
+<data name="UpdateNotificationMessage" xml:space="preserve"><value>Versi baru ({0}) tersedia.\nBuka halaman distribusi?</value></data>
 </root>

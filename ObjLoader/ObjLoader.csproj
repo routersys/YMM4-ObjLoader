@@ -5,7 +5,7 @@
 		<UseWPF>true</UseWPF>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<Version>2.2.0</Version>
+		<Version>2.3.0</Version>
 		<Platforms>AnyCPU;x64</Platforms>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>

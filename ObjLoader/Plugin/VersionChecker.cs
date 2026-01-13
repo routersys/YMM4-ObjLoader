@@ -1,4 +1,5 @@
-﻿using System.Net.Http;
+﻿using ObjLoader.Localization;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
@@ -30,8 +31,8 @@ namespace ObjLoader.Plugin
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        if (MessageBox.Show($"新しいバージョン ({latestVersion}) が利用可能です。\n配布ページを開きますか？",
-                            "ObjLoader 更新通知", MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
+                        if (MessageBox.Show(string.Format(Texts.UpdateNotificationMessage, latestVersion),
+                            Texts.UpdateNotificationTitle, MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                         {
                             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                             {

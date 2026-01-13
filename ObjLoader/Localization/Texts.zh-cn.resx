@@ -303,4 +303,6 @@
 <data name="Layer_MoveUp" xml:space="preserve"><value>上移</value></data>
 <data name="Layer_MoveDown" xml:space="preserve"><value>下移</value></data>
 <data name="Layer_New" xml:space="preserve"><value>新建图层</value></data>
+<data name="UpdateNotificationTitle" xml:space="preserve"><value>ObjLoader 更新通知</value></data>
+<data name="UpdateNotificationMessage" xml:space="preserve"><value>新版本 ({0}) 可用。\n是否打开发布页面？</value></data>
 </root>

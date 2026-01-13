@@ -9,7 +9,7 @@ namespace ObjLoader.Parsers
 {
     public class ObjModelLoader
     {
-        private const string DefaultPluginVersion = "2.2.0";
+        private const string DefaultPluginVersion = "2.3.0";
         private static readonly string PluginVersion;
 
         static ObjModelLoader()
