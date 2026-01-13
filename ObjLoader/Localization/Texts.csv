@@ -254,3 +254,8 @@ Layer_MoveDown,Tooltip,下へ移動,Move Down,下移,下移,아래로 이동,Mov
 Layer_New,New Layer,新規レイヤー,New Layer,新建图层,新建圖層,새 레이어,Nueva capa,طبقة جديدة,Layer Baru,
 UpdateNotificationTitle,Message Title,ObjLoader 更新通知,ObjLoader Update Notification,ObjLoader 更新通知,ObjLoader 更新通知,ObjLoader 업데이트 알림,Notificación de actualización de ObjLoader,إشعار تحديث ObjLoader,Pemberitahuan Pembaruan ObjLoader,
 UpdateNotificationMessage,Message Body,新しいバージョン ({0}) が利用可能です。\n配布ページを開きますか？,A new version ({0}) is available.\nDo you want to open the distribution page?,新版本 ({0}) 可用。\n是否打开发布页面？,新版本 ({0}) 可用。\n是否開啟發佈頁面？,새 버전 ({0})을 사용할 수 있습니다.\n배포 페이지를 여시겠습니까?,Hay una nueva versión ({0}) disponible.\n¿Desea abrir la página de distribución?,يتوفر إصدار جديد ({0}).\nهل تريد فتح صفحة التوزيع؟,Versi baru ({0}) tersedia.\nBuka halaman distribusi?,
+RenderQuality,Setting Label,描画品質,Render Quality,渲染质量,渲染品質,렌더링 품질,Calidad de renderizado,جودة التصيير,Kualitas Render,
+RenderQuality_Desc,Setting Description,3Dモデルの描画品質を設定します。高いほど綺麗ですが負荷が増えます。,Sets the rendering quality of the 3D model. Higher quality increases load.,设置3D模型的渲染质量。质量越高，负载越大。,設定3D模型的渲染品質。品質越高，負載越大。,3D 모델의 렌더링 품질을 설정합니다. 높을수록 깨끗하지만 부하가 증가합니다.,Establece la calidad de renderizado del modelo 3D. Mayor calidad aumenta la carga.,يحدد جودة تصيير النموذج ثلاثي الأبعاد. الجودة الأعلى تزيد الحمل.,Mengatur kualitas render model 3D. Kualitas lebih tinggi meningkatkan beban.,
+RenderQuality_High,Enum Value,高品質 (2x SSAA),High (2x SSAA),高质量 (2x SSAA),高品質 (2x SSAA),고품질 (2x SSAA),Alta (2x SSAA),عالية (2x SSAA),Tinggi (2x SSAA),
+RenderQuality_Standard,Enum Value,標準,Standard,标准,標準,표준,Estándar,قياسي,Standar,
+RenderQuality_Low,Enum Value,低品質,Low,低质量,低品質,저품질,Baja,منخفضة,Rendah,

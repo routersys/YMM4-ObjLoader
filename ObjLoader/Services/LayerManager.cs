@@ -7,6 +7,7 @@ namespace ObjLoader.Services
     public class LayerManager : ILayerManager
     {
         private int _selectedLayerIndex;
+        private LayerData? _activeLayer;
 
         public ObservableCollection<LayerData> Layers { get; } = new ObservableCollection<LayerData>();
         public int SelectedLayerIndex => _selectedLayerIndex;
@@ -15,6 +16,11 @@ namespace ObjLoader.Services
         public void Initialize(ObjLoaderParameter parameter)
         {
             EnsureLayers(parameter);
+            if (Layers.Count > 0)
+            {
+                var idx = Math.Clamp(_selectedLayerIndex, 0, Layers.Count - 1);
+                _activeLayer = Layers[idx];
+            }
         }
 
         public void EnsureLayers(ObjLoaderParameter parameter)
@@ -25,6 +31,7 @@ namespace ObjLoader.Services
                 CopyFromParameter(defaultLayer, parameter);
                 Layers.Add(defaultLayer);
                 _selectedLayerIndex = 0;
+                _activeLayer = defaultLayer;
             }
         }
 
@@ -50,9 +57,21 @@ namespace ObjLoader.Services
         {
             if (IsSwitchingLayer || Layers.Count == 0) return;
 
-            var idx = Math.Clamp(_selectedLayerIndex, 0, Layers.Count - 1);
-            var layer = Layers[idx];
-            CopyFromParameter(layer, parameter);
+            LayerData? targetLayer = null;
+
+            if (_activeLayer != null && Layers.Contains(_activeLayer))
+            {
+                targetLayer = _activeLayer;
+            }
+            else if (_activeLayer == null && _selectedLayerIndex >= 0 && _selectedLayerIndex < Layers.Count)
+            {
+                targetLayer = Layers[_selectedLayerIndex];
+            }
+
+            if (targetLayer != null)
+            {
+                CopyFromParameter(targetLayer, parameter);
+            }
         }
 
         public void LoadSharedData(IEnumerable<LayerData> layers)
@@ -69,6 +88,7 @@ namespace ObjLoader.Services
             if (Layers.Count == 0) return;
             var idx = Math.Clamp(_selectedLayerIndex, 0, Layers.Count - 1);
             var layer = Layers[idx];
+            _activeLayer = layer;
             ApplyToParameter(layer, parameter);
         }
 

@@ -305,4 +305,9 @@
 <data name="Layer_New" xml:space="preserve"><value>新規レイヤー</value></data>
 <data name="UpdateNotificationTitle" xml:space="preserve"><value>ObjLoader 更新通知</value></data>
 <data name="UpdateNotificationMessage" xml:space="preserve"><value>新しいバージョン ({0}) が利用可能です。\n配布ページを開きますか？</value></data>
+<data name="RenderQuality" xml:space="preserve"><value>描画品質</value></data>
+<data name="RenderQuality_Desc" xml:space="preserve"><value>3Dモデルの描画品質を設定します。高いほど綺麗ですが負荷が増えます。</value></data>
+<data name="RenderQuality_High" xml:space="preserve"><value>高品質 (2x SSAA)</value></data>
+<data name="RenderQuality_Standard" xml:space="preserve"><value>標準</value></data>
+<data name="RenderQuality_Low" xml:space="preserve"><value>低品質</value></data>
 </root>

@@ -305,4 +305,9 @@
 <data name="Layer_New" xml:space="preserve"><value>Nueva capa</value></data>
 <data name="UpdateNotificationTitle" xml:space="preserve"><value>Notificación de actualización de ObjLoader</value></data>
 <data name="UpdateNotificationMessage" xml:space="preserve"><value>Hay una nueva versión ({0}) disponible.\n¿Desea abrir la página de distribución?</value></data>
+<data name="RenderQuality" xml:space="preserve"><value>Calidad de renderizado</value></data>
+<data name="RenderQuality_Desc" xml:space="preserve"><value>Establece la calidad de renderizado del modelo 3D. Mayor calidad aumenta la carga.</value></data>
+<data name="RenderQuality_High" xml:space="preserve"><value>Alta (2x SSAA)</value></data>
+<data name="RenderQuality_Standard" xml:space="preserve"><value>Estándar</value></data>
+<data name="RenderQuality_Low" xml:space="preserve"><value>Baja</value></data>
 </root>

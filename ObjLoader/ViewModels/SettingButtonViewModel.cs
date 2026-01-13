@@ -204,9 +204,10 @@ namespace ObjLoader.ViewModels
             Layers.Remove(item);
             _parameter.Layers.Remove(item.Data);
 
+            int newIndex = 0;
             if (Layers.Count > 0)
             {
-                var newIndex = Math.Min(index, Layers.Count - 1);
+                newIndex = Math.Min(index, Layers.Count - 1);
                 SelectedLayer = Layers[newIndex];
             }
             else
@@ -214,6 +215,32 @@ namespace ObjLoader.ViewModels
                 SelectedLayer = null;
                 _parameter.FilePath = string.Empty;
             }
+
+            if (Layers.Count > 0)
+            {
+                var currentLayer = Layers[newIndex].Data;
+
+                _parameter.FilePath = currentLayer.FilePath;
+                _parameter.BaseColor = currentLayer.BaseColor;
+                _parameter.IsLightEnabled = currentLayer.IsLightEnabled;
+                _parameter.Projection = currentLayer.Projection;
+
+                _parameter.X.CopyFrom(currentLayer.X);
+                _parameter.Y.CopyFrom(currentLayer.Y);
+                _parameter.Z.CopyFrom(currentLayer.Z);
+                _parameter.Scale.CopyFrom(currentLayer.Scale);
+                _parameter.RotationX.CopyFrom(currentLayer.RotationX);
+                _parameter.RotationY.CopyFrom(currentLayer.RotationY);
+                _parameter.RotationZ.CopyFrom(currentLayer.RotationZ);
+                _parameter.Fov.CopyFrom(currentLayer.Fov);
+                _parameter.LightX.CopyFrom(currentLayer.LightX);
+                _parameter.LightY.CopyFrom(currentLayer.LightY);
+                _parameter.LightZ.CopyFrom(currentLayer.LightZ);
+                _parameter.WorldId.CopyFrom(currentLayer.WorldId);
+
+                _parameter.SelectedLayerIndex = newIndex;
+            }
+
             UpdateCommands();
         }
 

@@ -305,4 +305,9 @@
 <data name="Layer_New" xml:space="preserve"><value>طبقة جديدة</value></data>
 <data name="UpdateNotificationTitle" xml:space="preserve"><value>إشعار تحديث ObjLoader</value></data>
 <data name="UpdateNotificationMessage" xml:space="preserve"><value>يتوفر إصدار جديد ({0}).\nهل تريد فتح صفحة التوزيع؟</value></data>
+<data name="RenderQuality" xml:space="preserve"><value>جودة التصيير</value></data>
+<data name="RenderQuality_Desc" xml:space="preserve"><value>يحدد جودة تصيير النموذج ثلاثي الأبعاد. الجودة الأعلى تزيد الحمل.</value></data>
+<data name="RenderQuality_High" xml:space="preserve"><value>عالية (2x SSAA)</value></data>
+<data name="RenderQuality_Standard" xml:space="preserve"><value>قياسي</value></data>
+<data name="RenderQuality_Low" xml:space="preserve"><value>منخفضة</value></data>
 </root>

@@ -305,4 +305,9 @@
 <data name="Layer_New" xml:space="preserve"><value>새 레이어</value></data>
 <data name="UpdateNotificationTitle" xml:space="preserve"><value>ObjLoader 업데이트 알림</value></data>
 <data name="UpdateNotificationMessage" xml:space="preserve"><value>새 버전 ({0})을 사용할 수 있습니다.\n배포 페이지를 여시겠습니까?</value></data>
+<data name="RenderQuality" xml:space="preserve"><value>렌더링 품질</value></data>
+<data name="RenderQuality_Desc" xml:space="preserve"><value>3D 모델의 렌더링 품질을 설정합니다. 높을수록 깨끗하지만 부하가 증가합니다.</value></data>
+<data name="RenderQuality_High" xml:space="preserve"><value>고품질 (2x SSAA)</value></data>
+<data name="RenderQuality_Standard" xml:space="preserve"><value>표준</value></data>
+<data name="RenderQuality_Low" xml:space="preserve"><value>저품질</value></data>
 </root>

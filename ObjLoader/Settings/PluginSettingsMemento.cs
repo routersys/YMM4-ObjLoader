@@ -6,6 +6,7 @@ namespace ObjLoader.Settings
     {
         public CoordinateSystem CoordinateSystem;
         public RenderCullMode CullMode;
+        public RenderQuality RenderQuality;
         public bool AssimpObj;
         public bool AssimpGlb;
         public bool AssimpPly;

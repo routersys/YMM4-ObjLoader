@@ -85,8 +85,31 @@ namespace ObjLoader.Services
         {
             if (width < 1 || height < 1 || _device == null) return;
 
-            _viewportWidth = width;
-            _viewportHeight = height;
+            var settings = PluginSettings.Instance;
+            int scaleFactor = 1;
+            int sampleCount = 4;
+
+            switch (settings.RenderQuality)
+            {
+                case RenderQuality.High:
+                    scaleFactor = 2;
+                    sampleCount = 8;
+                    break;
+                case RenderQuality.Standard:
+                    scaleFactor = 1;
+                    sampleCount = 4;
+                    break;
+                case RenderQuality.Low:
+                    scaleFactor = 1;
+                    sampleCount = 1;
+                    break;
+            }
+
+            int targetWidth = width * scaleFactor;
+            int targetHeight = height * scaleFactor;
+
+            _viewportWidth = targetWidth;
+            _viewportHeight = targetHeight;
 
             _rtv?.Dispose();
             _renderTarget?.Dispose();
@@ -97,12 +120,12 @@ namespace ObjLoader.Services
 
             var texDesc = new Texture2DDescription
             {
-                Width = width,
-                Height = height,
+                Width = targetWidth,
+                Height = targetHeight,
                 MipLevels = 1,
                 ArraySize = 1,
                 Format = Format.B8G8R8A8_UNorm,
-                SampleDescription = new SampleDescription(4, 0),
+                SampleDescription = new SampleDescription(sampleCount, 0),
                 Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.RenderTarget,
                 CPUAccessFlags = CpuAccessFlags.None
@@ -112,12 +135,12 @@ namespace ObjLoader.Services
 
             var depthDesc = new Texture2DDescription
             {
-                Width = width,
-                Height = height,
+                Width = targetWidth,
+                Height = targetHeight,
                 MipLevels = 1,
                 ArraySize = 1,
                 Format = Format.D24_UNorm_S8_UInt,
-                SampleDescription = new SampleDescription(4, 0),
+                SampleDescription = new SampleDescription(sampleCount, 0),
                 Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.DepthStencil,
                 CPUAccessFlags = CpuAccessFlags.None
@@ -135,7 +158,7 @@ namespace ObjLoader.Services
             stagingDesc.CPUAccessFlags = CpuAccessFlags.Read;
             _stagingTexture = _device.CreateTexture2D(stagingDesc);
 
-            SceneImage = new WriteableBitmap(width, height, 96, 96, System.Windows.Media.PixelFormats.Pbgra32, null);
+            SceneImage = new WriteableBitmap(targetWidth, targetHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32, null);
         }
 
         public void Render(

@@ -24,4 +24,14 @@ namespace ObjLoader.Settings
         [Display(Name = nameof(Texts.CullMode_Back), ResourceType = typeof(Texts))]
         Back
     }
+
+    public enum RenderQuality
+    {
+        [Display(Name = nameof(Texts.RenderQuality_High), ResourceType = typeof(Texts))]
+        High,
+        [Display(Name = nameof(Texts.RenderQuality_Standard), ResourceType = typeof(Texts))]
+        Standard,
+        [Display(Name = nameof(Texts.RenderQuality_Low), ResourceType = typeof(Texts))]
+        Low
+    }
 }

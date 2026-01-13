@@ -107,7 +107,7 @@ namespace ObjLoader.Rendering
             DepthStencilStateNoWrite = device.CreateDepthStencilState(depthDescNoWrite);
             _disposer.Collect(DepthStencilStateNoWrite);
 
-            var sampDesc = new SamplerDescription(Filter.MinMagMipLinear, TextureAddressMode.Wrap, TextureAddressMode.Wrap, TextureAddressMode.Wrap, 0, 1, ComparisonFunction.Always, new Vortice.Mathematics.Color4(0, 0, 0, 0), 0, float.MaxValue);
+            var sampDesc = new SamplerDescription(Filter.Anisotropic, TextureAddressMode.Wrap, TextureAddressMode.Wrap, TextureAddressMode.Wrap, 0, 16, ComparisonFunction.Always, new Vortice.Mathematics.Color4(0, 0, 0, 0), 0, float.MaxValue);
             SamplerState = device.CreateSamplerState(sampDesc);
             _disposer.Collect(SamplerState);
 
