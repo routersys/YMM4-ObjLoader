@@ -111,5 +111,25 @@ namespace ObjLoader.Parsers
             var model = Load(path);
             return _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
         }
+
+        public List<byte[]> GetSplitThumbnails(string path)
+        {
+            var model = Load(path);
+            var thumbnails = new List<byte[]>();
+
+            if (model.Parts != null && model.Parts.Count > 0)
+            {
+                foreach (var part in model.Parts)
+                {
+                    thumbnails.Add(ThumbnailUtil.CreateThumbnail(model, 256, 256, part.IndexOffset, part.IndexCount));
+                }
+            }
+            else
+            {
+                thumbnails.Add(ThumbnailUtil.CreateThumbnail(model, 256, 256));
+            }
+
+            return thumbnails;
+        }
     }
 }

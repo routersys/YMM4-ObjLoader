@@ -121,7 +121,8 @@ namespace ObjLoader.Parsers
             for (int i = 0; i < mCount; i++)
             {
                 len = br.ReadInt32();
-                var mName = br.ReadBytes(len);
+                var mNameBytes = br.ReadBytes(len);
+                string mName = encoding.GetString(mNameBytes).Trim().Replace("\0", "");
                 len = br.ReadInt32();
                 var mNameEn = br.ReadBytes(len);
 
@@ -185,6 +186,7 @@ namespace ObjLoader.Parsers
 
                 parts.Add(new ModelPart
                 {
+                    Name = mName,
                     TexturePath = texPath,
                     IndexOffset = indexOffset,
                     IndexCount = faceCount,

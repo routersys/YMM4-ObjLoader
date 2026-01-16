@@ -12,6 +12,25 @@ namespace ObjLoader.Parsers
     {
         public bool CanParse(string extension) => string.IsNullOrEmpty(extension) || extension == ".obj";
 
+        private struct MaterialData
+        {
+            public string TexturePath;
+            public Vector4 DiffuseColor;
+        }
+
+        private struct SplitEvent
+        {
+            public int LocalFaceIndex;
+            public byte Type;
+            public string Name;
+        }
+
+        private class ChunkResult
+        {
+            public List<SplitEvent> Events = new List<SplitEvent>();
+            public string MtlLib = string.Empty;
+        }
+
         public unsafe ObjModel Parse(string path)
         {
             using var mmf = MemoryMappedFile.CreateFromFile(path, FileMode.Open, null, 0, MemoryMappedFileAccess.Read);
@@ -63,12 +82,11 @@ namespace ObjLoader.Parsers
             Vector3* rawVn = (Vector3*)NativeMemory.Alloc((nuint)(totalVn > 0 ? totalVn : 1), (nuint)sizeof(Vector3));
 
             var sortArray = GC.AllocateUninitializedArray<SortableVertex>(totalF * 3, true);
-
-            var mtlLibs = new string[processorCount];
+            var chunkResults = new ChunkResult[processorCount];
 
             Parallel.For(0, processorCount, i =>
             {
-                mtlLibs[i] = ParseChunk(basePointer, chunkBoundaries[i], chunkBoundaries[i + 1],
+                chunkResults[i] = ParseChunk(basePointer, chunkBoundaries[i], chunkBoundaries[i + 1],
                     rawV + offsets[i].V,
                     rawVt + offsets[i].Vt,
                     rawVn + offsets[i].Vn,
@@ -129,34 +147,124 @@ namespace ObjLoader.Parsers
                 ModelHelper.CalculateNormals(vertices, indices);
             }
 
-            ModelHelper.CalculateBounds(vertices, out Vector3 center, out float scale);
+            var materialLib = new Dictionary<string, MaterialData>(StringComparer.OrdinalIgnoreCase);
+            string baseDir = Path.GetDirectoryName(path) ?? string.Empty;
 
-            string texturePath = string.Empty;
-            foreach (var lib in mtlLibs)
+            foreach (var res in chunkResults)
             {
-                if (!string.IsNullOrEmpty(lib))
+                if (!string.IsNullOrEmpty(res.MtlLib))
                 {
-                    try
-                    {
-                        string mtlPath = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, lib);
-                        if (File.Exists(mtlPath))
-                        {
-                            texturePath = ParseMtlForTexture(mtlPath);
-                            if (!string.IsNullOrEmpty(texturePath))
-                            {
-                                if (!Path.IsPathRooted(texturePath))
-                                {
-                                    texturePath = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, texturePath);
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    catch { }
+                    ParseMtl(baseDir, res.MtlLib, materialLib);
                 }
             }
 
-            var parts = new List<ModelPart> { new ModelPart { TexturePath = texturePath, IndexOffset = 0, IndexCount = indices.Length, BaseColor = Vector4.One, Center = center } };
+            var parts = new List<ModelPart>();
+
+            string currentObj = "default";
+            string currentGrp = "default";
+            string currentMat = "default";
+
+            var partIndices = new List<int>();
+
+            var allEvents = new List<(int globalFaceIndex, SplitEvent evt)>();
+            for (int i = 0; i < processorCount; i++)
+            {
+                int baseF = offsets[i].F;
+                foreach (var e in chunkResults[i].Events)
+                {
+                    allEvents.Add((baseF + e.LocalFaceIndex, e));
+                }
+            }
+            allEvents.Sort((a, b) => a.globalFaceIndex.CompareTo(b.globalFaceIndex));
+
+            int eventPtr = 0;
+
+            string lastKey = string.Empty;
+            int startIndex = 0;
+
+            Vector3 partMin = new Vector3(float.MaxValue);
+            Vector3 partMax = new Vector3(float.MinValue);
+            bool hasVerts = false;
+
+            for (int f = 0; f < totalF; f++)
+            {
+                while (eventPtr < allEvents.Count && allEvents[eventPtr].globalFaceIndex == f)
+                {
+                    var e = allEvents[eventPtr].evt;
+                    if (e.Type == 0) currentObj = e.Name;
+                    else if (e.Type == 1) currentGrp = e.Name;
+                    else if (e.Type == 2) currentMat = e.Name;
+                    eventPtr++;
+                }
+
+                string key = $"{currentObj}|{currentGrp}|{currentMat}";
+                if (f == 0) lastKey = key;
+
+                if (key != lastKey)
+                {
+                    if (f > startIndex)
+                    {
+                        var keys = lastKey.Split('|');
+                        var objName = keys[0];
+                        var grpName = keys[1];
+                        var matName = keys[2];
+
+                        string partName = objName != "default" ? objName : (grpName != "default" ? grpName : matName);
+                        if (partName == "default") partName = "";
+
+                        var m = materialLib.TryGetValue(matName, out var md) ? md : new MaterialData { DiffuseColor = Vector4.One };
+                        parts.Add(new ModelPart
+                        {
+                            Name = partName,
+                            IndexOffset = startIndex * 3,
+                            IndexCount = (f - startIndex) * 3,
+                            TexturePath = m.TexturePath,
+                            BaseColor = m.DiffuseColor,
+                            Center = hasVerts ? (partMin + partMax) * 0.5f : Vector3.Zero
+                        });
+                    }
+
+                    startIndex = f;
+                    lastKey = key;
+                    partMin = new Vector3(float.MaxValue);
+                    partMax = new Vector3(float.MinValue);
+                    hasVerts = false;
+                }
+
+                for (int k = 0; k < 3; k++)
+                {
+                    int vIdx = indices[f * 3 + k];
+                    var p = vertices[vIdx].Position;
+                    partMin = Vector3.Min(partMin, p);
+                    partMax = Vector3.Max(partMax, p);
+                    hasVerts = true;
+                }
+            }
+
+            if (totalF > startIndex)
+            {
+                var keys = lastKey.Split('|');
+                var objName = keys[0];
+                var grpName = keys[1];
+                var matName = keys[2];
+
+                string partName = objName != "default" ? objName : (grpName != "default" ? grpName : matName);
+                if (partName == "default") partName = "";
+
+                var m = materialLib.TryGetValue(matName, out var md) ? md : new MaterialData { DiffuseColor = Vector4.One };
+                parts.Add(new ModelPart
+                {
+                    Name = partName,
+                    IndexOffset = startIndex * 3,
+                    IndexCount = (totalF - startIndex) * 3,
+                    TexturePath = m.TexturePath,
+                    BaseColor = m.DiffuseColor,
+                    Center = hasVerts ? (partMin + partMax) * 0.5f : Vector3.Zero
+                });
+            }
+
+            ModelHelper.CalculateBounds(vertices, out Vector3 center, out float scale);
+
             return new ObjModel
             {
                 Vertices = vertices,
@@ -165,6 +273,63 @@ namespace ObjLoader.Parsers
                 ModelCenter = center,
                 ModelScale = scale
             };
+        }
+
+        private void ParseMtl(string baseDir, string mtlLib, Dictionary<string, MaterialData> lib)
+        {
+            try
+            {
+                string path = Path.Combine(baseDir, mtlLib);
+                if (!File.Exists(path)) return;
+
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var sr = new StreamReader(fs);
+                string? line;
+                string currentMat = string.Empty;
+
+                while ((line = sr.ReadLine()) != null)
+                {
+                    var trim = line.Trim();
+                    if (string.IsNullOrEmpty(trim) || trim.StartsWith("#")) continue;
+
+                    var parts = trim.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2) continue;
+
+                    var keyword = parts[0].ToLowerInvariant();
+
+                    if (keyword == "newmtl")
+                    {
+                        currentMat = parts[1];
+                        if (!lib.ContainsKey(currentMat))
+                        {
+                            lib[currentMat] = new MaterialData { DiffuseColor = Vector4.One };
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(currentMat))
+                    {
+                        var data = lib[currentMat];
+                        if (keyword == "map_kd")
+                        {
+                            string texPath = parts[1];
+                            if (!Path.IsPathRooted(texPath)) texPath = Path.Combine(baseDir, texPath);
+                            data.TexturePath = texPath;
+                            lib[currentMat] = data;
+                        }
+                        else if (keyword == "kd")
+                        {
+                            if (parts.Length >= 4 &&
+                                float.TryParse(parts[1], out float r) &&
+                                float.TryParse(parts[2], out float g) &&
+                                float.TryParse(parts[3], out float b))
+                            {
+                                data.DiffuseColor = new Vector4(r, g, b, 1.0f);
+                                lib[currentMat] = data;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -242,11 +407,11 @@ namespace ObjLoader.Parsers
             return counts;
         }
 
-        private static unsafe string ParseChunk(byte* start, long startOffset, long endOffset,
+        private static unsafe ChunkResult ParseChunk(byte* start, long startOffset, long endOffset,
             Vector3* vPtr, Vector2* vtPtr, Vector3* vnPtr,
             SortableVertex[] sortArray, int sortStartIndex)
         {
-            string mtlLib = string.Empty;
+            var result = new ChunkResult();
             byte* ptr = start + startOffset;
             byte* end = start + endOffset;
 
@@ -254,6 +419,7 @@ namespace ObjLoader.Parsers
             Vector2* currVt = vtPtr;
             Vector3* currVn = vnPtr;
             int currentSortIdx = sortStartIndex;
+            int localFaceIdx = 0;
 
             while (ptr < end)
             {
@@ -309,6 +475,7 @@ namespace ObjLoader.Parsers
                         currentSortIdx++;
                         sortArray[currentSortIdx] = new SortableVertex(v3, vt3, vn3, currentSortIdx);
                         currentSortIdx++;
+                        localFaceIdx++;
 
                         while (true)
                         {
@@ -324,6 +491,7 @@ namespace ObjLoader.Parsers
                             currentSortIdx++;
                             sortArray[currentSortIdx] = new SortableVertex(v3, vt3, vn3, currentSortIdx);
                             currentSortIdx++;
+                            localFaceIdx++;
                         }
                     }
                     else
@@ -340,11 +508,39 @@ namespace ObjLoader.Parsers
                         var s = ptr;
                         while (ptr < end && *ptr > 32 && *ptr != '\n') ptr++;
                         var len = (int)(ptr - s);
-                        if (len > 0) mtlLib = Encoding.UTF8.GetString(s, len);
+                        if (len > 0) result.MtlLib = Encoding.UTF8.GetString(s, len);
                     }
                     else
                     {
                         while (ptr < end && *ptr != '\n') ptr++;
+                    }
+                }
+                else if (c1 == 'o' || c1 == 'g' || c1 == 'u')
+                {
+                    byte type = 0;
+                    if (c1 == 'o') type = 0;
+                    else if (c1 == 'g') type = 1;
+                    else if (c1 == 'u')
+                    {
+                        if (IsKeyword(ptr, "semtl"))
+                        {
+                            ptr += 5;
+                            type = 2;
+                        }
+                        else
+                        {
+                            while (ptr < end && *ptr != '\n') ptr++;
+                            continue;
+                        }
+                    }
+
+                    while (ptr < end && *ptr <= 32 && *ptr != '\n') ptr++;
+                    var s = ptr;
+                    while (ptr < end && *ptr != '\n') ptr++;
+                    var len = (int)(ptr - s);
+                    if (len > 0)
+                    {
+                        result.Events.Add(new SplitEvent { LocalFaceIndex = localFaceIdx, Type = type, Name = Encoding.UTF8.GetString(s, len).Trim() });
                     }
                 }
                 else
@@ -352,7 +548,7 @@ namespace ObjLoader.Parsers
                     while (ptr < end && *ptr != '\n') ptr++;
                 }
             }
-            return mtlLib;
+            return result;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -386,27 +582,6 @@ namespace ObjLoader.Parsers
                 if (*(ptr + i) != keyword[i]) return false;
             }
             return true;
-        }
-
-        private static string ParseMtlForTexture(string path)
-        {
-            try
-            {
-                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-                using var sr = new StreamReader(fs);
-                string? line;
-                while ((line = sr.ReadLine()) != null)
-                {
-                    var trim = line.Trim();
-                    if (trim.StartsWith("map_Kd", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var parts = trim.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (parts.Length >= 2) return parts[1];
-                    }
-                }
-            }
-            catch { }
-            return string.Empty;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

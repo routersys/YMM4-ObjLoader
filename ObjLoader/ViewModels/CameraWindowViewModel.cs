@@ -503,7 +503,8 @@ namespace ObjLoader.ViewModels
                     BaseColor = baseColor,
                     LightEnabled = lightEnabled,
                     WorldId = worldId,
-                    HeightOffset = height / 2.0
+                    HeightOffset = height / 2.0,
+                    VisibleParts = layer.VisibleParts
                 });
             }
 

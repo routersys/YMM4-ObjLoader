@@ -146,15 +146,35 @@ namespace ObjLoader.Parsers
                         }
                     }
 
+                    var partMin = new Vector3(float.MaxValue);
+                    var partMax = new Vector3(float.MinValue);
+                    bool hasVerts = false;
+
+                    for (int k = startIndex; k < indices.Count; k++)
+                    {
+                        var vIdx = indices[k];
+                        if (vIdx >= 0 && vIdx < vertices.Count)
+                        {
+                            var p = vertices[vIdx].Position;
+                            partMin = Vector3.Min(partMin, p);
+                            partMax = Vector3.Max(partMax, p);
+                            hasVerts = true;
+                        }
+                    }
+
+                    var partName = mesh.Name;
+                    if (string.IsNullOrEmpty(partName)) partName = node.Name;
+
                     parts.Add(new ModelPart
                     {
+                        Name = partName,
                         IndexOffset = startIndex,
                         IndexCount = indices.Count - startIndex,
                         BaseColor = baseColor,
                         TexturePath = texPath,
                         Metallic = metallic,
                         Roughness = roughness,
-                        Center = vertices.Count > 0 ? vertices[vertexOffset].Position : Vector3.Zero
+                        Center = hasVerts ? (partMin + partMax) * 0.5f : Vector3.Zero
                     });
                 }
             }

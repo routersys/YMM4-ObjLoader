@@ -310,4 +310,26 @@
 <data name="RenderQuality_High" xml:space="preserve"><value>High (2x SSAA)</value></data>
 <data name="RenderQuality_Standard" xml:space="preserve"><value>Standard</value></data>
 <data name="RenderQuality_Low" xml:space="preserve"><value>Low</value></data>
+<data name="Button_Setting" xml:space="preserve"><value>Settings</value></data>
+<data name="Button_Layer" xml:space="preserve"><value>Layers</value></data>
+<data name="Button_Split" xml:space="preserve"><value>Split</value></data>
+<data name="SplitWindow_Title" xml:space="preserve"><value>Split</value></data>
+<data name="SplitWindow_Parts" xml:space="preserve"><value>Parts List</value></data>
+<data name="SplitWindow_All" xml:space="preserve"><value>All</value></data>
+<data name="SplitWindow_PartName" xml:space="preserve"><value>Part {0}</value></data>
+<data name="SplitWindow_Faces" xml:space="preserve"><value>Polygons: {0}</value></data>
+<data name="SplitWindow_AddToLayer" xml:space="preserve"><value>Add to Layer</value></data>
+<data name="Button_CenterPoint" xml:space="preserve"><value>Rotation Center</value></data>
+<data name="Window_CenterPoint" xml:space="preserve"><value>Rotation Center Settings</value></data>
+<data name="Msg_CenterPointDesc" xml:space="preserve"><value>Sets the rotation center coordinates for the selected layer.</value></data>
+<data name="Group_Selection" xml:space="preserve"><value>3D Selection</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>Automatically recognizes vertices</value></data>
+<data name="Button_ApplySelection" xml:space="preserve"><value>Apply Detected Coordinates</value></data>
+<data name="State_None" xml:space="preserve"><value>None</value></data>
+<data name="Dialog_Close" xml:space="preserve"><value>Close</value></data>
+<data name="State_Scanning" xml:space="preserve"><value>Scanning...</value></data>
+<data name="State_Locked" xml:space="preserve"><value>Locked</value></data>
+<data name="Mode_Vertex" xml:space="preserve"><value>Vertex</value></data>
+<data name="Mode_Edge" xml:space="preserve"><value>Edge</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>Face</value></data>
 </root>

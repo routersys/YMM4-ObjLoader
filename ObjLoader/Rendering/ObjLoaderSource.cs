@@ -45,7 +45,7 @@ namespace ObjLoader.Rendering
 
         private struct LayerState
         {
-            public double X, Y, Z, Scale, Rx, Ry, Rz, Fov, LightX, LightY, LightZ, Diffuse, Specular, Shininess;
+            public double X, Y, Z, Scale, Rx, Ry, Rz, Cx, Cy, Cz, Fov, LightX, LightY, LightZ, Diffuse, Specular, Shininess;
             public bool IsLightEnabled;
             public string FilePath, ShaderFilePath;
             public Color BaseColor, Ambient, Light;
@@ -54,6 +54,8 @@ namespace ObjLoader.Rendering
             public RenderCullMode CullMode;
             public int WorldId;
             public bool IsVisible;
+            public HashSet<int>? VisibleParts;
+            public string ParentGuid;
         }
 
         static ObjLoaderSource()
@@ -87,7 +89,6 @@ namespace ObjLoader.Rendering
         public void Update(TimelineItemSourceDescription desc)
         {
             _parameter.Duration = (double)desc.ItemDuration.Frame / desc.FPS;
-            _parameter.EnsureLayers();
 
             if (!_parameter.IsSwitchingLayer)
             {
@@ -138,20 +139,10 @@ namespace ObjLoader.Rendering
             }
 
             var layersToRender = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)>();
+            var currentLayerStates = new Dictionary<string, LayerState>();
 
-            for (int i = 0; i < _parameter.Layers.Count; i++)
+            foreach (var layer in _parameter.Layers)
             {
-                var layer = _parameter.Layers[i];
-                if (!layer.IsVisible) continue;
-
-                string filePath = layer.FilePath?.Trim('"') ?? string.Empty;
-                if (string.IsNullOrEmpty(filePath)) continue;
-
-                string shaderPath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty;
-                Color baseColor = layer.BaseColor;
-                bool lightEnabled = layer.IsLightEnabled;
-                ProjectionType projection = layer.Projection;
-
                 double x = layer.X.GetValue(frame, length, fps);
                 double y = layer.Y.GetValue(frame, length, fps);
                 double z = layer.Z.GetValue(frame, length, fps);
@@ -159,13 +150,16 @@ namespace ObjLoader.Rendering
                 double rx = layer.RotationX.GetValue(frame, length, fps);
                 double ry = layer.RotationY.GetValue(frame, length, fps);
                 double rz = layer.RotationZ.GetValue(frame, length, fps);
+                double cx = layer.RotationCenterX;
+                double cy = layer.RotationCenterY;
+                double cz = layer.RotationCenterZ;
                 double fov = layer.Fov.GetValue(frame, length, fps);
                 double lx = layer.LightX.GetValue(frame, length, fps);
                 double ly = layer.LightY.GetValue(frame, length, fps);
                 double lz = layer.LightZ.GetValue(frame, length, fps);
                 int worldId = (int)layer.WorldId.GetValue(frame, length, fps);
 
-                var currentState = new LayerState
+                var state = new LayerState
                 {
                     X = x,
                     Y = y,
@@ -174,16 +168,19 @@ namespace ObjLoader.Rendering
                     Rx = rx,
                     Ry = ry,
                     Rz = rz,
+                    Cx = cx,
+                    Cy = cy,
+                    Cz = cz,
                     Fov = fov,
                     LightX = lx,
                     LightY = ly,
                     LightZ = lz,
-                    IsLightEnabled = lightEnabled,
-                    FilePath = filePath,
-                    ShaderFilePath = shaderPath,
-                    BaseColor = baseColor,
+                    IsLightEnabled = layer.IsLightEnabled,
+                    FilePath = layer.FilePath?.Trim('"') ?? string.Empty,
+                    ShaderFilePath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty,
+                    BaseColor = layer.BaseColor,
                     WorldId = worldId,
-                    Projection = projection,
+                    Projection = layer.Projection,
                     CoordSystem = settings.CoordinateSystem,
                     CullMode = settings.CullMode,
                     Ambient = settings.GetAmbientColor(worldId),
@@ -191,56 +188,56 @@ namespace ObjLoader.Rendering
                     Diffuse = settings.GetDiffuseIntensity(worldId),
                     Specular = settings.GetSpecularIntensity(worldId),
                     Shininess = settings.GetShininess(worldId),
-                    IsVisible = true
+                    IsVisible = layer.IsVisible,
+                    VisibleParts = layer.VisibleParts != null ? new HashSet<int>(layer.VisibleParts) : null,
+                    ParentGuid = layer.ParentGuid
                 };
+
+                currentLayerStates[layer.Guid] = state;
 
                 if (!needsRedraw)
                 {
-                    if (!_layerStates.TryGetValue(layer.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref currentState))
+                    if (!_layerStates.TryGetValue(layer.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref state))
                     {
                         needsRedraw = true;
                     }
                 }
 
-                _layerStates[layer.Guid] = currentState;
-
-                GpuResourceCacheItem? resource = null;
-                if (GpuResourceCache.TryGetValue(filePath, out var cached))
+                if (state.IsVisible && !string.IsNullOrEmpty(state.FilePath))
                 {
-                    if (cached != null && cached.Device == _devices.D3D.Device)
+                    GpuResourceCacheItem? resource = null;
+                    if (GpuResourceCache.TryGetValue(state.FilePath, out var cached))
                     {
-                        resource = cached;
+                        if (cached != null && cached.Device == _devices.D3D.Device)
+                        {
+                            resource = cached;
+                        }
                     }
-                }
 
-                if (resource == null)
-                {
-                    var model = _loader.Load(filePath);
-                    if (model.Vertices.Length > 0)
+                    if (resource == null)
                     {
-                        resource = CreateGpuResource(model, filePath);
-                        model = null;
-                        GC.Collect(2, GCCollectionMode.Optimized);
+                        var model = _loader.Load(state.FilePath);
+                        if (model.Vertices.Length > 0)
+                        {
+                            resource = CreateGpuResource(model, state.FilePath);
+                            model = null;
+                            GC.Collect(2, GCCollectionMode.Optimized);
+                        }
                     }
-                }
 
-                if (resource != null)
-                {
-                    layersToRender.Add((layer, resource, currentState));
+                    if (resource != null)
+                    {
+                        layersToRender.Add((layer, resource, state));
+                    }
                 }
             }
 
-            if (!needsRedraw && _layerStates.Count != layersToRender.Count)
+            if (!needsRedraw && _layerStates.Count != currentLayerStates.Count)
             {
                 needsRedraw = true;
             }
 
-            if (needsRedraw)
-            {
-                var currentGuids = new HashSet<string>(_parameter.Layers.Select(l => l.Guid));
-                var keysToRemove = _layerStates.Keys.Where(k => !currentGuids.Contains(k)).ToList();
-                foreach (var k in keysToRemove) _layerStates.Remove(k);
-            }
+            _layerStates = currentLayerStates;
 
             if (!needsRedraw)
             {
@@ -263,12 +260,22 @@ namespace ObjLoader.Rendering
         {
             return Math.Abs(a.X - b.X) < 1e-5 && Math.Abs(a.Y - b.Y) < 1e-5 && Math.Abs(a.Z - b.Z) < 1e-5 &&
                    Math.Abs(a.Scale - b.Scale) < 1e-5 && Math.Abs(a.Rx - b.Rx) < 1e-5 && Math.Abs(a.Ry - b.Ry) < 1e-5 && Math.Abs(a.Rz - b.Rz) < 1e-5 &&
+                   Math.Abs(a.Cx - b.Cx) < 1e-5 && Math.Abs(a.Cy - b.Cy) < 1e-5 && Math.Abs(a.Cz - b.Cz) < 1e-5 &&
                    Math.Abs(a.Fov - b.Fov) < 1e-5 && Math.Abs(a.LightX - b.LightX) < 1e-5 && Math.Abs(a.LightY - b.LightY) < 1e-5 && Math.Abs(a.LightZ - b.LightZ) < 1e-5 &&
                    a.IsLightEnabled == b.IsLightEnabled && string.Equals(a.FilePath, b.FilePath, StringComparison.Ordinal) &&
                    string.Equals(a.ShaderFilePath, b.ShaderFilePath, StringComparison.Ordinal) && a.BaseColor == b.BaseColor &&
                    a.Projection == b.Projection && a.CoordSystem == b.CoordSystem && a.CullMode == b.CullMode &&
                    a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < 1e-5 &&
-                   Math.Abs(a.Specular - b.Specular) < 1e-5 && Math.Abs(a.Shininess - b.Shininess) < 1e-5 && a.WorldId == b.WorldId;
+                   Math.Abs(a.Specular - b.Specular) < 1e-5 && Math.Abs(a.Shininess - b.Shininess) < 1e-5 && a.WorldId == b.WorldId &&
+                   AreSetsEqual(a.VisibleParts, b.VisibleParts) && string.Equals(a.ParentGuid, b.ParentGuid, StringComparison.Ordinal);
+        }
+
+        private bool AreSetsEqual(HashSet<int>? a, HashSet<int>? b)
+        {
+            if (a == null && b == null) return true;
+            if (a == null || b == null) return false;
+            if (ReferenceEquals(a, b)) return true;
+            return a.SetEquals(b);
         }
 
         private void UpdateCustomShader(string path)
@@ -397,6 +404,34 @@ namespace ObjLoader.Rendering
             return item;
         }
 
+        private Matrix4x4 GetLayerTransform(LayerState state)
+        {
+            Matrix4x4 axisConversion = Matrix4x4.Identity;
+            switch (state.CoordSystem)
+            {
+                case CoordinateSystem.RightHandedZUp:
+                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
+                    break;
+                case CoordinateSystem.LeftHandedYUp:
+                    axisConversion = Matrix4x4.CreateScale(1, 1, -1);
+                    break;
+                case CoordinateSystem.LeftHandedZUp:
+                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
+                    break;
+            }
+
+            var rotation = Matrix4x4.CreateRotationX((float)(state.Rx * Math.PI / 180.0)) *
+                           Matrix4x4.CreateRotationY((float)(state.Ry * Math.PI / 180.0)) *
+                           Matrix4x4.CreateRotationZ((float)(state.Rz * Math.PI / 180.0));
+            var scale = Matrix4x4.CreateScale((float)(state.Scale / 100.0));
+            var translation = Matrix4x4.CreateTranslation((float)state.X, (float)state.Y, (float)state.Z);
+
+            var center = new Vector3((float)state.Cx, (float)state.Cy, (float)state.Cz);
+            var pivotOffset = Matrix4x4.CreateTranslation(-center);
+
+            return pivotOffset * axisConversion * rotation * scale * translation;
+        }
+
         private void RenderToTexture(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, int width, int height, double camX, double camY, double camZ, double targetX, double targetY, double targetZ)
         {
             if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
@@ -439,28 +474,20 @@ namespace ObjLoader.Rendering
                 context.PSSetShader(ps);
                 context.PSSetSamplers(0, new[] { _resources.SamplerState });
 
-                Matrix4x4 axisConversion = Matrix4x4.Identity;
-                switch (state.CoordSystem)
+                Matrix4x4 hierarchyMatrix = GetLayerTransform(state);
+                var currentGuid = state.ParentGuid;
+                int depth = 0;
+                while (!string.IsNullOrEmpty(currentGuid) && _layerStates.TryGetValue(currentGuid, out var parentState))
                 {
-                    case CoordinateSystem.RightHandedZUp:
-                        axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
-                        break;
-                    case CoordinateSystem.LeftHandedYUp:
-                        axisConversion = Matrix4x4.CreateScale(1, 1, -1);
-                        break;
-                    case CoordinateSystem.LeftHandedZUp:
-                        axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
-                        break;
+                    hierarchyMatrix *= GetLayerTransform(parentState);
+                    currentGuid = parentState.ParentGuid;
+                    depth++;
+                    if (depth > 100) break;
                 }
 
-                var rotation = Matrix4x4.CreateRotationX((float)(state.Rx * Math.PI / 180.0)) *
-                               Matrix4x4.CreateRotationY((float)(state.Ry * Math.PI / 180.0)) *
-                               Matrix4x4.CreateRotationZ((float)(state.Rz * Math.PI / 180.0));
-                var userScale = Matrix4x4.CreateScale((float)(state.Scale / 100.0));
-                var userTranslation = Matrix4x4.CreateTranslation((float)state.X, (float)state.Y, (float)state.Z);
-
                 var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
-                var world = normalize * axisConversion * rotation * userScale * userTranslation;
+
+                var world = normalize * hierarchyMatrix;
 
                 Matrix4x4 view, proj;
                 float aspect = (float)width / height;
@@ -497,6 +524,8 @@ namespace ObjLoader.Rendering
 
                 for (int i = 0; i < resource.Parts.Length; i++)
                 {
+                    if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
+
                     var part = resource.Parts[i];
                     var texView = resource.PartTextures[i];
                     bool hasTexture = texView != null;

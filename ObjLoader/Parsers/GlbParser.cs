@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using ObjLoader.Core;
@@ -179,7 +178,7 @@ namespace ObjLoader.Parsers
                     int meshCount = meshes.GetArrayLength();
                     for (int i = 0; i < meshCount; i++)
                     {
-                        ProcessMesh(root, binData, i, Matrix4x4.Identity, allVertices, allIndices, parts, materials, images, textures);
+                        ProcessMesh(root, binData, i, Matrix4x4.Identity, "", allVertices, allIndices, parts, materials, images, textures);
                     }
                 }
                 else
@@ -274,7 +273,12 @@ namespace ObjLoader.Parsers
 
             if (node.TryGetProperty("mesh", out var meshIdxProp))
             {
-                ProcessMesh(root, binData, meshIdxProp.GetInt32(), worldTransform, vertices, indices, parts, materials, images, textures);
+                string nodeName = "";
+                if (node.TryGetProperty("name", out var nameProp))
+                {
+                    nodeName = nameProp.GetString() ?? "";
+                }
+                ProcessMesh(root, binData, meshIdxProp.GetInt32(), worldTransform, nodeName, vertices, indices, parts, materials, images, textures);
             }
 
             if (node.TryGetProperty("children", out var childrenProp) && childrenProp.ValueKind == JsonValueKind.Array)
@@ -286,11 +290,22 @@ namespace ObjLoader.Parsers
             }
         }
 
-        private void ProcessMesh(JsonElement root, byte[]? binData, int meshIdx, Matrix4x4 transform, List<ObjVertex> allVertices, List<int> allIndices, List<ModelPart> parts, JsonElement materials, List<string> images, List<int> textures)
+        private void ProcessMesh(JsonElement root, byte[]? binData, int meshIdx, Matrix4x4 transform, string nodeName, List<ObjVertex> allVertices, List<int> allIndices, List<ModelPart> parts, JsonElement materials, List<string> images, List<int> textures)
         {
             if (!root.TryGetProperty("meshes", out var meshes) || meshIdx < 0 || meshIdx >= meshes.GetArrayLength()) return;
 
             var mesh = meshes[meshIdx];
+            string meshName = "";
+            if (mesh.TryGetProperty("name", out var nameProp))
+            {
+                meshName = nameProp.GetString() ?? "";
+            }
+
+            if (string.IsNullOrEmpty(meshName))
+            {
+                meshName = nodeName;
+            }
+
             if (mesh.TryGetProperty("primitives", out var primitives))
             {
                 foreach (var prim in primitives.EnumerateArray())
@@ -398,6 +413,7 @@ namespace ObjLoader.Parsers
 
                     parts.Add(new ModelPart
                     {
+                        Name = meshName,
                         TexturePath = texPath,
                         IndexOffset = startIndex,
                         IndexCount = allIndices.Count - startIndex,

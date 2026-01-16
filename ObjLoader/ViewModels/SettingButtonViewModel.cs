@@ -5,10 +5,13 @@ using ObjLoader.Plugin;
 using ObjLoader.Settings;
 using ObjLoader.Views;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
-using YukkuriMovieMaker.Commons;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels
 {
@@ -16,15 +19,20 @@ namespace ObjLoader.ViewModels
     {
         private readonly ObjLoaderParameter _parameter;
         private LayerWindow? _layerWindow;
+        private SplitWindow? _splitWindow;
+        private CenterPointWindow? _centerPointWindow;
 
         public ActionCommand OpenSettingWindowCommand { get; }
         public ActionCommand OpenLayerWindowCommand { get; }
+        public ActionCommand OpenSplitWindowCommand { get; }
+        public ActionCommand OpenCenterPointWindowCommand { get; }
 
         public SettingButtonViewModel(ObjLoaderParameter parameter)
         {
             _parameter = parameter;
 
             PropertyChangedEventManager.AddHandler(_parameter, OnParameterPropertyChanged, string.Empty);
+            CollectionChangedEventManager.AddHandler(_parameter.Layers, OnLayersCollectionChanged);
 
             OpenSettingWindowCommand = new ActionCommand(
                 _ => true,
@@ -36,6 +44,16 @@ namespace ObjLoader.ViewModels
                 _ => OpenLayerWindow()
             );
 
+            OpenSplitWindowCommand = new ActionCommand(
+                _ => !string.IsNullOrEmpty(_parameter.FilePath),
+                _ => OpenSplitWindow()
+            );
+
+            OpenCenterPointWindowCommand = new ActionCommand(
+                _ => !string.IsNullOrEmpty(_parameter.FilePath) && _parameter.Layers.Count > 0,
+                _ => OpenCenterPointWindow()
+            );
+
             VersionChecker.CheckVersion();
         }
 
@@ -43,7 +61,25 @@ namespace ObjLoader.ViewModels
         {
             if (e.PropertyName == nameof(ObjLoaderParameter.FilePath) || e.PropertyName == nameof(ObjLoaderParameter.Layers))
             {
-                OpenLayerWindowCommand.RaiseCanExecuteChanged();
+                RaiseCanExecuteChanged();
+            }
+        }
+
+        private void OnLayersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            RaiseCanExecuteChanged();
+        }
+
+        private void RaiseCanExecuteChanged()
+        {
+            if (Application.Current != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    OpenLayerWindowCommand.RaiseCanExecuteChanged();
+                    OpenSplitWindowCommand.RaiseCanExecuteChanged();
+                    OpenCenterPointWindowCommand.RaiseCanExecuteChanged();
+                });
             }
         }
 
@@ -87,6 +123,48 @@ namespace ObjLoader.ViewModels
             _layerWindow.Closed += (s, e) => _layerWindow = null;
             _layerWindow.Show();
         }
+
+        private void OpenSplitWindow()
+        {
+            if (_splitWindow != null)
+            {
+                _splitWindow.Activate();
+                if (_splitWindow.WindowState == WindowState.Minimized)
+                {
+                    _splitWindow.WindowState = WindowState.Normal;
+                }
+                return;
+            }
+
+            _splitWindow = new SplitWindow
+            {
+                DataContext = new SplitWindowViewModel(_parameter),
+                Owner = Application.Current.MainWindow
+            };
+            _splitWindow.Closed += (s, e) => _splitWindow = null;
+            _splitWindow.Show();
+        }
+
+        private void OpenCenterPointWindow()
+        {
+            if (_centerPointWindow != null)
+            {
+                _centerPointWindow.Activate();
+                if (_centerPointWindow.WindowState == WindowState.Minimized)
+                {
+                    _centerPointWindow.WindowState = WindowState.Normal;
+                }
+                return;
+            }
+
+            _centerPointWindow = new CenterPointWindow
+            {
+                DataContext = new CenterPointWindowViewModel(_parameter),
+                Owner = Application.Current.MainWindow
+            };
+            _centerPointWindow.Closed += (s, e) => _centerPointWindow = null;
+            _centerPointWindow.Show();
+        }
     }
 
     internal class LayerWindowViewModel : Bindable, IDisposable
@@ -126,10 +204,7 @@ namespace ObjLoader.ViewModels
         {
             _parameter = parameter;
 
-            foreach (var layer in _parameter.Layers)
-            {
-                Layers.Add(new LayerItemViewModel(layer, _loader));
-            }
+            SyncLayers();
 
             if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < Layers.Count)
             {
@@ -143,11 +218,47 @@ namespace ObjLoader.ViewModels
             }
 
             PropertyChangedEventManager.AddHandler(_parameter, OnParameterPropertyChanged, string.Empty);
+            CollectionChangedEventManager.AddHandler(_parameter.Layers, OnLayersCollectionChanged);
 
             AddLayerCommand = new ActionCommand(_ => true, _ => AddLayer());
             RemoveLayerCommand = new ActionCommand(_ => CanRemove(), _ => RemoveLayer());
             MoveUpLayerCommand = new ActionCommand(_ => CanMoveUp(), _ => MoveUp());
             MoveDownLayerCommand = new ActionCommand(_ => CanMoveDown(), _ => MoveDown());
+        }
+
+        private void SyncLayers()
+        {
+            Layers.Clear();
+            var dict = _parameter.Layers.ToDictionary(x => x.Guid);
+            foreach (var layer in _parameter.Layers)
+            {
+                int depth = 0;
+                var current = layer;
+                while (!string.IsNullOrEmpty(current.ParentGuid) && dict.TryGetValue(current.ParentGuid, out var parent))
+                {
+                    depth++;
+                    current = parent;
+                    if (depth > 20) break;
+                }
+
+                Layers.Add(new LayerItemViewModel(layer, _loader) { Depth = depth });
+            }
+        }
+
+        private void OnLayersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (Application.Current != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    SyncLayers();
+                    if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < Layers.Count)
+                    {
+                        SelectedLayer = Layers[_parameter.SelectedLayerIndex];
+                    }
+                    UpdateCommands();
+                });
+            }
         }
 
         private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -185,11 +296,7 @@ namespace ObjLoader.ViewModels
         {
             var newLayerData = new LayerData { FilePath = string.Empty };
             _parameter.Layers.Add(newLayerData);
-
-            var newItem = new LayerItemViewModel(newLayerData, _loader);
-            Layers.Add(newItem);
-
-            SelectedLayer = newItem;
+            _parameter.SelectedLayerIndex = _parameter.Layers.Count - 1;
         }
 
         private bool CanRemove() => SelectedLayer != null && Layers.Count > 1;
@@ -201,7 +308,6 @@ namespace ObjLoader.ViewModels
             var item = SelectedLayer;
             var index = Layers.IndexOf(item);
 
-            Layers.Remove(item);
             _parameter.Layers.Remove(item.Data);
 
             int newIndex = 0;
@@ -219,29 +325,8 @@ namespace ObjLoader.ViewModels
             if (Layers.Count > 0)
             {
                 var currentLayer = Layers[newIndex].Data;
-
-                _parameter.FilePath = currentLayer.FilePath;
-                _parameter.BaseColor = currentLayer.BaseColor;
-                _parameter.IsLightEnabled = currentLayer.IsLightEnabled;
-                _parameter.Projection = currentLayer.Projection;
-
-                _parameter.X.CopyFrom(currentLayer.X);
-                _parameter.Y.CopyFrom(currentLayer.Y);
-                _parameter.Z.CopyFrom(currentLayer.Z);
-                _parameter.Scale.CopyFrom(currentLayer.Scale);
-                _parameter.RotationX.CopyFrom(currentLayer.RotationX);
-                _parameter.RotationY.CopyFrom(currentLayer.RotationY);
-                _parameter.RotationZ.CopyFrom(currentLayer.RotationZ);
-                _parameter.Fov.CopyFrom(currentLayer.Fov);
-                _parameter.LightX.CopyFrom(currentLayer.LightX);
-                _parameter.LightY.CopyFrom(currentLayer.LightY);
-                _parameter.LightZ.CopyFrom(currentLayer.LightZ);
-                _parameter.WorldId.CopyFrom(currentLayer.WorldId);
-
                 _parameter.SelectedLayerIndex = newIndex;
             }
-
-            UpdateCommands();
         }
 
         private bool CanMoveUp() => SelectedLayer != null && Layers.IndexOf(SelectedLayer) > 0;
@@ -252,11 +337,8 @@ namespace ObjLoader.ViewModels
             var index = Layers.IndexOf(SelectedLayer);
             if (index <= 0) return;
 
-            Layers.Move(index, index - 1);
             _parameter.Layers.Move(index, index - 1);
             _parameter.SelectedLayerIndex = index - 1;
-
-            UpdateCommands();
         }
 
         private bool CanMoveDown() => SelectedLayer != null && Layers.IndexOf(SelectedLayer) < Layers.Count - 1;
@@ -267,16 +349,14 @@ namespace ObjLoader.ViewModels
             var index = Layers.IndexOf(SelectedLayer);
             if (index < 0 || index >= Layers.Count - 1) return;
 
-            Layers.Move(index, index + 1);
             _parameter.Layers.Move(index, index + 1);
             _parameter.SelectedLayerIndex = index + 1;
-
-            UpdateCommands();
         }
 
         public void Dispose()
         {
             PropertyChangedEventManager.RemoveHandler(_parameter, OnParameterPropertyChanged, string.Empty);
+            CollectionChangedEventManager.RemoveHandler(_parameter.Layers, OnLayersCollectionChanged);
         }
     }
 
@@ -287,12 +367,29 @@ namespace ObjLoader.ViewModels
 
         public string Name => string.IsNullOrEmpty(Data.FilePath) ? Texts.Layer_New : Path.GetFileName(Data.FilePath);
 
-        private byte[] _thumbnail = Array.Empty<byte>();
-        public byte[] Thumbnail
+        private ImageSource? _thumbnailSource;
+        public ImageSource? ThumbnailSource
         {
-            get => _thumbnail;
-            set => Set(ref _thumbnail, value);
+            get => _thumbnailSource;
+            set => Set(ref _thumbnailSource, value);
         }
+
+        private int _depth;
+        public int Depth
+        {
+            get => _depth;
+            set
+            {
+                if (Set(ref _depth, value))
+                {
+                    OnPropertyChanged(nameof(IndentMargin));
+                    OnPropertyChanged(nameof(LineVisibility));
+                }
+            }
+        }
+
+        public Thickness IndentMargin => new Thickness(Depth * 15, 0, 0, 0);
+        public Visibility LineVisibility => Depth > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         public LayerItemViewModel(LayerData data, ObjModelLoader loader)
         {
@@ -303,13 +400,36 @@ namespace ObjLoader.ViewModels
 
         public void UpdateThumbnail()
         {
-            if (!string.IsNullOrEmpty(Data.FilePath) && File.Exists(Data.FilePath))
+            byte[]? bytes = Data.Thumbnail;
+
+            if ((bytes == null || bytes.Length == 0) && !string.IsNullOrEmpty(Data.FilePath) && File.Exists(Data.FilePath))
             {
-                Thumbnail = _loader.GetThumbnail(Data.FilePath);
+                bytes = _loader.GetThumbnail(Data.FilePath);
+            }
+
+            if (bytes != null && bytes.Length > 0)
+            {
+                try
+                {
+                    using (var ms = new MemoryStream(bytes))
+                    {
+                        var bitmap = new BitmapImage();
+                        bitmap.BeginInit();
+                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmap.StreamSource = ms;
+                        bitmap.EndInit();
+                        bitmap.Freeze();
+                        ThumbnailSource = bitmap;
+                    }
+                }
+                catch
+                {
+                    ThumbnailSource = null;
+                }
             }
             else
             {
-                Thumbnail = Array.Empty<byte>();
+                ThumbnailSource = null;
             }
             OnPropertyChanged(nameof(Name));
         }

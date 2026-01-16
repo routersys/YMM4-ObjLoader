@@ -23,6 +23,7 @@ namespace ObjLoader.Services
         public bool LightEnabled;
         public int WorldId;
         public double HeightOffset;
+        public HashSet<int>? VisibleParts;
     }
 
     internal class RenderService : IDisposable
@@ -266,6 +267,8 @@ namespace ObjLoader.Services
 
                 for (int p = 0; p < modelResource.Parts.Length; p++)
                 {
+                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
+
                     var part = modelResource.Parts[p];
                     if (part.BaseColor.W < 0.99f)
                     {
@@ -293,6 +296,8 @@ namespace ObjLoader.Services
                 foreach (var tp in _transparentParts)
                 {
                     var layer = layers[tp.LayerIndex];
+                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(tp.PartIndex)) continue;
+
                     var resource = layer.Resource;
                     DrawPart(layer, resource, tp.PartIndex, layerWorlds[tp.LayerIndex], layerWvps[tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting);
                 }

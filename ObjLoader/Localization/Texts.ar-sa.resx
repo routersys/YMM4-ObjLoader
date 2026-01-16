@@ -310,4 +310,26 @@
 <data name="RenderQuality_High" xml:space="preserve"><value>عالية (2x SSAA)</value></data>
 <data name="RenderQuality_Standard" xml:space="preserve"><value>قياسي</value></data>
 <data name="RenderQuality_Low" xml:space="preserve"><value>منخفضة</value></data>
+<data name="Button_Setting" xml:space="preserve"><value>إعدادات</value></data>
+<data name="Button_Layer" xml:space="preserve"><value>طبقات</value></data>
+<data name="Button_Split" xml:space="preserve"><value>إنقسام</value></data>
+<data name="SplitWindow_Title" xml:space="preserve"><value>إنقسام</value></data>
+<data name="SplitWindow_Parts" xml:space="preserve"><value>قائمة الأجزاء</value></data>
+<data name="SplitWindow_All" xml:space="preserve"><value>الجميع</value></data>
+<data name="SplitWindow_PartName" xml:space="preserve"><value>الجزء {0}</value></data>
+<data name="SplitWindow_Faces" xml:space="preserve"><value>مضلعات: {0}</value></data>
+<data name="SplitWindow_AddToLayer" xml:space="preserve"><value>إضافة إلى طبقة</value></data>
+<data name="Button_CenterPoint" xml:space="preserve"><value>مركز الدوران</value></data>
+<data name="Window_CenterPoint" xml:space="preserve"><value>إعدادات مركز الدوران</value></data>
+<data name="Msg_CenterPointDesc" xml:space="preserve"><value>يحدد إحداثيات مركز الدوران للطبقة المحددة.</value></data>
+<data name="Group_Selection" xml:space="preserve"><value>تحديد ثلاثي الأبعاد</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>3D 뷰에서 마우스를 가져가면 정점</value></data>
+<data name="Button_ApplySelection" xml:space="preserve"><value>تطبيق الإحداثيات المكتشفة</value></data>
+<data name="State_None" xml:space="preserve"><value>لا شيء</value></data>
+<data name="Dialog_Close" xml:space="preserve"><value>إغلاق</value></data>
+<data name="State_Scanning" xml:space="preserve"><value>مسح...</value></data>
+<data name="State_Locked" xml:space="preserve"><value>مقفل</value></data>
+<data name="Mode_Vertex" xml:space="preserve"><value>قمة</value></data>
+<data name="Mode_Edge" xml:space="preserve"><value>حافة</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>Wajah</value></data>
 </root>

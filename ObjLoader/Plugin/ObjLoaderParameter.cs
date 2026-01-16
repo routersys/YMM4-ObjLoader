@@ -37,7 +37,18 @@ namespace ObjLoader.Plugin
             nameof(Texts.Filter_BlenderDeprecated),
             ".blend"
             )]
-        public string FilePath { get => _filePath; set => Set(ref _filePath, value); }
+        public string FilePath
+        {
+            get => _filePath;
+            set
+            {
+                if (Set(ref _filePath, value))
+                {
+                    EnsureLayers();
+                    ForceUpdate();
+                }
+            }
+        }
         private string _filePath = string.Empty;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Shader), Description = nameof(Texts.Shader_Desc), ResourceType = typeof(Texts))]
@@ -203,12 +214,46 @@ namespace ObjLoader.Plugin
 
         public void EnsureLayers()
         {
-            _layerManager.EnsureLayers(this);
+            void Action()
+            {
+                int count = Layers.Count;
+                _layerManager.EnsureLayers(this);
+                if (Layers.Count != count)
+                {
+                    OnPropertyChanged(nameof(Layers));
+                    _versionCounter++;
+                    SettingsVersion.CopyFrom(new Animation(_versionCounter, 0, 100000000));
+                    OnPropertyChanged(string.Empty);
+                }
+            }
+
+            if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.CheckAccess())
+            {
+                Application.Current.Dispatcher.Invoke(Action);
+            }
+            else
+            {
+                Action();
+            }
         }
 
         public void SyncActiveLayer()
         {
             _layerManager.SaveActiveLayer(this);
+        }
+
+        public void ForceUpdate()
+        {
+            if (Application.Current != null && Application.Current.Dispatcher != null)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    _versionCounter++;
+                    SettingsVersion.CopyFrom(new Animation(_versionCounter, 0, 100000000));
+                    OnPropertyChanged(string.Empty);
+                    OnPropertyChanged(nameof(Layers));
+                });
+            }
         }
 
         public override IShapeSource CreateShapeSource(IGraphicsDevicesAndContext devices)
@@ -280,12 +325,7 @@ namespace ObjLoader.Plugin
 
         private void OnPluginSettingsChanged(object? sender, PropertyChangedEventArgs e)
         {
-            Application.Current?.Dispatcher.Invoke(() =>
-            {
-                _versionCounter++;
-                SettingsVersion.CopyFrom(new Animation(_versionCounter, 0, 100000000));
-                OnPropertyChanged(string.Empty);
-            });
+            ForceUpdate();
         }
     }
 }

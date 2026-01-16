@@ -310,4 +310,26 @@
 <data name="RenderQuality_High" xml:space="preserve"><value>高质量 (2x SSAA)</value></data>
 <data name="RenderQuality_Standard" xml:space="preserve"><value>标准</value></data>
 <data name="RenderQuality_Low" xml:space="preserve"><value>低质量</value></data>
+<data name="Button_Setting" xml:space="preserve"><value>设置</value></data>
+<data name="Button_Layer" xml:space="preserve"><value>图层</value></data>
+<data name="Button_Split" xml:space="preserve"><value>分解</value></data>
+<data name="SplitWindow_Title" xml:space="preserve"><value>分解</value></data>
+<data name="SplitWindow_Parts" xml:space="preserve"><value>部件列表</value></data>
+<data name="SplitWindow_All" xml:space="preserve"><value>全部</value></data>
+<data name="SplitWindow_PartName" xml:space="preserve"><value>部件 {0}</value></data>
+<data name="SplitWindow_Faces" xml:space="preserve"><value>面数: {0}</value></data>
+<data name="SplitWindow_AddToLayer" xml:space="preserve"><value>添加至图层</value></data>
+<data name="Button_CenterPoint" xml:space="preserve"><value>旋转中心</value></data>
+<data name="Window_CenterPoint" xml:space="preserve"><value>旋转中心设置</value></data>
+<data name="Msg_CenterPointDesc" xml:space="preserve"><value>设置所选图层的旋转中心坐标。</value></data>
+<data name="Group_Selection" xml:space="preserve"><value>3D选择</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>edges</value></data>
+<data name="Button_ApplySelection" xml:space="preserve"><value>应用检测到的坐标</value></data>
+<data name="State_None" xml:space="preserve"><value>无</value></data>
+<data name="Dialog_Close" xml:space="preserve"><value>关闭</value></data>
+<data name="State_Scanning" xml:space="preserve"><value>扫描中...</value></data>
+<data name="State_Locked" xml:space="preserve"><value>已锁定</value></data>
+<data name="Mode_Vertex" xml:space="preserve"><value>顶点</value></data>
+<data name="Mode_Edge" xml:space="preserve"><value>边</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>面</value></data>
 </root>

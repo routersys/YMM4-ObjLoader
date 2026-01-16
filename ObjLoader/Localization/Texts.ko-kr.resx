@@ -310,4 +310,26 @@
 <data name="RenderQuality_High" xml:space="preserve"><value>고품질 (2x SSAA)</value></data>
 <data name="RenderQuality_Standard" xml:space="preserve"><value>표준</value></data>
 <data name="RenderQuality_Low" xml:space="preserve"><value>저품질</value></data>
+<data name="Button_Setting" xml:space="preserve"><value>설정</value></data>
+<data name="Button_Layer" xml:space="preserve"><value>레이어</value></data>
+<data name="Button_Split" xml:space="preserve"><value>분해</value></data>
+<data name="SplitWindow_Title" xml:space="preserve"><value>분해</value></data>
+<data name="SplitWindow_Parts" xml:space="preserve"><value>부품 목록</value></data>
+<data name="SplitWindow_All" xml:space="preserve"><value>전체</value></data>
+<data name="SplitWindow_PartName" xml:space="preserve"><value>부품 {0}</value></data>
+<data name="SplitWindow_Faces" xml:space="preserve"><value>폴리곤 수: {0}</value></data>
+<data name="SplitWindow_AddToLayer" xml:space="preserve"><value>레이어에 추가</value></data>
+<data name="Button_CenterPoint" xml:space="preserve"><value>회전 중심</value></data>
+<data name="Window_CenterPoint" xml:space="preserve"><value>회전 중심 설정</value></data>
+<data name="Msg_CenterPointDesc" xml:space="preserve"><value>선택한 레이어의 회전 중심 좌표를 설정합니다.</value></data>
+<data name="Group_Selection" xml:space="preserve"><value>3D 선택</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>在3D视图中鼠标悬停时自动识别顶点、边和面。</value></data>
+<data name="Button_ApplySelection" xml:space="preserve"><value>감지된 좌표 적용</value></data>
+<data name="State_None" xml:space="preserve"><value>없음</value></data>
+<data name="Dialog_Close" xml:space="preserve"><value>닫기</value></data>
+<data name="State_Scanning" xml:space="preserve"><value>스캔 중...</value></data>
+<data name="State_Locked" xml:space="preserve"><value>잠김</value></data>
+<data name="Mode_Vertex" xml:space="preserve"><value>정점</value></data>
+<data name="Mode_Edge" xml:space="preserve"><value>모서리</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>Cara</value></data>
 </root>
