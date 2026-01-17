@@ -1,30 +1,20 @@
-﻿using ObjLoader.Cache;
-using ObjLoader.Core;
-using ObjLoader.Parsers;
-using ObjLoader.Plugin;
+﻿using ObjLoader.Plugin;
 using ObjLoader.Services;
 using ObjLoader.Views;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
-using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using Vortice.Direct3D11;
-using Vortice.DXGI;
+using System.Windows.Media.Imaging;
 using YukkuriMovieMaker.Commons;
-using Matrix4x4 = System.Numerics.Matrix4x4;
-using Vector3 = System.Numerics.Vector3;
 
 namespace ObjLoader.ViewModels
 {
     public class CameraWindowViewModel : Bindable, IDisposable, ICameraManipulator
     {
         private readonly ObjLoaderParameter _parameter;
-        private readonly ObjModelLoader _loader;
         private readonly RenderService _renderService;
+        private readonly SceneService _sceneService;
         private readonly CameraLogic _cameraLogic;
         private readonly UndoStack<(double cx, double cy, double cz, double tx, double ty, double tz)> _undoStack;
         private readonly CameraAnimationManager _animationManager;
@@ -40,8 +30,6 @@ namespace ObjLoader.ViewModels
         private string _camXScaleInfo = "", _camYScaleInfo = "", _camZScaleInfo = "";
         private string _targetXScaleInfo = "", _targetYScaleInfo = "", _targetZScaleInfo = "";
 
-        private double _modelScale = 1.0;
-        private double _modelHeight = 1.0;
         private double _aspectRatio = 16.0 / 9.0;
         private int _viewportWidth = 100;
         private int _viewportHeight = 100;
@@ -52,7 +40,6 @@ namespace ObjLoader.ViewModels
         private bool _isSnapping = false;
         private bool _isTargetFixed = true;
 
-        private Dictionary<string, (GpuResourceCacheItem Resource, double Height)> _modelResources = new Dictionary<string, (GpuResourceCacheItem, double)>();
         private System.Windows.Media.Color _themeColor = System.Windows.Media.Colors.White;
 
         private double _currentTime = 0;
@@ -115,7 +102,7 @@ namespace ObjLoader.ViewModels
         public double ViewRadius { get => _cameraLogic.ViewRadius; set => _cameraLogic.ViewRadius = value; }
         public double ViewTheta { get => _cameraLogic.ViewTheta; set => _cameraLogic.ViewTheta = value; }
         public double ViewPhi { get => _cameraLogic.ViewPhi; set => _cameraLogic.ViewPhi = value; }
-        public double ModelHeight => _modelHeight;
+        public double ModelHeight => _sceneService.ModelHeight;
         public int ViewportHeight => _viewportHeight;
 
         public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
@@ -156,6 +143,8 @@ namespace ObjLoader.ViewModels
                         SelectedKeyframe = null;
                     }
                     UpdateAnimation();
+                    PlayCommand.RaiseCanExecuteChanged();
+                    PauseCommand.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -217,8 +206,8 @@ namespace ObjLoader.ViewModels
         public CameraWindowViewModel(ObjLoaderParameter parameter)
         {
             _parameter = parameter;
-            _loader = new ObjModelLoader();
             _renderService = new RenderService();
+            _sceneService = new SceneService(_parameter, _renderService);
             _cameraLogic = new CameraLogic();
             _undoStack = new UndoStack<(double, double, double, double, double, double)>();
             _animationManager = new CameraAnimationManager();
@@ -248,7 +237,7 @@ namespace ObjLoader.ViewModels
             RedoCommand = new ActionCommand(_ => _undoStack.CanRedo, _ => PerformRedo());
             FocusCommand = new ActionCommand(_ => true, _ => PerformFocus());
 
-            PlayCommand = new ActionCommand(_ => !IsPlaying, _ => IsPlaying = true);
+            PlayCommand = new ActionCommand(_ => !IsPlaying && CurrentTime < MaxDuration, _ => IsPlaying = true);
             PauseCommand = new ActionCommand(_ => IsPlaying, _ => IsPlaying = false);
             StopCommand = new ActionCommand(_ => true, _ => StopPlayback());
             AddKeyframeCommand = new ActionCommand(_ => !IsKeyframeSelected, _ => AddKeyframe());
@@ -295,6 +284,8 @@ namespace ObjLoader.ViewModels
                 CurrentTime = MaxDuration;
                 _animationManager.Pause();
                 OnPropertyChanged(nameof(IsPlaying));
+                PlayCommand.RaiseCanExecuteChanged();
+                PauseCommand.RaiseCanExecuteChanged();
             }
             else
             {
@@ -343,7 +334,7 @@ namespace ObjLoader.ViewModels
                 {
                     CamX = 0;
                     CamY = 0;
-                    CamZ = -_modelScale * 2.5;
+                    CamZ = -_sceneService.ModelScale * 2.5;
                     TargetX = 0;
                     TargetY = 0;
                     TargetZ = 0;
@@ -412,119 +403,21 @@ namespace ObjLoader.ViewModels
 
         public void UpdateVisuals()
         {
-            _cameraLogic.UpdateViewport(Camera, GizmoCamera, _modelHeight);
+            _cameraLogic.UpdateViewport(Camera, GizmoCamera, _sceneService.ModelHeight);
             UpdateSceneCameraVisual();
             UpdateD3DScene();
         }
 
         private void UpdateD3DScene()
         {
-            if (_renderService.SceneImage == null) return;
-            var camDir = Camera.LookDirection; camDir.Normalize();
-            var camUp = Camera.UpDirection; camUp.Normalize();
-            var camPos = Camera.Position;
-            var target = camPos + camDir;
-            var view = Matrix4x4.CreateLookAt(
-                new Vector3((float)camPos.X, (float)camPos.Y, (float)camPos.Z),
-                new Vector3((float)target.X, (float)target.Y, (float)target.Z),
-                new Vector3((float)camUp.X, (float)camUp.Y, (float)camUp.Z));
-
-            double fovValue = _parameter.Fov.Values[0].Value;
-            if (fovValue < 0.1) fovValue = 0.1;
-            if (IsPilotView && Camera.FieldOfView != fovValue) Camera.FieldOfView = fovValue;
-            else if (!IsPilotView && Camera.FieldOfView != 45) Camera.FieldOfView = 45;
-
-            float hFovRad = (float)(Camera.FieldOfView * Math.PI / 180.0);
-            float aspect = (float)_viewportWidth / _viewportHeight;
-            float vFovRad = 2.0f * (float)Math.Atan(Math.Tan(hFovRad / 2.0f) / aspect);
-            var proj = Matrix4x4.CreatePerspectiveFieldOfView(vFovRad, aspect, 0.1f, 10000.0f);
-
-            bool isInteracting = false;
-            int fps = _parameter.CurrentFPS > 0 ? _parameter.CurrentFPS : 60;
-            double currentFrame = _currentTime * fps;
-            int len = (int)(_parameter.Duration * fps);
-
-            var layers = new List<LayerRenderData>();
-            int activeIndex = _parameter.SelectedLayerIndex;
-
-            for (int i = 0; i < _parameter.Layers.Count; i++)
-            {
-                var layer = _parameter.Layers[i];
-                if (!layer.IsVisible) continue;
-
-                string filePath = layer.FilePath?.Trim('"') ?? string.Empty;
-                if (string.IsNullOrEmpty(filePath) || !_modelResources.ContainsKey(filePath)) continue;
-
-                var (resource, height) = _modelResources[filePath];
-                bool isActive = (i == activeIndex);
-
-                double x, y, z, scale, rx, ry, rz;
-                bool lightEnabled;
-                Color baseColor;
-                int worldId;
-
-                if (isActive)
-                {
-                    x = _parameter.X.GetValue((long)currentFrame, len, fps);
-                    y = _parameter.Y.GetValue((long)currentFrame, len, fps);
-                    z = _parameter.Z.GetValue((long)currentFrame, len, fps);
-                    scale = _parameter.Scale.GetValue((long)currentFrame, len, fps);
-                    rx = _parameter.RotationX.GetValue((long)currentFrame, len, fps);
-                    ry = _parameter.RotationY.GetValue((long)currentFrame, len, fps);
-                    rz = _parameter.RotationZ.GetValue((long)currentFrame, len, fps);
-                    lightEnabled = _parameter.IsLightEnabled;
-                    baseColor = _parameter.BaseColor;
-                    worldId = (int)_parameter.WorldId.GetValue((long)currentFrame, len, fps);
-                }
-                else
-                {
-                    x = layer.X.GetValue((long)currentFrame, len, fps);
-                    y = layer.Y.GetValue((long)currentFrame, len, fps);
-                    z = layer.Z.GetValue((long)currentFrame, len, fps);
-                    scale = layer.Scale.GetValue((long)currentFrame, len, fps);
-                    rx = layer.RotationX.GetValue((long)currentFrame, len, fps);
-                    ry = layer.RotationY.GetValue((long)currentFrame, len, fps);
-                    rz = layer.RotationZ.GetValue((long)currentFrame, len, fps);
-                    lightEnabled = layer.IsLightEnabled;
-                    baseColor = layer.BaseColor;
-                    worldId = (int)layer.WorldId.GetValue((long)currentFrame, len, fps);
-                }
-
-                layers.Add(new LayerRenderData
-                {
-                    Resource = resource,
-                    X = x,
-                    Y = y,
-                    Z = z,
-                    Scale = scale,
-                    Rx = rx,
-                    Ry = ry,
-                    Rz = rz,
-                    BaseColor = baseColor,
-                    LightEnabled = lightEnabled,
-                    WorldId = worldId,
-                    HeightOffset = height / 2.0,
-                    VisibleParts = layer.VisibleParts
-                });
-            }
-
-            _renderService.Render(
-                layers,
-                view,
-                proj,
-                new Vector3((float)camPos.X, (float)camPos.Y, (float)camPos.Z),
-                _themeColor,
-                _isWireframe,
-                _isGridVisible,
-                _isInfiniteGrid,
-                _modelScale,
-                isInteracting);
+            bool isInteracting = !string.IsNullOrEmpty(HoveredDirectionName);
+            _sceneService.Render(Camera, CurrentTime, _viewportWidth, _viewportHeight, IsPilotView, _themeColor, _isWireframe, _isGridVisible, _isInfiniteGrid, isInteracting);
         }
 
         private void UpdateSceneCameraVisual()
         {
             bool isInteracting = !string.IsNullOrEmpty(HoveredDirectionName);
-            double yOffset = _modelHeight / 2.0;
+            double yOffset = _sceneService.ModelHeight / 2.0;
             var camPos = new Point3D(CamX, CamY + yOffset, CamZ);
             var targetPos = new Point3D(TargetX, TargetY + yOffset, TargetZ);
 
@@ -533,7 +426,7 @@ namespace ObjLoader.ViewModels
                 GizmoXYGeometry, GizmoYZGeometry, GizmoZXGeometry,
                 CameraVisualGeometry, TargetVisualGeometry,
                 camPos, targetPos,
-                _isTargetFixed, _modelScale, isInteracting,
+                _isTargetFixed, _sceneService.ModelScale, isInteracting,
                 _parameter.Fov.Values[0].Value, _aspectRatio,
                 IsPilotView
             );
@@ -544,91 +437,10 @@ namespace ObjLoader.ViewModels
             OnPropertyChanged(nameof(GizmoXYGeometry)); OnPropertyChanged(nameof(GizmoYZGeometry)); OnPropertyChanged(nameof(GizmoZXGeometry));
         }
 
-        private unsafe void LoadModel()
+        private void LoadModel()
         {
-            foreach (var entry in _modelResources) entry.Value.Resource.Dispose();
-            _modelResources.Clear();
-
-            var paths = new HashSet<string>();
-            foreach (var layer in _parameter.Layers)
-            {
-                if (!string.IsNullOrWhiteSpace(layer.FilePath))
-                    paths.Add(layer.FilePath.Trim('"'));
-            }
-            if (!string.IsNullOrWhiteSpace(_parameter.FilePath))
-                paths.Add(_parameter.FilePath.Trim('"'));
-
-            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
-            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-            bool hasModel = false;
-
-            foreach (var path in paths)
-            {
-                if (_modelResources.ContainsKey(path)) continue;
-                if (!File.Exists(path)) continue;
-
-                var model = _loader.Load(path);
-                if (model.Vertices.Length == 0) continue;
-
-                var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
-                ID3D11Buffer vb;
-                fixed (ObjVertex* p = model.Vertices) vb = _renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
-
-                var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
-                ID3D11Buffer ib;
-                fixed (int* p = model.Indices) ib = _renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
-
-                var parts = model.Parts.ToArray();
-                var partTextures = new ID3D11ShaderResourceView?[parts.Length];
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    if (File.Exists(parts[i].TexturePath))
-                    {
-                        try
-                        {
-                            var bytes = File.ReadAllBytes(parts[i].TexturePath);
-                            using var ms = new MemoryStream(bytes);
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = ms;
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-                            var conv = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-                            var pixels = new byte[conv.PixelWidth * conv.PixelHeight * 4];
-                            conv.CopyPixels(pixels, conv.PixelWidth * 4, 0);
-                            var tDesc = new Texture2DDescription { Width = conv.PixelWidth, Height = conv.PixelHeight, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
-                            fixed (byte* p = pixels) { using var t = _renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, conv.PixelWidth * 4) }); partTextures[i] = _renderService.Device.CreateShaderResourceView(t); }
-                        }
-                        catch { }
-                    }
-                }
-                var resource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
-
-                double localMinY = double.MaxValue, localMaxY = double.MinValue;
-                foreach (var v in model.Vertices)
-                {
-                    double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                    if (x < minX) minX = x; if (x > maxX) maxX = x;
-                    double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                    if (y < minY) minY = y; if (y > maxY) maxY = y;
-                    if (y < localMinY) localMinY = y; if (y > localMaxY) localMaxY = y;
-                    double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-                    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
-                }
-
-                double height = localMaxY - localMinY;
-                _modelResources[path] = (resource, height);
-                hasModel = true;
-            }
-
-            if (hasModel)
-            {
-                _modelScale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
-                _modelHeight = maxY - minY;
-                if (_modelScale < 0.1) _modelScale = 1.0;
-                _cameraLogic.ViewRadius = _modelScale * 2.5;
-            }
+            _sceneService.LoadModel();
+            _cameraLogic.ViewRadius = _sceneService.ModelScale * 2.5;
 
             UpdateRange(CamX, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo));
             UpdateRange(CamY, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo));
@@ -643,10 +455,10 @@ namespace ObjLoader.ViewModels
         private void ResetSceneCamera()
         {
             RecordUndo();
-            CamX = 0; CamY = 0; CamZ = -_modelScale * 2.0;
+            CamX = 0; CamY = 0; CamZ = -_sceneService.ModelScale * 2.0;
             TargetX = 0; TargetY = 0; TargetZ = 0;
             _cameraLogic.ViewCenterX = 0; _cameraLogic.ViewCenterY = 0; _cameraLogic.ViewCenterZ = 0;
-            _cameraLogic.ViewRadius = _modelScale * 3.0;
+            _cameraLogic.ViewRadius = _sceneService.ModelScale * 3.0;
             _cameraLogic.ViewTheta = Math.PI / 4;
             _cameraLogic.ViewPhi = Math.PI / 4;
             _cameraLogic.AnimateView(Math.PI / 4, Math.PI / 4);
@@ -702,7 +514,7 @@ namespace ObjLoader.ViewModels
         public void PerformFocus()
         {
             if (IsPilotView) return;
-            _cameraLogic.ViewRadius = _modelScale * 2.0;
+            _cameraLogic.ViewRadius = _sceneService.ModelScale * 2.0;
             _cameraLogic.ViewCenterX = TargetX;
             _cameraLogic.ViewCenterY = TargetY;
             _cameraLogic.ViewCenterZ = TargetZ;
@@ -716,19 +528,16 @@ namespace ObjLoader.ViewModels
 
         public void Zoom(int delta)
         {
-            if (IsPlaying) _animationManager.Pause();
-            _interactionManager.Zoom(delta, IsPilotView, _modelScale);
+            _interactionManager.Zoom(delta, IsPilotView, _sceneService.ModelScale);
         }
 
         public void StartPan(Point pos)
         {
-            if (IsPlaying) _animationManager.Pause();
             _interactionManager.StartPan(pos);
         }
 
         public void StartRotate(Point pos)
         {
-            if (IsPlaying) _animationManager.Pause();
             _interactionManager.StartRotate(pos);
         }
 
@@ -750,7 +559,6 @@ namespace ObjLoader.ViewModels
 
         public void StartGizmoDrag(Point pos)
         {
-            if (IsPlaying) _animationManager.Pause();
             _interactionManager.StartGizmoDrag(pos, CameraVisualGeometry, TargetVisualGeometry);
         }
 
@@ -761,8 +569,7 @@ namespace ObjLoader.ViewModels
 
         public void ScrubValue(string axis, double delta)
         {
-            if (IsPlaying) _animationManager.Pause();
-            _interactionManager.ScrubValue(axis, delta, _modelScale);
+            _interactionManager.ScrubValue(axis, delta, _sceneService.ModelScale);
         }
 
         public void Move(Point pos)
@@ -772,15 +579,13 @@ namespace ObjLoader.ViewModels
 
         public void MovePilot(double fwd, double right, double up)
         {
-            if (IsPlaying) _animationManager.Pause();
-            _interactionManager.MovePilot(fwd, right, up, IsPilotView, _modelScale);
+            _interactionManager.MovePilot(fwd, right, up, IsPilotView, _sceneService.ModelScale);
         }
 
         public void Dispose()
         {
             _renderService.Dispose();
-            foreach (var entry in _modelResources) entry.Value.Resource.Dispose();
-            _modelResources.Clear();
+            _sceneService.Dispose();
             _cameraLogic.StopAnimation();
             _animationManager.Dispose();
             _parameter.PropertyChanged -= OnParameterPropertyChanged;

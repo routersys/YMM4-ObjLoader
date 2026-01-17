@@ -8,7 +8,7 @@ namespace ObjLoader.Cache
     public class ModelCache
     {
         private const int Signature = 0x4A424F04;
-        private const int Version = 3;
+        private const int Version = 4;
 
         public bool TryLoad(string path, DateTime originalTimestamp, string parserId, string pluginVersion, out ObjModel model)
         {

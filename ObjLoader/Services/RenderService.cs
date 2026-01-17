@@ -10,6 +10,7 @@ using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
 using D3D11MapFlags = Vortice.Direct3D11.MapFlags;
+using Matrix4x4 = System.Numerics.Matrix4x4;
 
 namespace ObjLoader.Services
 {
@@ -24,6 +25,7 @@ namespace ObjLoader.Services
         public int WorldId;
         public double HeightOffset;
         public HashSet<int>? VisibleParts;
+        public Matrix4x4? WorldMatrixOverride;
     }
 
     internal class RenderService : IDisposable
@@ -210,16 +212,16 @@ namespace ObjLoader.Services
             _context.RSSetViewport(0, 0, _viewportWidth, _viewportHeight);
 
             _transparentParts.Clear();
-            var layerWorlds = new System.Numerics.Matrix4x4[layers.Count];
-            var layerWvps = new System.Numerics.Matrix4x4[layers.Count];
+            var layerWorlds = new Matrix4x4[layers.Count];
+            var layerWvps = new Matrix4x4[layers.Count];
 
             var settings = PluginSettings.Instance;
-            System.Numerics.Matrix4x4 axisConversion = System.Numerics.Matrix4x4.Identity;
+            Matrix4x4 axisConversion = Matrix4x4.Identity;
             switch (settings.CoordinateSystem)
             {
-                case CoordinateSystem.RightHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)); break;
-                case CoordinateSystem.LeftHandedYUp: axisConversion = System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
-                case CoordinateSystem.LeftHandedZUp: axisConversion = System.Numerics.Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * System.Numerics.Matrix4x4.CreateScale(1, 1, -1); break;
+                case CoordinateSystem.RightHandedZUp: axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)); break;
+                case CoordinateSystem.LeftHandedYUp: axisConversion = Matrix4x4.CreateScale(1, 1, -1); break;
+                case CoordinateSystem.LeftHandedZUp: axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1); break;
             }
 
             for (int i = 0; i < layers.Count; i++)
@@ -227,20 +229,29 @@ namespace ObjLoader.Services
                 var layer = layers[i];
                 var modelResource = layer.Resource;
 
-                var normalize = System.Numerics.Matrix4x4.CreateTranslation(-modelResource.ModelCenter) * System.Numerics.Matrix4x4.CreateScale(modelResource.ModelScale);
-                normalize *= System.Numerics.Matrix4x4.CreateTranslation(0, (float)layer.HeightOffset, 0);
+                Matrix4x4 world;
+                if (layer.WorldMatrixOverride.HasValue)
+                {
+                    world = layer.WorldMatrixOverride.Value;
+                }
+                else
+                {
+                    var normalize = Matrix4x4.CreateTranslation(-modelResource.ModelCenter) * Matrix4x4.CreateScale(modelResource.ModelScale);
+                    normalize *= Matrix4x4.CreateTranslation(0, (float)layer.HeightOffset, 0);
 
-                float scale = (float)(layer.Scale / 100.0);
-                float rx = (float)(layer.Rx * Math.PI / 180.0);
-                float ry = (float)(layer.Ry * Math.PI / 180.0);
-                float rz = (float)(layer.Rz * Math.PI / 180.0);
-                float tx = (float)layer.X;
-                float ty = (float)layer.Y;
-                float tz = (float)layer.Z;
+                    float scale = (float)(layer.Scale / 100.0);
+                    float rx = (float)(layer.Rx * Math.PI / 180.0);
+                    float ry = (float)(layer.Ry * Math.PI / 180.0);
+                    float rz = (float)(layer.Rz * Math.PI / 180.0);
+                    float tx = (float)layer.X;
+                    float ty = (float)layer.Y;
+                    float tz = (float)layer.Z;
 
-                var placement = System.Numerics.Matrix4x4.CreateScale(scale) * System.Numerics.Matrix4x4.CreateRotationZ(rz) * System.Numerics.Matrix4x4.CreateRotationX(rx) * System.Numerics.Matrix4x4.CreateRotationY(ry) * System.Numerics.Matrix4x4.CreateTranslation(tx, ty, tz);
+                    var placement = Matrix4x4.CreateScale(scale) * Matrix4x4.CreateRotationZ(rz) * Matrix4x4.CreateRotationX(rx) * Matrix4x4.CreateRotationY(ry) * Matrix4x4.CreateTranslation(tx, ty, tz);
 
-                var world = normalize * axisConversion * placement;
+                    world = normalize * axisConversion * placement;
+                }
+
                 var wvp = world * view * proj;
 
                 layerWorlds[i] = world;
@@ -318,18 +329,18 @@ namespace ObjLoader.Services
                 _context.PSSetShader(_d3dResources.GridPixelShader);
                 _context.OMSetBlendState(_d3dResources.GridBlendState, new Color4(0, 0, 0, 0), -1);
 
-                System.Numerics.Matrix4x4 gridWorld = System.Numerics.Matrix4x4.Identity;
+                Matrix4x4 gridWorld = Matrix4x4.Identity;
                 if (!isInfiniteGrid)
                 {
                     float finiteScale = (float)(gridScale * 50.0 / 1000.0);
                     if (finiteScale < 0.001f) finiteScale = 0.001f;
-                    gridWorld = System.Numerics.Matrix4x4.CreateScale(finiteScale);
+                    gridWorld = Matrix4x4.CreateScale(finiteScale);
                 }
 
                 ConstantBufferData gridCb = new ConstantBufferData
                 {
-                    WorldViewProj = System.Numerics.Matrix4x4.Transpose(gridWorld * view * proj),
-                    World = System.Numerics.Matrix4x4.Transpose(gridWorld),
+                    WorldViewProj = Matrix4x4.Transpose(gridWorld * view * proj),
+                    World = Matrix4x4.Transpose(gridWorld),
                     CameraPos = new System.Numerics.Vector4(camPos, 1),
                     GridColor = gridColor,
                     GridAxisColor = axisColor
@@ -365,7 +376,7 @@ namespace ObjLoader.Services
             }
         }
 
-        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, System.Numerics.Matrix4x4 world, System.Numerics.Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting)
+        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, Matrix4x4 world, Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting)
         {
             if (_context == null || _d3dResources == null) return;
 
@@ -378,8 +389,8 @@ namespace ObjLoader.Services
 
             ConstantBufferData cbData = new ConstantBufferData
             {
-                WorldViewProj = System.Numerics.Matrix4x4.Transpose(wvp),
-                World = System.Numerics.Matrix4x4.Transpose(world),
+                WorldViewProj = Matrix4x4.Transpose(wvp),
+                World = Matrix4x4.Transpose(world),
                 LightPos = new System.Numerics.Vector4(1, 1, 1, 0),
                 BaseColor = part.BaseColor,
                 AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
