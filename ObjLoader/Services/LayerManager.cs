@@ -1,4 +1,6 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Threading;
 using ObjLoader.Core;
 using ObjLoader.Plugin;
 
@@ -15,11 +17,21 @@ namespace ObjLoader.Services
 
         public void Initialize(ObjLoaderParameter parameter)
         {
-            EnsureLayers(parameter);
             if (Layers.Count > 0)
             {
-                var idx = Math.Clamp(_selectedLayerIndex, 0, Layers.Count - 1);
-                _activeLayer = Layers[idx];
+                _selectedLayerIndex = Math.Clamp(parameter.SelectedLayerIndex, 0, Layers.Count - 1);
+                parameter.SelectedLayerIndex = _selectedLayerIndex;
+                _activeLayer = Layers[_selectedLayerIndex];
+
+                if (_activeLayer != null)
+                {
+                    CopyFromParameter(_activeLayer, parameter);
+                }
+            }
+            else
+            {
+                _selectedLayerIndex = -1;
+                _activeLayer = null;
             }
         }
 
@@ -30,8 +42,25 @@ namespace ObjLoader.Services
                 var defaultLayer = new LayerData { Name = "Default" };
                 CopyFromParameter(defaultLayer, parameter);
                 Layers.Add(defaultLayer);
+
                 _selectedLayerIndex = 0;
+                parameter.SelectedLayerIndex = 0;
                 _activeLayer = defaultLayer;
+
+                if (Application.Current != null)
+                {
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (Layers.Count > 1 && Layers.Contains(defaultLayer))
+                        {
+                            Layers.Remove(defaultLayer);
+
+                            _selectedLayerIndex = Math.Clamp(parameter.SelectedLayerIndex, 0, Layers.Count - 1);
+                            parameter.SelectedLayerIndex = _selectedLayerIndex;
+                            _activeLayer = Layers[_selectedLayerIndex];
+                        }
+                    }, DispatcherPriority.Loaded);
+                }
             }
         }
 
@@ -45,6 +74,7 @@ namespace ObjLoader.Services
 
                 IsSwitchingLayer = true;
                 _selectedLayerIndex = newIndex;
+                parameter.SelectedLayerIndex = newIndex;
                 LoadActiveLayer(parameter);
             }
             finally
@@ -63,7 +93,7 @@ namespace ObjLoader.Services
             {
                 targetLayer = _activeLayer;
             }
-            else if (_activeLayer == null && _selectedLayerIndex >= 0 && _selectedLayerIndex < Layers.Count)
+            else if (_selectedLayerIndex >= 0 && _selectedLayerIndex < Layers.Count)
             {
                 targetLayer = Layers[_selectedLayerIndex];
             }

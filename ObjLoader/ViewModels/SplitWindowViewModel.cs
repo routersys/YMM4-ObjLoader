@@ -291,18 +291,35 @@ namespace ObjLoader.ViewModels
                     newLayer.Thumbnail = ThumbnailUtil.CreateThumbnail(_currentModel, 64, 64, 0, -1, newLayer.VisibleParts);
                 }
 
-                int sourceIndex = _parameter.Layers.IndexOf(sourceLayer);
-                int insertIndex = sourceIndex + 1;
-                while (insertIndex < _parameter.Layers.Count)
+                int sourceIndex = -1;
+                for (int i = 0; i < _parameter.Layers.Count; i++)
                 {
-                    if (_parameter.Layers[insertIndex].ParentGuid == sourceLayer.Guid)
+                    if (_parameter.Layers[i].Guid == sourceLayer.Guid)
                     {
-                        insertIndex++;
-                    }
-                    else
-                    {
+                        sourceIndex = i;
                         break;
                     }
+                }
+
+                int insertIndex;
+                if (sourceIndex != -1)
+                {
+                    insertIndex = sourceIndex + 1;
+                    while (insertIndex < _parameter.Layers.Count)
+                    {
+                        if (_parameter.Layers[insertIndex].ParentGuid == sourceLayer.Guid)
+                        {
+                            insertIndex++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    insertIndex = _parameter.Layers.Count;
                 }
 
                 _parameter.Layers.Insert(insertIndex, newLayer);

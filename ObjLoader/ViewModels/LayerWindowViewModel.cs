@@ -71,13 +71,22 @@ namespace ObjLoader.ViewModels
         private void SyncLayers()
         {
             Layers.Clear();
-            var dict = _parameter.Layers.ToDictionary(x => x.Guid);
+            var dict = new Dictionary<string, LayerData>();
+            foreach (var layer in _parameter.Layers)
+            {
+                if (!dict.ContainsKey(layer.Guid))
+                {
+                    dict[layer.Guid] = layer;
+                }
+            }
+
             foreach (var layer in _parameter.Layers)
             {
                 int depth = 0;
                 var current = layer;
                 while (!string.IsNullOrEmpty(current.ParentGuid) && dict.TryGetValue(current.ParentGuid, out var parent))
                 {
+                    if (current.Guid == parent.Guid) break;
                     depth++;
                     current = parent;
                     if (depth > 20) break;
