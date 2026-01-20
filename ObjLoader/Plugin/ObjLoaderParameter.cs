@@ -16,6 +16,8 @@ using System.Windows;
 using ObjLoader.Settings;
 using System.Runtime.Serialization;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Windows.Threading;
 
 namespace ObjLoader.Plugin
 {
@@ -23,7 +25,9 @@ namespace ObjLoader.Plugin
     {
         private readonly CameraService _cameraService = new CameraService();
         private readonly ShaderService _shaderService = new ShaderService();
-        private readonly ILayerManager _layerManager;
+        private readonly ILayerManager _layerManager = new LayerManager();
+
+        private bool _isLoading = false;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
         [SettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
@@ -44,8 +48,21 @@ namespace ObjLoader.Plugin
             {
                 if (Set(ref _filePath, value))
                 {
+                    if (!string.IsNullOrEmpty(value) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
+                    {
+                        var layer = Layers[SelectedLayerIndex];
+                        var fileName = System.IO.Path.GetFileNameWithoutExtension(value);
+                        if (!string.IsNullOrEmpty(fileName))
+                        {
+                            layer.Name = fileName;
+                        }
+                    }
+
+                    SyncActiveLayer();
                     EnsureLayers();
+                    UpdateLayerSignature();
                     ForceUpdate();
+                    OnPropertyChanged(nameof(Layers));
                 }
             }
         }
@@ -195,31 +212,56 @@ namespace ObjLoader.Plugin
             }
         }
 
+        public string LayerIds
+        {
+            get => _layerIds;
+            set
+            {
+                if (Set(ref _layerIds, value))
+                {
+                    EnsureLayers();
+                }
+            }
+        }
+        private string _layerIds = string.Empty;
+
+        public string ActiveLayerGuid { get => _activeLayerGuid; set => Set(ref _activeLayerGuid, value); }
+        private string _activeLayerGuid = string.Empty;
+
         public ObjLoaderParameter() : this(null) { }
         public ObjLoaderParameter(SharedDataStore? sharedData) : base(sharedData)
         {
-            _layerManager = new LayerManager();
+            Layers.CollectionChanged += Layers_CollectionChanged;
 
             if (sharedData == null)
             {
                 _baseColor = Colors.White;
                 _projection = ProjectionType.Parallel;
                 _isLightEnabled = false;
-                Scale = new Animation(100.0, 0, 100000);
 
                 _layerManager.Initialize(this);
+                UpdateLayerSignature();
             }
             WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(PluginSettings.Instance, nameof(INotifyPropertyChanged.PropertyChanged), OnPluginSettingsChanged);
         }
 
+        private void Layers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            UpdateLayerSignature();
+        }
+
         public void EnsureLayers()
         {
+            if (_isLoading) return;
+
             void Action()
             {
                 int count = Layers.Count;
                 _layerManager.EnsureLayers(this);
+
                 if (Layers.Count != count)
                 {
+                    UpdateLayerSignature();
                     OnPropertyChanged(nameof(Layers));
                     _versionCounter++;
                     SettingsVersion.CopyFrom(new Animation(_versionCounter, 0, 100000000));
@@ -239,6 +281,7 @@ namespace ObjLoader.Plugin
 
         public void SyncActiveLayer()
         {
+            if (_isLoading) return;
             _layerManager.SaveActiveLayer(this);
         }
 
@@ -253,6 +296,21 @@ namespace ObjLoader.Plugin
                     OnPropertyChanged(string.Empty);
                     OnPropertyChanged(nameof(Layers));
                 });
+            }
+        }
+
+        public void UpdateLayerSignature()
+        {
+            if (_isLoading) return;
+
+            if (Layers != null)
+            {
+                var newIds = string.Join(",", Layers.Select(l => l.Guid));
+                if (_layerIds != newIds)
+                {
+                    _layerIds = newIds;
+                    OnPropertyChanged(nameof(LayerIds));
+                }
             }
         }
 
@@ -273,24 +331,85 @@ namespace ObjLoader.Plugin
 
         protected override IEnumerable<IAnimatable> GetAnimatables()
         {
-            return new[] { ScreenWidth, ScreenHeight, X, Y, Z, Scale, RotationX, RotationY, RotationZ, Fov, LightX, LightY, LightZ, WorldId, CameraX, CameraY, CameraZ, TargetX, TargetY, TargetZ, SettingsVersion };
+            var animatables = new List<IAnimatable>
+            {
+                ScreenWidth, ScreenHeight, X, Y, Z, Scale, RotationX, RotationY, RotationZ, Fov, LightX, LightY, LightZ, WorldId, CameraX, CameraY, CameraZ, TargetX, TargetY, TargetZ, SettingsVersion
+            };
+
+            if (Layers != null)
+            {
+                foreach (var layer in Layers)
+                {
+                    animatables.Add(layer.X);
+                    animatables.Add(layer.Y);
+                    animatables.Add(layer.Z);
+                    animatables.Add(layer.Scale);
+                    animatables.Add(layer.RotationX);
+                    animatables.Add(layer.RotationY);
+                    animatables.Add(layer.RotationZ);
+                    animatables.Add(layer.Fov);
+                    animatables.Add(layer.LightX);
+                    animatables.Add(layer.LightY);
+                    animatables.Add(layer.LightZ);
+                    animatables.Add(layer.WorldId);
+                }
+            }
+
+            return animatables;
         }
 
         protected override void LoadSharedData(SharedDataStore store)
         {
-            var data = store.Load<ObjLoaderParameterSharedData>();
-            if (data is null) return;
-            data.CopyTo(this);
-            if (data.Layers != null)
+            _isLoading = true;
+            try
             {
-                _layerManager.LoadSharedData(data.Layers);
+                var data = store.Load<ObjLoaderParameterSharedData>();
+                if (data is null) return;
+
+                data.CopyTo(this);
+
+                if (data.Layers != null)
+                {
+                    var layers = data.Layers.Select(l =>
+                    {
+                        var clone = l.Clone();
+                        clone.Name = l.Name;
+                        clone.Guid = l.Guid;
+                        return clone;
+                    }).ToList();
+                    _layerManager.LoadSharedData(layers);
+                }
+                _layerManager.Initialize(this);
             }
-            _layerManager.Initialize(this);
+            finally
+            {
+                _isLoading = false;
+                EnsureLayers();
+                UpdateLayerSignature();
+
+                if (Application.Current?.Dispatcher != null)
+                {
+                    Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (Layers.Count == 0) return;
+
+                        var targetLayer = Layers.FirstOrDefault(l => l.Guid == ActiveLayerGuid);
+                        var targetIndex = targetLayer != null ? Layers.IndexOf(targetLayer) : 0;
+
+                        SelectedLayerIndex = -1;
+                        SelectedLayerIndex = targetIndex;
+
+                        OnPropertyChanged(nameof(SelectedLayerIndex));
+                        ForceUpdate();
+                    }, DispatcherPriority.ContextIdle);
+                }
+            }
         }
 
         protected override void SaveSharedData(SharedDataStore store)
         {
             _layerManager.SaveActiveLayer(this);
+            UpdateLayerSignature();
             var data = new ObjLoaderParameterSharedData(this);
             data.Layers = new List<LayerData>(Layers);
             store.Save(data);

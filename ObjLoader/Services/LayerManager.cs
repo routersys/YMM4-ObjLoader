@@ -1,6 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Threading;
 using ObjLoader.Core;
 using ObjLoader.Plugin;
 
@@ -17,50 +15,89 @@ namespace ObjLoader.Services
 
         public void Initialize(ObjLoaderParameter parameter)
         {
+            EnsureLayers(parameter);
+        }
+
+        public void EnsureLayers(ObjLoaderParameter parameter)
+        {
+            var validLayerIds = (parameter.LayerIds ?? "")
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .ToHashSet();
+
+            if (Layers.Count > 0 && validLayerIds.Count > 0 && Layers.Any(l => validLayerIds.Contains(l.Guid)))
+            {
+                var unauthorizedLayers = Layers.Where(l => !validLayerIds.Contains(l.Guid)).ToList();
+                foreach (var layer in unauthorizedLayers)
+                {
+                    Layers.Remove(layer);
+                }
+            }
+
+            if (Layers.Any(l => !string.IsNullOrEmpty(l.FilePath)))
+            {
+                var emptyDefaults = Layers
+                    .Where(l => l.Name == "Default" && string.IsNullOrEmpty(l.FilePath))
+                    .ToList();
+
+                foreach (var item in emptyDefaults)
+                {
+                    Layers.Remove(item);
+                }
+            }
+
+            if (Layers.Count == 0 && validLayerIds.Count == 0)
+            {
+                var defaultLayer = new LayerData { Name = "Default" };
+                CopyFromParameter(defaultLayer, parameter);
+                Layers.Add(defaultLayer);
+            }
+            
             if (Layers.Count > 0)
             {
-                _selectedLayerIndex = Math.Clamp(parameter.SelectedLayerIndex, 0, Layers.Count - 1);
-                parameter.SelectedLayerIndex = _selectedLayerIndex;
-                _activeLayer = Layers[_selectedLayerIndex];
+                var targetLayer = Layers.FirstOrDefault(l => l.Guid == parameter.ActiveLayerGuid);
 
-                if (_activeLayer != null)
+                if (targetLayer != null)
                 {
-                    CopyFromParameter(_activeLayer, parameter);
+                    _activeLayer = targetLayer;
+                    var newIndex = Layers.IndexOf(targetLayer);
+                    
+                    if (_selectedLayerIndex != newIndex)
+                    {
+                        _selectedLayerIndex = newIndex;
+                        parameter.SelectedLayerIndex = newIndex;
+                    }
+
+                    if (!string.IsNullOrEmpty(_activeLayer.FilePath))
+                    {
+                        ApplyToParameter(_activeLayer, parameter);
+                    }
+                    else if (_activeLayer.Name == "Default")
+                    {
+                        CopyFromParameter(_activeLayer, parameter);
+                    }
+                }
+                else
+                {
+                    var maxIndex = Layers.Count - 1;
+                    var targetIndex = Math.Clamp(parameter.SelectedLayerIndex, 0, maxIndex);
+                    
+                    _selectedLayerIndex = targetIndex;
+                    parameter.SelectedLayerIndex = targetIndex;
+                    _activeLayer = Layers[_selectedLayerIndex];
+                    
+                    parameter.ActiveLayerGuid = _activeLayer.Guid;
+
+                    if (!string.IsNullOrEmpty(_activeLayer.FilePath))
+                    {
+                        ApplyToParameter(_activeLayer, parameter);
+                    }
                 }
             }
             else
             {
                 _selectedLayerIndex = -1;
                 _activeLayer = null;
-            }
-        }
-
-        public void EnsureLayers(ObjLoaderParameter parameter)
-        {
-            if (Layers.Count == 0)
-            {
-                var defaultLayer = new LayerData { Name = "Default" };
-                CopyFromParameter(defaultLayer, parameter);
-                Layers.Add(defaultLayer);
-
-                _selectedLayerIndex = 0;
-                parameter.SelectedLayerIndex = 0;
-                _activeLayer = defaultLayer;
-
-                if (Application.Current != null)
-                {
-                    Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        if (Layers.Count > 1 && Layers.Contains(defaultLayer))
-                        {
-                            Layers.Remove(defaultLayer);
-
-                            _selectedLayerIndex = Math.Clamp(parameter.SelectedLayerIndex, 0, Layers.Count - 1);
-                            parameter.SelectedLayerIndex = _selectedLayerIndex;
-                            _activeLayer = Layers[_selectedLayerIndex];
-                        }
-                    }, DispatcherPriority.Loaded);
-                }
+                parameter.ActiveLayerGuid = string.Empty;
             }
         }
 
@@ -106,10 +143,13 @@ namespace ObjLoader.Services
 
         public void LoadSharedData(IEnumerable<LayerData> layers)
         {
-            Layers.Clear();
-            foreach (var layer in layers)
+            if (layers != null)
             {
-                Layers.Add(layer);
+                Layers.Clear();
+                foreach (var layer in layers)
+                {
+                    Layers.Add(layer);
+                }
             }
         }
 
@@ -118,7 +158,10 @@ namespace ObjLoader.Services
             if (Layers.Count == 0) return;
             var idx = Math.Clamp(_selectedLayerIndex, 0, Layers.Count - 1);
             var layer = Layers[idx];
+            
             _activeLayer = layer;
+            parameter.ActiveLayerGuid = layer.Guid;
+
             ApplyToParameter(layer, parameter);
         }
 

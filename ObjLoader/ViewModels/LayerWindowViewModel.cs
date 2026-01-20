@@ -30,6 +30,11 @@ namespace ObjLoader.ViewModels
                     if (_selectedLayer != null)
                     {
                         _parameter.SelectedLayerIndex = Layers.IndexOf(_selectedLayer);
+                        _parameter.ActiveLayerGuid = _selectedLayer.Data.Guid;
+                    }
+                    else
+                    {
+                        _parameter.ActiveLayerGuid = string.Empty;
                     }
 
                     UpdateCommands();
@@ -48,15 +53,34 @@ namespace ObjLoader.ViewModels
 
             SyncLayers();
 
-            if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < Layers.Count)
+            LayerItemViewModel? targetLayer = null;
+            if (!string.IsNullOrEmpty(_parameter.ActiveLayerGuid))
             {
-                _selectedLayer = Layers[_parameter.SelectedLayerIndex];
-                OnPropertyChanged(nameof(SelectedLayer));
+                targetLayer = Layers.FirstOrDefault(l => l.Data.Guid == _parameter.ActiveLayerGuid);
             }
-            else if (Layers.Count > 0)
+
+            if (targetLayer == null && _parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < Layers.Count)
             {
-                _selectedLayer = Layers[0];
-                OnPropertyChanged(nameof(SelectedLayer));
+                targetLayer = Layers[_parameter.SelectedLayerIndex];
+            }
+            else if (targetLayer == null && Layers.Count > 0)
+            {
+                targetLayer = Layers[0];
+            }
+
+            _selectedLayer = targetLayer;
+            OnPropertyChanged(nameof(SelectedLayer));
+
+            if (_selectedLayer != null)
+            {
+                if (_parameter.SelectedLayerIndex != Layers.IndexOf(_selectedLayer))
+                {
+                    _parameter.SelectedLayerIndex = Layers.IndexOf(_selectedLayer);
+                }
+                if (_parameter.ActiveLayerGuid != _selectedLayer.Data.Guid)
+                {
+                    _parameter.ActiveLayerGuid = _selectedLayer.Data.Guid;
+                }
             }
 
             PropertyChangedEventManager.AddHandler(_parameter, OnParameterPropertyChanged, string.Empty);
@@ -102,11 +126,22 @@ namespace ObjLoader.ViewModels
             {
                 Application.Current.Dispatcher.Invoke(() =>
                 {
+                    var currentGuid = _parameter.ActiveLayerGuid;
+
                     SyncLayers();
-                    if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < Layers.Count)
+
+                    LayerItemViewModel? nextSelection = null;
+                    if (!string.IsNullOrEmpty(currentGuid))
                     {
-                        SelectedLayer = Layers[_parameter.SelectedLayerIndex];
+                        nextSelection = Layers.FirstOrDefault(l => l.Data.Guid == currentGuid);
                     }
+
+                    if (nextSelection == null && _parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < Layers.Count)
+                    {
+                        nextSelection = Layers[_parameter.SelectedLayerIndex];
+                    }
+
+                    SelectedLayer = nextSelection;
                     UpdateCommands();
                 });
             }
@@ -121,6 +156,16 @@ namespace ObjLoader.ViewModels
                 {
                     _selectedLayer = Layers[idx];
                     OnPropertyChanged(nameof(SelectedLayer));
+
+                    if (_selectedLayer != null)
+                    {
+                        _parameter.ActiveLayerGuid = _selectedLayer.Data.Guid;
+                    }
+                    else
+                    {
+                        _parameter.ActiveLayerGuid = string.Empty;
+                    }
+
                     UpdateCommands();
                 }
             }
@@ -175,7 +220,6 @@ namespace ObjLoader.ViewModels
 
             if (Layers.Count > 0)
             {
-                var currentLayer = Layers[newIndex].Data;
                 _parameter.SelectedLayerIndex = newIndex;
             }
         }
