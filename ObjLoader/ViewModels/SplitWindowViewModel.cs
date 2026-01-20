@@ -5,14 +5,10 @@ using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Services;
 using ObjLoader.Utilities;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -273,6 +269,14 @@ namespace ObjLoader.ViewModels
                 }
 
                 var newLayer = sourceLayer.Clone();
+                newLayer.X = new Animation(0, -100000, 100000);
+                newLayer.Y = new Animation(0, -100000, 100000);
+                newLayer.Z = new Animation(0, -100000, 100000);
+                newLayer.Scale = new Animation(100, 0, 100000);
+                newLayer.RotationX = new Animation(0, -36000, 36000);
+                newLayer.RotationY = new Animation(0, -36000, 36000);
+                newLayer.RotationZ = new Animation(0, -36000, 36000);
+
                 if (targetList.Count == 1)
                 {
                     newLayer.Name = targetList[0].Name;
