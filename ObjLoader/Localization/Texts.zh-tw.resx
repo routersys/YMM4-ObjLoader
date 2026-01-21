@@ -332,4 +332,8 @@
 <data name="Mode_Vertex" xml:space="preserve"><value>頂點</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>邊</value></data>
 <data name="Mode_Face" xml:space="preserve"><value>면</value></data>
+<data name="Layer_Rename" xml:space="preserve"><value>重新命名</value></data>
+<data name="Layer_Visibility_Show" xml:space="preserve"><value>顯示</value></data>
+<data name="Layer_Visibility_Hide" xml:space="preserve"><value>隱藏</value></data>
+<data name="Layer_PartName" xml:space="preserve"><value>部件 {0}</value></data>
 </root>

@@ -131,5 +131,34 @@ namespace ObjLoader.Parsers
 
             return thumbnails;
         }
+
+        public List<byte[]> GetPartThumbnails(string path, HashSet<int> partIndices)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path) || partIndices == null || partIndices.Count == 0)
+            {
+                return new List<byte[]>();
+            }
+
+            var model = Load(path);
+            var thumbnails = new List<byte[]>();
+
+            if (model.Parts != null && model.Parts.Count > 0)
+            {
+                for (int i = 0; i < model.Parts.Count; i++)
+                {
+                    if (partIndices.Contains(i))
+                    {
+                        var part = model.Parts[i];
+                        thumbnails.Add(ThumbnailUtil.CreateThumbnail(model, 256, 256, part.IndexOffset, part.IndexCount));
+                    }
+                }
+            }
+            else if (partIndices.Contains(0))
+            {
+                thumbnails.Add(ThumbnailUtil.CreateThumbnail(model, 256, 256));
+            }
+
+            return thumbnails;
+        }
     }
 }

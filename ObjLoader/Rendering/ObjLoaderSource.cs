@@ -138,7 +138,6 @@ namespace ObjLoader.Rendering
                 needsRedraw = true;
             }
 
-            var layersToRender = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)>();
             var currentLayerStates = new Dictionary<string, LayerState>();
 
             foreach (var layer in _parameter.Layers)
@@ -202,8 +201,40 @@ namespace ObjLoader.Rendering
                         needsRedraw = true;
                     }
                 }
+            }
 
-                if (state.IsVisible && !string.IsNullOrEmpty(state.FilePath))
+            if (!needsRedraw && _layerStates.Count != currentLayerStates.Count)
+            {
+                needsRedraw = true;
+            }
+
+            if (!needsRedraw)
+            {
+                return;
+            }
+
+            var layersToRender = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)>();
+
+            foreach (var layer in _parameter.Layers)
+            {
+                if (!currentLayerStates.TryGetValue(layer.Guid, out var state)) continue;
+
+                bool effectiveVisibility = state.IsVisible;
+                var parentGuid = state.ParentGuid;
+                int depth = 0;
+                while (effectiveVisibility && !string.IsNullOrEmpty(parentGuid) && currentLayerStates.TryGetValue(parentGuid, out var parentState))
+                {
+                    if (!parentState.IsVisible)
+                    {
+                        effectiveVisibility = false;
+                        break;
+                    }
+                    parentGuid = parentState.ParentGuid;
+                    depth++;
+                    if (depth > 100) break;
+                }
+
+                if (effectiveVisibility && !string.IsNullOrEmpty(state.FilePath))
                 {
                     GpuResourceCacheItem? resource = null;
                     if (GpuResourceCache.TryGetValue(state.FilePath, out var cached))
@@ -232,17 +263,7 @@ namespace ObjLoader.Rendering
                 }
             }
 
-            if (!needsRedraw && _layerStates.Count != currentLayerStates.Count)
-            {
-                needsRedraw = true;
-            }
-
             _layerStates = currentLayerStates;
-
-            if (!needsRedraw)
-            {
-                return;
-            }
 
             RenderToTexture(layersToRender, sw, sh, camX, camY, camZ, targetX, targetY, targetZ);
             CreateCommandList();
@@ -267,7 +288,8 @@ namespace ObjLoader.Rendering
                    a.Projection == b.Projection && a.CoordSystem == b.CoordSystem && a.CullMode == b.CullMode &&
                    a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < 1e-5 &&
                    Math.Abs(a.Specular - b.Specular) < 1e-5 && Math.Abs(a.Shininess - b.Shininess) < 1e-5 && a.WorldId == b.WorldId &&
-                   AreSetsEqual(a.VisibleParts, b.VisibleParts) && string.Equals(a.ParentGuid, b.ParentGuid, StringComparison.Ordinal);
+                   AreSetsEqual(a.VisibleParts, b.VisibleParts) && string.Equals(a.ParentGuid, b.ParentGuid, StringComparison.Ordinal) &&
+                   a.IsVisible == b.IsVisible;
         }
 
         private bool AreSetsEqual(HashSet<int>? a, HashSet<int>? b)

@@ -28,6 +28,7 @@ namespace ObjLoader.Plugin
         private readonly ILayerManager _layerManager = new LayerManager();
 
         private bool _isLoading = false;
+        private int _updateSuspendCount = 0;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
         [SettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
@@ -51,10 +52,13 @@ namespace ObjLoader.Plugin
                     if (!string.IsNullOrEmpty(value) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
                     {
                         var layer = Layers[SelectedLayerIndex];
-                        var fileName = System.IO.Path.GetFileNameWithoutExtension(value);
-                        if (!string.IsNullOrEmpty(fileName))
+                        if (layer.FilePath != value)
                         {
-                            layer.Name = fileName;
+                            var fileName = System.IO.Path.GetFileNameWithoutExtension(value);
+                            if (!string.IsNullOrEmpty(fileName))
+                            {
+                                layer.Name = fileName;
+                            }
                         }
                     }
 
@@ -245,9 +249,41 @@ namespace ObjLoader.Plugin
             WeakEventManager<INotifyPropertyChanged, PropertyChangedEventArgs>.AddHandler(PluginSettings.Instance, nameof(INotifyPropertyChanged.PropertyChanged), OnPluginSettingsChanged);
         }
 
+        public void BeginUpdate()
+        {
+            _updateSuspendCount++;
+        }
+
+        public void EndUpdate()
+        {
+            _updateSuspendCount--;
+            if (_updateSuspendCount <= 0)
+            {
+                _updateSuspendCount = 0;
+                UpdateLayerSignature();
+                ForceUpdate();
+            }
+        }
+
         private void Layers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
+            if (e.OldItems != null)
+            {
+                foreach (LayerData item in e.OldItems)
+                    item.PropertyChanged -= Layer_PropertyChanged;
+            }
+            if (e.NewItems != null)
+            {
+                foreach (LayerData item in e.NewItems)
+                    item.PropertyChanged += Layer_PropertyChanged;
+            }
             UpdateLayerSignature();
+            ForceUpdate();
+        }
+
+        private void Layer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            ForceUpdate();
         }
 
         public void EnsureLayers()
@@ -287,6 +323,8 @@ namespace ObjLoader.Plugin
 
         public void ForceUpdate()
         {
+            if (_updateSuspendCount > 0) return;
+
             if (Application.Current != null && Application.Current.Dispatcher != null)
             {
                 Application.Current.Dispatcher.Invoke(() =>
@@ -302,6 +340,7 @@ namespace ObjLoader.Plugin
         public void UpdateLayerSignature()
         {
             if (_isLoading) return;
+            if (_updateSuspendCount > 0) return;
 
             if (Layers != null)
             {
@@ -380,6 +419,11 @@ namespace ObjLoader.Plugin
                     _layerManager.LoadSharedData(layers);
                 }
                 _layerManager.Initialize(this);
+
+                foreach (var layer in Layers)
+                {
+                    layer.PropertyChanged += Layer_PropertyChanged;
+                }
             }
             finally
             {

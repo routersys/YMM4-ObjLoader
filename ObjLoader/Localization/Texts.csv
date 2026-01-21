@@ -281,3 +281,7 @@ State_Locked,State,ロック中,Locked,已锁定,已鎖定,잠김,Bloqueado,مق
 Mode_Vertex,Mode,頂点,Vertex,顶点,頂點,정점,Vértice,قمة,Titik Sudut,
 Mode_Edge,Mode,辺,Edge,边,邊,모서리,Borde,حافة,Tepi,
 Mode_Face,Mode,面,Face,面,면,Cara,وجه,Wajah,
+Layer_Rename,Rename Layer,名前の変更,Rename,重命名,重新命名,이름 변경,Renombrar,إعادة تسمية,Ganti Nama,
+Layer_Visibility_Show,Show,表示する,Show,显示,顯示,표시,Mostrar,إظهار,Tampilkan,
+Layer_Visibility_Hide,Hide,非表示にする,Hide,隐藏,隱藏,숨기기,Ocultar,إخفاء,Sembunyikan,
+Layer_PartName,Part Name,パーツ {0},Part {0},部件 {0},部件 {0},부품 {0},Pieza {0},جزء {0},Bagian {0},

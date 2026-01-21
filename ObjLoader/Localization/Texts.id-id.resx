@@ -331,4 +331,8 @@
 <data name="State_Locked" xml:space="preserve"><value>Terkunci</value></data>
 <data name="Mode_Vertex" xml:space="preserve"><value>Titik Sudut</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>Tepi</value></data>
+<data name="Layer_Rename" xml:space="preserve"><value>Ganti Nama</value></data>
+<data name="Layer_Visibility_Show" xml:space="preserve"><value>Tampilkan</value></data>
+<data name="Layer_Visibility_Hide" xml:space="preserve"><value>Sembunyikan</value></data>
+<data name="Layer_PartName" xml:space="preserve"><value>Bagian {0}</value></data>
 </root>
