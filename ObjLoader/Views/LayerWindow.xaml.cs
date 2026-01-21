@@ -1,15 +1,19 @@
-﻿using System.Windows;
+﻿using ObjLoader.Services;
+using ObjLoader.ViewModels;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using ObjLoader.ViewModels;
 
 namespace ObjLoader.Views
 {
     public partial class LayerWindow : Window
     {
+        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+
         public LayerWindow()
         {
             InitializeComponent();
+            _themeService.Bind(this);
         }
 
         private void LayerName_KeyDown(object sender, KeyEventArgs e)

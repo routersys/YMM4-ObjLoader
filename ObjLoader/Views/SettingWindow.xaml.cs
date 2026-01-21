@@ -1,12 +1,16 @@
-﻿using System.Windows;
+﻿using ObjLoader.Services;
+using System.Windows;
 
 namespace ObjLoader.Views
 {
     public partial class SettingWindow : Window
     {
+        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+
         public SettingWindow()
         {
             InitializeComponent();
+            _themeService.Bind(this);
         }
     }
 }

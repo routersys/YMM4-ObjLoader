@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ObjLoader.Services;
+using ObjLoader.ViewModels;
+using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -6,12 +8,13 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using ObjLoader.ViewModels;
 
 namespace ObjLoader.Views
 {
     public partial class CameraWindow : Window
     {
+        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+
         private Point _labelDragStart;
         private bool _isLabelDragging;
         private string _draggedLabel = "";
@@ -36,6 +39,7 @@ namespace ObjLoader.Views
         public CameraWindow()
         {
             InitializeComponent();
+            _themeService.Bind(this);
             Owner = Application.Current.MainWindow;
             DataContextChanged += OnDataContextChanged;
             Closed += OnClosed;

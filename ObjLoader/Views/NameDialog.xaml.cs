@@ -1,14 +1,18 @@
-﻿using System.Windows;
+﻿using ObjLoader.Services;
+using System.Windows;
 
 namespace ObjLoader.Views
 {
     public partial class NameDialog : Window
     {
+        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+
         public string ResultName { get; private set; } = "";
 
         public NameDialog()
         {
             InitializeComponent();
+            _themeService.Bind(this);
             NameBox.Focus();
         }
 

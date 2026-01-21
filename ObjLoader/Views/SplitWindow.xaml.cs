@@ -1,4 +1,5 @@
-﻿using ObjLoader.ViewModels;
+﻿using ObjLoader.Services;
+using ObjLoader.ViewModels;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -11,9 +12,12 @@ namespace ObjLoader.Views
 {
     public partial class SplitWindow : Window
     {
+        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+
         public SplitWindow()
         {
             InitializeComponent();
+            _themeService.Bind(this);
             Loaded += Window_Loaded;
             Unloaded += Window_Unloaded;
         }

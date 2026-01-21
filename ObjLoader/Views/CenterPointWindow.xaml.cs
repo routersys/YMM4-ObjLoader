@@ -1,13 +1,16 @@
-﻿using System.Windows;
+﻿using ObjLoader.Services;
+using ObjLoader.ViewModels;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using ObjLoader.ViewModels;
 
 namespace ObjLoader.Views
 {
     public partial class CenterPointWindow : Window
     {
+        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+
         private Point _lastMousePos;
         private bool _isRotating;
         private bool _isPanning;
@@ -15,6 +18,7 @@ namespace ObjLoader.Views
         public CenterPointWindow()
         {
             InitializeComponent();
+            _themeService.Bind(this);
             MainViewport.MouseMove += MainViewport_MouseMove;
             MainViewport.MouseLeftButtonDown += MainViewport_MouseLeftButtonDown;
             MainViewport.MouseRightButtonDown += MainViewport_MouseRightButtonDown;
