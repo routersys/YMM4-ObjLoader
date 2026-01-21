@@ -49,7 +49,7 @@ namespace ObjLoader.Plugin
             {
                 if (Set(ref _filePath, value))
                 {
-                    if (!string.IsNullOrEmpty(value) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
+                    if (!IsSwitchingLayer && _updateSuspendCount == 0 && !string.IsNullOrEmpty(value) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
                     {
                         var layer = Layers[SelectedLayerIndex];
                         if (layer.FilePath != value)
@@ -318,6 +318,7 @@ namespace ObjLoader.Plugin
         public void SyncActiveLayer()
         {
             if (_isLoading) return;
+            if (IsSwitchingLayer) return;
             _layerManager.SaveActiveLayer(this);
         }
 
@@ -452,7 +453,10 @@ namespace ObjLoader.Plugin
 
         protected override void SaveSharedData(SharedDataStore store)
         {
-            _layerManager.SaveActiveLayer(this);
+            if (!IsSwitchingLayer)
+            {
+                _layerManager.SaveActiveLayer(this);
+            }
             UpdateLayerSignature();
             var data = new ObjLoaderParameterSharedData(this);
             data.Layers = new List<LayerData>(Layers);

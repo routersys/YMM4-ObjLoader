@@ -332,7 +332,7 @@
 <data name="Mode_Vertex" xml:space="preserve"><value>قمة</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>حافة</value></data>
 <data name="Mode_Face" xml:space="preserve"><value>Wajah</value></data>
-<data name="Layer_Rename" xml:space="preserve"><value>إعادة تسمية</value></data>
+<data name="Layer_Rename" xml:space="preserve"><value>انقر نقرًا مزدوجًا لإعادة التسمية</value></data>
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>إظهار</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>إخفاء</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>جزء {0}</value></data>

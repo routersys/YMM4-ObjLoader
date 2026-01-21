@@ -332,7 +332,7 @@
 <data name="Mode_Vertex" xml:space="preserve"><value>頂点</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>辺</value></data>
 <data name="Mode_Face" xml:space="preserve"><value>面</value></data>
-<data name="Layer_Rename" xml:space="preserve"><value>名前の変更</value></data>
+<data name="Layer_Rename" xml:space="preserve"><value>ダブルクリックで名前を変更</value></data>
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>表示する</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>非表示にする</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>パーツ {0}</value></data>

@@ -332,7 +332,7 @@
 <data name="Mode_Vertex" xml:space="preserve"><value>Vertex</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>Edge</value></data>
 <data name="Mode_Face" xml:space="preserve"><value>Face</value></data>
-<data name="Layer_Rename" xml:space="preserve"><value>Rename</value></data>
+<data name="Layer_Rename" xml:space="preserve"><value>Double click to rename</value></data>
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>Show</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>Hide</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>Part {0}</value></data>

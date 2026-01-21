@@ -101,7 +101,8 @@ namespace ObjLoader.ViewModels
 
         private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ObjLoaderParameter.FilePath))
+            if (e.PropertyName == nameof(ObjLoaderParameter.FilePath) ||
+                e.PropertyName == nameof(ObjLoaderParameter.SelectedLayerIndex))
             {
                 LoadModel();
             }
@@ -266,6 +267,12 @@ namespace ObjLoader.ViewModels
                 if (_currentModel != null)
                 {
                     sourceLayer.Thumbnail = ThumbnailUtil.CreateThumbnail(_currentModel, 64, 64, 0, -1, sourceLayer.VisibleParts);
+                }
+
+                var partsToRemove = Parts.Where(p => p.Index != -1 && indicesToMove.Contains(p.Index)).ToList();
+                foreach (var p in partsToRemove)
+                {
+                    Parts.Remove(p);
                 }
 
                 var newLayer = sourceLayer.Clone();
@@ -480,10 +487,22 @@ namespace ObjLoader.ViewModels
             _modelHeight = localMaxY - localMinY;
             if (_modelScale < 0.1) _modelScale = 1.0;
 
+            HashSet<int>? currentVisibleParts = null;
+            if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < _parameter.Layers.Count)
+            {
+                var layer = _parameter.Layers[_parameter.SelectedLayerIndex];
+                if (layer.FilePath == path)
+                {
+                    currentVisibleParts = layer.VisibleParts;
+                }
+            }
+
             Parts.Add(new PartItem { Name = Texts.SplitWindow_All, Index = -1, Center = new Vector3(0, (float)(_modelHeight / 2.0), 0), Radius = _modelScale, FaceCount = model.Indices.Length / 3 });
 
             for (int i = 0; i < parts.Length; i++)
             {
+                if (currentVisibleParts != null && !currentVisibleParts.Contains(i)) continue;
+
                 var part = parts[i];
                 var name = string.IsNullOrEmpty(part.Name) ? string.Format(Texts.SplitWindow_PartName, i) : part.Name;
 
@@ -519,9 +538,11 @@ namespace ObjLoader.ViewModels
             _viewTarget = new Vector3(0, (float)(_modelHeight / 2.0), 0);
             UpdateVisuals();
 
+            var thumbnailItems = Parts.ToList();
+
             Task.Run(() =>
             {
-                foreach (var partItem in Parts)
+                foreach (var partItem in thumbnailItems)
                 {
                     int offset = partItem.Index == -1 ? 0 : parts[partItem.Index].IndexOffset;
                     int count = partItem.Index == -1 ? -1 : parts[partItem.Index].IndexCount;

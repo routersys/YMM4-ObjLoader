@@ -1,6 +1,7 @@
 ﻿using ObjLoader.Core;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
+using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -35,6 +36,7 @@ namespace ObjLoader.ViewModels
                     }
                     else
                     {
+                        _parameter.SelectedLayerIndex = -1;
                         _parameter.ActiveLayerGuid = string.Empty;
                     }
 
@@ -273,8 +275,13 @@ namespace ObjLoader.ViewModels
             var item = SelectedLayer;
             var index = Layers.IndexOf(item);
 
+            string? parentGuid = item.Data.ParentGuid;
+
             var (startIndex, count) = GetLayerRange(index);
             var itemsToRemove = Layers.Skip(startIndex).Take(count).Select(l => l.Data).ToList();
+
+            SelectedLayer = null;
+            _parameter.SelectedLayerIndex = -1;
 
             _parameter.BeginUpdate();
             _suppressCollectionChanged = true;
@@ -282,6 +289,26 @@ namespace ObjLoader.ViewModels
             {
                 foreach (var data in itemsToRemove)
                 {
+                    if (!string.IsNullOrEmpty(data.ParentGuid))
+                    {
+                        var parent = _parameter.Layers.FirstOrDefault(l => l.Guid == data.ParentGuid);
+                        if (parent != null && !itemsToRemove.Contains(parent))
+                        {
+                            if (parent.VisibleParts != null && data.VisibleParts != null)
+                            {
+                                var newSet = new HashSet<int>(parent.VisibleParts);
+                                newSet.UnionWith(data.VisibleParts);
+                                parent.VisibleParts = newSet;
+
+                                var model = _loader.Load(parent.FilePath);
+                                if (model.Vertices.Length > 0)
+                                {
+                                    parent.Thumbnail = ThumbnailUtil.CreateThumbnail(model, 64, 64, 0, -1, parent.VisibleParts);
+                                }
+                            }
+                        }
+                    }
+
                     _parameter.Layers.Remove(data);
                 }
             }
@@ -293,21 +320,27 @@ namespace ObjLoader.ViewModels
 
             SyncLayers();
 
-            int newIndex = 0;
-            if (Layers.Count > 0)
+            LayerItemViewModel? nextSelection = null;
+
+            if (!string.IsNullOrEmpty(parentGuid))
             {
-                newIndex = Math.Min(index, Layers.Count - 1);
-                SelectedLayer = Layers[newIndex];
+                nextSelection = Layers.FirstOrDefault(l => l.Data.Guid == parentGuid);
+            }
+
+            if (nextSelection == null && Layers.Count > 0)
+            {
+                int newIndex = Math.Min(index, Layers.Count - 1);
+                nextSelection = Layers[newIndex];
+            }
+
+            if (nextSelection != null)
+            {
+                SelectedLayer = nextSelection;
             }
             else
             {
                 SelectedLayer = null;
                 _parameter.FilePath = string.Empty;
-            }
-
-            if (Layers.Count > 0)
-            {
-                _parameter.SelectedLayerIndex = newIndex;
             }
         }
 

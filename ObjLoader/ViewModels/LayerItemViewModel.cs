@@ -154,7 +154,12 @@ namespace ObjLoader.ViewModels
             else if (e.PropertyName == nameof(LayerData.VisibleParts))
             {
                 OnPropertyChanged(nameof(Name));
+                UpdateThumbnail();
                 LoadPartThumbnails();
+            }
+            else if (e.PropertyName == nameof(LayerData.Thumbnail))
+            {
+                UpdateThumbnail();
             }
         }
 
