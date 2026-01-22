@@ -14,7 +14,7 @@ namespace ObjLoader.Settings
         public override object? SettingView => null;
         public static PluginSettings Instance => Default;
 
-        private const int MaxWorlds = 10;
+        private const int MaxWorlds = 20;
 
         private CoordinateSystem _coordinateSystem = CoordinateSystem.RightHandedYUp;
         private RenderCullMode _cullMode = RenderCullMode.None;
@@ -354,6 +354,10 @@ namespace ObjLoader.Settings
             {
                 list.AddRange(Enumerable.Repeat(defaultValue, MaxWorlds - list.Count));
             }
+            else if (list.Count > MaxWorlds)
+            {
+                list.RemoveRange(MaxWorlds, list.Count - MaxWorlds);
+            }
         }
 
         public Color GetAmbientColor(int id) => _ambientColors[Math.Clamp(id, 0, MaxWorlds - 1)];
@@ -431,7 +435,7 @@ namespace ObjLoader.Settings
         }
 
         [SettingGroup("Lighting", nameof(Texts.Group_Lighting), Order = 1, Icon = "M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z", ResourceType = typeof(Texts))]
-        [IntSpinnerSetting("Lighting", nameof(Texts.WorldId), 0, 9, IsGroupHeader = true, Description = nameof(Texts.WorldId_Desc), ResourceType = typeof(Texts))]
+        [IntSpinnerSetting("Lighting", nameof(Texts.WorldId), 0, 19, IsGroupHeader = true, Description = nameof(Texts.WorldId_Desc), ResourceType = typeof(Texts))]
         public int WorldId
         {
             get => _worldId;
