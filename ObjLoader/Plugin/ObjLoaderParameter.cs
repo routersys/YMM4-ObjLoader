@@ -145,8 +145,8 @@ namespace ObjLoader.Plugin
         public Animation TargetZ { get; } = new Animation(0, -100000, 100000);
 
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.WorldId), ResourceType = typeof(Texts))]
-        [AnimationSlider("F0", "", 0, 9)]
-        public Animation WorldId { get; } = new Animation(0, 0, 9);
+        [AnimationSlider("F0", "", 0, 19)]
+        public Animation WorldId { get; } = new Animation(0, 0, 19);
 
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.IsLightEnabled), ResourceType = typeof(Texts))]
         [ToggleSlider]

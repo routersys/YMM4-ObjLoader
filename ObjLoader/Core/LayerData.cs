@@ -59,7 +59,7 @@ namespace ObjLoader.Core
         public Animation LightX { get; set; } = new Animation(0, -100000, 100000);
         public Animation LightY { get; set; } = new Animation(0, -100000, 100000);
         public Animation LightZ { get; set; } = new Animation(-100, -100000, 100000);
-        public Animation WorldId { get; set; } = new Animation(0, 0, 9);
+        public Animation WorldId { get; set; } = new Animation(0, 0, 19);
 
         private ProjectionType _projection = ProjectionType.Parallel;
         public ProjectionType Projection { get => _projection; set => Set(ref _projection, value); }
