@@ -336,4 +336,15 @@
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>Mostrar</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>Ocultar</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>Pieza {0}</value></data>
+<data name="Menu_File" xml:space="preserve"><value>Archivo</value></data>
+<data name="Menu_Open" xml:space="preserve"><value>Abrir</value></data>
+<data name="Menu_Save" xml:space="preserve"><value>Guardar</value></data>
+<data name="Menu_SaveAs" xml:space="preserve"><value>Guardar como</value></data>
+<data name="Menu_Exit" xml:space="preserve"><value>Cerrar</value></data>
+<data name="Menu_Edit" xml:space="preserve"><value>Editar</value></data>
+<data name="Menu_Undo" xml:space="preserve"><value>Deshacer</value></data>
+<data name="Menu_Redo" xml:space="preserve"><value>Rehacer</value></data>
+<data name="Msg_ProjectFileFilter" xml:space="preserve"><value>Archivo de proyecto de cámara</value></data>
+<data name="Msg_FailedToLoad" xml:space="preserve"><value>Error al cargar: {0}</value></data>
+<data name="Msg_FailedToSave" xml:space="preserve"><value>Error al guardar: {0}</value></data>
 </root>

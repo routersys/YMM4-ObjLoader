@@ -57,9 +57,13 @@ namespace ObjLoader.Views
             {
                 newVm.PropertyChanged += OnViewModelPropertyChanged;
             }
-            if (e.NewValue is CameraWindowViewModel vm && ThemeBrush is SolidColorBrush brush)
+            if (e.NewValue is CameraWindowViewModel vm)
             {
-                vm.UpdateThemeColor(brush.Color);
+                if (ThemeBrush is SolidColorBrush brush)
+                {
+                    vm.UpdateThemeColor(brush.Color);
+                }
+                vm.RegisterMenuInputBindings(this);
             }
         }
 

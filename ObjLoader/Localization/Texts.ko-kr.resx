@@ -336,4 +336,15 @@
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>표시</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>숨기기</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>부품 {0}</value></data>
+<data name="Menu_File" xml:space="preserve"><value>파일</value></data>
+<data name="Menu_Open" xml:space="preserve"><value>열기</value></data>
+<data name="Menu_Save" xml:space="preserve"><value>저장</value></data>
+<data name="Menu_SaveAs" xml:space="preserve"><value>다른 이름으로 저장</value></data>
+<data name="Menu_Exit" xml:space="preserve"><value>닫기</value></data>
+<data name="Menu_Edit" xml:space="preserve"><value>편집</value></data>
+<data name="Menu_Undo" xml:space="preserve"><value>실행 취소</value></data>
+<data name="Menu_Redo" xml:space="preserve"><value>다시 실행</value></data>
+<data name="Msg_ProjectFileFilter" xml:space="preserve"><value>카메라 프로젝트 파일</value></data>
+<data name="Msg_FailedToLoad" xml:space="preserve"><value>로드 실패: {0}</value></data>
+<data name="Msg_FailedToSave" xml:space="preserve"><value>저장 실패: {0}</value></data>
 </root>

@@ -1,16 +1,21 @@
 ﻿using ObjLoader.Plugin;
 using ObjLoader.Services;
 using ObjLoader.Views;
+using ObjLoader.Localization;
+using ObjLoader.Attributes;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media.Media3D;
 using System.Windows.Media.Imaging;
 using YukkuriMovieMaker.Commons;
+using Microsoft.Win32;
+using System.IO;
+using System.Xml.Serialization;
 
 namespace ObjLoader.ViewModels
 {
-    public class CameraWindowViewModel : Bindable, IDisposable, ICameraManipulator
+    public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManipulator
     {
         private readonly ObjLoaderParameter _parameter;
         private readonly RenderService _renderService;
@@ -46,6 +51,8 @@ namespace ObjLoader.ViewModels
         private double _maxDuration = 10.0;
         private CameraKeyframe? _selectedKeyframe;
         private bool _isUpdatingAnimation;
+        private string _currentFilePath = string.Empty;
+        private string _windowTitle = Texts.CameraSettings;
 
         private GeometryModel3D[] _cubeFaces;
         private GeometryModel3D[] _cubeCorners;
@@ -67,10 +74,9 @@ namespace ObjLoader.ViewModels
 
         public ObservableCollection<CameraKeyframe> Keyframes { get; }
         public ObservableCollection<EasingData> EasingPresets => EasingManager.Presets;
+        public ObservableCollection<MenuItemViewModel> MenuItems { get; private set; } = new ObservableCollection<MenuItemViewModel>();
 
         public ActionCommand ResetCommand { get; }
-        public ActionCommand UndoCommand { get; }
-        public ActionCommand RedoCommand { get; }
         public ActionCommand FocusCommand { get; }
         public ActionCommand PlayCommand { get; }
         public ActionCommand PauseCommand { get; }
@@ -79,6 +85,30 @@ namespace ObjLoader.ViewModels
         public ActionCommand RemoveKeyframeCommand { get; }
         public ActionCommand SavePresetCommand { get; }
         public ActionCommand DeletePresetCommand { get; }
+
+        [Menu(Group = "File", GroupNameKey = nameof(Texts.Menu_File), GroupAcceleratorKey = "F", NameKey = nameof(Texts.Menu_Open), ResourceType = typeof(Texts), Order = 0, AcceleratorKey = "O")]
+        public ActionCommand OpenProjectCommand { get; }
+
+        [Menu(Group = "File", NameKey = nameof(Texts.Menu_Save), ResourceType = typeof(Texts), Order = 1, AcceleratorKey = "S")]
+        public ActionCommand SaveProjectCommand { get; }
+
+        [Menu(Group = "File", NameKey = nameof(Texts.Menu_SaveAs), ResourceType = typeof(Texts), Order = 2, IsSeparatorAfter = true, AcceleratorKey = "A")]
+        public ActionCommand SaveProjectAsCommand { get; }
+
+        [Menu(Group = "File", NameKey = nameof(Texts.Menu_Exit), ResourceType = typeof(Texts), Order = 3, AcceleratorKey = "X")]
+        public ActionCommand ExitCommand { get; }
+
+        [Menu(Group = "Edit", GroupNameKey = nameof(Texts.Menu_Edit), GroupAcceleratorKey = "E", NameKey = nameof(Texts.Menu_Undo), ResourceType = typeof(Texts), Order = 0, AcceleratorKey = "U")]
+        public ActionCommand UndoCommand { get; }
+
+        [Menu(Group = "Edit", NameKey = nameof(Texts.Menu_Redo), ResourceType = typeof(Texts), Order = 1, AcceleratorKey = "R")]
+        public ActionCommand RedoCommand { get; }
+
+        public string WindowTitle
+        {
+            get => _windowTitle;
+            set => Set(ref _windowTitle, value);
+        }
 
         public string HoveredDirectionName
         {
@@ -245,6 +275,13 @@ namespace ObjLoader.ViewModels
             SavePresetCommand = new ActionCommand(_ => IsKeyframeSelected, _ => SavePreset());
             DeletePresetCommand = new ActionCommand(_ => IsKeyframeSelected && SelectedKeyframeEasing != null && SelectedKeyframeEasing.IsCustom, _ => DeletePreset());
 
+            OpenProjectCommand = new ActionCommand(_ => true, _ => OpenProject());
+            SaveProjectCommand = new ActionCommand(_ => !string.IsNullOrEmpty(_currentFilePath), _ => SaveProject());
+            SaveProjectAsCommand = new ActionCommand(_ => true, _ => SaveProjectAs());
+            ExitCommand = new ActionCommand(_ => true, _ => Application.Current.Windows.OfType<CameraWindow>().FirstOrDefault()?.Close());
+
+            InitializeMenuItems();
+
             _parameter.PropertyChanged += OnParameterPropertyChanged;
             MaxDuration = _parameter.Duration;
             if (MaxDuration <= 0) MaxDuration = 10.0;
@@ -254,6 +291,8 @@ namespace ObjLoader.ViewModels
             LoadModel();
             UpdateVisuals();
         }
+
+        partial void InitializeMenuItems();
 
         private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
@@ -365,6 +404,120 @@ namespace ObjLoader.ViewModels
                 EasingManager.DeletePreset(SelectedKeyframeEasing);
                 SelectedKeyframeEasing = EasingManager.Presets.FirstOrDefault();
             }
+        }
+
+        private void SetCurrentFilePath(string path)
+        {
+            _currentFilePath = path;
+            if (string.IsNullOrEmpty(_currentFilePath))
+            {
+                WindowTitle = Texts.CameraSettings;
+            }
+            else
+            {
+                WindowTitle = $"{Texts.CameraSettings} - {Path.GetFileNameWithoutExtension(_currentFilePath)}";
+            }
+            SaveProjectCommand.RaiseCanExecuteChanged();
+        }
+
+        private void OpenProject()
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = $"{Texts.Msg_ProjectFileFilter}|*.olcp",
+                Multiselect = false
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                SetCurrentFilePath(dialog.FileName);
+                LoadProjectFile(_currentFilePath);
+            }
+        }
+
+        private void SaveProject()
+        {
+            if (string.IsNullOrEmpty(_currentFilePath))
+            {
+                SaveProjectAs();
+            }
+            else
+            {
+                SaveProjectFile(_currentFilePath);
+            }
+        }
+
+        private void SaveProjectAs()
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = $"{Texts.Msg_ProjectFileFilter}|*.olcp",
+                FileName = Path.GetFileName(_currentFilePath)
+            };
+            if (dialog.ShowDialog() == true)
+            {
+                SetCurrentFilePath(dialog.FileName);
+                SaveProjectFile(_currentFilePath);
+            }
+        }
+
+        private void LoadProjectFile(string path)
+        {
+            try
+            {
+                var serializer = new XmlSerializer(typeof(CameraProjectData));
+                using (var stream = new FileStream(path, FileMode.Open))
+                {
+                    if (serializer.Deserialize(stream) is CameraProjectData data)
+                    {
+                        Keyframes.Clear();
+                        if (data.Keyframes != null)
+                        {
+                            foreach (var k in data.Keyframes) Keyframes.Add(k);
+                        }
+
+                        _parameter.Keyframes = new List<CameraKeyframe>(Keyframes);
+                        MaxDuration = data.Duration;
+                        IsTargetFixed = data.IsTargetFixed;
+
+                        CurrentTime = 0;
+                        UpdateAnimation();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Texts.Msg_FailedToLoad, ex.Message));
+            }
+        }
+
+        private void SaveProjectFile(string path)
+        {
+            try
+            {
+                var data = new CameraProjectData
+                {
+                    Keyframes = new List<CameraKeyframe>(Keyframes),
+                    Duration = MaxDuration,
+                    IsTargetFixed = IsTargetFixed
+                };
+
+                var serializer = new XmlSerializer(typeof(CameraProjectData));
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    serializer.Serialize(stream, data);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Texts.Msg_FailedToSave, ex.Message));
+            }
+        }
+
+        public class CameraProjectData
+        {
+            public List<CameraKeyframe> Keyframes { get; set; } = new List<CameraKeyframe>();
+            public double Duration { get; set; }
+            public bool IsTargetFixed { get; set; }
         }
 
         private void UpdateAnimation()

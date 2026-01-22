@@ -336,4 +336,15 @@
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>表示する</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>非表示にする</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>パーツ {0}</value></data>
+<data name="Menu_File" xml:space="preserve"><value>ファイル</value></data>
+<data name="Menu_Open" xml:space="preserve"><value>開く</value></data>
+<data name="Menu_Save" xml:space="preserve"><value>上書き保存</value></data>
+<data name="Menu_SaveAs" xml:space="preserve"><value>名前を付けて保存</value></data>
+<data name="Menu_Exit" xml:space="preserve"><value>閉じる</value></data>
+<data name="Menu_Edit" xml:space="preserve"><value>編集</value></data>
+<data name="Menu_Undo" xml:space="preserve"><value>元に戻す</value></data>
+<data name="Menu_Redo" xml:space="preserve"><value>やり直し</value></data>
+<data name="Msg_ProjectFileFilter" xml:space="preserve"><value>カメラプロジェクトファイル</value></data>
+<data name="Msg_FailedToLoad" xml:space="preserve"><value>読み込みに失敗しました: {0}</value></data>
+<data name="Msg_FailedToSave" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
 </root>

@@ -336,4 +336,15 @@
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>إظهار</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>إخفاء</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>جزء {0}</value></data>
+<data name="Menu_File" xml:space="preserve"><value>ملف</value></data>
+<data name="Menu_Open" xml:space="preserve"><value>فتح</value></data>
+<data name="Menu_Save" xml:space="preserve"><value>حفظ</value></data>
+<data name="Menu_SaveAs" xml:space="preserve"><value>حفظ باسم</value></data>
+<data name="Menu_Exit" xml:space="preserve"><value>إغلاق</value></data>
+<data name="Menu_Edit" xml:space="preserve"><value>تحرير</value></data>
+<data name="Menu_Undo" xml:space="preserve"><value>تراجع</value></data>
+<data name="Menu_Redo" xml:space="preserve"><value>إعادة</value></data>
+<data name="Msg_ProjectFileFilter" xml:space="preserve"><value>ملف مشروع الكاميرا</value></data>
+<data name="Msg_FailedToLoad" xml:space="preserve"><value>فشل التحميل: {0}</value></data>
+<data name="Msg_FailedToSave" xml:space="preserve"><value>فشل الحفظ: {0}</value></data>
 </root>

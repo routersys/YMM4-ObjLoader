@@ -336,4 +336,15 @@
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>显示</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>隐藏</value></data>
 <data name="Layer_PartName" xml:space="preserve"><value>部件 {0}</value></data>
+<data name="Menu_File" xml:space="preserve"><value>文件</value></data>
+<data name="Menu_Open" xml:space="preserve"><value>打开</value></data>
+<data name="Menu_Save" xml:space="preserve"><value>保存</value></data>
+<data name="Menu_SaveAs" xml:space="preserve"><value>另存为</value></data>
+<data name="Menu_Exit" xml:space="preserve"><value>关闭</value></data>
+<data name="Menu_Edit" xml:space="preserve"><value>编辑</value></data>
+<data name="Menu_Undo" xml:space="preserve"><value>撤销</value></data>
+<data name="Menu_Redo" xml:space="preserve"><value>重做</value></data>
+<data name="Msg_ProjectFileFilter" xml:space="preserve"><value>相机项目文件</value></data>
+<data name="Msg_FailedToLoad" xml:space="preserve"><value>加载失败: {0}</value></data>
+<data name="Msg_FailedToSave" xml:space="preserve"><value>保存失败: {0}</value></data>
 </root>
