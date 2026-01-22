@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
-using System.Windows;
 using System.Windows.Data;
 using ObjLoader.Infrastructure;
 using YukkuriMovieMaker.Commons;
@@ -175,7 +174,17 @@ namespace ObjLoader.ViewModels
             {
                 notify.PropertyChanged += (s, e) =>
                 {
-                    if (e.PropertyName != null && _viewModels.TryGetValue(e.PropertyName, out var vms))
+                    if (string.IsNullOrEmpty(e.PropertyName))
+                    {
+                        foreach (var vms in _viewModels.Values)
+                        {
+                            foreach (var vm in vms)
+                            {
+                                vm.Refresh();
+                            }
+                        }
+                    }
+                    else if (_viewModels.TryGetValue(e.PropertyName, out var vms))
                     {
                         foreach (var vm in vms)
                         {

@@ -19,21 +19,21 @@
 
         <DataTemplate x:Key="TextTemplate" DataType="{x:Type infra:TextSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
-                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
                 <TextBox Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" Padding="5" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="BoolTemplate" DataType="{x:Type infra:BoolSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
-                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
                 <c:ToggleSlider Value="{Binding Value}" HorizontalAlignment="Left" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="RangeTemplate" DataType="{x:Type infra:RangeSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
-                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
                 <Grid IsEnabled="{Binding IsEnabled}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -46,7 +46,6 @@
                             <Style TargetType="TextBox">
                                 <Setter Property="BorderThickness" Value="0"/>
                                 <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
                                 <Style.Triggers>
                                     <Trigger Property="IsFocused" Value="True">
                                         <Setter Property="BorderThickness" Value="1"/>
@@ -56,7 +55,7 @@
                             </Style>
                         </TextBox.Style>
                     </TextBox>
-                    <TextBlock Grid.Column="2" Text="{Binding Unit}" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    <TextBlock Grid.Column="2" Text="{Binding Unit}" Margin="5,0,0,0" VerticalAlignment="Center"/>
                 </Grid>
             </DockPanel>
         </DataTemplate>
@@ -67,31 +66,43 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Margin="0,0,2,0" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Value}" VerticalAlignment="Center" Margin="0,0,2,0" FontWeight="Bold"/>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <Button Command="{Binding UpCommand}" Content="▲" FontSize="6" Height="8" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                    <Button Command="{Binding DownCommand}" Content="▼" FontSize="6" Height="8" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                    <Button Command="{Binding UpCommand}" Content="▲" FontSize="6" Height="8" Padding="0" BorderThickness="0" Background="Transparent"/>
+                    <Button Command="{Binding DownCommand}" Content="▼" FontSize="6" Height="8" Padding="0" BorderThickness="0" Background="Transparent"/>
                 </StackPanel>
             </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="EnumTemplate" DataType="{x:Type infra:EnumSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
-                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                <ComboBox ItemsSource="{Binding EnumValues}" SelectedValue="{Binding Value}" DisplayMemberPath="Label" SelectedValuePath="Value" Padding="5" IsEnabled="{Binding IsEnabled}"/>
+                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
+                <ComboBox ItemsSource="{Binding EnumValues}" 
+                          SelectedValue="{Binding Value}" 
+                          SelectedValuePath="Value" 
+                          Padding="5" 
+                          IsEnabled="{Binding IsEnabled}"
+                          HorizontalContentAlignment="Left"
+                          VerticalContentAlignment="Center">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Label}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="ColorTemplate" DataType="{x:Type infra:ColorSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
-                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
                 <c:ColorPicker Value="{Binding ColorValue, Mode=TwoWay}" Height="26" HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding IsEnabled}"/>
             </DockPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="FileTemplate" DataType="{x:Type infra:FilePathSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
-                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+                <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
                 <Grid IsEnabled="{Binding IsEnabled}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -156,8 +167,10 @@
                                                     <Setter Property="Template">
                                                         <Setter.Value>
                                                             <ControlTemplate TargetType="{x:Type ToggleButton}">
-                                                                <Border Background="Transparent" Height="16" Padding="5" Width="16">
-                                                                    <Path x:Name="ExpandPath" Data="M0,0 L0,6 L6,0 z" Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
+                                                                <Border x:Name="ExpanderBorder" Background="Transparent" Height="16" Padding="5" Width="16">
+                                                                    <Path x:Name="ExpandPath" Data="M0,0 L0,6 L6,0 z" 
+                                                                          Fill="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" 
+                                                                          Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}">
                                                                         <Path.RenderTransform>
                                                                             <RotateTransform Angle="135" CenterX="3" CenterY="3"/>
                                                                         </Path.RenderTransform>
@@ -170,12 +183,10 @@
                                                                                 <RotateTransform Angle="180" CenterX="3" CenterY="3"/>
                                                                             </Setter.Value>
                                                                         </Setter>
-                                                                        <Setter Property="Fill" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                                                                        <Setter Property="Stroke" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
                                                                     </Trigger>
                                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                                        <Setter Property="Stroke" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                                                         <Setter Property="Fill" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                                                        <Setter Property="Stroke" TargetName="ExpandPath" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                                                     </Trigger>
                                                                 </ControlTemplate.Triggers>
                                                             </ControlTemplate>
@@ -287,7 +298,7 @@
             </ScrollViewer>
 
             <Border Grid.Row="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0" Padding="15,10" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Opacity="0.8"/>
+                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.8"/>
             </Border>
 
             <Border Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Padding="10" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0">
