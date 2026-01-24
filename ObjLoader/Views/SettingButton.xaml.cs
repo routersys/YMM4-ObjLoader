@@ -10,10 +10,8 @@ namespace ObjLoader.Views
 {
     public partial class SettingButton : UserControl, IPropertyEditorControl
     {
-#pragma warning disable CS0067
-        public event EventHandler? BeginEdit;
-        public event EventHandler? EndEdit;
-#pragma warning restore CS0067
+        event EventHandler? IPropertyEditorControl.BeginEdit { add { } remove { } }
+        event EventHandler? IPropertyEditorControl.EndEdit { add { } remove { } }
 
         public SettingButton()
         {
