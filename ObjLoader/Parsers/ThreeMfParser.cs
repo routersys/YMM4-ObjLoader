@@ -21,76 +21,105 @@ namespace ObjLoader.Parsers
                 using var reader = XmlReader.Create(stream);
 
                 var verts = new List<ObjVertex>();
-                var inds = new List<int>();
-
                 var colorMap = new Dictionary<string, Vector4>();
-                string currentPid = "";
+                var groupedIndices = new Dictionary<Vector4, List<int>>();
+
+                string currentResourcePid = "";
+                int resourceIndex = 0;
+                string objectPid = "";
+                string objectP1 = "";
+                int vertexOffset = 0;
 
                 while (reader.Read())
                 {
                     if (reader.NodeType == XmlNodeType.Element)
                     {
-                        if (reader.LocalName == "vertex")
+                        if (reader.LocalName == "basematerials" || reader.LocalName == "colorgroup")
                         {
-                            float x = float.Parse(reader.GetAttribute("x") ?? "0");
-                            float y = float.Parse(reader.GetAttribute("y") ?? "0");
-                            float z = float.Parse(reader.GetAttribute("z") ?? "0");
-                            verts.Add(new ObjVertex { Position = new Vector3(x, y, z), Color = Vector4.One });
-                        }
-                        else if (reader.LocalName == "triangle")
-                        {
-                            int v1 = int.Parse(reader.GetAttribute("v1") ?? "0");
-                            int v2 = int.Parse(reader.GetAttribute("v2") ?? "0");
-                            int v3 = int.Parse(reader.GetAttribute("v3") ?? "0");
-
-                            inds.Add(v1);
-                            inds.Add(v2);
-                            inds.Add(v3);
-
-                            string pid = reader.GetAttribute("pid") ?? "";
-                            string p1 = reader.GetAttribute("p1") ?? "";
-
-                            if (!string.IsNullOrEmpty(pid) && !string.IsNullOrEmpty(p1))
-                            {
-                                string key = pid + ":" + p1;
-                                if (colorMap.TryGetValue(key, out var col))
-                                {
-                                    if (v1 < verts.Count) { var v = verts[v1]; v.Color = col; verts[v1] = v; }
-                                    if (v2 < verts.Count) { var v = verts[v2]; v.Color = col; verts[v2] = v; }
-                                    if (v3 < verts.Count) { var v = verts[v3]; v.Color = col; verts[v3] = v; }
-                                }
-                            }
+                            currentResourcePid = reader.GetAttribute("id") ?? "";
+                            resourceIndex = 0;
                         }
                         else if (reader.LocalName == "base")
                         {
                             string val = reader.GetAttribute("displaycolor") ?? "#FFFFFFFF";
-                            if (ParseColor(val, out var col))
-                            {
-                                if (!string.IsNullOrEmpty(currentPid))
-                                {
-                                    colorMap[currentPid + ":" + colorMap.Count] = col;
-                                }
-                            }
+                            if (ParseColor(val, out var col)) colorMap[currentResourcePid + ":" + resourceIndex] = col;
+                            resourceIndex++;
                         }
-                        else if (reader.LocalName == "basematerials")
+                        else if (reader.LocalName == "color")
                         {
-                            currentPid = reader.GetAttribute("id") ?? "";
+                            string val = reader.GetAttribute("color") ?? "#FFFFFFFF";
+                            if (ParseColor(val, out var col)) colorMap[currentResourcePid + ":" + resourceIndex] = col;
+                            resourceIndex++;
+                        }
+                        else if (reader.LocalName == "object")
+                        {
+                            objectPid = reader.GetAttribute("pid") ?? "";
+                            objectP1 = reader.GetAttribute("p1") ?? "";
+                        }
+                        else if (reader.LocalName == "mesh")
+                        {
+                            vertexOffset = verts.Count;
+                        }
+                        else if (reader.LocalName == "vertex")
+                        {
+                            float x = float.Parse(reader.GetAttribute("x") ?? "0");
+                            float y = float.Parse(reader.GetAttribute("y") ?? "0");
+                            float z = float.Parse(reader.GetAttribute("z") ?? "0");
+                            verts.Add(new ObjVertex { Position = new Vector3(x, z, -y), Color = Vector4.One });
+                        }
+                        else if (reader.LocalName == "triangle")
+                        {
+                            int v1 = int.Parse(reader.GetAttribute("v1") ?? "0") + vertexOffset;
+                            int v2 = int.Parse(reader.GetAttribute("v2") ?? "0") + vertexOffset;
+                            int v3 = int.Parse(reader.GetAttribute("v3") ?? "0") + vertexOffset;
+
+                            string? pid = reader.GetAttribute("pid") ?? objectPid;
+                            string? p1 = reader.GetAttribute("p1") ?? (string.IsNullOrEmpty(reader.GetAttribute("pid")) ? objectP1 : "");
+
+                            Vector4 triColor = Vector4.One;
+                            if (!string.IsNullOrEmpty(pid) && !string.IsNullOrEmpty(p1))
+                            {
+                                if (colorMap.TryGetValue(pid + ":" + p1, out var col)) triColor = col;
+                            }
+
+                            if (!groupedIndices.ContainsKey(triColor)) groupedIndices[triColor] = new List<int>();
+                            groupedIndices[triColor].Add(v1);
+                            groupedIndices[triColor].Add(v2);
+                            groupedIndices[triColor].Add(v3);
+
+                            if (v1 < verts.Count) { var v = verts[v1]; v.Color = triColor; verts[v1] = v; }
+                            if (v2 < verts.Count) { var v = verts[v2]; v.Color = triColor; verts[v2] = v; }
+                            if (v3 < verts.Count) { var v = verts[v3]; v.Color = triColor; verts[v3] = v; }
                         }
                     }
                     else if (reader.NodeType == XmlNodeType.EndElement)
                     {
-                        if (reader.LocalName == "basematerials")
-                        {
-                            currentPid = "";
-                        }
+                        if (reader.LocalName == "object") { objectPid = ""; objectP1 = ""; }
                     }
                 }
 
                 var vArray = verts.ToArray();
-                var iArray = inds.ToArray();
-                ModelHelper.CalculateNormals(vArray, iArray);
+                var allIndices = new List<int>();
+                var parts = new List<ModelPart>();
                 ModelHelper.CalculateBounds(vArray, out Vector3 c, out float s);
-                var parts = new List<ModelPart> { new ModelPart { TexturePath = string.Empty, IndexOffset = 0, IndexCount = iArray.Length, BaseColor = Vector4.One, Center = c } };
+
+                foreach (var group in groupedIndices)
+                {
+                    parts.Add(new ModelPart
+                    {
+                        Name = "Color_" + group.Key.ToString(),
+                        IndexOffset = allIndices.Count,
+                        IndexCount = group.Value.Count,
+                        BaseColor = group.Key,
+                        Center = c,
+                        TexturePath = string.Empty
+                    });
+                    allIndices.AddRange(group.Value);
+                }
+
+                var iArray = allIndices.ToArray();
+                ModelHelper.CalculateNormals(vArray, iArray);
+
                 return new ObjModel { Vertices = vArray, Indices = iArray, Parts = parts, ModelCenter = c, ModelScale = s };
             }
             catch
@@ -102,26 +131,25 @@ namespace ObjLoader.Parsers
         private bool ParseColor(string hex, out Vector4 color)
         {
             color = Vector4.One;
-            if (string.IsNullOrEmpty(hex) || hex.Length < 7) return false;
-
+            if (string.IsNullOrEmpty(hex)) return false;
             try
             {
                 int start = hex.StartsWith("#") ? 1 : 0;
-
-                if (hex.Length == 9)
+                string cleanHex = hex.Substring(start);
+                if (cleanHex.Length == 8)
                 {
-                    byte r = Convert.ToByte(hex.Substring(start, 2), 16);
-                    byte g = Convert.ToByte(hex.Substring(start + 2, 2), 16);
-                    byte b = Convert.ToByte(hex.Substring(start + 4, 2), 16);
-                    byte a = Convert.ToByte(hex.Substring(start + 6, 2), 16);
+                    byte r = Convert.ToByte(cleanHex.Substring(0, 2), 16);
+                    byte g = Convert.ToByte(cleanHex.Substring(2, 2), 16);
+                    byte b = Convert.ToByte(cleanHex.Substring(4, 2), 16);
+                    byte a = Convert.ToByte(cleanHex.Substring(6, 2), 16);
                     color = new Vector4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
                     return true;
                 }
-                else if (hex.Length == 7)
+                else if (cleanHex.Length == 6)
                 {
-                    byte r = Convert.ToByte(hex.Substring(start, 2), 16);
-                    byte g = Convert.ToByte(hex.Substring(start + 2, 2), 16);
-                    byte b = Convert.ToByte(hex.Substring(start + 4, 2), 16);
+                    byte r = Convert.ToByte(cleanHex.Substring(0, 2), 16);
+                    byte g = Convert.ToByte(cleanHex.Substring(2, 2), 16);
+                    byte b = Convert.ToByte(cleanHex.Substring(4, 2), 16);
                     color = new Vector4(r / 255.0f, g / 255.0f, b / 255.0f, 1.0f);
                     return true;
                 }
