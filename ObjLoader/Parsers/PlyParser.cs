@@ -1,13 +1,15 @@
-﻿using System.Buffers;
+﻿using ObjLoader.Attributes;
+using ObjLoader.Core;
+using System.Buffers;
 using System.Globalization;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
-using ObjLoader.Core;
 
 namespace ObjLoader.Parsers
 {
+    [ModelParser(1, ".ply")]
     public class PlyParser : IModelParser
     {
         public bool CanParse(string extension) => extension == ".ply";

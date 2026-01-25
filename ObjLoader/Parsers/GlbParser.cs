@@ -1,12 +1,14 @@
-﻿using System.IO;
+﻿using ObjLoader.Attributes;
+using ObjLoader.Core;
+using ObjLoader.Localization;
+using System.IO;
 using System.Numerics;
 using System.Text;
 using System.Text.Json;
-using ObjLoader.Core;
-using ObjLoader.Localization;
 
 namespace ObjLoader.Parsers
 {
+    [ModelParser(1, ".glb", ".gltf")]
     public class GlbParser : IModelParser
     {
         public bool CanParse(string extension) => extension == ".glb" || extension == ".gltf";

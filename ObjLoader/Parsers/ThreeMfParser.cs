@@ -1,10 +1,12 @@
-﻿using System.IO.Compression;
+﻿using ObjLoader.Attributes;
+using ObjLoader.Core;
+using System.IO.Compression;
 using System.Numerics;
 using System.Xml;
-using ObjLoader.Core;
 
 namespace ObjLoader.Parsers
 {
+    [ModelParser(1, ".3mf")]
     public class ThreeMfParser : IModelParser
     {
         public bool CanParse(string extension) => extension == ".3mf";

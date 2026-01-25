@@ -1,11 +1,13 @@
-﻿using System.IO;
-using Assimp;
+﻿using Assimp;
+using ObjLoader.Attributes;
 using ObjLoader.Core;
+using System.IO;
 using System.Numerics;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 
 namespace ObjLoader.Parsers
 {
+    [ModelParser(1, ".3d", ".3ds", ".3mf", ".ac", ".ac3d", ".acc", ".amj", ".ase", ".ask", ".b3d", ".blend", ".bvh", ".cms", ".cob", ".dae", ".dxf", ".enff", ".fbx", ".glb", ".gltf", ".hmb", ".ifc", ".irr", ".irrmesh", ".lwo", ".lws", ".lxo", ".md2", ".md3", ".md5", ".mdc", ".mdl", ".mesh", ".mot", ".ms3d", ".ndo", ".nff", ".obj", ".off", ".ogex", ".ply", ".pmx", ".prj", ".q3o", ".q3s", ".raw", ".scn", ".sib", ".smd", ".stl", ".stp", ".ter", ".uc", ".vta", ".x", ".x3d", ".xgl", ".xml", ".zgl")]
     public class AssimpParser : IModelParser
     {
         private static readonly HashSet<string> SupportedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)

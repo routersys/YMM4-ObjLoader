@@ -1,16 +1,20 @@
 ﻿using System.IO;
 using System.Reflection;
-using ObjLoader.Core;
 using ObjLoader.Cache;
-using ObjLoader.Utilities;
+using ObjLoader.Core;
 using ObjLoader.Settings;
+using ObjLoader.Utilities;
 
 namespace ObjLoader.Parsers
 {
-    public class ObjModelLoader
+    public partial class ObjModelLoader
     {
         private const string DefaultPluginVersion = "1.0.0";
         private static readonly string PluginVersion;
+        private readonly List<IModelParser> _parsers;
+        private readonly ModelCache _cache;
+        private readonly Dictionary<string, List<IModelParser>> _extensionMap;
+        private readonly Dictionary<Type, int> _parserVersions;
 
         static ObjModelLoader()
         {
@@ -24,53 +28,56 @@ namespace ObjLoader.Parsers
             }
         }
 
-        private readonly List<IModelParser> _parsers;
-        private readonly ModelCache _cache;
-
         public ObjModelLoader()
         {
             _cache = new ModelCache();
-            _parsers = new List<IModelParser>
-            {
-                new StlParser(),
-                new PmxParser(),
-                new PmdParser(),
-                new GlbParser(),
-                new ThreeMfParser(),
-                new PlyParser(),
-                new WavefrontObjParser(),
-                new AssimpParser()
-            };
+            _parsers = new List<IModelParser>();
+            _extensionMap = new Dictionary<string, List<IModelParser>>(StringComparer.OrdinalIgnoreCase);
+            _parserVersions = new Dictionary<Type, int>();
+
+            LoadGeneratedParsers();
         }
 
         private IModelParser? GetParser(string path)
         {
-            var ext = Path.GetExtension(path).ToLowerInvariant();
+            var ext = Path.GetExtension(path);
+            if (string.IsNullOrEmpty(ext)) return null;
 
-            bool forceAssimp = false;
-            if (ext == ".obj") forceAssimp = PluginSettings.Instance.AssimpObj;
-            else if (ext == ".glb" || ext == ".gltf") forceAssimp = PluginSettings.Instance.AssimpGlb;
-            else if (ext == ".ply") forceAssimp = PluginSettings.Instance.AssimpPly;
-            else if (ext == ".stl") forceAssimp = PluginSettings.Instance.AssimpStl;
-            else if (ext == ".3mf") forceAssimp = PluginSettings.Instance.Assimp3mf;
-            else if (ext == ".pmx") forceAssimp = PluginSettings.Instance.AssimpPmx;
-
-            IModelParser? parser = null;
-            if (forceAssimp)
+            if (ShouldForceAssimp(ext))
             {
-                parser = _parsers.OfType<AssimpParser>().FirstOrDefault();
-                if (parser != null && !parser.CanParse(ext))
+                var assimpParser = _parsers.FirstOrDefault(p => p.GetType().Name == "AssimpParser");
+                if (assimpParser != null && assimpParser.CanParse(ext))
                 {
-                    parser = null;
+                    return assimpParser;
                 }
             }
 
-            if (parser == null)
+            if (_extensionMap.TryGetValue(ext, out var mappedParsers))
             {
-                parser = _parsers.FirstOrDefault(p => p.CanParse(ext));
+                var parser = mappedParsers.FirstOrDefault(p => p.GetType().Name != "AssimpParser" && p.CanParse(ext));
+                if (parser != null) return parser;
+
+                parser = mappedParsers.FirstOrDefault(p => p.CanParse(ext));
+                if (parser != null) return parser;
             }
 
-            return parser;
+            return _parsers.FirstOrDefault(p => p.CanParse(ext));
+        }
+
+        private bool ShouldForceAssimp(string ext)
+        {
+            var settings = PluginSettings.Instance;
+            return ext.ToLowerInvariant() switch
+            {
+                ".obj" => settings.AssimpObj,
+                ".glb" => settings.AssimpGlb,
+                ".gltf" => settings.AssimpGlb,
+                ".ply" => settings.AssimpPly,
+                ".stl" => settings.AssimpStl,
+                ".3mf" => settings.Assimp3mf,
+                ".pmx" => settings.AssimpPmx,
+                _ => false
+            };
         }
 
         public ObjModel Load(string path)
@@ -79,9 +86,10 @@ namespace ObjLoader.Parsers
 
             var parser = GetParser(path);
             var parserId = parser?.GetType().Name ?? string.Empty;
-
+            var parserVersion = parser != null && _parserVersions.TryGetValue(parser.GetType(), out var v) ? v : 1;
             var fileInfo = new FileInfo(path);
-            if (_cache.TryLoad(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion, out var cachedModel))
+
+            if (_cache.TryLoad(path, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion, out var cachedModel))
             {
                 return cachedModel;
             }
@@ -91,7 +99,7 @@ namespace ObjLoader.Parsers
             if (model.Vertices.Length > 0)
             {
                 var thumb = ThumbnailUtil.CreateThumbnail(model);
-                _cache.Save(path, model, thumb, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
+                _cache.Save(path, model, thumb, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion);
             }
 
             return model;
@@ -103,13 +111,14 @@ namespace ObjLoader.Parsers
 
             var parser = GetParser(path);
             var parserId = parser?.GetType().Name ?? string.Empty;
-
+            var parserVersion = parser != null && _parserVersions.TryGetValue(parser.GetType(), out var v) ? v : 1;
             var fileInfo = new FileInfo(path);
-            var thumb = _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
+
+            var thumb = _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion);
             if (thumb.Length > 0) return thumb;
 
             var model = Load(path);
-            return _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, PluginVersion);
+            return _cache.GetThumbnail(path, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion);
         }
 
         public List<byte[]> GetSplitThumbnails(string path)

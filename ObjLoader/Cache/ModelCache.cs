@@ -7,22 +7,22 @@ namespace ObjLoader.Cache
 {
     public class ModelCache
     {
-        private const int Signature = 0x4A424F04;
-        private const int Version = 4;
-
-        public bool TryLoad(string path, DateTime originalTimestamp, string parserId, string pluginVersion, out ObjModel model)
+        public bool TryLoad(string path, DateTime originalTimestamp, string parserId, int parserVersion, string pluginVersion, out ObjModel model)
         {
             model = new ObjModel();
             var cachePath = path + ".bin";
 
             if (!File.Exists(cachePath)) return false;
 
-            var cacheInfo = new FileInfo(cachePath);
-            if (cacheInfo.LastWriteTimeUtc < originalTimestamp) return false;
-
             try
             {
-                model = LoadBinary(cachePath, path, parserId, pluginVersion);
+                using var fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+                using var br = new BinaryReader(fs);
+
+                var header = ReadHeader(br);
+                if (!header.IsValid(originalTimestamp.ToBinary(), path, parserId, parserVersion, pluginVersion)) return false;
+
+                model = ReadBody(br, fs);
                 return model.Vertices.Length > 0;
             }
             catch
@@ -31,31 +31,18 @@ namespace ObjLoader.Cache
             }
         }
 
-        public byte[] GetThumbnail(string path, DateTime originalTimestamp, string parserId, string pluginVersion)
+        public byte[] GetThumbnail(string path, DateTime originalTimestamp, string parserId, int parserVersion, string pluginVersion)
         {
             var cachePath = path + ".bin";
             if (!File.Exists(cachePath)) return Array.Empty<byte>();
 
-            var cacheInfo = new FileInfo(cachePath);
-            if (cacheInfo.LastWriteTimeUtc < originalTimestamp) return Array.Empty<byte>();
-
             try
             {
-                using var fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
                 using var br = new BinaryReader(fs);
 
-                if (br.ReadInt32() != Signature) return Array.Empty<byte>();
-                if (br.ReadInt32() != Version) return Array.Empty<byte>();
-                br.ReadInt64();
-
-                var storedPath = br.ReadString();
-                if (!string.Equals(path, storedPath, StringComparison.OrdinalIgnoreCase)) return Array.Empty<byte>();
-
-                var storedParserId = br.ReadString();
-                if (!string.Equals(parserId, storedParserId, StringComparison.Ordinal)) return Array.Empty<byte>();
-
-                var storedPluginVersion = br.ReadString();
-                if (!string.Equals(pluginVersion, storedPluginVersion, StringComparison.Ordinal)) return Array.Empty<byte>();
+                var header = ReadHeader(br);
+                if (!header.IsValid(originalTimestamp.ToBinary(), path, parserId, parserVersion, pluginVersion)) return Array.Empty<byte>();
 
                 int thumbLen = br.ReadInt32();
                 if (thumbLen > 0)
@@ -63,91 +50,53 @@ namespace ObjLoader.Cache
                     return br.ReadBytes(thumbLen);
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             return Array.Empty<byte>();
         }
 
-        public void Save(string path, ObjModel model, byte[] thumbnail, DateTime originalTimestamp, string parserId, string pluginVersion)
+        public void Save(string path, ObjModel model, byte[] thumbnail, DateTime originalTimestamp, string parserId, int parserVersion, string pluginVersion)
         {
+            var cachePath = path + ".bin";
+            var tempPath = cachePath + ".tmp";
+
             try
             {
-                SaveBinary(path + ".bin", path, model, thumbnail, originalTimestamp, parserId, pluginVersion);
+                var header = new CacheHeader(originalTimestamp.ToBinary(), path, parserId, parserVersion, pluginVersion);
+                WriteCacheFile(tempPath, header, model, thumbnail);
+
+                if (File.Exists(cachePath))
+                {
+                    File.Delete(cachePath);
+                }
+                File.Move(tempPath, cachePath);
             }
-            catch { }
-        }
-
-        private unsafe void SaveBinary(string cachePath, string originalPath, ObjModel model, byte[] thumbnail, DateTime originalTimestamp, string parserId, string pluginVersion)
-        {
-            using var fs = new FileStream(cachePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            using var bw = new BinaryWriter(fs);
-
-            bw.Write(Signature);
-            bw.Write(Version);
-            bw.Write(originalTimestamp.ToBinary());
-            bw.Write(originalPath);
-            bw.Write(parserId);
-            bw.Write(pluginVersion);
-
-            bw.Write(thumbnail.Length);
-            if (thumbnail.Length > 0)
+            catch
             {
-                bw.Write(thumbnail);
-            }
-
-            bw.Write(model.Vertices.Length);
-            bw.Write(model.Indices.Length);
-            bw.Write(model.Parts.Count);
-
-            foreach (var part in model.Parts)
-            {
-                var textureBytes = Encoding.UTF8.GetBytes(part.TexturePath ?? string.Empty);
-                bw.Write(textureBytes.Length);
-                bw.Write(textureBytes);
-                bw.Write(part.IndexOffset);
-                bw.Write(part.IndexCount);
-                bw.Write(part.BaseColor.X);
-                bw.Write(part.BaseColor.Y);
-                bw.Write(part.BaseColor.Z);
-                bw.Write(part.BaseColor.W);
-            }
-
-            bw.Write(model.ModelCenter.X);
-            bw.Write(model.ModelCenter.Y);
-            bw.Write(model.ModelCenter.Z);
-            bw.Write(model.ModelScale);
-
-            fixed (ObjVertex* pV = model.Vertices)
-            {
-                var span = new ReadOnlySpan<byte>(pV, model.Vertices.Length * sizeof(ObjVertex));
-                bw.Write(span);
-            }
-
-            fixed (int* pI = model.Indices)
-            {
-                var span = new ReadOnlySpan<byte>(pI, model.Indices.Length * sizeof(int));
-                bw.Write(span);
+                if (File.Exists(tempPath))
+                {
+                    try { File.Delete(tempPath); } catch { }
+                }
             }
         }
 
-        private unsafe ObjModel LoadBinary(string cachePath, string originalPath, string parserId, string pluginVersion)
+        private CacheHeader ReadHeader(BinaryReader br)
         {
-            using var fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            using var br = new BinaryReader(fs);
+            int signature = br.ReadInt32();
+            int version = br.ReadInt32();
+            long timestamp = br.ReadInt64();
+            string path = br.ReadString();
+            string parserId = br.ReadString();
+            int parserVersion = br.ReadInt32();
+            string pluginVersion = br.ReadString();
 
-            if (br.ReadInt32() != Signature) throw new Exception();
-            if (br.ReadInt32() != Version) throw new Exception();
-            br.ReadInt64();
+            return new CacheHeader(signature, version, timestamp, path, parserId, parserVersion, pluginVersion);
+        }
 
-            var storedPath = br.ReadString();
-            if (!string.Equals(originalPath, storedPath, StringComparison.OrdinalIgnoreCase)) throw new Exception();
-
-            var storedParserId = br.ReadString();
-            if (!string.Equals(parserId, storedParserId, StringComparison.Ordinal)) throw new Exception();
-
-            var storedPluginVersion = br.ReadString();
-            if (!string.Equals(pluginVersion, storedPluginVersion, StringComparison.Ordinal)) throw new Exception();
-
+        private unsafe ObjModel ReadBody(BinaryReader br, FileStream fs)
+        {
             int thumbLen = br.ReadInt32();
             if (thumbLen > 0) fs.Seek(thumbLen, SeekOrigin.Current);
 
@@ -193,6 +142,60 @@ namespace ObjLoader.Cache
                 ModelCenter = center,
                 ModelScale = scale
             };
+        }
+
+        private unsafe void WriteCacheFile(string tempPath, CacheHeader header, ObjModel model, byte[] thumbnail)
+        {
+            using var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var bw = new BinaryWriter(fs);
+
+            bw.Write(header.Signature);
+            bw.Write(header.Version);
+            bw.Write(header.Timestamp);
+            bw.Write(header.OriginalPath);
+            bw.Write(header.ParserId);
+            bw.Write(header.ParserVersion);
+            bw.Write(header.PluginVersion);
+
+            bw.Write(thumbnail.Length);
+            if (thumbnail.Length > 0)
+            {
+                bw.Write(thumbnail);
+            }
+
+            bw.Write(model.Vertices.Length);
+            bw.Write(model.Indices.Length);
+            bw.Write(model.Parts.Count);
+
+            foreach (var part in model.Parts)
+            {
+                var textureBytes = Encoding.UTF8.GetBytes(part.TexturePath ?? string.Empty);
+                bw.Write(textureBytes.Length);
+                bw.Write(textureBytes);
+                bw.Write(part.IndexOffset);
+                bw.Write(part.IndexCount);
+                bw.Write(part.BaseColor.X);
+                bw.Write(part.BaseColor.Y);
+                bw.Write(part.BaseColor.Z);
+                bw.Write(part.BaseColor.W);
+            }
+
+            bw.Write(model.ModelCenter.X);
+            bw.Write(model.ModelCenter.Y);
+            bw.Write(model.ModelCenter.Z);
+            bw.Write(model.ModelScale);
+
+            fixed (ObjVertex* pV = model.Vertices)
+            {
+                var span = new ReadOnlySpan<byte>(pV, model.Vertices.Length * sizeof(ObjVertex));
+                bw.Write(span);
+            }
+
+            fixed (int* pI = model.Indices)
+            {
+                var span = new ReadOnlySpan<byte>(pI, model.Indices.Length * sizeof(int));
+                bw.Write(span);
+            }
         }
     }
 }

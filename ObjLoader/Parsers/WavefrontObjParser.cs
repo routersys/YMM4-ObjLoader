@@ -1,13 +1,15 @@
-﻿using System.IO;
+﻿using ObjLoader.Attributes;
+using ObjLoader.Core;
+using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using ObjLoader.Core;
 
 namespace ObjLoader.Parsers
 {
+    [ModelParser(1, ".obj")]
     public class WavefrontObjParser : IModelParser
     {
         public bool CanParse(string extension) => string.IsNullOrEmpty(extension) || extension == ".obj";

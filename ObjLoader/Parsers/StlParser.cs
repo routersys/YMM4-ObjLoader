@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using ObjLoader.Attributes;
+using ObjLoader.Core;
+using System.IO;
 using System.Numerics;
 using System.Text;
-using ObjLoader.Core;
 
 namespace ObjLoader.Parsers
 {
+    [ModelParser(1, ".stl")]
     public class StlParser : IModelParser
     {
         public bool CanParse(string extension) => extension == ".stl";
