@@ -15,6 +15,9 @@ namespace ObjLoader.ViewModels
     {
         private readonly ObjModelLoader _loader;
         private readonly Action _forceUpdateAction;
+        private readonly Dictionary<string, string> _layerNameCache = new Dictionary<string, string>();
+        private string _previousFilePath;
+
         public LayerData Data { get; }
 
         public bool IsChild => !string.IsNullOrEmpty(Data.ParentGuid);
@@ -40,7 +43,7 @@ namespace ObjLoader.ViewModels
                     return GeneratePartName();
                 }
 
-                return string.IsNullOrEmpty(Data.FilePath) ? Texts.Layer_New : Path.GetFileName(Data.FilePath);
+                return string.IsNullOrEmpty(Data.FilePath) ? Texts.Layer_New : Path.GetFileNameWithoutExtension(Data.FilePath);
             }
             set
             {
@@ -123,6 +126,7 @@ namespace ObjLoader.ViewModels
             Data = data;
             _loader = loader;
             _forceUpdateAction = forceUpdateAction;
+            _previousFilePath = Data.FilePath ?? string.Empty;
 
             Data.PropertyChanged += Data_PropertyChanged;
 
@@ -146,6 +150,27 @@ namespace ObjLoader.ViewModels
             }
             else if (e.PropertyName == nameof(LayerData.FilePath))
             {
+                var currentName = Data.Name;
+                if (!string.IsNullOrEmpty(currentName) && currentName != "Layer" && currentName != "Default")
+                {
+                    _layerNameCache[_previousFilePath] = currentName;
+                }
+                else
+                {
+                    _layerNameCache.Remove(_previousFilePath);
+                }
+
+                _previousFilePath = Data.FilePath ?? string.Empty;
+
+                if (_layerNameCache.TryGetValue(_previousFilePath, out var cachedName))
+                {
+                    Data.Name = cachedName;
+                }
+                else
+                {
+                    Data.Name = "Default";
+                }
+
                 OnPropertyChanged(nameof(Name));
                 OnPropertyChanged(nameof(FileName));
                 UpdateThumbnail();
