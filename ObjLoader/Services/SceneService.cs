@@ -20,7 +20,7 @@ namespace ObjLoader.Services
         private readonly ObjLoaderParameter _parameter;
         private readonly ObjModelLoader _loader;
         private readonly RenderService _renderService;
-        private readonly Dictionary<string, (GpuResourceCacheItem Resource, double Height)> _modelResources = new();
+        private readonly Dictionary<string, (GpuResourceCacheItem Resource, Vector3 Size, Vector3 Min, Vector3 Max)> _modelResources = new();
 
         public double ModelScale { get; private set; } = 1.0;
         public double ModelHeight { get; private set; } = 1.0;
@@ -34,23 +34,30 @@ namespace ObjLoader.Services
 
         public unsafe void LoadModel()
         {
-            foreach (var entry in _modelResources) entry.Value.Resource.Dispose();
-            _modelResources.Clear();
+            var validPaths = new HashSet<string>();
+            if (!string.IsNullOrWhiteSpace(_parameter.FilePath))
+                validPaths.Add(_parameter.FilePath.Trim('"'));
 
-            var paths = new HashSet<string>();
             foreach (var layer in _parameter.Layers)
             {
                 if (!string.IsNullOrWhiteSpace(layer.FilePath))
-                    paths.Add(layer.FilePath.Trim('"'));
+                    validPaths.Add(layer.FilePath.Trim('"'));
             }
-            if (!string.IsNullOrWhiteSpace(_parameter.FilePath))
-                paths.Add(_parameter.FilePath.Trim('"'));
 
-            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
-            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-            bool hasModel = false;
+            var keysToRemove = new List<string>();
+            foreach (var key in _modelResources.Keys)
+            {
+                if (!validPaths.Contains(key))
+                    keysToRemove.Add(key);
+            }
 
-            foreach (var path in paths)
+            foreach (var key in keysToRemove)
+            {
+                _modelResources[key].Resource.Dispose();
+                _modelResources.Remove(key);
+            }
+
+            foreach (var path in validPaths)
             {
                 if (_modelResources.ContainsKey(path)) continue;
                 if (!File.Exists(path)) continue;
@@ -93,25 +100,45 @@ namespace ObjLoader.Services
                 }
                 var resource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
 
+                double localMinX = double.MaxValue, localMaxX = double.MinValue;
                 double localMinY = double.MaxValue, localMaxY = double.MinValue;
+                double localMinZ = double.MaxValue, localMaxZ = double.MinValue;
+
                 foreach (var v in model.Vertices)
                 {
                     double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                    if (x < minX) minX = x; if (x > maxX) maxX = x;
+                    if (x < localMinX) localMinX = x; if (x > localMaxX) localMaxX = x;
+
                     double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                    if (y < minY) minY = y; if (y > maxY) maxY = y;
                     if (y < localMinY) localMinY = y; if (y > localMaxY) localMaxY = y;
+
                     double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-                    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+                    if (z < localMinZ) localMinZ = z; if (z > localMaxZ) localMaxZ = z;
                 }
 
-                double height = localMaxY - localMinY;
-                _modelResources[path] = (resource, height);
-                hasModel = true;
+                Vector3 size = new Vector3((float)(localMaxX - localMinX), (float)(localMaxY - localMinY), (float)(localMaxZ - localMinZ));
+                Vector3 min = new Vector3((float)localMinX, (float)localMinY, (float)localMinZ);
+                Vector3 max = new Vector3((float)localMaxX, (float)localMaxY, (float)localMaxZ);
+
+                _modelResources[path] = (resource, size, min, max);
             }
 
-            if (hasModel)
+            if (_modelResources.Count > 0)
             {
+                double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
+                double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
+
+                foreach (var entry in _modelResources.Values)
+                {
+                    if (entry.Min.X < minX) minX = entry.Min.X;
+                    if (entry.Min.Y < minY) minY = entry.Min.Y;
+                    if (entry.Min.Z < minZ) minZ = entry.Min.Z;
+
+                    if (entry.Max.X > maxX) maxX = entry.Max.X;
+                    if (entry.Max.Y > maxY) maxY = entry.Max.Y;
+                    if (entry.Max.Z > maxZ) maxZ = entry.Max.Z;
+                }
+
                 ModelScale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
                 ModelHeight = maxY - minY;
                 if (ModelScale < 0.1) ModelScale = 1.0;
@@ -120,6 +147,8 @@ namespace ObjLoader.Services
 
         public void Render(PerspectiveCamera camera, double currentTime, int width, int height, bool isPilotView, Color themeColor, bool isWireframe, bool isGrid, bool isInfinite, bool isInteracting)
         {
+            LoadModel();
+
             if (_renderService.SceneImage == null) return;
             var camDir = camera.LookDirection; camDir.Normalize();
             var camUp = camera.UpDirection; camUp.Normalize();
@@ -145,7 +174,11 @@ namespace ObjLoader.Services
             int len = (int)(_parameter.Duration * fps);
 
             var layers = new List<LayerRenderData>();
+            var layerList = _parameter.Layers;
             int activeIndex = _parameter.SelectedLayerIndex;
+
+            bool isIndexValid = activeIndex >= 0 && activeIndex < layerList.Count;
+            LayerData? activeLayer = isIndexValid ? layerList[activeIndex] : null;
 
             var settings = PluginSettings.Instance;
             Matrix4x4 axisConversion = Matrix4x4.Identity;
@@ -156,18 +189,19 @@ namespace ObjLoader.Services
                 case CoordinateSystem.LeftHandedZUp: axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1); break;
             }
 
-            var localPlacements = new Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource, double Height)>();
+            var localPlacements = new Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)>();
+            double? globalLiftY = null;
 
-            for (int i = 0; i < _parameter.Layers.Count; i++)
+            for (int i = 0; i < layerList.Count; i++)
             {
-                var layer = _parameter.Layers[i];
+                var layer = layerList[i];
                 if (!layer.IsVisible) continue;
 
                 string filePath = layer.FilePath?.Trim('"') ?? string.Empty;
                 if (string.IsNullOrEmpty(filePath) || !_modelResources.ContainsKey(filePath)) continue;
 
-                var (resource, h) = _modelResources[filePath];
-                bool isActive = (i == activeIndex);
+                var (resource, size, _, _) = _modelResources[filePath];
+                bool isActive = (activeLayer != null && layer == activeLayer);
 
                 double x, y, z, scale, rx, ry, rz;
 
@@ -192,6 +226,17 @@ namespace ObjLoader.Services
                     rz = layer.RotationZ.GetValue((long)currentFrame, len, fps);
                 }
 
+                if (globalLiftY == null)
+                {
+                    double h = 0;
+                    if (settings.CoordinateSystem == CoordinateSystem.RightHandedZUp || settings.CoordinateSystem == CoordinateSystem.LeftHandedZUp)
+                        h = size.Z;
+                    else
+                        h = size.Y;
+
+                    globalLiftY = (h * scale / 100.0) / 2.0;
+                }
+
                 float fScale = (float)(scale / 100.0);
                 float fRx = (float)(rx * Math.PI / 180.0);
                 float fRy = (float)(ry * Math.PI / 180.0);
@@ -202,7 +247,7 @@ namespace ObjLoader.Services
 
                 var placement = Matrix4x4.CreateScale(fScale) * Matrix4x4.CreateRotationZ(fRz) * Matrix4x4.CreateRotationX(fRx) * Matrix4x4.CreateRotationY(fRy) * Matrix4x4.CreateTranslation(fTx, fTy, fTz);
 
-                localPlacements[layer.Guid] = (placement, layer.ParentGuid, layer, resource, h);
+                localPlacements[layer.Guid] = (placement, layer.ParentGuid, layer, resource);
             }
 
             var globalPlacements = new Dictionary<string, Matrix4x4>();
@@ -233,14 +278,15 @@ namespace ObjLoader.Services
                 var globalPlacement = GetGlobalPlacement(guid);
 
                 var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
-                normalize *= Matrix4x4.CreateTranslation(0, (float)(info.Height / 2.0), 0);
 
-                var finalWorld = normalize * axisConversion * globalPlacement;
+                var finalWorld = normalize * axisConversion * globalPlacement * Matrix4x4.CreateTranslation(0, (float)(globalLiftY ?? 0), 0);
 
-                bool isActive = (layer == _parameter.Layers[activeIndex]);
+                bool isActive = (activeLayer != null && layer == activeLayer);
                 bool lightEnabled = isActive ? _parameter.IsLightEnabled : layer.IsLightEnabled;
                 Color baseColor = isActive ? _parameter.BaseColor : layer.BaseColor;
-                int worldId = (int)(isActive ? _parameter.WorldId.GetValue((long)currentFrame, len, fps) : layer.WorldId.GetValue((long)currentFrame, len, fps));
+
+                double wIdVal = isActive ? _parameter.WorldId.GetValue((long)currentFrame, len, fps) : layer.WorldId.GetValue((long)currentFrame, len, fps);
+                int worldId = (int)wIdVal;
 
                 layers.Add(new LayerRenderData
                 {

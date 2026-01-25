@@ -49,21 +49,27 @@ namespace ObjLoader.Plugin
             {
                 if (Set(ref _filePath, value))
                 {
+                    SyncActiveLayer();
+                    EnsureLayers();
+
                     if (!IsSwitchingLayer && _updateSuspendCount == 0 && !string.IsNullOrEmpty(value) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
                     {
                         var layer = Layers[SelectedLayerIndex];
-                        if (layer.FilePath != value)
+                        var fileName = System.IO.Path.GetFileNameWithoutExtension(value);
+
+                        if (!string.IsNullOrEmpty(fileName))
                         {
-                            var fileName = System.IO.Path.GetFileNameWithoutExtension(value);
-                            if (!string.IsNullOrEmpty(fileName))
+                            if (layer.Name == "Default" || layer.Name == "Layer" || string.IsNullOrEmpty(layer.Name))
+                            {
+                                layer.Name = fileName;
+                            }
+                            else if (layer.FilePath != value)
                             {
                                 layer.Name = fileName;
                             }
                         }
                     }
 
-                    SyncActiveLayer();
-                    EnsureLayers();
                     UpdateLayerSignature();
                     ForceUpdate();
                     OnPropertyChanged(nameof(Layers));
@@ -267,22 +273,7 @@ namespace ObjLoader.Plugin
 
         private void Layers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.OldItems != null)
-            {
-                foreach (LayerData item in e.OldItems)
-                    item.PropertyChanged -= Layer_PropertyChanged;
-            }
-            if (e.NewItems != null)
-            {
-                foreach (LayerData item in e.NewItems)
-                    item.PropertyChanged += Layer_PropertyChanged;
-            }
             UpdateLayerSignature();
-            ForceUpdate();
-        }
-
-        private void Layer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-        {
             ForceUpdate();
         }
 
@@ -420,11 +411,6 @@ namespace ObjLoader.Plugin
                     _layerManager.LoadSharedData(layers);
                 }
                 _layerManager.Initialize(this);
-
-                foreach (var layer in Layers)
-                {
-                    layer.PropertyChanged += Layer_PropertyChanged;
-                }
             }
             finally
             {

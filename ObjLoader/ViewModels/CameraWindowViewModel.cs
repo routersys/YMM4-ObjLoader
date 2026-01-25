@@ -12,6 +12,7 @@ using YukkuriMovieMaker.Commons;
 using Microsoft.Win32;
 using System.IO;
 using System.Xml.Serialization;
+using System.Windows.Media;
 
 namespace ObjLoader.ViewModels
 {
@@ -119,12 +120,12 @@ namespace ObjLoader.ViewModels
         public bool IsTargetFree => !_isTargetFixed;
         public bool IsPilotFrameVisible => _cameraLogic.IsPilotView;
 
-        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamX = value; } } }
-        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamY = value; } } }
-        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamZ = value; } } }
-        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetX = value; } } }
-        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetY = value; } } }
-        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) { UpdateVisuals(); SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetZ = value; } } }
+        public double CamX { get => _cameraLogic.CamX; set { _cameraLogic.CamX = value; OnPropertyChanged(); UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo)); if (!_isUpdatingAnimation) { SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamX = value; } } }
+        public double CamY { get => _cameraLogic.CamY; set { _cameraLogic.CamY = value; OnPropertyChanged(); UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo)); if (!_isUpdatingAnimation) { SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamY = value; } } }
+        public double CamZ { get => _cameraLogic.CamZ; set { _cameraLogic.CamZ = value; OnPropertyChanged(); UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo)); if (!_isUpdatingAnimation) { SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.CamZ = value; } } }
+        public double TargetX { get => _cameraLogic.TargetX; set { _cameraLogic.TargetX = value; OnPropertyChanged(); UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo)); if (!_isUpdatingAnimation) { SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetX = value; } } }
+        public double TargetY { get => _cameraLogic.TargetY; set { _cameraLogic.TargetY = value; OnPropertyChanged(); UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo)); if (!_isUpdatingAnimation) { SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetY = value; } } }
+        public double TargetZ { get => _cameraLogic.TargetZ; set { _cameraLogic.TargetZ = value; OnPropertyChanged(); UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo)); if (!_isUpdatingAnimation) { SyncToParameter(); if (SelectedKeyframe != null) SelectedKeyframe.TargetZ = value; } } }
 
         public double ViewCenterX { get => _cameraLogic.ViewCenterX; set => _cameraLogic.ViewCenterX = value; }
         public double ViewCenterY { get => _cameraLogic.ViewCenterY; set => _cameraLogic.ViewCenterY = value; }
@@ -154,12 +155,12 @@ namespace ObjLoader.ViewModels
         public double TargetZMax { get => _targetZMax; set => Set(ref _targetZMax, value); }
         public string TargetZScaleInfo { get => _targetZScaleInfo; set => Set(ref _targetZScaleInfo, value); }
 
-        public bool IsGridVisible { get => _isGridVisible; set { Set(ref _isGridVisible, value); UpdateD3DScene(); } }
-        public bool IsInfiniteGrid { get => _isInfiniteGrid; set { Set(ref _isInfiniteGrid, value); UpdateD3DScene(); } }
-        public bool IsWireframe { get => _isWireframe; set { Set(ref _isWireframe, value); UpdateD3DScene(); } }
-        public bool IsPilotView { get => _cameraLogic.IsPilotView; set { _cameraLogic.IsPilotView = value; OnPropertyChanged(); UpdateVisuals(); OnPropertyChanged(nameof(IsPilotFrameVisible)); } }
+        public bool IsGridVisible { get => _isGridVisible; set { Set(ref _isGridVisible, value); } }
+        public bool IsInfiniteGrid { get => _isInfiniteGrid; set { Set(ref _isInfiniteGrid, value); } }
+        public bool IsWireframe { get => _isWireframe; set { Set(ref _isWireframe, value); } }
+        public bool IsPilotView { get => _cameraLogic.IsPilotView; set { _cameraLogic.IsPilotView = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsPilotFrameVisible)); } }
         public bool IsSnapping { get => _isSnapping; set => Set(ref _isSnapping, value); }
-        public bool IsTargetFixed { get => _isTargetFixed; set { if (Set(ref _isTargetFixed, value)) { OnPropertyChanged(nameof(IsTargetFree)); UpdateVisuals(); } } }
+        public bool IsTargetFixed { get => _isTargetFixed; set { if (Set(ref _isTargetFixed, value)) { OnPropertyChanged(nameof(IsTargetFree)); } } }
 
         public double CurrentTime
         {
@@ -253,7 +254,6 @@ namespace ObjLoader.ViewModels
             _cameraLogic.ViewCenterY = _cameraLogic.TargetY;
             _cameraLogic.ViewCenterZ = _cameraLogic.TargetZ;
 
-            _cameraLogic.Updated += UpdateVisuals;
             _animationManager.Tick += PlaybackTick;
 
             Keyframes = new ObservableCollection<CameraKeyframe>(_parameter.Keyframes);
@@ -289,20 +289,22 @@ namespace ObjLoader.ViewModels
             ViewCubeModel = GizmoBuilder.CreateViewCube(out _cubeFaces, out _cubeCorners);
             _renderService.Initialize();
             LoadModel();
-            UpdateVisuals();
+
+            CompositionTarget.Rendering += OnRendering;
         }
 
         partial void InitializeMenuItems();
+
+        private void OnRendering(object? sender, EventArgs e)
+        {
+            UpdateVisuals();
+        }
 
         private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(ObjLoaderParameter.Duration))
             {
                 MaxDuration = _parameter.Duration;
-            }
-            else if (e.PropertyName == nameof(ObjLoaderParameter.CurrentFrame))
-            {
-
             }
         }
 
@@ -534,14 +536,11 @@ namespace ObjLoader.ViewModels
                 TargetZ = state.tz;
                 _isUpdatingAnimation = false;
             }
-
-            UpdateVisuals();
         }
 
         public void UpdateThemeColor(System.Windows.Media.Color color)
         {
             _themeColor = color;
-            UpdateD3DScene();
         }
 
         public void ResizeViewport(int width, int height)
@@ -551,7 +550,6 @@ namespace ObjLoader.ViewModels
             if (height > 0) _aspectRatio = (double)width / height;
             _renderService.Resize(width, height);
             OnPropertyChanged(nameof(SceneImage));
-            UpdateVisuals();
         }
 
         public void UpdateVisuals()
@@ -564,7 +562,7 @@ namespace ObjLoader.ViewModels
         private void UpdateD3DScene()
         {
             bool isInteracting = !string.IsNullOrEmpty(HoveredDirectionName);
-            _sceneService.Render(Camera, CurrentTime, _viewportWidth, _viewportHeight, IsPilotView, _themeColor, _isWireframe, _isGridVisible, _isInfiniteGrid, isInteracting);
+            _sceneService.Render(Camera, CurrentTime, _viewportWidth, _viewportHeight, IsPilotView, _themeColor, _isWireframe, _isGridVisible, _isInfiniteGrid, false);
         }
 
         private void UpdateSceneCameraVisual()
@@ -601,8 +599,6 @@ namespace ObjLoader.ViewModels
             UpdateRange(TargetX, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo));
             UpdateRange(TargetY, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo));
             UpdateRange(TargetZ, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo));
-
-            UpdateVisuals();
         }
 
         private void ResetSceneCamera()
@@ -648,7 +644,7 @@ namespace ObjLoader.ViewModels
             {
                 CamX = s.cx; CamY = s.cy; CamZ = s.cz;
                 TargetX = s.tx; TargetY = s.ty; TargetZ = s.tz;
-                SyncToParameter(); UpdateVisuals();
+                SyncToParameter();
                 UndoCommand.RaiseCanExecuteChanged(); RedoCommand.RaiseCanExecuteChanged();
             }
         }
@@ -659,7 +655,7 @@ namespace ObjLoader.ViewModels
             {
                 CamX = s.cx; CamY = s.cy; CamZ = s.cz;
                 TargetX = s.tx; TargetY = s.ty; TargetZ = s.tz;
-                SyncToParameter(); UpdateVisuals();
+                SyncToParameter();
                 UndoCommand.RaiseCanExecuteChanged(); RedoCommand.RaiseCanExecuteChanged();
             }
         }
@@ -671,7 +667,6 @@ namespace ObjLoader.ViewModels
             _cameraLogic.ViewCenterX = TargetX;
             _cameraLogic.ViewCenterY = TargetY;
             _cameraLogic.ViewCenterZ = TargetZ;
-            UpdateVisuals();
         }
 
         public void AnimateView(double theta, double phi)
@@ -737,6 +732,7 @@ namespace ObjLoader.ViewModels
 
         public void Dispose()
         {
+            CompositionTarget.Rendering -= OnRendering;
             _renderService.Dispose();
             _sceneService.Dispose();
             _cameraLogic.StopAnimation();
