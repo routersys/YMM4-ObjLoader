@@ -139,7 +139,9 @@ namespace ObjLoader.Rendering
                 needsRedraw = true;
             }
 
-            var currentLayerStates = new Dictionary<string, LayerState>();
+            var preCalcStates = new List<(string Guid, LayerState State, LayerData Data)>();
+            var worldMasterLights = new Dictionary<int, LayerState>();
+            var activeGuid = _parameter.ActiveLayerGuid;
 
             foreach (var layer in _parameter.Layers)
             {
@@ -194,11 +196,37 @@ namespace ObjLoader.Rendering
                     ParentGuid = layer.ParentGuid
                 };
 
-                currentLayerStates[layer.Guid] = state;
+                preCalcStates.Add((layer.Guid, state, layer));
+
+                if (!worldMasterLights.ContainsKey(worldId))
+                {
+                    worldMasterLights[worldId] = state;
+                }
+                else if (layer.Guid == activeGuid)
+                {
+                    worldMasterLights[worldId] = state;
+                }
+            }
+
+            var currentLayerStates = new Dictionary<string, LayerState>();
+
+            foreach (var item in preCalcStates)
+            {
+                var state = item.State;
+                if (worldMasterLights.TryGetValue(state.WorldId, out var master))
+                {
+                    state.LightX = master.LightX;
+                    state.LightY = master.LightY;
+                    state.LightZ = master.LightZ;
+                    state.IsLightEnabled = master.IsLightEnabled;
+                    state.LightType = master.LightType;
+                }
+
+                currentLayerStates[item.Guid] = state;
 
                 if (!needsRedraw)
                 {
-                    if (!_layerStates.TryGetValue(layer.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref state))
+                    if (!_layerStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref state))
                     {
                         needsRedraw = true;
                     }
@@ -217,9 +245,9 @@ namespace ObjLoader.Rendering
 
             var layersToRender = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)>();
 
-            foreach (var layer in _parameter.Layers)
+            foreach (var item in preCalcStates)
             {
-                if (!currentLayerStates.TryGetValue(layer.Guid, out var state)) continue;
+                if (!currentLayerStates.TryGetValue(item.Guid, out var state)) continue;
 
                 bool effectiveVisibility = state.IsVisible;
                 var parentGuid = state.ParentGuid;
@@ -260,7 +288,7 @@ namespace ObjLoader.Rendering
 
                     if (resource != null)
                     {
-                        layersToRender.Add((layer, resource, state));
+                        layersToRender.Add((item.Data, resource, state));
                     }
                 }
             }

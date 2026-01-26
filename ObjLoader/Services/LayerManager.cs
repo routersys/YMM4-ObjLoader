@@ -138,6 +138,27 @@ namespace ObjLoader.Services
             if (targetLayer != null)
             {
                 CopyFromParameter(targetLayer, parameter);
+
+                var frame = (long)parameter.CurrentFrame;
+                var len = (int)(parameter.Duration * parameter.CurrentFPS);
+                var fps = parameter.CurrentFPS;
+
+                var activeWorldId = (int)parameter.WorldId.GetValue(frame, len, fps);
+
+                foreach (var l in Layers)
+                {
+                    if (l == targetLayer) continue;
+
+                    var lWorldId = (int)l.WorldId.GetValue(frame, len, fps);
+                    if (lWorldId == activeWorldId)
+                    {
+                        l.LightX.CopyFrom(parameter.LightX);
+                        l.LightY.CopyFrom(parameter.LightY);
+                        l.LightZ.CopyFrom(parameter.LightZ);
+                        l.LightType = parameter.LightType;
+                        l.IsLightEnabled = parameter.IsLightEnabled;
+                    }
+                }
             }
         }
 
