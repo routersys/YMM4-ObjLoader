@@ -296,3 +296,8 @@ Menu_Redo,Menu Item,やり直し,Redo,重做,重做,다시 실행,Rehacer,إعا
 Msg_ProjectFileFilter,Message,カメラプロジェクトファイル,Camera Project File,相机项目文件,相機專案檔,카메라 프로젝트 파일,Archivo de proyecto de cámara,ملف مشروع الكاميرا,File Proyek Kamera,
 Msg_FailedToLoad,Message,読み込みに失敗しました: {0},Failed to load: {0},加载失败: {0},載入失敗: {0},로드 실패: {0},Error al cargar: {0},فشل التحميل: {0},Gagal memuat: {0},
 Msg_FailedToSave,Message,保存に失敗しました: {0},Failed to save: {0},保存失败: {0},儲存失敗: {0},저장 실패: {0},Error al guardar: {0},فشل الحفظ: {0},Gagal menyimpan: {0},
+LightType,Light Type,ライトの種類,Light Type,灯光类型,燈光類型,조명 유형,Tipo de luz,نوع الضوء,Jenis Cahaya,
+LightType_Point,Enum Value,ポイント,Point,点光,點光,포인트,Punto,نقطة,Titik,
+LightType_Spot,Enum Value,スポット,Spot,聚光,聚光,스포트,Foco,بقعة,Spot,
+LightType_Sun,Enum Value,サン,Sun,日光,日光,태양,Sol,شمس,Matahari,
+LightType_Area,Enum Value,エリア,Area,区域,區域,영역,Área,منطقة,Area,

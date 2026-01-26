@@ -34,5 +34,6 @@ namespace ObjLoader.Core
         public Vector4 MonoParams;
         public Vector4 MonoColor;
         public Vector4 PosterizeParams;
+        public Vector4 LightTypeParams;
     }
 }

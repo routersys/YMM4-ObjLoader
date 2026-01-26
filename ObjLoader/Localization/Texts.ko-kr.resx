@@ -347,4 +347,9 @@
 <data name="Msg_ProjectFileFilter" xml:space="preserve"><value>카메라 프로젝트 파일</value></data>
 <data name="Msg_FailedToLoad" xml:space="preserve"><value>로드 실패: {0}</value></data>
 <data name="Msg_FailedToSave" xml:space="preserve"><value>저장 실패: {0}</value></data>
+<data name="LightType" xml:space="preserve"><value>조명 유형</value></data>
+<data name="LightType_Point" xml:space="preserve"><value>포인트</value></data>
+<data name="LightType_Spot" xml:space="preserve"><value>스포트</value></data>
+<data name="LightType_Sun" xml:space="preserve"><value>태양</value></data>
+<data name="LightType_Area" xml:space="preserve"><value>영역</value></data>
 </root>

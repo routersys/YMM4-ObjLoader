@@ -347,4 +347,9 @@
 <data name="Msg_ProjectFileFilter" xml:space="preserve"><value>カメラプロジェクトファイル</value></data>
 <data name="Msg_FailedToLoad" xml:space="preserve"><value>読み込みに失敗しました: {0}</value></data>
 <data name="Msg_FailedToSave" xml:space="preserve"><value>保存に失敗しました: {0}</value></data>
+<data name="LightType" xml:space="preserve"><value>ライトの種類</value></data>
+<data name="LightType_Point" xml:space="preserve"><value>ポイント</value></data>
+<data name="LightType_Spot" xml:space="preserve"><value>スポット</value></data>
+<data name="LightType_Sun" xml:space="preserve"><value>サン</value></data>
+<data name="LightType_Area" xml:space="preserve"><value>エリア</value></data>
 </root>

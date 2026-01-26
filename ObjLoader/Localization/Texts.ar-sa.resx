@@ -347,4 +347,9 @@
 <data name="Msg_ProjectFileFilter" xml:space="preserve"><value>ملف مشروع الكاميرا</value></data>
 <data name="Msg_FailedToLoad" xml:space="preserve"><value>فشل التحميل: {0}</value></data>
 <data name="Msg_FailedToSave" xml:space="preserve"><value>فشل الحفظ: {0}</value></data>
+<data name="LightType" xml:space="preserve"><value>نوع الضوء</value></data>
+<data name="LightType_Point" xml:space="preserve"><value>نقطة</value></data>
+<data name="LightType_Spot" xml:space="preserve"><value>بقعة</value></data>
+<data name="LightType_Sun" xml:space="preserve"><value>شمس</value></data>
+<data name="LightType_Area" xml:space="preserve"><value>منطقة</value></data>
 </root>

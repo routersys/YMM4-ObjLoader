@@ -159,6 +159,11 @@ namespace ObjLoader.Plugin
         public bool IsLightEnabled { get => _isLightEnabled; set => Set(ref _isLightEnabled, value); }
         private bool _isLightEnabled = false;
 
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightType), ResourceType = typeof(Texts))]
+        [EnumComboBox]
+        public LightType LightType { get => _lightType; set => Set(ref _lightType, value); }
+        private LightType _lightType = LightType.Point;
+
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightX), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation LightX { get; } = new Animation(0, -100000, 100000);

@@ -347,4 +347,9 @@
 <data name="Msg_ProjectFileFilter" xml:space="preserve"><value>相机项目文件</value></data>
 <data name="Msg_FailedToLoad" xml:space="preserve"><value>加载失败: {0}</value></data>
 <data name="Msg_FailedToSave" xml:space="preserve"><value>保存失败: {0}</value></data>
+<data name="LightType" xml:space="preserve"><value>灯光类型</value></data>
+<data name="LightType_Point" xml:space="preserve"><value>点光</value></data>
+<data name="LightType_Spot" xml:space="preserve"><value>聚光</value></data>
+<data name="LightType_Sun" xml:space="preserve"><value>日光</value></data>
+<data name="LightType_Area" xml:space="preserve"><value>区域</value></data>
 </root>

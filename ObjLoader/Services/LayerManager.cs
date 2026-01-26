@@ -51,7 +51,7 @@ namespace ObjLoader.Services
                 CopyFromParameter(defaultLayer, parameter);
                 Layers.Add(defaultLayer);
             }
-            
+
             if (Layers.Count > 0)
             {
                 var targetLayer = Layers.FirstOrDefault(l => l.Guid == parameter.ActiveLayerGuid);
@@ -60,7 +60,7 @@ namespace ObjLoader.Services
                 {
                     _activeLayer = targetLayer;
                     var newIndex = Layers.IndexOf(targetLayer);
-                    
+
                     if (_selectedLayerIndex != newIndex)
                     {
                         _selectedLayerIndex = newIndex;
@@ -80,11 +80,11 @@ namespace ObjLoader.Services
                 {
                     var maxIndex = Layers.Count - 1;
                     var targetIndex = Math.Clamp(parameter.SelectedLayerIndex, 0, maxIndex);
-                    
+
                     _selectedLayerIndex = targetIndex;
                     parameter.SelectedLayerIndex = targetIndex;
                     _activeLayer = Layers[_selectedLayerIndex];
-                    
+
                     parameter.ActiveLayerGuid = _activeLayer.Guid;
 
                     if (!string.IsNullOrEmpty(_activeLayer.FilePath))
@@ -158,7 +158,7 @@ namespace ObjLoader.Services
             if (Layers.Count == 0) return;
             var idx = Math.Clamp(_selectedLayerIndex, 0, Layers.Count - 1);
             var layer = Layers[idx];
-            
+
             _activeLayer = layer;
             parameter.ActiveLayerGuid = layer.Guid;
 
@@ -170,6 +170,7 @@ namespace ObjLoader.Services
             layer.FilePath = parameter.FilePath;
             layer.BaseColor = parameter.BaseColor;
             layer.IsLightEnabled = parameter.IsLightEnabled;
+            layer.LightType = parameter.LightType;
             layer.Projection = parameter.Projection;
 
             layer.X.CopyFrom(parameter.X);
@@ -191,6 +192,7 @@ namespace ObjLoader.Services
             parameter.FilePath = layer.FilePath;
             parameter.BaseColor = layer.BaseColor;
             parameter.IsLightEnabled = layer.IsLightEnabled;
+            parameter.LightType = layer.LightType;
             parameter.Projection = layer.Projection;
 
             parameter.X.CopyFrom(layer.X);

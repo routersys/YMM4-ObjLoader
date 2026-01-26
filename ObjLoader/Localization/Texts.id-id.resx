@@ -346,4 +346,9 @@
 <data name="Msg_ProjectFileFilter" xml:space="preserve"><value>File Proyek Kamera</value></data>
 <data name="Msg_FailedToLoad" xml:space="preserve"><value>Gagal memuat: {0}</value></data>
 <data name="Msg_FailedToSave" xml:space="preserve"><value>Gagal menyimpan: {0}</value></data>
+<data name="LightType" xml:space="preserve"><value>Jenis Cahaya</value></data>
+<data name="LightType_Point" xml:space="preserve"><value>Titik</value></data>
+<data name="LightType_Spot" xml:space="preserve"><value>Spot</value></data>
+<data name="LightType_Sun" xml:space="preserve"><value>Matahari</value></data>
+<data name="LightType_Area" xml:space="preserve"><value>Area</value></data>
 </root>

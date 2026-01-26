@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
+using ObjLoader.Settings;
 
 namespace ObjLoader.Core
 {
@@ -37,6 +38,9 @@ namespace ObjLoader.Core
 
         private bool _isLightEnabled = false;
         public bool IsLightEnabled { get => _isLightEnabled; set => Set(ref _isLightEnabled, value); }
+
+        private LightType _lightType = LightType.Point;
+        public LightType LightType { get => _lightType; set => Set(ref _lightType, value); }
 
         public Animation X { get; set; } = new Animation(0, -100000, 100000);
         public Animation Y { get; set; } = new Animation(0, -100000, 100000);
@@ -79,6 +83,7 @@ namespace ObjLoader.Core
                 FilePath = FilePath,
                 BaseColor = BaseColor,
                 IsLightEnabled = IsLightEnabled,
+                LightType = LightType,
                 Projection = Projection,
                 Thumbnail = Thumbnail,
                 ParentGuid = ParentGuid,

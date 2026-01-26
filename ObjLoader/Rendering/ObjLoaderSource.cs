@@ -47,6 +47,7 @@ namespace ObjLoader.Rendering
         {
             public double X, Y, Z, Scale, Rx, Ry, Rz, Cx, Cy, Cz, Fov, LightX, LightY, LightZ, Diffuse, Specular, Shininess;
             public bool IsLightEnabled;
+            public LightType LightType;
             public string FilePath, ShaderFilePath;
             public Color BaseColor, Ambient, Light;
             public ProjectionType Projection;
@@ -175,6 +176,7 @@ namespace ObjLoader.Rendering
                     LightY = ly,
                     LightZ = lz,
                     IsLightEnabled = layer.IsLightEnabled,
+                    LightType = layer.LightType,
                     FilePath = layer.FilePath?.Trim('"') ?? string.Empty,
                     ShaderFilePath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty,
                     BaseColor = layer.BaseColor,
@@ -283,7 +285,7 @@ namespace ObjLoader.Rendering
                    Math.Abs(a.Scale - b.Scale) < 1e-5 && Math.Abs(a.Rx - b.Rx) < 1e-5 && Math.Abs(a.Ry - b.Ry) < 1e-5 && Math.Abs(a.Rz - b.Rz) < 1e-5 &&
                    Math.Abs(a.Cx - b.Cx) < 1e-5 && Math.Abs(a.Cy - b.Cy) < 1e-5 && Math.Abs(a.Cz - b.Cz) < 1e-5 &&
                    Math.Abs(a.Fov - b.Fov) < 1e-5 && Math.Abs(a.LightX - b.LightX) < 1e-5 && Math.Abs(a.LightY - b.LightY) < 1e-5 && Math.Abs(a.LightZ - b.LightZ) < 1e-5 &&
-                   a.IsLightEnabled == b.IsLightEnabled && string.Equals(a.FilePath, b.FilePath, StringComparison.Ordinal) &&
+                   a.IsLightEnabled == b.IsLightEnabled && a.LightType == b.LightType && string.Equals(a.FilePath, b.FilePath, StringComparison.Ordinal) &&
                    string.Equals(a.ShaderFilePath, b.ShaderFilePath, StringComparison.Ordinal) && a.BaseColor == b.BaseColor &&
                    a.Projection == b.Projection && a.CoordSystem == b.CoordSystem && a.CullMode == b.CullMode &&
                    a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < 1e-5 &&
@@ -585,7 +587,8 @@ namespace ObjLoader.Rendering
                         ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
                         MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
                         MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
-                        PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0)
+                        PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
+                        LightTypeParams = new System.Numerics.Vector4((float)state.LightType, 0, 0, 0)
                     };
 
                     D3D11.MappedSubresource mapped;

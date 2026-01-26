@@ -347,4 +347,9 @@
 <data name="Msg_ProjectFileFilter" xml:space="preserve"><value>Archivo de proyecto de cámara</value></data>
 <data name="Msg_FailedToLoad" xml:space="preserve"><value>Error al cargar: {0}</value></data>
 <data name="Msg_FailedToSave" xml:space="preserve"><value>Error al guardar: {0}</value></data>
+<data name="LightType" xml:space="preserve"><value>Tipo de luz</value></data>
+<data name="LightType_Point" xml:space="preserve"><value>Punto</value></data>
+<data name="LightType_Spot" xml:space="preserve"><value>Foco</value></data>
+<data name="LightType_Sun" xml:space="preserve"><value>Sol</value></data>
+<data name="LightType_Area" xml:space="preserve"><value>Área</value></data>
 </root>

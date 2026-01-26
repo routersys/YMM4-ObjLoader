@@ -28,6 +28,7 @@ cbuffer CBuf : register(b0)
     float4 MonoParams;
     float4 MonoColor;
     float4 PosterizeParams;
+    float4 LightTypeParams;
 }
 
 Texture2D tex : register(t0);
@@ -62,7 +63,7 @@ float4 PS(PS_IN input) : SV_Target
 {
     float2 uv = input.uv;
     float4 texColor;
-    
+
     if (ChromAbParams.x > 0.5f)
     {
         float2 dist = uv - 0.5f;
@@ -84,11 +85,34 @@ float4 PS(PS_IN input) : SV_Target
 
     if (LightEnabled > 0.5f)
     {
-        float3 lightDir = normalize(LightPos.xyz - input.wPos);
-        
+        float3 lightDir;
+        float attenuation = 1.0f;
+        int type = (int) LightTypeParams.x;
+
+        if (type == 2)
+        {
+            lightDir = normalize(LightPos.xyz);
+        }
+        else
+        {
+            lightDir = normalize(LightPos.xyz - input.wPos);
+        }
+
+        if (type == 1)
+        {
+            float3 spotDir = normalize(-LightPos.xyz);
+            float cosAngle = dot(-lightDir, spotDir);
+            attenuation = smoothstep(0.86, 0.90, cosAngle);
+        }
+
         float NdotL = dot(n, lightDir);
         float diff = NdotL * 0.5f + 0.5f;
-        
+
+        if (type == 3)
+        {
+            diff = pow(diff, 0.5);
+        }
+
         if (ToonParams.x > 0.5f)
         {
             float steps = ToonParams.y;
@@ -97,19 +121,19 @@ float4 PS(PS_IN input) : SV_Target
         }
 
         float3 ambient = texColor.rgb * (AmbientColor.rgb + 0.3f);
-        float3 diffuse = texColor.rgb * LightColor.rgb * diff * DiffuseIntensity;
+        float3 diffuse = texColor.rgb * LightColor.rgb * diff * DiffuseIntensity * attenuation;
 
         float3 halfDir = normalize(lightDir + viewDir);
         float NdotH = max(dot(n, halfDir), 0.0f);
         float spec = pow(abs(NdotH), Shininess);
-        
+
         if (ToonParams.x > 0.5f)
         {
             float specSmooth = 0.01f;
             spec = smoothstep(0.5 - specSmooth, 0.5 + specSmooth, spec);
         }
 
-        float3 specular = LightColor.rgb * spec * SpecularIntensity;
+        float3 specular = LightColor.rgb * spec * SpecularIntensity * attenuation;
         finalColor = ambient + diffuse + specular;
         
         if (RimParams.x > 0.5f)
