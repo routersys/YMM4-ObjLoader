@@ -1,6 +1,7 @@
 ﻿using ObjLoader.Core;
 using ObjLoader.Settings;
 using System.Runtime.InteropServices;
+using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
@@ -38,6 +39,15 @@ namespace ObjLoader.Rendering
             get => _wireframeRasterizerState!;
             private set => _wireframeRasterizerState = value;
         }
+
+        public ID3D11Texture2D? ShadowMapTexture { get; private set; }
+        public ID3D11DepthStencilView? ShadowMapDSV { get; private set; }
+        public ID3D11ShaderResourceView? ShadowMapSRV { get; private set; }
+        public ID3D11SamplerState ShadowSampler { get; }
+        public ID3D11RasterizerState ShadowRasterizerState { get; }
+
+        private int _currentShadowMapSize = 0;
+        public int CurrentShadowMapSize => _currentShadowMapSize;
 
         private readonly DisposeCollector _disposer = new DisposeCollector();
         private RenderCullMode _currentCullMode;
@@ -164,7 +174,82 @@ namespace ObjLoader.Rendering
                 WhiteTextureView = device.CreateShaderResourceView(tex);
             }
             _disposer.Collect(WhiteTextureView);
+
+            var shadowSampDesc = new SamplerDescription(
+                Filter.ComparisonMinMagMipLinear,
+                TextureAddressMode.Border,
+                TextureAddressMode.Border,
+                TextureAddressMode.Border,
+                0,
+                0,
+                ComparisonFunction.Less,
+                new Vortice.Mathematics.Color4(1, 1, 1, 1),
+                0,
+                float.MaxValue);
+            ShadowSampler = device.CreateSamplerState(shadowSampDesc);
+            _disposer.Collect(ShadowSampler);
+
+            var shadowRasterDesc = new RasterizerDescription(CullMode.Front, FillMode.Solid)
+            {
+                DepthBias = 0,
+                SlopeScaledDepthBias = 0.0f,
+                MultisampleEnable = true,
+                AntialiasedLineEnable = true
+            };
+            ShadowRasterizerState = device.CreateRasterizerState(shadowRasterDesc);
+            _disposer.Collect(ShadowRasterizerState);
+
+            EnsureShadowMapSize(2048);
         }
+
+        public void EnsureShadowMapSize(int size)
+        {
+            if (_currentShadowMapSize == size && ShadowMapTexture != null) return;
+
+            _disposer.RemoveAndDispose(ref _shadowMapSRV);
+            _disposer.RemoveAndDispose(ref _shadowMapDSV);
+            _disposer.RemoveAndDispose(ref _shadowMapTexture);
+
+            _currentShadowMapSize = size;
+
+            var texDesc = new Texture2DDescription
+            {
+                Width = size,
+                Height = size,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = Format.R24G8_Typeless,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+                BindFlags = BindFlags.DepthStencil | BindFlags.ShaderResource,
+                CPUAccessFlags = CpuAccessFlags.None,
+                MiscFlags = ResourceOptionFlags.None
+            };
+
+            ShadowMapTexture = Device.CreateTexture2D(texDesc);
+            _disposer.Collect(ShadowMapTexture);
+
+            var dsvDesc = new DepthStencilViewDescription
+            {
+                Format = Format.D24_UNorm_S8_UInt,
+                ViewDimension = DepthStencilViewDimension.Texture2D
+            };
+            ShadowMapDSV = Device.CreateDepthStencilView(ShadowMapTexture, dsvDesc);
+            _disposer.Collect(ShadowMapDSV);
+
+            var srvDesc = new ShaderResourceViewDescription
+            {
+                Format = Format.R24_UNorm_X8_Typeless,
+                ViewDimension = ShaderResourceViewDimension.Texture2D,
+                Texture2D = new Texture2DShaderResourceView { MipLevels = 1 }
+            };
+            ShadowMapSRV = Device.CreateShaderResourceView(ShadowMapTexture, srvDesc);
+            _disposer.Collect(ShadowMapSRV);
+        }
+
+        private ID3D11Texture2D? _shadowMapTexture;
+        private ID3D11DepthStencilView? _shadowMapDSV;
+        private ID3D11ShaderResourceView? _shadowMapSRV;
 
         public void UpdateRasterizerState(RenderCullMode mode)
         {
@@ -208,6 +293,9 @@ namespace ObjLoader.Rendering
 
         public void Dispose()
         {
+            _disposer.RemoveAndDispose(ref _shadowMapSRV);
+            _disposer.RemoveAndDispose(ref _shadowMapDSV);
+            _disposer.RemoveAndDispose(ref _shadowMapTexture);
             _disposer.DisposeAndClear();
         }
     }

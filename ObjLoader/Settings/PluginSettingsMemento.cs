@@ -4,58 +4,65 @@ namespace ObjLoader.Settings
 {
     public class PluginSettingsMemento
     {
-        public CoordinateSystem CoordinateSystem;
-        public RenderCullMode CullMode;
-        public RenderQuality RenderQuality;
-        public bool AssimpObj;
-        public bool AssimpGlb;
-        public bool AssimpPly;
-        public bool AssimpStl;
-        public bool Assimp3mf;
-        public bool AssimpPmx;
-        public int WorldId;
+        public CoordinateSystem CoordinateSystem { get; set; }
+        public RenderCullMode CullMode { get; set; }
+        public RenderQuality RenderQuality { get; set; }
 
-        public List<WorldParameter> WorldParameters = new();
+        public bool ShadowMappingEnabled { get; set; }
+        public int ShadowResolution { get; set; }
+        public double ShadowBias { get; set; }
+        public double ShadowStrength { get; set; }
+        public double SunLightShadowRange { get; set; }
 
-        public List<Color>? AmbientColors;
-        public List<Color>? LightColors;
-        public List<double>? DiffuseIntensities;
-        public List<double>? SpecularIntensities;
-        public List<double>? Shininesses;
-        public List<bool>? ToonEnabled;
-        public List<int>? ToonSteps;
-        public List<double>? ToonSmoothness;
-        public List<bool>? OutlineEnabled;
-        public List<Color>? OutlineColor;
-        public List<double>? OutlineWidth;
-        public List<double>? OutlinePower;
-        public List<bool>? RimEnabled;
-        public List<Color>? RimColor;
-        public List<double>? RimIntensity;
-        public List<double>? RimPower;
-        public List<bool>? FogEnabled;
-        public List<Color>? FogColor;
-        public List<double>? FogStart;
-        public List<double>? FogEnd;
-        public List<double>? FogDensity;
-        public List<double>? Saturation;
-        public List<double>? Contrast;
-        public List<double>? Gamma;
-        public List<double>? BrightnessPost;
-        public List<bool>? VignetteEnabled;
-        public List<Color>? VignetteColor;
-        public List<double>? VignetteIntensity;
-        public List<double>? VignetteRadius;
-        public List<double>? VignetteSoftness;
-        public List<bool>? ChromAbEnabled;
-        public List<double>? ChromAbIntensity;
-        public List<bool>? ScanlineEnabled;
-        public List<double>? ScanlineIntensity;
-        public List<double>? ScanlineFrequency;
-        public List<bool>? MonochromeEnabled;
-        public List<Color>? MonochromeColor;
-        public List<double>? MonochromeMix;
-        public List<bool>? PosterizeEnabled;
-        public List<int>? PosterizeLevels;
+        public bool AssimpObj { get; set; }
+        public bool AssimpGlb { get; set; }
+        public bool AssimpPly { get; set; }
+        public bool AssimpStl { get; set; }
+        public bool Assimp3mf { get; set; }
+        public bool AssimpPmx { get; set; }
+
+        public int WorldId { get; set; }
+        public List<WorldParameter>? WorldParameters { get; set; }
+
+        public List<Color>? AmbientColors { get; set; }
+        public List<Color>? LightColors { get; set; }
+        public List<double>? DiffuseIntensities { get; set; }
+        public List<double>? SpecularIntensities { get; set; }
+        public List<double>? Shininesses { get; set; }
+        public List<bool>? ToonEnabled { get; set; }
+        public List<int>? ToonSteps { get; set; }
+        public List<double>? ToonSmoothness { get; set; }
+        public List<bool>? RimEnabled { get; set; }
+        public List<Color>? RimColor { get; set; }
+        public List<double>? RimIntensity { get; set; }
+        public List<double>? RimPower { get; set; }
+        public List<bool>? OutlineEnabled { get; set; }
+        public List<Color>? OutlineColor { get; set; }
+        public List<double>? OutlineWidth { get; set; }
+        public List<double>? OutlinePower { get; set; }
+        public List<bool>? FogEnabled { get; set; }
+        public List<Color>? FogColor { get; set; }
+        public List<double>? FogStart { get; set; }
+        public List<double>? FogEnd { get; set; }
+        public List<double>? FogDensity { get; set; }
+        public List<double>? Saturation { get; set; }
+        public List<double>? Contrast { get; set; }
+        public List<double>? Gamma { get; set; }
+        public List<double>? BrightnessPost { get; set; }
+        public List<bool>? VignetteEnabled { get; set; }
+        public List<Color>? VignetteColor { get; set; }
+        public List<double>? VignetteIntensity { get; set; }
+        public List<double>? VignetteRadius { get; set; }
+        public List<double>? VignetteSoftness { get; set; }
+        public List<bool>? ScanlineEnabled { get; set; }
+        public List<double>? ScanlineIntensity { get; set; }
+        public List<double>? ScanlineFrequency { get; set; }
+        public List<bool>? ChromAbEnabled { get; set; }
+        public List<double>? ChromAbIntensity { get; set; }
+        public List<bool>? MonochromeEnabled { get; set; }
+        public List<Color>? MonochromeColor { get; set; }
+        public List<double>? MonochromeMix { get; set; }
+        public List<bool>? PosterizeEnabled { get; set; }
+        public List<int>? PosterizeLevels { get; set; }
     }
 }

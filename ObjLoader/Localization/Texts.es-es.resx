@@ -352,4 +352,15 @@
 <data name="LightType_Spot" xml:space="preserve"><value>Foco</value></data>
 <data name="LightType_Sun" xml:space="preserve"><value>Sol</value></data>
 <data name="LightType_Area" xml:space="preserve"><value>Área</value></data>
+<data name="Shadow_Enabled" xml:space="preserve"><value>Habilitar sombra</value></data>
+<data name="Shadow_Resolution" xml:space="preserve"><value>Resolución de sombra</value></data>
+<data name="Shadow_Bias" xml:space="preserve"><value>Sesgo de sombra</value></data>
+<data name="Shadow_Strength" xml:space="preserve"><value>Fuerza de la sombra</value></data>
+<data name="SunLight_ShadowRange" xml:space="preserve"><value>Rango de sombra del sol</value></data>
+<data name="Group_Shadow" xml:space="preserve"><value>Configuración de sombras</value></data>
+<data name="Shadow_Enabled_Desc" xml:space="preserve"><value>Alternar renderizado de sombras.</value></data>
+<data name="Shadow_Resolution_Desc" xml:space="preserve"><value>Resolución de textura para mapeo de sombras.</value></data>
+<data name="Shadow_Bias_Desc" xml:space="preserve"><value>Desplazamiento para evitar el acné de sombra.</value></data>
+<data name="Shadow_Strength_Desc" xml:space="preserve"><value>Oscuridad de las sombras.</value></data>
+<data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>Tamaño del área cubierta por sombras solares.</value></data>
 </root>

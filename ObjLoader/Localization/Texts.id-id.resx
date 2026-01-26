@@ -351,4 +351,15 @@
 <data name="LightType_Spot" xml:space="preserve"><value>Spot</value></data>
 <data name="LightType_Sun" xml:space="preserve"><value>Matahari</value></data>
 <data name="LightType_Area" xml:space="preserve"><value>Area</value></data>
+<data name="Shadow_Enabled" xml:space="preserve"><value>Aktifkan Bayangan</value></data>
+<data name="Shadow_Resolution" xml:space="preserve"><value>Resolusi Bayangan</value></data>
+<data name="Shadow_Bias" xml:space="preserve"><value>Bias Bayangan</value></data>
+<data name="Shadow_Strength" xml:space="preserve"><value>Kekuatan Bayangan</value></data>
+<data name="SunLight_ShadowRange" xml:space="preserve"><value>Rentang Bayangan Matahari</value></data>
+<data name="Group_Shadow" xml:space="preserve"><value>Pengaturan Bayangan</value></data>
+<data name="Shadow_Enabled_Desc" xml:space="preserve"><value>Beralih rendering bayangan.</value></data>
+<data name="Shadow_Resolution_Desc" xml:space="preserve"><value>Resolusi tekstur untuk pemetaan bayangan.</value></data>
+<data name="Shadow_Bias_Desc" xml:space="preserve"><value>Offset untuk mencegah jerawat bayangan.</value></data>
+<data name="Shadow_Strength_Desc" xml:space="preserve"><value>Kegelapan bayangan.</value></data>
+<data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>Ukuran area yang dicakup oleh bayangan matahari.</value></data>
 </root>

@@ -352,4 +352,15 @@
 <data name="LightType_Spot" xml:space="preserve"><value>스포트</value></data>
 <data name="LightType_Sun" xml:space="preserve"><value>태양</value></data>
 <data name="LightType_Area" xml:space="preserve"><value>영역</value></data>
+<data name="Shadow_Enabled" xml:space="preserve"><value>그림자 사용</value></data>
+<data name="Shadow_Resolution" xml:space="preserve"><value>그림자 해상도</value></data>
+<data name="Shadow_Bias" xml:space="preserve"><value>그림자 바이어스</value></data>
+<data name="Shadow_Strength" xml:space="preserve"><value>그림자 강도</value></data>
+<data name="SunLight_ShadowRange" xml:space="preserve"><value>태양 그림자 범위</value></data>
+<data name="Group_Shadow" xml:space="preserve"><value>그림자 설정</value></data>
+<data name="Shadow_Enabled_Desc" xml:space="preserve"><value>그림자 렌더링 전환.</value></data>
+<data name="Shadow_Resolution_Desc" xml:space="preserve"><value>그림자 매핑을 위한 텍스처 해상도.</value></data>
+<data name="Shadow_Bias_Desc" xml:space="preserve"><value>그림자 여드름을 방지하기 위한 오프셋.</value></data>
+<data name="Shadow_Strength_Desc" xml:space="preserve"><value>그림자의 어두운 정도 설정.</value></data>
+<data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>태양 그림자가 커버하는 영역 크기.</value></data>
 </root>

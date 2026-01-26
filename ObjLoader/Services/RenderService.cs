@@ -26,6 +26,10 @@ namespace ObjLoader.Services
         public double HeightOffset;
         public HashSet<int>? VisibleParts;
         public Matrix4x4? WorldMatrixOverride;
+        public int LightType { get; set; }
+        public double LightX { get; set; }
+        public double LightY { get; set; }
+        public double LightZ { get; set; }
     }
 
     internal class RenderService : IDisposable
@@ -42,6 +46,19 @@ namespace ObjLoader.Services
         private ID3D11Buffer? _gridVertexBuffer;
         private int _viewportWidth;
         private int _viewportHeight;
+
+        private readonly ID3D11ShaderResourceView[] _nullSrv = new ID3D11ShaderResourceView[] { null! };
+        private readonly ID3D11Buffer[] _cbArray = new ID3D11Buffer[1];
+        private readonly ID3D11ShaderResourceView[] _texArray = new ID3D11ShaderResourceView[1];
+        private readonly ID3D11SamplerState[] _samplerArray = new ID3D11SamplerState[1];
+        private readonly ID3D11ShaderResourceView[] _shadowSrvArray = new ID3D11ShaderResourceView[1];
+        private readonly ID3D11SamplerState[] _shadowSamplerArray = new ID3D11SamplerState[1];
+        private readonly ID3D11Buffer[] _gridVbArray = new ID3D11Buffer[1];
+        private readonly int[] _gridStrideArray = new int[] { 12 };
+        private readonly int[] _gridOffsetArray = new int[] { 0 };
+        private readonly int[] _strideArray = new int[1];
+        private readonly int[] _offsetArray = new int[] { 0 };
+        private readonly ID3D11Buffer[] _vbArray = new ID3D11Buffer[1];
 
         private readonly List<int> _opaqueParts = new List<int>();
         private readonly List<TransparentPart> _transparentParts = new List<TransparentPart>();
@@ -82,6 +99,11 @@ namespace ObjLoader.Services
             {
                 fixed (float* p = gridVerts) _gridVertexBuffer = _device.CreateBuffer(vDesc, new SubresourceData(p));
             }
+
+            _cbArray[0] = _d3dResources.ConstantBuffer;
+            _samplerArray[0] = _d3dResources.SamplerState;
+            _shadowSamplerArray[0] = _d3dResources.ShadowSampler;
+            _gridVbArray[0] = _gridVertexBuffer;
         }
 
         public void Resize(int width, int height)
@@ -178,44 +200,27 @@ namespace ObjLoader.Services
         {
             if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
 
-            double brightness = themeColor.R * 0.299 + themeColor.G * 0.587 + themeColor.B * 0.114;
-            Color4 clearColor;
-            System.Numerics.Vector4 gridColor;
-            System.Numerics.Vector4 axisColor;
+            var settings = PluginSettings.Instance;
 
-            if (brightness < 20)
+            if (_cbArray[0] == null) _cbArray[0] = _d3dResources.ConstantBuffer;
+            if (_samplerArray[0] == null) _samplerArray[0] = _d3dResources.SamplerState;
+            if (_shadowSamplerArray[0] == null) _shadowSamplerArray[0] = _d3dResources.ShadowSampler;
+
+            _context.PSSetShaderResources(1, _nullSrv);
+
+            if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize)
             {
-                clearColor = new Color4(0.0f, 0.0f, 0.0f, 1.0f);
-                gridColor = new System.Numerics.Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-                axisColor = new System.Numerics.Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+                _d3dResources.EnsureShadowMapSize(settings.ShadowResolution);
+                _shadowSrvArray[0] = _d3dResources.ShadowMapSRV!;
             }
-            else if (brightness < 128)
+            else if (_shadowSrvArray[0] == null)
             {
-                clearColor = new Color4(0.13f, 0.13f, 0.13f, 1.0f);
-                gridColor = new System.Numerics.Vector4(0.65f, 0.65f, 0.65f, 1.0f);
-                axisColor = new System.Numerics.Vector4(0.9f, 0.9f, 0.9f, 1.0f);
-            }
-            else
-            {
-                clearColor = new Color4(0.9f, 0.9f, 0.9f, 1.0f);
-                gridColor = new System.Numerics.Vector4(0.4f, 0.4f, 0.4f, 1.0f);
-                axisColor = new System.Numerics.Vector4(0.1f, 0.1f, 0.1f, 1.0f);
+                _shadowSrvArray[0] = _d3dResources.ShadowMapSRV!;
             }
 
-            _context.OMSetRenderTargets(_rtv, _dsv);
-            _context.ClearRenderTargetView(_rtv, clearColor);
-            _context.ClearDepthStencilView(_dsv!, DepthStencilClearFlags.Depth, 1.0f, 0);
-
-            _context.RSSetState(isWireframe ? _d3dResources.WireframeRasterizerState : _d3dResources.RasterizerState);
-            _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
-            _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
-            _context.RSSetViewport(0, 0, _viewportWidth, _viewportHeight);
-
-            _transparentParts.Clear();
             var layerWorlds = new Matrix4x4[layers.Count];
             var layerWvps = new Matrix4x4[layers.Count];
 
-            var settings = PluginSettings.Instance;
             Matrix4x4 axisConversion = Matrix4x4.Identity;
             switch (settings.CoordinateSystem)
             {
@@ -258,9 +263,146 @@ namespace ObjLoader.Services
                 layerWvps[i] = wvp;
             }
 
+            Matrix4x4 lightViewProj = Matrix4x4.Identity;
+            bool renderShadowMap = false;
+
+            if (settings.ShadowMappingEnabled && _d3dResources.ShadowMapDSV != null)
+            {
+                LayerRenderData shadowCasterLayer = default;
+                bool foundCaster = false;
+
+                foreach (var l in layers)
+                {
+                    if (l.LightEnabled && (l.LightType == 1 || l.LightType == 2))
+                    {
+                        shadowCasterLayer = l;
+                        foundCaster = true;
+                        break;
+                    }
+                }
+
+                if (foundCaster)
+                {
+                    renderShadowMap = true;
+                    var lightPosVec = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
+
+                    Matrix4x4 lightView;
+                    Matrix4x4 lightProj;
+                    float shadowRange = (float)settings.SunLightShadowRange;
+
+                    if (shadowCasterLayer.LightType == 2)
+                    {
+                        var lightDir = System.Numerics.Vector3.Normalize(lightPosVec);
+                        if (lightDir.LengthSquared() < 0.0001f) lightDir = System.Numerics.Vector3.UnitY;
+
+                        var targetPos = System.Numerics.Vector3.Zero;
+                        var camPosShadow = targetPos + lightDir * shadowRange * 0.5f;
+
+                        lightView = Matrix4x4.CreateLookAt(camPosShadow, targetPos, System.Numerics.Vector3.UnitY);
+                        lightProj = Matrix4x4.CreateOrthographic(shadowRange, shadowRange, 1.0f, shadowRange * 2.0f);
+                    }
+                    else
+                    {
+                        var targetPos = System.Numerics.Vector3.Zero;
+                        lightView = Matrix4x4.CreateLookAt(lightPosVec, targetPos, System.Numerics.Vector3.UnitY);
+                        lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, 2000.0f);
+                    }
+
+                    lightViewProj = lightView * lightProj;
+
+                    _context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, _d3dResources.ShadowMapDSV);
+                    _context.ClearDepthStencilView(_d3dResources.ShadowMapDSV, DepthStencilClearFlags.Depth, 1.0f, 0);
+                    _context.RSSetState(_d3dResources.ShadowRasterizerState);
+                    _context.RSSetViewport(0, 0, settings.ShadowResolution, settings.ShadowResolution);
+                    _context.VSSetShader(_d3dResources.VertexShader);
+                    _context.PSSetShader(null);
+                    _context.IASetInputLayout(_d3dResources.InputLayout);
+                    _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+
+                    for (int i = 0; i < layers.Count; i++)
+                    {
+                        var layer = layers[i];
+                        if (!layer.LightEnabled) continue;
+                        if (layer.LightType == 0 && !foundCaster) continue;
+
+                        var modelResource = layer.Resource;
+                        var world = layerWorlds[i];
+                        var wvpShadow = world * lightViewProj;
+
+                        int stride = Unsafe.SizeOf<ObjVertex>();
+                        _vbArray[0] = modelResource.VertexBuffer;
+                        _strideArray[0] = stride;
+                        _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
+                        _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
+
+                        ConstantBufferData cbShadow = new ConstantBufferData
+                        {
+                            WorldViewProj = Matrix4x4.Transpose(wvpShadow),
+                            World = Matrix4x4.Transpose(world)
+                        };
+                        UpdateConstantBuffer(ref cbShadow);
+
+                        for (int p = 0; p < modelResource.Parts.Length; p++)
+                        {
+                            if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
+                            var part = modelResource.Parts[p];
+                            if (part.BaseColor.W >= 0.99f)
+                            {
+                                _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                            }
+                        }
+                    }
+                }
+            }
+
+            double brightness = themeColor.R * 0.299 + themeColor.G * 0.587 + themeColor.B * 0.114;
+            Color4 clearColor;
+            System.Numerics.Vector4 gridColor;
+            System.Numerics.Vector4 axisColor;
+
+            if (brightness < 20)
+            {
+                clearColor = new Color4(0.0f, 0.0f, 0.0f, 1.0f);
+                gridColor = new System.Numerics.Vector4(0.5f, 0.5f, 0.5f, 1.0f);
+                axisColor = new System.Numerics.Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+            }
+            else if (brightness < 128)
+            {
+                clearColor = new Color4(0.13f, 0.13f, 0.13f, 1.0f);
+                gridColor = new System.Numerics.Vector4(0.65f, 0.65f, 0.65f, 1.0f);
+                axisColor = new System.Numerics.Vector4(0.9f, 0.9f, 0.9f, 1.0f);
+            }
+            else
+            {
+                clearColor = new Color4(0.9f, 0.9f, 0.9f, 1.0f);
+                gridColor = new System.Numerics.Vector4(0.4f, 0.4f, 0.4f, 1.0f);
+                axisColor = new System.Numerics.Vector4(0.1f, 0.1f, 0.1f, 1.0f);
+            }
+
+            _context.OMSetRenderTargets(_rtv, _dsv);
+            _context.ClearRenderTargetView(_rtv, clearColor);
+            _context.ClearDepthStencilView(_dsv!, DepthStencilClearFlags.Depth, 1.0f, 0);
+
+            _context.RSSetState(isWireframe ? _d3dResources.WireframeRasterizerState : _d3dResources.RasterizerState);
+            _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
+            _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
+            _context.RSSetViewport(0, 0, _viewportWidth, _viewportHeight);
+
+            _transparentParts.Clear();
+
             _context.VSSetShader(_d3dResources.VertexShader);
             _context.PSSetShader(_d3dResources.PixelShader);
-            _context.PSSetSamplers(0, new[] { _d3dResources.SamplerState });
+            _context.PSSetSamplers(0, _samplerArray);
+            if (renderShadowMap)
+            {
+                _context.PSSetShaderResources(1, _shadowSrvArray);
+                _context.PSSetSamplers(1, _shadowSamplerArray);
+            }
+            else
+            {
+                _context.PSSetShaderResources(1, _nullSrv);
+            }
+
             _context.IASetInputLayout(_d3dResources.InputLayout);
             _context.IASetPrimitiveTopology(isInteracting ? PrimitiveTopology.PointList : PrimitiveTopology.TriangleList);
 
@@ -273,7 +415,9 @@ namespace ObjLoader.Services
                 int wId = layer.WorldId;
 
                 int stride = Unsafe.SizeOf<ObjVertex>();
-                _context.IASetVertexBuffers(0, 1, new[] { modelResource.VertexBuffer }, new[] { stride }, new[] { 0 });
+                _vbArray[0] = modelResource.VertexBuffer;
+                _strideArray[0] = stride;
+                _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
                 _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
 
                 for (int p = 0; p < modelResource.Parts.Length; p++)
@@ -289,7 +433,7 @@ namespace ObjLoader.Services
                     }
                     else
                     {
-                        DrawPart(layer, modelResource, p, world, wvp, wId, gridColor, axisColor, isInteracting);
+                        DrawPart(layer, modelResource, p, world, wvp, wId, gridColor, axisColor, isInteracting, lightViewProj);
                     }
                 }
             }
@@ -310,7 +454,7 @@ namespace ObjLoader.Services
                     if (layer.VisibleParts != null && !layer.VisibleParts.Contains(tp.PartIndex)) continue;
 
                     var resource = layer.Resource;
-                    DrawPart(layer, resource, tp.PartIndex, layerWorlds[tp.LayerIndex], layerWvps[tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting);
+                    DrawPart(layer, resource, tp.PartIndex, layerWorlds[tp.LayerIndex], layerWvps[tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj);
                 }
 
                 _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
@@ -324,7 +468,7 @@ namespace ObjLoader.Services
             {
                 _context.IASetInputLayout(_d3dResources.GridInputLayout);
                 _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-                _context.IASetVertexBuffers(0, 1, new[] { _gridVertexBuffer }, new[] { 12 }, new[] { 0 });
+                _context.IASetVertexBuffers(0, 1, _gridVbArray, _gridStrideArray, _gridOffsetArray);
                 _context.VSSetShader(_d3dResources.GridVertexShader);
                 _context.PSSetShader(_d3dResources.GridPixelShader);
                 _context.OMSetBlendState(_d3dResources.GridBlendState, new Color4(0, 0, 0, 0), -1);
@@ -351,6 +495,8 @@ namespace ObjLoader.Services
                 _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
             }
 
+            _context.PSSetShaderResources(1, _nullSrv);
+
             _context.ResolveSubresource(_resolveTexture!, 0, _renderTarget!, 0, Format.B8G8R8A8_UNorm);
             _context.CopyResource(_stagingTexture, _resolveTexture);
             var map = _context.Map(_stagingTexture, 0, MapMode.Read, D3D11MapFlags.None);
@@ -376,14 +522,16 @@ namespace ObjLoader.Services
             }
         }
 
-        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, Matrix4x4 world, Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting)
+        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, Matrix4x4 world, Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting, Matrix4x4 lightViewProj)
         {
             if (_context == null || _d3dResources == null) return;
 
             var settings = PluginSettings.Instance;
             var part = resource.Parts[partIndex];
             var texView = resource.PartTextures[partIndex];
-            _context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { texView != null ? texView! : _d3dResources.WhiteTextureView! });
+
+            _texArray[0] = texView != null ? texView! : _d3dResources.WhiteTextureView!;
+            _context.PSSetShaderResources(0, _texArray);
 
             System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
 
@@ -391,7 +539,7 @@ namespace ObjLoader.Services
             {
                 WorldViewProj = Matrix4x4.Transpose(wvp),
                 World = Matrix4x4.Transpose(world),
-                LightPos = new System.Numerics.Vector4(1, 1, 1, 0),
+                LightPos = new System.Numerics.Vector4((float)layer.LightX, (float)layer.LightY, (float)layer.LightZ, 1.0f),
                 BaseColor = part.BaseColor,
                 AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
                 LightColor = ToVec4(settings.GetLightColor(wId)),
@@ -416,7 +564,10 @@ namespace ObjLoader.Services
                 ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
                 MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
                 MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
-                PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0)
+                PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
+                LightTypeParams = new System.Numerics.Vector4(layer.LightType, 0, 0, 0),
+                LightViewProj = Matrix4x4.Transpose(lightViewProj),
+                ShadowParams = new System.Numerics.Vector4(settings.ShadowMappingEnabled ? 1 : 0, (float)settings.ShadowBias, (float)settings.ShadowStrength, settings.ShadowResolution)
             };
 
             UpdateConstantBuffer(ref cbData);
@@ -434,8 +585,8 @@ namespace ObjLoader.Services
             _context.Map(_d3dResources.ConstantBuffer, 0, MapMode.WriteDiscard, D3D11MapFlags.None, out mapped);
             unsafe { Unsafe.Copy(mapped.DataPointer.ToPointer(), ref data); }
             _context.Unmap(_d3dResources.ConstantBuffer, 0);
-            _context.VSSetConstantBuffers(0, new[] { _d3dResources.ConstantBuffer });
-            _context.PSSetConstantBuffers(0, new[] { _d3dResources.ConstantBuffer });
+            _context.VSSetConstantBuffers(0, _cbArray);
+            _context.PSSetConstantBuffers(0, _cbArray);
         }
 
         public void Dispose()

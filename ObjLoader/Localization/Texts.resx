@@ -352,4 +352,15 @@
 <data name="LightType_Spot" xml:space="preserve"><value>スポット</value></data>
 <data name="LightType_Sun" xml:space="preserve"><value>サン</value></data>
 <data name="LightType_Area" xml:space="preserve"><value>エリア</value></data>
+<data name="Shadow_Enabled" xml:space="preserve"><value>影を有効にする</value></data>
+<data name="Shadow_Resolution" xml:space="preserve"><value>影の解像度</value></data>
+<data name="Shadow_Bias" xml:space="preserve"><value>影のバイアス</value></data>
+<data name="Shadow_Strength" xml:space="preserve"><value>影の濃さ</value></data>
+<data name="SunLight_ShadowRange" xml:space="preserve"><value>サンの影の範囲</value></data>
+<data name="Group_Shadow" xml:space="preserve"><value>影設定</value></data>
+<data name="Shadow_Enabled_Desc" xml:space="preserve"><value>影の描画を切り替えます。</value></data>
+<data name="Shadow_Resolution_Desc" xml:space="preserve"><value>シャドウマッピングのテクスチャ解像度です。</value></data>
+<data name="Shadow_Bias_Desc" xml:space="preserve"><value>シャドウアクネを防ぐためのオフセットです。</value></data>
+<data name="Shadow_Strength_Desc" xml:space="preserve"><value>影の濃さを設定します。</value></data>
+<data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>サンライトの影がカバーする範囲の大きさです。</value></data>
 </root>

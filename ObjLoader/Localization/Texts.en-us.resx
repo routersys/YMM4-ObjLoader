@@ -352,4 +352,15 @@
 <data name="LightType_Spot" xml:space="preserve"><value>Spot</value></data>
 <data name="LightType_Sun" xml:space="preserve"><value>Sun</value></data>
 <data name="LightType_Area" xml:space="preserve"><value>Area</value></data>
+<data name="Shadow_Enabled" xml:space="preserve"><value>Enable Shadow</value></data>
+<data name="Shadow_Resolution" xml:space="preserve"><value>Shadow Resolution</value></data>
+<data name="Shadow_Bias" xml:space="preserve"><value>Shadow Bias</value></data>
+<data name="Shadow_Strength" xml:space="preserve"><value>Shadow Strength</value></data>
+<data name="SunLight_ShadowRange" xml:space="preserve"><value>Sun Shadow Range</value></data>
+<data name="Group_Shadow" xml:space="preserve"><value>Shadow Settings</value></data>
+<data name="Shadow_Enabled_Desc" xml:space="preserve"><value>Toggle shadow rendering.</value></data>
+<data name="Shadow_Resolution_Desc" xml:space="preserve"><value>Texture resolution for shadow mapping.</value></data>
+<data name="Shadow_Bias_Desc" xml:space="preserve"><value>Offset to prevent shadow acne.</value></data>
+<data name="Shadow_Strength_Desc" xml:space="preserve"><value>Darkness of the shadows.</value></data>
+<data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>Area size covered by sun shadows.</value></data>
 </root>

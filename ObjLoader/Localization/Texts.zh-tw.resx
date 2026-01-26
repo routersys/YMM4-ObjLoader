@@ -352,4 +352,15 @@
 <data name="LightType_Spot" xml:space="preserve"><value>聚光</value></data>
 <data name="LightType_Sun" xml:space="preserve"><value>日光</value></data>
 <data name="LightType_Area" xml:space="preserve"><value>區域</value></data>
+<data name="Shadow_Enabled" xml:space="preserve"><value>啟用陰影</value></data>
+<data name="Shadow_Resolution" xml:space="preserve"><value>陰影解析度</value></data>
+<data name="Shadow_Bias" xml:space="preserve"><value>陰影偏差</value></data>
+<data name="Shadow_Strength" xml:space="preserve"><value>陰影強度</value></data>
+<data name="SunLight_ShadowRange" xml:space="preserve"><value>日光陰影範圍</value></data>
+<data name="Group_Shadow" xml:space="preserve"><value>陰影設置</value></data>
+<data name="Shadow_Enabled_Desc" xml:space="preserve"><value>切換陰影渲染。</value></data>
+<data name="Shadow_Resolution_Desc" xml:space="preserve"><value>陰影貼圖的紋理分辨率。</value></data>
+<data name="Shadow_Bias_Desc" xml:space="preserve"><value>防止陰影痤瘡的偏移。</value></data>
+<data name="Shadow_Strength_Desc" xml:space="preserve"><value>設置陰影的深淺。</value></data>
+<data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>太陽陰影覆蓋的區域大小。</value></data>
 </root>
