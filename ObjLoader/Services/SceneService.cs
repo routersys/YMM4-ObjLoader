@@ -235,6 +235,8 @@ namespace ObjLoader.Services
                         h = size.Y;
 
                     globalLiftY = (h * scale / 100.0) / 2.0;
+                    ModelHeight = h * scale / 100.0;
+                    ModelScale *= scale / 100.0;
                 }
 
                 float fScale = (float)(scale / 100.0);

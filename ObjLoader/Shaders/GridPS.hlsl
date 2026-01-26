@@ -35,12 +35,10 @@ float4 PS(PS_IN input) : SV_Target
     float2 axisDist = axis / derivative;
     float axisLine = min(axisDist.x, axisDist.y);
     float axisAlpha = saturate(1.5 - axisLine);
-    
     color = lerp(color, GridAxisColor, axisAlpha);
 
     float dist = length(CameraPos.xz - pos.xz);
-    float scaleX = length(float3(World[0][0], World[0][1], World[0][2]));
-    if (scaleX > 0.5)
+    if (Shininess > 0.5)
     {
         color.a *= max(0.0, 1.0 - dist / 100.0);
     }

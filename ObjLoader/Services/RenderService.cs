@@ -270,12 +270,15 @@ namespace ObjLoader.Services
             {
                 LayerRenderData shadowCasterLayer = default;
                 bool foundCaster = false;
+                Matrix4x4 shadowCasterWorld = Matrix4x4.Identity;
 
-                foreach (var l in layers)
+                for (int i = 0; i < layers.Count; i++)
                 {
+                    var l = layers[i];
                     if (l.LightEnabled && (l.LightType == 1 || l.LightType == 2))
                     {
                         shadowCasterLayer = l;
+                        shadowCasterWorld = layerWorlds[i];
                         foundCaster = true;
                         break;
                     }
@@ -284,7 +287,14 @@ namespace ObjLoader.Services
                 if (foundCaster)
                 {
                     renderShadowMap = true;
-                    var lightPosVec = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
+
+                    var rawLightPos = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
+                    System.Numerics.Vector3 lightPosVec;
+
+                    if (shadowCasterLayer.LightType == 2)
+                        lightPosVec = System.Numerics.Vector3.TransformNormal(rawLightPos, shadowCasterWorld);
+                    else
+                        lightPosVec = System.Numerics.Vector3.Transform(rawLightPos, shadowCasterWorld);
 
                     Matrix4x4 lightView;
                     Matrix4x4 lightProj;
@@ -487,7 +497,8 @@ namespace ObjLoader.Services
                     World = Matrix4x4.Transpose(gridWorld),
                     CameraPos = new System.Numerics.Vector4(camPos, 1),
                     GridColor = gridColor,
-                    GridAxisColor = axisColor
+                    GridAxisColor = axisColor,
+                    Shininess = isInfiniteGrid ? 1.0f : 0.0f
                 };
                 UpdateConstantBuffer(ref gridCb);
                 _context.Draw(6, 0);
@@ -535,11 +546,18 @@ namespace ObjLoader.Services
 
             System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
 
+            var rawLightPos = new System.Numerics.Vector3((float)layer.LightX, (float)layer.LightY, (float)layer.LightZ);
+            System.Numerics.Vector3 finalLightPos;
+            if (layer.LightType == 2)
+                finalLightPos = System.Numerics.Vector3.TransformNormal(rawLightPos, world);
+            else
+                finalLightPos = System.Numerics.Vector3.Transform(rawLightPos, world);
+
             ConstantBufferData cbData = new ConstantBufferData
             {
                 WorldViewProj = Matrix4x4.Transpose(wvp),
                 World = Matrix4x4.Transpose(world),
-                LightPos = new System.Numerics.Vector4((float)layer.LightX, (float)layer.LightY, (float)layer.LightZ, 1.0f),
+                LightPos = new System.Numerics.Vector4(finalLightPos, 1.0f),
                 BaseColor = part.BaseColor,
                 AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
                 LightColor = ToVec4(settings.GetLightColor(wId)),
