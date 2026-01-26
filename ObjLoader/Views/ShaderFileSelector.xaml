@@ -15,7 +15,8 @@
         <ComboBox Grid.Column="0" 
                   ItemsSource="{Binding Files}" 
                   SelectedItem="{Binding SelectedFile}"
-                  HorizontalContentAlignment="Stretch">
+                  HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Center">
             <ComboBox.ItemTemplate>
                 <DataTemplate>
                     <Grid ToolTip="{Binding StatusMessage}">
