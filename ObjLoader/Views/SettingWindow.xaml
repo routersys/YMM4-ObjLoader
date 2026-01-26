@@ -40,6 +40,7 @@
                         <ColumnDefinition Width="60"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
+
                     <Slider Grid.Column="0" Value="{Binding Value}" Minimum="{Binding Min}" Maximum="{Binding Max}" TickFrequency="{Binding Tick}" IsSnapToTickEnabled="True" VerticalAlignment="Center"/>
                     <TextBox Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBox.Style>
@@ -96,7 +97,19 @@
         <DataTemplate x:Key="ColorTemplate" DataType="{x:Type infra:ColorSettingViewModel}">
             <DockPanel Margin="0,5" Background="Transparent">
                 <TextBlock Text="{Binding Label}" DockPanel.Dock="Top" Margin="0,0,0,2"/>
-                <c:ColorPicker Value="{Binding ColorValue, Mode=TwoWay}" Height="26" HorizontalAlignment="Stretch" Margin="0,0,8,0" IsEnabled="{Binding IsEnabled}"/>
+                <ToolBar Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0" HorizontalAlignment="Stretch">
+                    <ToolBar.Template>
+                        <ControlTemplate TargetType="ToolBar">
+                            <ItemsPresenter/>
+                        </ControlTemplate>
+                    </ToolBar.Template>
+                    <ToolBar.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid/>
+                        </ItemsPanelTemplate>
+                    </ToolBar.ItemsPanel>
+                    <c:ColorPicker Value="{Binding ColorValue, Mode=TwoWay}" Height="26" HorizontalAlignment="Stretch" IsEnabled="{Binding IsEnabled}"/>
+                </ToolBar>
             </DockPanel>
         </DataTemplate>
 
