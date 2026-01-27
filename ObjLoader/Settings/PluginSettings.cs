@@ -78,6 +78,7 @@ namespace ObjLoader.Settings
                 CullMode = _cullMode,
                 RenderQuality = _renderQuality,
                 ShadowMappingEnabled = _shadowMappingEnabled,
+                CascadedShadowsEnabled = _cascadedShadowsEnabled,
                 ShadowResolution = _shadowResolution,
                 ShadowBias = _shadowBias,
                 ShadowStrength = _shadowStrength,
@@ -99,6 +100,7 @@ namespace ObjLoader.Settings
             _cullMode = m.CullMode;
             _renderQuality = m.RenderQuality;
             _shadowMappingEnabled = m.ShadowMappingEnabled;
+            _cascadedShadowsEnabled = m.CascadedShadowsEnabled;
             _shadowResolution = m.ShadowResolution > 0 ? m.ShadowResolution : 2048;
             _shadowBias = m.ShadowBias;
             _shadowStrength = m.ShadowStrength;
@@ -311,6 +313,7 @@ namespace ObjLoader.Settings
             {
                 if (SetProperty(ref _worldId, value))
                 {
+                    OnPropertyChanged(nameof(PostEffectWorldId));
                     NotifyWorldPropertiesChanged();
                 }
             }
@@ -476,6 +479,13 @@ namespace ObjLoader.Settings
         }
 
         [SettingGroup("PostEffect", nameof(Texts.Group_PostEffect), Order = 8, Icon = "M2,2V22H22V2H2M20,20H4V4H20V20M8,6H16V14H8V6M10,8V12H14V8H10Z", ResourceType = typeof(Texts))]
+        [IntSpinnerSetting("PostEffect", nameof(Texts.WorldId), 0, 19, IsGroupHeader = true, Description = nameof(Texts.WorldId_Desc), ResourceType = typeof(Texts))]
+        public int PostEffectWorldId
+        {
+            get => WorldId;
+            set => WorldId = value;
+        }
+
         [RangeSetting("PostEffect", nameof(Texts.Saturation), 0, 3, Tick = 0.1, Description = nameof(Texts.Saturation_Desc), ResourceType = typeof(Texts))]
         public double Saturation
         {
