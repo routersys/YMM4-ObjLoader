@@ -363,4 +363,8 @@
 <data name="Shadow_Bias_Desc" xml:space="preserve"><value>Desplazamiento para evitar el acné de sombra.</value></data>
 <data name="Shadow_Strength_Desc" xml:space="preserve"><value>Oscuridad de las sombras.</value></data>
 <data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>Tamaño del área cubierta por sombras solares.</value></data>
+<data name="ShadowMode" xml:space="preserve"><value>Generación de sombras</value></data>
+<data name="ShadowMode_Desc" xml:space="preserve"><value>Alterna la generación de sombras para esta configuración de ID de mundo.</value></data>
+<data name="CascadedShadows" xml:space="preserve"><value>Sombras en cascada</value></data>
+<data name="CascadedShadows_Desc" xml:space="preserve"><value>Habilita mapas de sombras en cascada para mejorar la calidad de las sombras.</value></data>
 </root>

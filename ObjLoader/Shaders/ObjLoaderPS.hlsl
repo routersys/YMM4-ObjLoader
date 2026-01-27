@@ -29,13 +29,16 @@ cbuffer CBuf : register(b0)
     float4 MonoColor;
     float4 PosterizeParams;
     float4 LightTypeParams;
-    matrix LightViewProj;
+    matrix LightViewProj0;
+    matrix LightViewProj1;
+    matrix LightViewProj2;
     float4 ShadowParams;
+    float4 CascadeSplits;
 }
 
 Texture2D tex : register(t0);
 SamplerState sam : register(s0);
-Texture2D ShadowMap : register(t1);
+Texture2DArray ShadowMap : register(t1);
 SamplerComparisonState ShadowSampler : register(s1);
 
 struct PS_IN
@@ -44,7 +47,6 @@ struct PS_IN
     float3 wPos : TEXCOORD1;
     float3 norm : NORMAL;
     float2 uv : TEXCOORD0;
-    float4 lightPos : TEXCOORD3;
 };
 
 float3 RGBtoHSV(float3 c)
@@ -64,11 +66,28 @@ float3 HSVtoRGB(float3 c)
     return c.z * lerp(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-float CalculateShadow(float4 lpos, float bias)
+float CalculateShadow(float3 wPos, float bias)
 {
+    float dist = distance(wPos, CameraPos.xyz);
+    int cascadeIndex = 0;
+    matrix lightVP = LightViewProj0;
+    
+    if (dist > CascadeSplits.x)
+    {
+        cascadeIndex = 1;
+        lightVP = LightViewProj1;
+    }
+    if (dist > CascadeSplits.y)
+    {
+        cascadeIndex = 2;
+        lightVP = LightViewProj2;
+    }
+    
+    float4 lpos = mul(float4(wPos, 1.0f), lightVP);
     float3 projCoords = lpos.xyz / lpos.w;
     projCoords.x = projCoords.x * 0.5 + 0.5;
     projCoords.y = -projCoords.y * 0.5 + 0.5;
+
     if (projCoords.z > 1.0 || projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
     {
         return 1.0;
@@ -77,13 +96,14 @@ float CalculateShadow(float4 lpos, float bias)
     float currentDepth = projCoords.z;
     float shadow = 0.0;
     float2 texelSize = 1.0 / ShadowParams.w;
+
     [unroll]
     for (int x = -1; x <= 1; ++x)
     {
         [unroll]
         for (int y = -1; y <= 1; ++y)
         {
-            shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, projCoords.xy + float2(x, y) * texelSize, currentDepth - bias);
+            shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + float2(x, y) * texelSize, cascadeIndex), currentDepth - bias);
         }
     }
     
@@ -112,6 +132,7 @@ float4 PS(PS_IN input) : SV_Target
     float3 finalColor;
     float3 n = normalize(input.norm);
     float3 viewDir = normalize(CameraPos.xyz - input.wPos);
+    
     if (LightEnabled > 0.5f)
     {
         float3 lightDir;
@@ -159,7 +180,7 @@ float4 PS(PS_IN input) : SV_Target
         if (ShadowParams.x > 0.5f && (type == 1 || type == 2))
         {
             float bias = max(ShadowParams.y * (1.0 - NdotL), ShadowParams.y * 0.1);
-            float sVal = CalculateShadow(input.lightPos, bias);
+            float sVal = CalculateShadow(input.wPos, bias);
             shadow = lerp(1.0 - ShadowParams.z, 1.0, sVal);
         }
 

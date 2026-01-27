@@ -25,6 +25,7 @@ namespace ObjLoader.Settings
         private double _shadowBias = 0.001;
         private double _shadowStrength = 0.5;
         private double _sunLightShadowRange = 100.0;
+        private bool _cascadedShadowsEnabled = false;
 
         private bool _assimpObj = false;
         private bool _assimpGlb = false;
@@ -189,6 +190,7 @@ namespace ObjLoader.Settings
         public double GetDiffuseIntensity(int id) => GetWorld(id).Lighting.DiffuseIntensity;
         public double GetSpecularIntensity(int id) => GetWorld(id).Lighting.SpecularIntensity;
         public double GetShininess(int id) => GetWorld(id).Lighting.Shininess;
+        public bool GetShadowEnabled(int id) => GetWorld(id).Lighting.ShadowEnabled;
 
         public bool GetToonEnabled(int id) => GetWorld(id).Toon.Enabled;
         public int GetToonSteps(int id) => GetWorld(id).Toon.Steps;
@@ -265,6 +267,13 @@ namespace ObjLoader.Settings
             set => SetProperty(ref _shadowMappingEnabled, value);
         }
 
+        [BoolSetting("Shadow", nameof(Texts.CascadedShadows), Description = nameof(Texts.CascadedShadows_Desc), ResourceType = typeof(Texts))]
+        public bool CascadedShadowsEnabled
+        {
+            get => _cascadedShadowsEnabled;
+            set => SetProperty(ref _cascadedShadowsEnabled, value);
+        }
+
         [RangeSetting("Shadow", nameof(Texts.Shadow_Resolution), 512, 8192, Tick = 128, EnableBy = nameof(ShadowMappingEnabled), Description = nameof(Texts.Shadow_Resolution_Desc), ResourceType = typeof(Texts))]
         public int ShadowResolution
         {
@@ -305,6 +314,13 @@ namespace ObjLoader.Settings
                     NotifyWorldPropertiesChanged();
                 }
             }
+        }
+
+        [BoolSetting("Lighting", nameof(Texts.ShadowMode), Description = nameof(Texts.ShadowMode_Desc), ResourceType = typeof(Texts))]
+        public bool ShadowEnabled
+        {
+            get => CurrentWorld.Lighting.ShadowEnabled;
+            set { if (CurrentWorld.Lighting.ShadowEnabled != value) { CurrentWorld.Lighting.ShadowEnabled = value; OnPropertyChanged(); } }
         }
 
         [ColorSetting("Lighting", nameof(Texts.AmbientColor), Description = nameof(Texts.AmbientColor_Desc), ResourceType = typeof(Texts))]
@@ -622,6 +638,7 @@ namespace ObjLoader.Settings
             CullMode = RenderCullMode.None;
             RenderQuality = RenderQuality.Standard;
             ShadowMappingEnabled = true;
+            CascadedShadowsEnabled = false;
             ShadowResolution = 2048;
             ShadowBias = 0.001;
             ShadowStrength = 0.5;
@@ -693,6 +710,7 @@ namespace ObjLoader.Settings
 
     public class LightingSettings : ICloneable
     {
+        public bool ShadowEnabled { get; set; } = true;
         public Color AmbientColor { get; set; } = Color.FromRgb(50, 50, 50);
         public Color LightColor { get; set; } = Colors.White;
         public double DiffuseIntensity { get; set; } = 1.0;

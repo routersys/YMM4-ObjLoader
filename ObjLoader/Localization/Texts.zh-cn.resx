@@ -363,4 +363,8 @@
 <data name="Shadow_Bias_Desc" xml:space="preserve"><value>防止阴影痤疮的偏移。</value></data>
 <data name="Shadow_Strength_Desc" xml:space="preserve"><value>设置阴影的深浅。</value></data>
 <data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>太阳阴影覆盖的区域大小。</value></data>
+<data name="ShadowMode" xml:space="preserve"><value>阴影生成</value></data>
+<data name="ShadowMode_Desc" xml:space="preserve"><value>切换此世界ID设置的阴影生成。</value></data>
+<data name="CascadedShadows" xml:space="preserve"><value>级联阴影</value></data>
+<data name="CascadedShadows_Desc" xml:space="preserve"><value>启用级联阴影贴图以提高阴影质量。</value></data>
 </root>

@@ -363,4 +363,8 @@
 <data name="Shadow_Bias_Desc" xml:space="preserve"><value>シャドウアクネを防ぐためのオフセットです。</value></data>
 <data name="Shadow_Strength_Desc" xml:space="preserve"><value>影の濃さを設定します。</value></data>
 <data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>サンライトの影がカバーする範囲の大きさです。</value></data>
+<data name="ShadowMode" xml:space="preserve"><value>影の生成</value></data>
+<data name="ShadowMode_Desc" xml:space="preserve"><value>このワールドID設定での影の有効・無効を切り替えます。</value></data>
+<data name="CascadedShadows" xml:space="preserve"><value>カスケードシャドウ</value></data>
+<data name="CascadedShadows_Desc" xml:space="preserve"><value>カスケードシャドウマップを有効にし、影の品質を向上させます。</value></data>
 </root>

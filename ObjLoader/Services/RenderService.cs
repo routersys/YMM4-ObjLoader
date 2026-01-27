@@ -208,9 +208,10 @@ namespace ObjLoader.Services
 
             _context.PSSetShaderResources(1, _nullSrv);
 
-            if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize)
+            bool useCascaded = settings.CascadedShadowsEnabled;
+            if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
             {
-                _d3dResources.EnsureShadowMapSize(settings.ShadowResolution);
+                _d3dResources.EnsureShadowMapSize(settings.ShadowResolution, useCascaded);
                 _shadowSrvArray[0] = _d3dResources.ShadowMapSRV!;
             }
             else if (_shadowSrvArray[0] == null)
@@ -266,7 +267,7 @@ namespace ObjLoader.Services
             Matrix4x4 lightViewProj = Matrix4x4.Identity;
             bool renderShadowMap = false;
 
-            if (settings.ShadowMappingEnabled && _d3dResources.ShadowMapDSV != null)
+            if (settings.ShadowMappingEnabled && _d3dResources.ShadowMapDSVs != null && _d3dResources.ShadowMapDSVs.Length > 0)
             {
                 LayerRenderData shadowCasterLayer = default;
                 bool foundCaster = false;
@@ -286,79 +287,82 @@ namespace ObjLoader.Services
 
                 if (foundCaster)
                 {
-                    renderShadowMap = true;
-
-                    var rawLightPos = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
-                    System.Numerics.Vector3 lightPosVec;
-
-                    if (shadowCasterLayer.LightType == 2)
-                        lightPosVec = System.Numerics.Vector3.TransformNormal(rawLightPos, shadowCasterWorld);
-                    else
-                        lightPosVec = System.Numerics.Vector3.Transform(rawLightPos, shadowCasterWorld);
-
-                    Matrix4x4 lightView;
-                    Matrix4x4 lightProj;
-                    float shadowRange = (float)settings.SunLightShadowRange;
-
-                    if (shadowCasterLayer.LightType == 2)
+                    if (settings.GetShadowEnabled(shadowCasterLayer.WorldId))
                     {
-                        var lightDir = System.Numerics.Vector3.Normalize(lightPosVec);
-                        if (lightDir.LengthSquared() < 0.0001f) lightDir = System.Numerics.Vector3.UnitY;
+                        renderShadowMap = true;
 
-                        var targetPos = System.Numerics.Vector3.Zero;
-                        var camPosShadow = targetPos + lightDir * shadowRange * 0.5f;
+                        var rawLightPos = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
+                        System.Numerics.Vector3 lightPosVec;
 
-                        lightView = Matrix4x4.CreateLookAt(camPosShadow, targetPos, System.Numerics.Vector3.UnitY);
-                        lightProj = Matrix4x4.CreateOrthographic(shadowRange, shadowRange, 1.0f, shadowRange * 2.0f);
-                    }
-                    else
-                    {
-                        var targetPos = System.Numerics.Vector3.Zero;
-                        lightView = Matrix4x4.CreateLookAt(lightPosVec, targetPos, System.Numerics.Vector3.UnitY);
-                        lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, 2000.0f);
-                    }
+                        if (shadowCasterLayer.LightType == 2)
+                            lightPosVec = System.Numerics.Vector3.TransformNormal(rawLightPos, shadowCasterWorld);
+                        else
+                            lightPosVec = System.Numerics.Vector3.Transform(rawLightPos, shadowCasterWorld);
 
-                    lightViewProj = lightView * lightProj;
+                        Matrix4x4 lightView;
+                        Matrix4x4 lightProj;
+                        float shadowRange = (float)settings.SunLightShadowRange;
 
-                    _context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, _d3dResources.ShadowMapDSV);
-                    _context.ClearDepthStencilView(_d3dResources.ShadowMapDSV, DepthStencilClearFlags.Depth, 1.0f, 0);
-                    _context.RSSetState(_d3dResources.ShadowRasterizerState);
-                    _context.RSSetViewport(0, 0, settings.ShadowResolution, settings.ShadowResolution);
-                    _context.VSSetShader(_d3dResources.VertexShader);
-                    _context.PSSetShader(null);
-                    _context.IASetInputLayout(_d3dResources.InputLayout);
-                    _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-
-                    for (int i = 0; i < layers.Count; i++)
-                    {
-                        var layer = layers[i];
-                        if (!layer.LightEnabled) continue;
-                        if (layer.LightType == 0 && !foundCaster) continue;
-
-                        var modelResource = layer.Resource;
-                        var world = layerWorlds[i];
-                        var wvpShadow = world * lightViewProj;
-
-                        int stride = Unsafe.SizeOf<ObjVertex>();
-                        _vbArray[0] = modelResource.VertexBuffer;
-                        _strideArray[0] = stride;
-                        _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
-                        _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
-
-                        ConstantBufferData cbShadow = new ConstantBufferData
+                        if (shadowCasterLayer.LightType == 2)
                         {
-                            WorldViewProj = Matrix4x4.Transpose(wvpShadow),
-                            World = Matrix4x4.Transpose(world)
-                        };
-                        UpdateConstantBuffer(ref cbShadow);
+                            var lightDir = System.Numerics.Vector3.Normalize(lightPosVec);
+                            if (lightDir.LengthSquared() < 0.0001f) lightDir = System.Numerics.Vector3.UnitY;
 
-                        for (int p = 0; p < modelResource.Parts.Length; p++)
+                            var targetPos = System.Numerics.Vector3.Zero;
+                            var camPosShadow = targetPos + lightDir * shadowRange * 0.5f;
+
+                            lightView = Matrix4x4.CreateLookAt(camPosShadow, targetPos, System.Numerics.Vector3.UnitY);
+                            lightProj = Matrix4x4.CreateOrthographic(shadowRange, shadowRange, 1.0f, shadowRange * 2.0f);
+                        }
+                        else
                         {
-                            if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
-                            var part = modelResource.Parts[p];
-                            if (part.BaseColor.W >= 0.99f)
+                            var targetPos = System.Numerics.Vector3.Zero;
+                            lightView = Matrix4x4.CreateLookAt(lightPosVec, targetPos, System.Numerics.Vector3.UnitY);
+                            lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, 2000.0f);
+                        }
+
+                        lightViewProj = lightView * lightProj;
+
+                        _context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, _d3dResources.ShadowMapDSVs[0]);
+                        _context.ClearDepthStencilView(_d3dResources.ShadowMapDSVs[0], DepthStencilClearFlags.Depth, 1.0f, 0);
+                        _context.RSSetState(_d3dResources.ShadowRasterizerState);
+                        _context.RSSetViewport(0, 0, settings.ShadowResolution, settings.ShadowResolution);
+                        _context.VSSetShader(_d3dResources.VertexShader);
+                        _context.PSSetShader(null);
+                        _context.IASetInputLayout(_d3dResources.InputLayout);
+                        _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+
+                        for (int i = 0; i < layers.Count; i++)
+                        {
+                            var layer = layers[i];
+                            if (!layer.LightEnabled) continue;
+                            if (layer.LightType == 0 && !foundCaster) continue;
+
+                            var modelResource = layer.Resource;
+                            var world = layerWorlds[i];
+                            var wvpShadow = world * lightViewProj;
+
+                            int stride = Unsafe.SizeOf<ObjVertex>();
+                            _vbArray[0] = modelResource.VertexBuffer;
+                            _strideArray[0] = stride;
+                            _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
+                            _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
+
+                            ConstantBufferData cbShadow = new ConstantBufferData
                             {
-                                _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                                WorldViewProj = Matrix4x4.Transpose(wvpShadow),
+                                World = Matrix4x4.Transpose(world)
+                            };
+                            UpdateConstantBuffer(ref cbShadow);
+
+                            for (int p = 0; p < modelResource.Parts.Length; p++)
+                            {
+                                if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
+                                var part = modelResource.Parts[p];
+                                if (part.BaseColor.W >= 0.99f)
+                                {
+                                    _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                                }
                             }
                         }
                     }
@@ -584,7 +588,10 @@ namespace ObjLoader.Services
                 MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
                 PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
                 LightTypeParams = new System.Numerics.Vector4(layer.LightType, 0, 0, 0),
-                LightViewProj = Matrix4x4.Transpose(lightViewProj),
+                LightViewProj0 = Matrix4x4.Transpose(lightViewProj),
+                LightViewProj1 = Matrix4x4.Identity,
+                LightViewProj2 = Matrix4x4.Identity,
+                CascadeSplits = new System.Numerics.Vector4(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue),
                 ShadowParams = new System.Numerics.Vector4(settings.ShadowMappingEnabled ? 1 : 0, (float)settings.ShadowBias, (float)settings.ShadowStrength, settings.ShadowResolution)
             };
 

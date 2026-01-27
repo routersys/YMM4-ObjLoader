@@ -29,8 +29,11 @@ cbuffer CBuf : register(b0)
     float4 MonoColor;
     float4 PosterizeParams;
     float4 LightTypeParams;
-    matrix LightViewProj;
+    matrix LightViewProj0;
+    matrix LightViewProj1;
+    matrix LightViewProj2;
     float4 ShadowParams;
+    float4 CascadeSplits;
 }
 
 struct VS_IN
@@ -46,7 +49,6 @@ struct VS_OUT
     float3 wPos : TEXCOORD1;
     float3 norm : NORMAL;
     float2 uv : TEXCOORD0;
-    float4 lightPos : TEXCOORD3;
 };
 
 VS_OUT VS(VS_IN input)
@@ -57,7 +59,6 @@ VS_OUT VS(VS_IN input)
     output.wPos = mul(float4(input.pos, 1.0f), World).xyz;
     output.norm = normalize(mul(float4(input.norm, 0.0f), World).xyz);
     output.uv = input.uv;
-    output.lightPos = mul(float4(output.wPos, 1.0f), LightViewProj);
 
     return output;
 }

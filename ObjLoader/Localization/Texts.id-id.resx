@@ -362,4 +362,8 @@
 <data name="Shadow_Bias_Desc" xml:space="preserve"><value>Offset untuk mencegah jerawat bayangan.</value></data>
 <data name="Shadow_Strength_Desc" xml:space="preserve"><value>Kegelapan bayangan.</value></data>
 <data name="SunLight_ShadowRange_Desc" xml:space="preserve"><value>Ukuran area yang dicakup oleh bayangan matahari.</value></data>
+<data name="ShadowMode" xml:space="preserve"><value>Pembuatan Bayangan</value></data>
+<data name="ShadowMode_Desc" xml:space="preserve"><value>Mengalihkan pembuatan bayangan untuk pengaturan ID Dunia ini.</value></data>
+<data name="CascadedShadows" xml:space="preserve"><value>Bayangan Bertingkat</value></data>
+<data name="CascadedShadows_Desc" xml:space="preserve"><value>Mengaktifkan Peta Bayangan Bertingkat untuk meningkatkan kualitas bayangan.</value></data>
 </root>

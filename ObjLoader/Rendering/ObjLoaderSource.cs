@@ -21,6 +21,10 @@ namespace ObjLoader.Rendering
 {
     public class ObjLoaderSource : IShapeSource
     {
+        private static D3DResources? _sharedResources;
+        private static int _sharedResourcesRefCount;
+        private static readonly object _sharedResourcesLock = new object();
+
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly ObjLoaderParameter _parameter;
         private readonly DisposeCollector _disposer = new DisposeCollector();
@@ -88,7 +92,18 @@ namespace ObjLoader.Rendering
             _devices = devices;
             _parameter = parameter;
             _loader = new ObjModelLoader();
-            _resources = new D3DResources(devices.D3D.Device);
+
+            lock (_sharedResourcesLock)
+            {
+                if (_sharedResources == null)
+                {
+                    _sharedResources = new D3DResources(devices.D3D.Device);
+                }
+                _resources = _sharedResources;
+                _sharedResourcesRefCount++;
+            }
+
+            _resources = _sharedResources;
             _renderTargets = new RenderTargetManager();
         }
 
@@ -134,7 +149,7 @@ namespace ObjLoader.Rendering
             var settings = PluginSettings.Instance;
 
             _resources.UpdateRasterizerState(settings.CullMode);
-            _resources.EnsureShadowMapSize(settings.ShadowResolution);
+            _resources.EnsureShadowMapSize(settings.ShadowResolution, true);
 
             bool settingsChanged = Math.Abs(_lastSettingsVersion - settingsVersion) > 1e-5;
             bool cameraChanged = Math.Abs(_lastCamX - camX) > 1e-5 || Math.Abs(_lastCamY - camY) > 1e-5 || Math.Abs(_lastCamZ - camZ) > 1e-5 ||
@@ -242,7 +257,7 @@ namespace ObjLoader.Rendering
             }
 
             bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
-            bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged;
+            bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
             bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null;
 
             if (!needsSceneRedraw)
@@ -313,41 +328,108 @@ namespace ObjLoader.Rendering
                 activeWorldId = shadowLightState.WorldId;
             }
 
-            Matrix4x4 lightView = Matrix4x4.Identity;
-            Matrix4x4 lightProj = Matrix4x4.Identity;
+            Matrix4x4[] lightViewProjs = new Matrix4x4[D3DResources.CascadeCount];
+            float[] cascadeSplits = new float[4];
             bool shadowValid = false;
 
             if (settings.ShadowMappingEnabled && shadowLightState.IsLightEnabled && (shadowLightState.LightType == LightType.Sun || shadowLightState.LightType == LightType.Spot))
             {
                 Vector3 lPos = new Vector3((float)shadowLightState.LightX, (float)shadowLightState.LightY, (float)shadowLightState.LightZ);
                 Vector3 lTarget = Vector3.Zero;
+                Vector3 lightDir;
 
                 if (shadowLightState.LightType == LightType.Sun)
                 {
-                    lTarget = Vector3.Zero;
-                    Vector3 dir = Vector3.Normalize(lPos);
-                    if (lPos == Vector3.Zero) dir = Vector3.UnitY;
-                    Vector3 camPos = lTarget + dir * (float)(settings.SunLightShadowRange * 0.5);
+                    lightDir = Vector3.Normalize(lPos == Vector3.Zero ? Vector3.UnitY : lPos);
+                }
+                else
+                {
+                    lightDir = Vector3.Normalize(lPos == Vector3.Zero ? Vector3.UnitY : -lPos);
+                }
 
-                    lightView = Matrix4x4.CreateLookAt(camPos, lTarget, Vector3.UnitY);
-                    float range = (float)settings.SunLightShadowRange;
-                    lightProj = Matrix4x4.CreateOrthographic(range, range, 1.0f, range * 2.0f);
+                if (shadowLightState.LightType == LightType.Sun)
+                {
+                    var cameraPos = new Vector3((float)camX, (float)camY, (float)camZ);
+                    var cameraTarget = new Vector3((float)targetX, (float)targetY, (float)targetZ);
+                    var viewMatrix = Matrix4x4.CreateLookAt(cameraPos, cameraTarget, Vector3.UnitY);
+
+                    float fov = (float)(Math.Max(1, Math.Min(179, shadowLightState.Fov)) * Math.PI / 180.0);
+                    float aspect = (float)sw / sh;
+                    float nearPlane = 0.1f;
+                    float farPlane = 1000.0f;
+
+                    float[] splitDistances = { nearPlane, nearPlane + (farPlane - nearPlane) * 0.05f, nearPlane + (farPlane - nearPlane) * 0.2f, farPlane };
+                    cascadeSplits[0] = splitDistances[1];
+                    cascadeSplits[1] = splitDistances[2];
+                    cascadeSplits[2] = splitDistances[3];
+
+                    for (int i = 0; i < D3DResources.CascadeCount; i++)
+                    {
+                        float sn = splitDistances[i];
+                        float sf = splitDistances[i + 1];
+                        var projMatrix = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect, sn, sf);
+                        var invViewProj = Matrix4x4.Invert(viewMatrix * projMatrix, out var inv) ? inv : Matrix4x4.Identity;
+
+                        Vector3[] corners = new Vector3[8];
+                        Vector3[] ndc = {
+                            new Vector3(-1, -1, 0), new Vector3(1, -1, 0), new Vector3(-1, 1, 0), new Vector3(1, 1, 0),
+                            new Vector3(-1, -1, 1), new Vector3(1, -1, 1), new Vector3(-1, 1, 1), new Vector3(1, 1, 1)
+                        };
+
+                        for (int j = 0; j < 8; j++)
+                        {
+                            var v = Vector3.Transform(ndc[j], invViewProj);
+                            corners[j] = v;
+                        }
+
+                        Vector3 center = Vector3.Zero;
+                        foreach (var c in corners) center += c;
+                        center /= 8.0f;
+
+                        var lightView = Matrix4x4.CreateLookAt(center + lightDir * 500.0f, center, Vector3.UnitY);
+
+                        float minX = float.MaxValue, maxX = float.MinValue;
+                        float minY = float.MaxValue, maxY = float.MinValue;
+                        float minZ = float.MaxValue, maxZ = float.MinValue;
+
+                        foreach (var c in corners)
+                        {
+                            var tr = Vector3.Transform(c, lightView);
+                            minX = Math.Min(minX, tr.X); maxX = Math.Max(maxX, tr.X);
+                            minY = Math.Min(minY, tr.Y); maxY = Math.Max(maxY, tr.Y);
+                            minZ = Math.Min(minZ, tr.Z); maxZ = Math.Max(maxZ, tr.Z);
+                        }
+
+                        float worldUnitsPerTexel = (maxX - minX) / settings.ShadowResolution;
+                        minX = MathF.Floor(minX / worldUnitsPerTexel) * worldUnitsPerTexel;
+                        maxX = MathF.Floor(maxX / worldUnitsPerTexel) * worldUnitsPerTexel;
+                        minY = MathF.Floor(minY / worldUnitsPerTexel) * worldUnitsPerTexel;
+                        maxY = MathF.Floor(maxY / worldUnitsPerTexel) * worldUnitsPerTexel;
+
+                        var lightProj = Matrix4x4.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ - 1000.0f, -minZ + 1000.0f);
+                        lightViewProjs[i] = lightView * lightProj;
+                    }
                 }
                 else
                 {
                     Vector3 dir = -Vector3.Normalize(lPos);
-                    lightView = Matrix4x4.CreateLookAt(lPos, lPos + dir, Vector3.UnitY);
-                    lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, 5000.0f);
+                    var lightView = Matrix4x4.CreateLookAt(lPos, lPos + dir, Vector3.UnitY);
+                    var lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, 5000.0f);
+                    for (int i = 0; i < D3DResources.CascadeCount; i++)
+                    {
+                        lightViewProjs[i] = lightView * lightProj;
+                        cascadeSplits[i] = 10000.0f;
+                    }
                 }
 
                 if (needsShadowRedraw)
                 {
-                    RenderShadowMap(layersToRender, lightView * lightProj, activeWorldId);
+                    RenderShadowMap(layersToRender, lightViewProjs, activeWorldId);
                 }
                 shadowValid = true;
             }
 
-            RenderToTexture(layersToRender, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightView * lightProj, shadowValid, activeWorldId);
+            RenderToTexture(layersToRender, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId);
             CreateCommandList();
 
             _lastCamX = camX;
@@ -362,67 +444,75 @@ namespace ObjLoader.Rendering
             _lastShadowEnabled = settings.ShadowMappingEnabled;
         }
 
-        private void RenderShadowMap(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, Matrix4x4 lightViewProj, int activeWorldId)
+        private void RenderShadowMap(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, Matrix4x4[] lightViewProjs, int activeWorldId)
         {
-            if (_resources.ShadowMapDSV == null || _resources.ConstantBuffer == null) return;
+            if (_resources.ShadowMapDSVs == null || _resources.ConstantBuffer == null) return;
 
             var context = _devices.D3D.Device.ImmediateContext;
-            context.ClearDepthStencilView(_resources.ShadowMapDSV, DepthStencilClearFlags.Depth, 1.0f, 0);
-            context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, _resources.ShadowMapDSV);
+            context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+            context.VSSetShader(_resources.VertexShader);
+            context.PSSetShader(null!);
+            context.IASetInputLayout(_resources.InputLayout);
             context.RSSetState(_resources.ShadowRasterizerState);
 
             var size = PluginSettings.Instance.ShadowResolution;
             context.RSSetViewport(0, 0, size, size);
-            context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
-            context.VSSetShader(_resources.VertexShader);
-            context.PSSetShader(null!);
-            context.IASetInputLayout(_resources.InputLayout);
-
-            foreach (var item in layers)
+            for (int cascadeIdx = 0; cascadeIdx < D3DResources.CascadeCount; cascadeIdx++)
             {
-                if (item.State.WorldId != activeWorldId) continue;
+                var dsv = _resources.ShadowMapDSVs[cascadeIdx];
+                if (dsv == null) continue;
 
-                var resource = item.Resource;
-                Matrix4x4 hierarchyMatrix = GetLayerTransform(item.State);
-                var currentGuid = item.State.ParentGuid;
-                int depth = 0;
-                while (!string.IsNullOrEmpty(currentGuid) && _layerStates.TryGetValue(currentGuid, out var parentState))
+                context.ClearDepthStencilView(dsv, DepthStencilClearFlags.Depth, 1.0f, 0);
+                context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, dsv);
+
+                var viewProj = lightViewProjs[cascadeIdx];
+
+                foreach (var item in layers)
                 {
-                    hierarchyMatrix *= GetLayerTransform(parentState);
-                    currentGuid = parentState.ParentGuid;
-                    depth++;
-                    if (depth > 100) break;
-                }
+                    if (item.State.WorldId != activeWorldId) continue;
 
-                var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
-                var world = normalize * hierarchyMatrix;
-
-                ConstantBufferData cbData = new ConstantBufferData();
-                cbData.WorldViewProj = Matrix4x4.Transpose(world * lightViewProj);
-                cbData.World = Matrix4x4.Transpose(world);
-
-                D3D11.MappedSubresource mapped;
-                context.Map(_resources.ConstantBuffer, 0, D3D11.MapMode.WriteDiscard, D3D11.MapFlags.None, out mapped);
-                unsafe
-                {
-                    Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
-                }
-                context.Unmap(_resources.ConstantBuffer, 0);
-
-                context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
-
-                int stride = Unsafe.SizeOf<ObjVertex>();
-                context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { 0 });
-                context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
-
-                for (int i = 0; i < resource.Parts.Length; i++)
-                {
-                    if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
-                    var part = resource.Parts[i];
-                    if (part.BaseColor.W >= 0.99f)
+                    var resource = item.Resource;
+                    Matrix4x4 hierarchyMatrix = GetLayerTransform(item.State);
+                    var currentGuid = item.State.ParentGuid;
+                    int depth = 0;
+                    while (!string.IsNullOrEmpty(currentGuid) && _layerStates.TryGetValue(currentGuid, out var parentState))
                     {
-                        context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                        hierarchyMatrix *= GetLayerTransform(parentState);
+                        currentGuid = parentState.ParentGuid;
+                        depth++;
+                        if (depth > 100) break;
+                    }
+
+                    var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
+                    var world = normalize * hierarchyMatrix;
+
+                    ConstantBufferData cbData = new ConstantBufferData();
+                    cbData.WorldViewProj = Matrix4x4.Transpose(world * viewProj);
+                    cbData.World = Matrix4x4.Transpose(world);
+
+                    D3D11.MappedSubresource mapped;
+                    context.Map(_resources.ConstantBuffer, 0, D3D11.MapMode.WriteDiscard, D3D11.MapFlags.None, out mapped);
+                    unsafe
+                    {
+                        Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
+                    }
+                    context.Unmap(_resources.ConstantBuffer, 0);
+
+                    context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
+
+                    int stride = Unsafe.SizeOf<ObjVertex>();
+                    context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { 0 });
+                    context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
+
+                    for (int i = 0; i < resource.Parts.Length; i++)
+                    {
+                        if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
+                        var part = resource.Parts[i];
+                        if (part.BaseColor.W >= 0.99f)
+                        {
+                            context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+                        }
                     }
                 }
             }
@@ -608,7 +698,7 @@ namespace ObjLoader.Rendering
             return pivotOffset * axisConversion * rotation * scale * translation;
         }
 
-        private void RenderToTexture(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, int width, int height, double camX, double camY, double camZ, double targetX, double targetY, double targetZ, Matrix4x4 lightViewProj, bool shadowValid, int activeWorldId)
+        private void RenderToTexture(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, int width, int height, double camX, double camY, double camZ, double targetX, double targetY, double targetZ, Matrix4x4[] lightViewProjs, float[] cascadeSplits, bool shadowValid, int activeWorldId)
         {
             if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
 
@@ -746,12 +836,15 @@ namespace ObjLoader.Rendering
                         PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
                         LightTypeParams = new System.Numerics.Vector4((float)state.LightType, 0, 0, 0),
 
-                        LightViewProj = Matrix4x4.Transpose(lightViewProj),
+                        LightViewProj0 = Matrix4x4.Transpose(lightViewProjs[0]),
+                        LightViewProj1 = Matrix4x4.Transpose(lightViewProjs[1]),
+                        LightViewProj2 = Matrix4x4.Transpose(lightViewProjs[2]),
                         ShadowParams = new Vector4(
                             (shadowValid && state.WorldId == activeWorldId) ? 1.0f : 0.0f,
                             (float)settings.ShadowBias,
                             (float)settings.ShadowStrength,
-                            (float)settings.ShadowResolution)
+                            (float)settings.ShadowResolution),
+                        CascadeSplits = new Vector4(cascadeSplits[0], cascadeSplits[1], cascadeSplits[2], cascadeSplits[3])
                     };
 
                     D3D11.MappedSubresource mapped;
@@ -817,7 +910,17 @@ namespace ObjLoader.Rendering
             if (_customPixelShader != null) { _customPixelShader.Dispose(); _customPixelShader = null; }
             if (_customInputLayout != null) { _customInputLayout.Dispose(); _customInputLayout = null; }
 
-            _resources.Dispose();
+            lock (_sharedResourcesLock)
+            {
+                _sharedResourcesRefCount--;
+                if (_sharedResourcesRefCount <= 0)
+                {
+                    _sharedResources?.Dispose();
+                    _sharedResources = null;
+                    _sharedResourcesRefCount = 0;
+                }
+            }
+
             _renderTargets.Dispose();
             _disposer.DisposeAndClear();
         }
