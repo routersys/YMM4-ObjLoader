@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
@@ -15,7 +14,6 @@ using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Settings;
 using D2D = Vortice.Direct2D1;
-using D3D11 = Vortice.Direct3D11;
 
 namespace ObjLoader.Rendering
 {
@@ -31,11 +29,11 @@ namespace ObjLoader.Rendering
         private readonly ObjModelLoader _loader;
         private readonly D3DResources _resources;
         private readonly RenderTargetManager _renderTargets;
+        private readonly CustomShaderManager _shaderManager;
+        private readonly ShadowRenderer _shadowRenderer;
+        private readonly SceneRenderer _sceneRenderer;
 
         private D2D.ID2D1CommandList? _commandList;
-        private ID3D11VertexShader? _customVertexShader;
-        private ID3D11PixelShader? _customPixelShader;
-        private ID3D11InputLayout? _customInputLayout;
 
         private double _lastSettingsVersion = double.NaN;
         private double _lastCamX = double.NaN;
@@ -49,24 +47,7 @@ namespace ObjLoader.Rendering
         private int _lastShadowResolution = -1;
         private bool _lastShadowEnabled = false;
 
-        private string _loadedShaderPath = string.Empty;
         private Dictionary<string, LayerState> _layerStates = new Dictionary<string, LayerState>();
-
-        private struct LayerState
-        {
-            public double X, Y, Z, Scale, Rx, Ry, Rz, Cx, Cy, Cz, Fov, LightX, LightY, LightZ, Diffuse, Specular, Shininess;
-            public bool IsLightEnabled;
-            public LightType LightType;
-            public string FilePath, ShaderFilePath;
-            public Color BaseColor, Ambient, Light;
-            public ProjectionType Projection;
-            public CoordinateSystem CoordSystem;
-            public RenderCullMode CullMode;
-            public int WorldId;
-            public bool IsVisible;
-            public HashSet<int>? VisibleParts;
-            public string ParentGuid;
-        }
 
         static ObjLoaderSource()
         {
@@ -105,6 +86,9 @@ namespace ObjLoader.Rendering
 
             _resources = _sharedResources;
             _renderTargets = new RenderTargetManager();
+            _shaderManager = new CustomShaderManager(devices);
+            _shadowRenderer = new ShadowRenderer(devices, _resources);
+            _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager);
         }
 
         public void Update(TimelineItemSourceDescription desc)
@@ -335,7 +319,6 @@ namespace ObjLoader.Rendering
             if (settings.ShadowMappingEnabled && shadowLightState.IsLightEnabled && (shadowLightState.LightType == LightType.Sun || shadowLightState.LightType == LightType.Spot))
             {
                 Vector3 lPos = new Vector3((float)shadowLightState.LightX, (float)shadowLightState.LightY, (float)shadowLightState.LightZ);
-                Vector3 lTarget = Vector3.Zero;
                 Vector3 lightDir;
 
                 if (shadowLightState.LightType == LightType.Sun)
@@ -424,12 +407,12 @@ namespace ObjLoader.Rendering
 
                 if (needsShadowRedraw)
                 {
-                    RenderShadowMap(layersToRender, lightViewProjs, activeWorldId);
+                    _shadowRenderer.Render(layersToRender, lightViewProjs, activeWorldId, _layerStates);
                 }
                 shadowValid = true;
             }
 
-            RenderToTexture(layersToRender, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId);
+            _sceneRenderer.Render(layersToRender, _layerStates, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId);
             CreateCommandList();
 
             _lastCamX = camX;
@@ -442,80 +425,6 @@ namespace ObjLoader.Rendering
             _lastActiveWorldId = activeWorldId;
             _lastShadowResolution = settings.ShadowResolution;
             _lastShadowEnabled = settings.ShadowMappingEnabled;
-        }
-
-        private void RenderShadowMap(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, Matrix4x4[] lightViewProjs, int activeWorldId)
-        {
-            if (_resources.ShadowMapDSVs == null || _resources.ConstantBuffer == null) return;
-
-            var context = _devices.D3D.Device.ImmediateContext;
-            context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-            context.VSSetShader(_resources.VertexShader);
-            context.PSSetShader(null!);
-            context.IASetInputLayout(_resources.InputLayout);
-            context.RSSetState(_resources.ShadowRasterizerState);
-
-            var size = PluginSettings.Instance.ShadowResolution;
-            context.RSSetViewport(0, 0, size, size);
-
-            for (int cascadeIdx = 0; cascadeIdx < D3DResources.CascadeCount; cascadeIdx++)
-            {
-                var dsv = _resources.ShadowMapDSVs[cascadeIdx];
-                if (dsv == null) continue;
-
-                context.ClearDepthStencilView(dsv, DepthStencilClearFlags.Depth, 1.0f, 0);
-                context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, dsv);
-
-                var viewProj = lightViewProjs[cascadeIdx];
-
-                foreach (var item in layers)
-                {
-                    if (item.State.WorldId != activeWorldId) continue;
-
-                    var resource = item.Resource;
-                    Matrix4x4 hierarchyMatrix = GetLayerTransform(item.State);
-                    var currentGuid = item.State.ParentGuid;
-                    int depth = 0;
-                    while (!string.IsNullOrEmpty(currentGuid) && _layerStates.TryGetValue(currentGuid, out var parentState))
-                    {
-                        hierarchyMatrix *= GetLayerTransform(parentState);
-                        currentGuid = parentState.ParentGuid;
-                        depth++;
-                        if (depth > 100) break;
-                    }
-
-                    var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
-                    var world = normalize * hierarchyMatrix;
-
-                    ConstantBufferData cbData = new ConstantBufferData();
-                    cbData.WorldViewProj = Matrix4x4.Transpose(world * viewProj);
-                    cbData.World = Matrix4x4.Transpose(world);
-
-                    D3D11.MappedSubresource mapped;
-                    context.Map(_resources.ConstantBuffer, 0, D3D11.MapMode.WriteDiscard, D3D11.MapFlags.None, out mapped);
-                    unsafe
-                    {
-                        Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
-                    }
-                    context.Unmap(_resources.ConstantBuffer, 0);
-
-                    context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
-
-                    int stride = Unsafe.SizeOf<ObjVertex>();
-                    context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { 0 });
-                    context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
-
-                    for (int i = 0; i < resource.Parts.Length; i++)
-                    {
-                        if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
-                        var part = resource.Parts[i];
-                        if (part.BaseColor.W >= 0.99f)
-                        {
-                            context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
-                        }
-                    }
-                }
-            }
         }
 
         private bool AreStatesEqual(ref LayerState a, ref LayerState b)
@@ -539,49 +448,6 @@ namespace ObjLoader.Rendering
             if (a == null || b == null) return false;
             if (ReferenceEquals(a, b)) return true;
             return a.SetEquals(b);
-        }
-
-        private void UpdateCustomShader(string path)
-        {
-            if (path == _loadedShaderPath && _customVertexShader != null) return;
-
-            if (_customVertexShader != null) { _customVertexShader.Dispose(); _customVertexShader = null; }
-            if (_customPixelShader != null) { _customPixelShader.Dispose(); _customPixelShader = null; }
-            if (_customInputLayout != null) { _customInputLayout.Dispose(); _customInputLayout = null; }
-
-            _loadedShaderPath = path;
-            if (string.IsNullOrEmpty(path)) return;
-
-            try
-            {
-                var source = _parameter.GetAdaptedShaderSource();
-                if (string.IsNullOrEmpty(source)) return;
-
-                var vsResult = ShaderStore.Compile(source, "VS", "vs_5_0");
-                if (vsResult.Blob != null)
-                {
-                    using (vsResult.Blob)
-                    {
-                        _customVertexShader = _devices.D3D.Device.CreateVertexShader(vsResult.Blob.AsBytes());
-                        var inputElements = new[] {
-                            new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0),
-                            new InputElementDescription("NORMAL", 0, Format.R32G32B32_Float, 12, 0),
-                            new InputElementDescription("TEXCOORD", 0, Format.R32G32_Float, 24, 0)
-                        };
-                        _customInputLayout = _devices.D3D.Device.CreateInputLayout(inputElements, vsResult.Blob.AsBytes());
-                    }
-                }
-
-                var psResult = ShaderStore.Compile(source, "PS", "ps_5_0");
-                if (psResult.Blob != null)
-                {
-                    using (psResult.Blob)
-                    {
-                        _customPixelShader = _devices.D3D.Device.CreatePixelShader(psResult.Blob.AsBytes());
-                    }
-                }
-            }
-            catch { }
         }
 
         private unsafe GpuResourceCacheItem CreateGpuResource(ObjModel model, string filePath)
@@ -670,202 +536,6 @@ namespace ObjLoader.Rendering
             return item;
         }
 
-        private Matrix4x4 GetLayerTransform(LayerState state)
-        {
-            Matrix4x4 axisConversion = Matrix4x4.Identity;
-            switch (state.CoordSystem)
-            {
-                case CoordinateSystem.RightHandedZUp:
-                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
-                    break;
-                case CoordinateSystem.LeftHandedYUp:
-                    axisConversion = Matrix4x4.CreateScale(1, 1, -1);
-                    break;
-                case CoordinateSystem.LeftHandedZUp:
-                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
-                    break;
-            }
-
-            var rotation = Matrix4x4.CreateRotationX((float)(state.Rx * Math.PI / 180.0)) *
-                           Matrix4x4.CreateRotationY((float)(state.Ry * Math.PI / 180.0)) *
-                           Matrix4x4.CreateRotationZ((float)(state.Rz * Math.PI / 180.0));
-            var scale = Matrix4x4.CreateScale((float)(state.Scale / 100.0));
-            var translation = Matrix4x4.CreateTranslation((float)state.X, (float)state.Y, (float)state.Z);
-
-            var center = new Vector3((float)state.Cx, (float)state.Cy, (float)state.Cz);
-            var pivotOffset = Matrix4x4.CreateTranslation(-center);
-
-            return pivotOffset * axisConversion * rotation * scale * translation;
-        }
-
-        private void RenderToTexture(List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers, int width, int height, double camX, double camY, double camZ, double targetX, double targetY, double targetZ, Matrix4x4[] lightViewProjs, float[] cascadeSplits, bool shadowValid, int activeWorldId)
-        {
-            if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
-
-            var context = _devices.D3D.Device.ImmediateContext;
-
-            context.OMSetRenderTargets(_renderTargets.RenderTargetView, _renderTargets.DepthStencilView);
-            context.ClearRenderTargetView(_renderTargets.RenderTargetView, new Vortice.Mathematics.Color4(0, 0, 0, 0));
-            context.ClearDepthStencilView(_renderTargets.DepthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
-
-            context.RSSetState(_resources.RasterizerState);
-            context.OMSetDepthStencilState(_resources.DepthStencilState);
-            context.OMSetBlendState(_resources.BlendState, new Vortice.Mathematics.Color4(0, 0, 0, 0), -1);
-
-            context.RSSetViewport(0, 0, width, height);
-            context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-
-            foreach (var item in layers)
-            {
-                var state = item.State;
-                var resource = item.Resource;
-                var settings = PluginSettings.Instance;
-
-                UpdateCustomShader(state.ShaderFilePath);
-
-                var vs = _customVertexShader ?? _resources.VertexShader;
-                var ps = _customPixelShader ?? _resources.PixelShader;
-                var layout = _customVertexShader != null ? _customInputLayout : _resources.InputLayout;
-
-                if (vs == null || ps == null || layout == null) continue;
-
-                context.IASetInputLayout(layout);
-                context.VSSetShader(vs);
-                context.PSSetShader(ps);
-                context.PSSetSamplers(0, new[] { _resources.SamplerState });
-
-                if (shadowValid && state.WorldId == activeWorldId)
-                {
-                    context.PSSetShaderResources(1, new[] { _resources.ShadowMapSRV! });
-                    context.PSSetSamplers(1, new[] { _resources.ShadowSampler });
-                }
-                else
-                {
-                    context.PSSetShaderResources(1, new ID3D11ShaderResourceView[] { null! });
-                }
-
-                Matrix4x4 hierarchyMatrix = GetLayerTransform(state);
-                var currentGuid = state.ParentGuid;
-                int depth = 0;
-                while (!string.IsNullOrEmpty(currentGuid) && _layerStates.TryGetValue(currentGuid, out var parentState))
-                {
-                    hierarchyMatrix *= GetLayerTransform(parentState);
-                    currentGuid = parentState.ParentGuid;
-                    depth++;
-                    if (depth > 100) break;
-                }
-
-                var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
-                var world = normalize * hierarchyMatrix;
-
-                Matrix4x4 view, proj;
-                float aspect = (float)width / height;
-                Vector3 cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
-                var target = new Vector3((float)targetX, (float)targetY, (float)targetZ);
-
-                if (state.Projection == ProjectionType.Parallel)
-                {
-                    if (cameraPosition == target) cameraPosition.Z -= 2.0f;
-                    view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
-                    float orthoSize = 2.0f;
-                    proj = Matrix4x4.CreateOrthographic(orthoSize * aspect, orthoSize, 0.1f, 1000.0f);
-                }
-                else
-                {
-                    if (cameraPosition == target) cameraPosition.Z -= 2.5f;
-                    view = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
-                    float radFov = (float)(Math.Max(1, Math.Min(179, state.Fov)) * Math.PI / 180.0);
-                    proj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, 0.1f, 1000.0f);
-                }
-
-                var wvp = world * view * proj;
-                var lightPos = new Vector4((float)state.LightX, (float)state.LightY, (float)state.LightZ, 1.0f);
-                var amb = new Vector4(state.Ambient.ScR, state.Ambient.ScG, state.Ambient.ScB, state.Ambient.ScA);
-                var lCol = new Vector4(state.Light.ScR, state.Light.ScG, state.Light.ScB, state.Light.ScA);
-                var camPos = new Vector4(cameraPosition, 1.0f);
-                System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
-
-                int stride = Unsafe.SizeOf<ObjVertex>();
-                context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { 0 });
-                context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
-
-                int wId = state.WorldId;
-
-                for (int i = 0; i < resource.Parts.Length; i++)
-                {
-                    if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
-
-                    var part = resource.Parts[i];
-                    var texView = resource.PartTextures[i];
-                    bool hasTexture = texView != null;
-
-                    ID3D11ShaderResourceView viewResource = hasTexture ? texView! : _resources.WhiteTextureView!;
-                    context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { viewResource });
-
-                    var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
-                    var partColor = part.BaseColor * uiColorVec;
-
-                    ConstantBufferData cbData = new ConstantBufferData
-                    {
-                        WorldViewProj = Matrix4x4.Transpose(wvp),
-                        World = Matrix4x4.Transpose(world),
-                        LightPos = lightPos,
-                        BaseColor = partColor,
-                        AmbientColor = amb,
-                        LightColor = lCol,
-                        CameraPos = camPos,
-                        LightEnabled = state.IsLightEnabled ? 1.0f : 0.0f,
-                        DiffuseIntensity = (float)state.Diffuse,
-                        SpecularIntensity = (float)state.Specular,
-                        Shininess = (float)state.Shininess,
-
-                        ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(wId) ? 1 : 0, settings.GetToonSteps(wId), (float)settings.GetToonSmoothness(wId), 0),
-                        RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(wId) ? 1 : 0, (float)settings.GetRimIntensity(wId), (float)settings.GetRimPower(wId), 0),
-                        RimColor = ToVec4(settings.GetRimColor(wId)),
-                        OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(wId) ? 1 : 0, (float)settings.GetOutlineWidth(wId), (float)settings.GetOutlinePower(wId), 0),
-                        OutlineColor = ToVec4(settings.GetOutlineColor(wId)),
-                        FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(wId) ? 1 : 0, (float)settings.GetFogStart(wId), (float)settings.GetFogEnd(wId), (float)settings.GetFogDensity(wId)),
-                        FogColor = ToVec4(settings.GetFogColor(wId)),
-                        ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(wId), (float)settings.GetContrast(wId), (float)settings.GetGamma(wId), (float)settings.GetBrightnessPost(wId)),
-                        VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(wId) ? 1 : 0, (float)settings.GetVignetteIntensity(wId), (float)settings.GetVignetteRadius(wId), (float)settings.GetVignetteSoftness(wId)),
-                        VignetteColor = ToVec4(settings.GetVignetteColor(wId)),
-                        ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(wId) ? 1 : 0, (float)settings.GetScanlineIntensity(wId), (float)settings.GetScanlineFrequency(wId), 0),
-                        ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
-                        MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
-                        MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
-                        PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
-                        LightTypeParams = new System.Numerics.Vector4((float)state.LightType, 0, 0, 0),
-
-                        LightViewProj0 = Matrix4x4.Transpose(lightViewProjs[0]),
-                        LightViewProj1 = Matrix4x4.Transpose(lightViewProjs[1]),
-                        LightViewProj2 = Matrix4x4.Transpose(lightViewProjs[2]),
-                        ShadowParams = new Vector4(
-                            (shadowValid && state.WorldId == activeWorldId) ? 1.0f : 0.0f,
-                            (float)settings.ShadowBias,
-                            (float)settings.ShadowStrength,
-                            (float)settings.ShadowResolution),
-                        CascadeSplits = new Vector4(cascadeSplits[0], cascadeSplits[1], cascadeSplits[2], cascadeSplits[3])
-                    };
-
-                    D3D11.MappedSubresource mapped;
-                    context.Map(_resources.ConstantBuffer, 0, D3D11.MapMode.WriteDiscard, D3D11.MapFlags.None, out mapped);
-                    unsafe
-                    {
-                        Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
-                    }
-                    context.Unmap(_resources.ConstantBuffer, 0);
-
-                    context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
-                    context.PSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
-
-                    context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
-                }
-            }
-
-            context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, (ID3D11DepthStencilView?)null);
-            context.Flush();
-        }
-
         private void CreateCommandList()
         {
             _disposer.RemoveAndDispose(ref _commandList);
@@ -888,27 +558,9 @@ namespace ObjLoader.Rendering
             _commandList.Close();
         }
 
-        private void EnsureEmptyCommandList()
-        {
-            if (_commandList == null)
-            {
-                _commandList = _devices.DeviceContext.CreateCommandList();
-                _disposer.Collect(_commandList);
-                var dc = _devices.DeviceContext;
-                dc.Target = _commandList;
-                dc.BeginDraw();
-                dc.Clear(null);
-                dc.EndDraw();
-                dc.Target = null;
-                _commandList.Close();
-            }
-        }
-
         public void Dispose()
         {
-            if (_customVertexShader != null) { _customVertexShader.Dispose(); _customVertexShader = null; }
-            if (_customPixelShader != null) { _customPixelShader.Dispose(); _customPixelShader = null; }
-            if (_customInputLayout != null) { _customInputLayout.Dispose(); _customInputLayout = null; }
+            _shaderManager.Dispose();
 
             lock (_sharedResourcesLock)
             {
