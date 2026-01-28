@@ -53,6 +53,11 @@ namespace ObjLoader.Rendering
 
         public const int CascadeCount = 3;
 
+        public ID3D11Texture2D EnvironmentCubeMap { get; private set; }
+        public ID3D11ShaderResourceView EnvironmentSRV { get; private set; }
+        public ID3D11RenderTargetView[] EnvironmentRTVs { get; private set; }
+        public ID3D11DepthStencilView EnvironmentDSV { get; private set; }
+
         private readonly DisposeCollector _disposer = new DisposeCollector();
         private RenderCullMode _currentCullMode;
 
@@ -204,6 +209,63 @@ namespace ObjLoader.Rendering
             _disposer.Collect(ShadowRasterizerState);
 
             EnsureShadowMapSize(2048, false);
+
+            var envDesc = new Texture2DDescription
+            {
+                Width = 512,
+                Height = 512,
+                MipLevels = 0,
+                ArraySize = 6,
+                Format = Format.R8G8B8A8_UNorm,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+                BindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
+                MiscFlags = ResourceOptionFlags.TextureCube | ResourceOptionFlags.GenerateMips
+            };
+            EnvironmentCubeMap = device.CreateTexture2D(envDesc);
+            _disposer.Collect(EnvironmentCubeMap);
+
+            var envSrvDesc = new ShaderResourceViewDescription
+            {
+                Format = Format.R8G8B8A8_UNorm,
+                ViewDimension = ShaderResourceViewDimension.TextureCube,
+                TextureCube = new TextureCubeShaderResourceView { MipLevels = -1, MostDetailedMip = 0 }
+            };
+            EnvironmentSRV = device.CreateShaderResourceView(EnvironmentCubeMap, envSrvDesc);
+            _disposer.Collect(EnvironmentSRV);
+
+            EnvironmentRTVs = new ID3D11RenderTargetView[6];
+            for (int i = 0; i < 6; i++)
+            {
+                var rtvDesc = new RenderTargetViewDescription
+                {
+                    Format = Format.R8G8B8A8_UNorm,
+                    ViewDimension = RenderTargetViewDimension.Texture2DArray,
+                    Texture2DArray = new Texture2DArrayRenderTargetView { ArraySize = 1, FirstArraySlice = i, MipSlice = 0 }
+                };
+                EnvironmentRTVs[i] = device.CreateRenderTargetView(EnvironmentCubeMap, rtvDesc);
+                _disposer.Collect(EnvironmentRTVs[i]);
+            }
+
+            var envDepthDesc = new Texture2DDescription
+            {
+                Width = 512,
+                Height = 512,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = Format.D24_UNorm_S8_UInt,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+                BindFlags = BindFlags.DepthStencil
+            };
+            using var envDepthTex = device.CreateTexture2D(envDepthDesc);
+            var envDsvDesc = new DepthStencilViewDescription
+            {
+                Format = Format.D24_UNorm_S8_UInt,
+                ViewDimension = DepthStencilViewDimension.Texture2D
+            };
+            EnvironmentDSV = device.CreateDepthStencilView(envDepthTex, envDsvDesc);
+            _disposer.Collect(EnvironmentDSV);
         }
 
         public void EnsureShadowMapSize(int size, bool useCascaded)

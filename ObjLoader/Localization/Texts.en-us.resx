@@ -367,4 +367,25 @@
 <data name="ShadowMode_Desc" xml:space="preserve"><value>Toggles shadow generation for this World ID setting.</value></data>
 <data name="CascadedShadows" xml:space="preserve"><value>Cascaded Shadows</value></data>
 <data name="CascadedShadows_Desc" xml:space="preserve"><value>Enables Cascaded Shadow Maps to improve shadow quality.</value></data>
+<data name="Group_PBR" xml:space="preserve"><value>PBR Settings</value></data>
+<data name="Metallic" xml:space="preserve"><value>Metallic</value></data>
+<data name="Metallic_Desc" xml:space="preserve"><value>Sets the metallic property of the surface.</value></data>
+<data name="Roughness" xml:space="preserve"><value>Roughness</value></data>
+<data name="Roughness_Desc" xml:space="preserve"><value>Sets the roughness of the surface. Affects reflection blur.</value></data>
+<data name="IBLIntensity" xml:space="preserve"><value>IBL Intensity</value></data>
+<data name="IBLIntensity_Desc" xml:space="preserve"><value>Sets the intensity of Image Based Lighting.</value></data>
+<data name="Group_SSR" xml:space="preserve"><value>SSR</value></data>
+<data name="SSREnabled" xml:space="preserve"><value>Enable SSR</value></data>
+<data name="SSREnabled_Desc" xml:space="preserve"><value>Enables Screen Space Reflections.</value></data>
+<data name="SSRStep" xml:space="preserve"><value>Step Size</value></data>
+<data name="SSRStep_Desc" xml:space="preserve"><value>Sets the precision of reflection calculation.</value></data>
+<data name="SSRMaxDist" xml:space="preserve"><value>Max Distance</value></data>
+<data name="SSRMaxDist_Desc" xml:space="preserve"><value>Sets the maximum distance for reflection calculation.</value></data>
+<data name="Group_PCSS" xml:space="preserve"><value>PCSS</value></data>
+<data name="PcssLightSize" xml:space="preserve"><value>Light Size</value></data>
+<data name="PcssLightSize_Desc" xml:space="preserve"><value>Sets the size of the light source. Affects shadow softness.</value></data>
+<data name="PcssQuality" xml:space="preserve"><value>Shadow Quality</value></data>
+<data name="PcssQuality_Desc" xml:space="preserve"><value>Sets the number of samples for soft shadows.</value></data>
+<data name="ScanlinePost" xml:space="preserve"><value>Apply After Tonemap</value></data>
+<data name="ScanlinePost_Desc" xml:space="preserve"><value>Applies scanlines after tone mapping.</value></data>
 </root>

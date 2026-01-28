@@ -34,12 +34,21 @@ cbuffer CBuf : register(b0)
     matrix LightViewProj2;
     float4 ShadowParams;
     float4 CascadeSplits;
+    float4 EnvironmentParam;
+    float4 PbrParams;
+    float4 IblParams;
+    float4 SsrParams;
+    matrix InverseViewProj;
+    matrix ViewProj;
+    float4 PcssParams;
 }
 
 Texture2D tex : register(t0);
 SamplerState sam : register(s0);
 Texture2DArray ShadowMap : register(t1);
 SamplerComparisonState ShadowSampler : register(s1);
+TextureCube EnvironmentMap : register(t2);
+Texture2D DepthMap : register(t3);
 
 struct PS_IN
 {
@@ -47,7 +56,10 @@ struct PS_IN
     float3 wPos : TEXCOORD1;
     float3 norm : NORMAL;
     float2 uv : TEXCOORD0;
+    float4 screenPos : TEXCOORD3;
 };
+
+static const float PI = 3.14159265359;
 
 float3 RGBtoHSV(float3 c)
 {
@@ -66,7 +78,41 @@ float3 HSVtoRGB(float3 c)
     return c.z * lerp(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
-float CalculateShadow(float3 wPos, float bias)
+float GetShadowBias(float3 N, float3 L)
+{
+    float NdotL = max(dot(N, L), 0.0);
+    return max(ShadowParams.y * (1.0 - NdotL), ShadowParams.y * 0.1);
+}
+
+float FindBlocker(float3 projCoords, float bias, float lightSize, int cascadeIndex)
+{
+    float2 texelSize = 1.0 / ShadowParams.w;
+    float blockerSum = 0.0;
+    float numBlockers = 0.0;
+    float searchWidth = lightSize * PcssParams.y;
+    int samples = (int) PcssParams.z;
+    
+    for (int i = 0; i < samples; ++i)
+    {
+        float angle = (float) i / (float) samples * 6.283185;
+        float radius = sqrt((float) i / (float) samples);
+        float2 offset = float2(cos(angle), sin(angle)) * radius * searchWidth * texelSize;
+        
+        float shadowMapDepth = ShadowMap.SampleLevel(sam, float3(projCoords.xy + offset, cascadeIndex), 0).r;
+        
+        if (shadowMapDepth < (projCoords.z - bias))
+        {
+            blockerSum += shadowMapDepth;
+            numBlockers += 1.0;
+        }
+    }
+    
+    if (numBlockers < 1.0)
+        return -1.0;
+    return blockerSum / numBlockers;
+}
+
+float CalculatePCSS(float3 wPos, float3 N, float3 L)
 {
     float dist = distance(wPos, CameraPos.xyz);
     int cascadeIndex = 0;
@@ -89,25 +135,180 @@ float CalculateShadow(float3 wPos, float bias)
     projCoords.y = -projCoords.y * 0.5 + 0.5;
 
     if (projCoords.z > 1.0 || projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
-    {
         return 1.0;
+
+    float bias = GetShadowBias(N, L);
+    float currentDepth = projCoords.z;
+
+    if (PcssParams.x <= 0.0)
+    {
+        float shadow = 0.0;
+        float2 texelSize = 1.0 / ShadowParams.w;
+        [unroll]
+        for (int x = -1; x <= 1; ++x)
+        {
+            [unroll]
+            for (int y = -1; y <= 1; ++y)
+            {
+                shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + float2(x, y) * texelSize, cascadeIndex), currentDepth - bias);
+            }
+        }
+        return shadow / 9.0;
     }
 
-    float currentDepth = projCoords.z;
-    float shadow = 0.0;
-    float2 texelSize = 1.0 / ShadowParams.w;
+    float avgBlockerDepth = FindBlocker(projCoords, bias, PcssParams.x, cascadeIndex);
+    if (avgBlockerDepth < 0.0)
+        return 1.0;
 
-    [unroll]
-    for (int x = -1; x <= 1; ++x)
+    float penumbraRatio = (currentDepth - avgBlockerDepth) / avgBlockerDepth;
+    float filterRadius = penumbraRatio * PcssParams.x * PcssParams.y;
+    float2 texelSize = 1.0 / ShadowParams.w;
+    
+    float shadow = 0.0;
+    int samples = (int) PcssParams.w;
+    
+    for (int i = 0; i < samples; ++i)
     {
-        [unroll]
-        for (int y = -1; y <= 1; ++y)
+        float angle = (float) i / (float) samples * 6.283185;
+        float radius = sqrt((float) i / (float) samples);
+        float2 offset = float2(cos(angle), sin(angle)) * radius * filterRadius * texelSize;
+        shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + offset, cascadeIndex), currentDepth - bias);
+    }
+    
+    return shadow / (float) samples;
+}
+
+float DistributionGGX(float3 N, float3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+    float num = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+    return num / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+    float num = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+    return num / denom;
+}
+
+float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+    return ggx1 * ggx2;
+}
+
+float3 FresnelSchlick(float cosTheta, float3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
+{
+    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+float2 IntegrateBRDF(float NdotV, float roughness)
+{
+    float4 c0 = float4(-1, -0.0275, -0.572, 0.022);
+    float4 c1 = float4(1, 0.0425, 1.04, -0.04);
+    float4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * NdotV)) * r.x + r.y;
+    return float2(-1.04, 1.04) * a004 + r.zw;
+}
+
+float3 CalculateSSR(float3 wPos, float3 N, float3 V, float roughness, out float hit)
+{
+    hit = 0.0;
+    if (SsrParams.x < 0.5f)
+        return float3(0, 0, 0);
+
+    float3 R = normalize(reflect(-V, N));
+    float stepSize = SsrParams.y;
+    float3 stepVec = R * stepSize;
+    float3 currentPos = wPos;
+    
+    int maxSteps = 32;
+    float maxDist = SsrParams.z;
+    float thickness = SsrParams.w;
+
+    float3 ssrColor = float3(0, 0, 0);
+    
+    [loop]
+    for (int i = 0; i < maxSteps; i++)
+    {
+        currentPos += stepVec;
+        if (distance(wPos, currentPos) > maxDist)
+            break;
+
+        float4 clipPos = mul(float4(currentPos, 1.0f), ViewProj);
+        if (clipPos.w <= 0.0)
+            continue;
+        
+        float2 screenUV = (clipPos.xy / clipPos.w) * float2(0.5, -0.5) + 0.5;
+        if (screenUV.x < 0.0 || screenUV.x > 1.0 || screenUV.y < 0.0 || screenUV.y > 1.0)
+            break;
+
+        float depthSample = DepthMap.SampleLevel(sam, screenUV, 0).r;
+        float currentDepth = clipPos.z / clipPos.w;
+
+        if (currentDepth > depthSample && (currentDepth - depthSample) < thickness)
         {
-            shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + float2(x, y) * texelSize, cascadeIndex), currentDepth - bias);
+            float3 start = currentPos - stepVec;
+            float3 end = currentPos;
+             
+            for (int j = 0; j < 8; j++)
+            {
+                float3 mid = (start + end) * 0.5;
+                float4 midClip = mul(float4(mid, 1.0f), ViewProj);
+                float2 midUV = (midClip.xy / midClip.w) * float2(0.5, -0.5) + 0.5;
+                float midDepthSample = DepthMap.SampleLevel(sam, midUV, 0).r;
+                float midCurrentDepth = midClip.z / midClip.w;
+                 
+                if (midCurrentDepth > midDepthSample)
+                    end = mid;
+                else
+                    start = mid;
+            }
+            currentPos = start;
+            float4 finalClip = mul(float4(currentPos, 1.0f), ViewProj);
+            float2 finalUV = (finalClip.xy / finalClip.w) * float2(0.5, -0.5) + 0.5;
+             
+            hit = 1.0;
+            float fade = 1.0 - saturate(distance(finalUV, 0.5) * 2.0);
+            fade *= saturate(1.0 - (distance(wPos, currentPos) / maxDist));
+            ssrColor = tex.SampleLevel(sam, finalUV, 0).rgb * fade;
+            break;
         }
     }
     
-    return shadow / 9.0;
+    return ssrColor;
+}
+
+float3 AceSToneMapping(float3 color)
+{
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+    return saturate((color * (a * color + b)) / (color * (c * color + d) + e));
+}
+
+float3 ApplyScanline(float3 color, float2 uv)
+{
+    float scanline = sin(uv.y * ScanlineParams.z * 3.14159) * 0.5 + 0.5;
+    return color * (1.0 - (scanline * ScanlineParams.y));
 }
 
 float4 PS(PS_IN input) : SV_Target
@@ -129,10 +330,18 @@ float4 PS(PS_IN input) : SV_Target
         texColor = tex.Sample(sam, uv) * BaseColor;
     }
 
-    float3 finalColor;
-    float3 n = normalize(input.norm);
-    float3 viewDir = normalize(CameraPos.xyz - input.wPos);
+    float3 albedo = pow(texColor.rgb, 2.2);
+    float metallic = PbrParams.x;
+    float roughness = PbrParams.y;
+    float ao = PbrParams.z;
     
+    float3 N = normalize(input.norm);
+    float3 V = normalize(CameraPos.xyz - input.wPos);
+    float3 F0 = float3(0.04, 0.04, 0.04);
+    F0 = lerp(F0, albedo, metallic);
+
+    float3 Lo = float3(0.0, 0.0, 0.0);
+
     if (LightEnabled > 0.5f)
     {
         float3 lightDir;
@@ -140,13 +349,9 @@ float4 PS(PS_IN input) : SV_Target
         int type = (int) LightTypeParams.x;
 
         if (type == 2)
-        {
             lightDir = normalize(LightPos.xyz);
-        }
         else
-        {
             lightDir = normalize(LightPos.xyz - input.wPos);
-        }
 
         if (type != 2)
         {
@@ -161,108 +366,137 @@ float4 PS(PS_IN input) : SV_Target
             attenuation *= smoothstep(0.86, 0.90, cosAngle);
         }
 
-        float NdotL = dot(n, lightDir);
-        float diff = NdotL * 0.5f + 0.5f;
-
-        if (type == 3)
-        {
-            diff = pow(diff, 0.5);
-        }
-
-        if (ToonParams.x > 0.5f)
-        {
-            float steps = ToonParams.y;
-            float smooth = ToonParams.z;
-            diff = smoothstep(0, smooth, diff * steps - floor(diff * steps)) / steps + floor(diff * steps) / steps;
-        }
-
+        float3 L = lightDir;
+        float3 H = normalize(V + L);
+        
+        float NdotL = max(dot(N, L), 0.0);
         float shadow = 1.0f;
+
         if (ShadowParams.x > 0.5f && (type == 1 || type == 2))
         {
-            float bias = max(ShadowParams.y * (1.0 - NdotL), ShadowParams.y * 0.1);
-            float sVal = CalculateShadow(input.wPos, bias);
+            float sVal = CalculatePCSS(input.wPos, N, L);
             shadow = lerp(1.0 - ShadowParams.z, 1.0, sVal);
         }
 
-        float3 ambient = texColor.rgb * (AmbientColor.rgb + 0.3f);
-        float3 diffuse = texColor.rgb * LightColor.rgb * diff * DiffuseIntensity * attenuation * shadow;
+        float3 radiance = LightColor.rgb * attenuation * shadow * DiffuseIntensity;
 
-        float3 halfDir = normalize(lightDir + viewDir);
-        float NdotH = max(dot(n, halfDir), 0.0f);
-        float spec = pow(abs(NdotH), Shininess);
-        if (ToonParams.x > 0.5f)
-        {
-            float specSmooth = 0.01f;
-            spec = smoothstep(0.5 - specSmooth, 0.5 + specSmooth, spec);
-        }
+        float NDF = DistributionGGX(N, H, roughness);
+        float G = GeometrySmith(N, V, L, roughness);
+        float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
 
-        float3 specular = LightColor.rgb * spec * SpecularIntensity * attenuation * shadow;
-        finalColor = ambient + diffuse + specular;
+        float3 numerator = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
+        float3 specular = numerator / denominator * SpecularIntensity;
+
+        float3 kS = F;
+        float3 kD = float3(1.0, 1.0, 1.0) - kS;
+        kD *= 1.0 - metallic;
+
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    float3 ambient = float3(0, 0, 0);
+    
+    if (EnvironmentParam.x > 0.5f)
+    {
+        float NdotV = max(dot(N, V), 0.0);
+        float3 kS = FresnelSchlickRoughness(NdotV, F0, roughness);
+        float3 kD = 1.0 - kS;
+        kD *= 1.0 - metallic;
         
-        if (RimParams.x > 0.5f)
+        float maxMip = IblParams.y > 0.0 ? IblParams.y : 6.0;
+        float3 irradiance = EnvironmentMap.SampleLevel(sam, N, maxMip).rgb;
+        float3 diffuse = irradiance * albedo;
+        
+        float3 R = reflect(-V, N);
+        float3 prefilteredColor = EnvironmentMap.SampleLevel(sam, R, roughness * maxMip).rgb;
+        float2 envBRDF = IntegrateBRDF(NdotV, roughness);
+        float3 specularIBL = prefilteredColor * (kS * envBRDF.x + envBRDF.y);
+        
+        float hit = 0.0;
+        float3 ssr = float3(0, 0, 0);
+        
+        if (SsrParams.x > 0.5f)
         {
-            float vdn = 1.0 - max(dot(viewDir, n), 0.0);
-            float rim = pow(abs(smoothstep(0.0, 1.0, vdn)), RimParams.z) * RimParams.y;
-            finalColor += RimColor.rgb * rim;
+            ssr = CalculateSSR(input.wPos, N, V, roughness, hit);
         }
+        
+        float3 finalSpecular = lerp(specularIBL, ssr, hit);
+        ambient = (kD * diffuse + finalSpecular) * ao * IblParams.x;
     }
     else
     {
-        finalColor = texColor.rgb;
+        ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
     }
+
+    float3 color = ambient + Lo;
     
+    if (RimParams.x > 0.5f)
+    {
+        float vdn = 1.0 - max(dot(V, N), 0.0);
+        float rim = pow(abs(smoothstep(0.0, 1.0, vdn)), RimParams.z) * RimParams.y;
+        color += RimColor.rgb * rim;
+    }
+
     if (OutlineParams.x > 0.5f)
     {
-        float vdn = max(dot(viewDir, n), 0.0);
+        float vdn = max(dot(V, N), 0.0);
         float threshold = 1.0 / (OutlineParams.y * 5.0 + 1.0);
         if (vdn < threshold)
         {
             float edgeFactor = smoothstep(threshold - 0.05, threshold, vdn);
-            finalColor = lerp(OutlineColor.rgb, finalColor, edgeFactor);
+            color = lerp(OutlineColor.rgb, color, edgeFactor);
         }
     }
-    
+
     if (FogParams.x > 0.5f)
     {
         float dist = distance(CameraPos.xyz, input.wPos);
         float fogFactor = saturate((dist - FogParams.y) / (FogParams.z - FogParams.y));
-        finalColor = lerp(finalColor, FogColor.rgb, fogFactor * FogParams.w);
+        color = lerp(color, FogColor.rgb, fogFactor * FogParams.w);
     }
-    
-    if (ScanlineParams.x > 0.5f)
-    {
-        float scanline = sin(uv.y * ScanlineParams.z * 3.14159) * 0.5 + 0.5;
-        finalColor *= 1.0 - (scanline * ScanlineParams.y);
-    }
-    
-    if (MonoParams.x > 0.5f)
-    {
-        float lum = dot(finalColor, float3(0.299, 0.587, 0.114));
-        float3 mono = lerp(float3(lum, lum, lum), MonoColor.rgb * lum, 0.5);
-        finalColor = lerp(finalColor, mono, MonoParams.y);
-    }
-    
-    if (PosterizeParams.x > 0.5f)
-    {
-        float levels = PosterizeParams.y;
-        finalColor = floor(finalColor * levels) / levels;
-    }
-    
-    float3 hsv = RGBtoHSV(finalColor);
-    hsv.y *= ColorCorrParams.x;
-    finalColor = HSVtoRGB(hsv);
-    
-    finalColor = (finalColor - 0.5f) * ColorCorrParams.y + 0.5f;
-    finalColor = pow(abs(finalColor), 1.0f / ColorCorrParams.z);
-    finalColor += ColorCorrParams.w;
     
     if (VignetteParams.x > 0.5f)
     {
         float2 d = uv - 0.5f;
         float v = length(d);
         float vig = smoothstep(VignetteParams.z, VignetteParams.z - VignetteParams.w, v);
-        finalColor = lerp(VignetteColor.rgb, finalColor, vig + (1.0 - VignetteParams.y));
+        color = lerp(VignetteColor.rgb, color, vig + (1.0 - VignetteParams.y));
     }
+    
+    if (PosterizeParams.x > 0.5f)
+    {
+        float levels = PosterizeParams.y;
+        color = floor(color * levels) / levels;
+    }
+    
+    if (MonoParams.x > 0.5f)
+    {
+        float lum = dot(color, float3(0.299, 0.587, 0.114));
+        float3 mono = lerp(float3(lum, lum, lum), MonoColor.rgb * lum, 0.5);
+        color = lerp(color, mono, MonoParams.y);
+    }
+    
+    float3 hsv = RGBtoHSV(color);
+    hsv.y *= ColorCorrParams.x;
+    color = HSVtoRGB(hsv);
+    color = (color - 0.5f) * ColorCorrParams.y + 0.5f;
+    color = pow(abs(color), 1.0f / ColorCorrParams.z);
+    color += ColorCorrParams.w;
+    
+    if (ScanlineParams.x > 0.5f && ScanlineParams.w < 0.5f)
+    {
+        color = ApplyScanline(color, uv);
+    }
+    
+    color = AceSToneMapping(color);
+    
+    if (ScanlineParams.x > 0.5f && ScanlineParams.w > 0.5f)
+    {
+        color = ApplyScanline(color, uv);
+    }
+    
+    color = pow(color, 1.0 / 2.2);
 
-    return float4(saturate(finalColor), texColor.a);
+    return float4(saturate(color), texColor.a);
 }

@@ -366,4 +366,25 @@
 <data name="ShadowMode_Desc" xml:space="preserve"><value>Mengalihkan pembuatan bayangan untuk pengaturan ID Dunia ini.</value></data>
 <data name="CascadedShadows" xml:space="preserve"><value>Bayangan Bertingkat</value></data>
 <data name="CascadedShadows_Desc" xml:space="preserve"><value>Mengaktifkan Peta Bayangan Bertingkat untuk meningkatkan kualitas bayangan.</value></data>
+<data name="Group_PBR" xml:space="preserve"><value>Pengaturan PBR</value></data>
+<data name="Metallic" xml:space="preserve"><value>Metallic</value></data>
+<data name="Metallic_Desc" xml:space="preserve"><value>Mengatur sifat logam dari permukaan.</value></data>
+<data name="Roughness" xml:space="preserve"><value>Kekasaran</value></data>
+<data name="Roughness_Desc" xml:space="preserve"><value>Mengatur kekasaran permukaan. Mempengaruhi blur refleksi.</value></data>
+<data name="IBLIntensity" xml:space="preserve"><value>Intensitas IBL</value></data>
+<data name="IBLIntensity_Desc" xml:space="preserve"><value>Mengatur intensitas Pencahayaan Berbasis Gambar.</value></data>
+<data name="Group_SSR" xml:space="preserve"><value>SSR</value></data>
+<data name="SSREnabled" xml:space="preserve"><value>Aktifkan SSR</value></data>
+<data name="SSREnabled_Desc" xml:space="preserve"><value>Mengaktifkan Refleksi Ruang Layar.</value></data>
+<data name="SSRStep" xml:space="preserve"><value>Ukuran Langkah</value></data>
+<data name="SSRStep_Desc" xml:space="preserve"><value>Mengatur presisi perhitungan refleksi.</value></data>
+<data name="SSRMaxDist" xml:space="preserve"><value>Jarak Maksimum</value></data>
+<data name="SSRMaxDist_Desc" xml:space="preserve"><value>Mengatur jarak maksimum untuk perhitungan refleksi.</value></data>
+<data name="Group_PCSS" xml:space="preserve"><value>PCSS</value></data>
+<data name="PcssLightSize" xml:space="preserve"><value>Ukuran Cahaya</value></data>
+<data name="PcssLightSize_Desc" xml:space="preserve"><value>Mengatur ukuran sumber cahaya. Mempengaruhi kelembutan bayangan.</value></data>
+<data name="PcssQuality" xml:space="preserve"><value>Kualitas Bayangan</value></data>
+<data name="PcssQuality_Desc" xml:space="preserve"><value>Mengatur jumlah sampel untuk bayangan lembut.</value></data>
+<data name="ScanlinePost" xml:space="preserve"><value>Terapkan Setelah Tonemap</value></data>
+<data name="ScanlinePost_Desc" xml:space="preserve"><value>Menerapkan scanlines setelah tone mapping.</value></data>
 </root>

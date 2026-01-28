@@ -367,4 +367,25 @@
 <data name="ShadowMode_Desc" xml:space="preserve"><value>このワールドID設定での影の有効・無効を切り替えます。</value></data>
 <data name="CascadedShadows" xml:space="preserve"><value>カスケードシャドウ</value></data>
 <data name="CascadedShadows_Desc" xml:space="preserve"><value>カスケードシャドウマップを有効にし、影の品質を向上させます。</value></data>
+<data name="Group_PBR" xml:space="preserve"><value>PBR設定</value></data>
+<data name="Metallic" xml:space="preserve"><value>メタリック</value></data>
+<data name="Metallic_Desc" xml:space="preserve"><value>表面の金属っぽさを設定します。</value></data>
+<data name="Roughness" xml:space="preserve"><value>ラフネス</value></data>
+<data name="Roughness_Desc" xml:space="preserve"><value>表面の粗さを設定します。反射のぼけ具合に影響します。</value></data>
+<data name="IBLIntensity" xml:space="preserve"><value>環境光強度 (IBL)</value></data>
+<data name="IBLIntensity_Desc" xml:space="preserve"><value>環境マップによるライティングの強さを設定します。</value></data>
+<data name="Group_SSR" xml:space="preserve"><value>SSR (画面空間反射)</value></data>
+<data name="SSREnabled" xml:space="preserve"><value>SSR有効</value></data>
+<data name="SSREnabled_Desc" xml:space="preserve"><value>画面空間反射を有効にします。</value></data>
+<data name="SSRStep" xml:space="preserve"><value>ステップサイズ</value></data>
+<data name="SSRStep_Desc" xml:space="preserve"><value>反射計算の精度を設定します。</value></data>
+<data name="SSRMaxDist" xml:space="preserve"><value>最大距離</value></data>
+<data name="SSRMaxDist_Desc" xml:space="preserve"><value>反射計算を行う最大距離を設定します。</value></data>
+<data name="Group_PCSS" xml:space="preserve"><value>PCSS (ソフトシャドウ)</value></data>
+<data name="PcssLightSize" xml:space="preserve"><value>光源サイズ</value></data>
+<data name="PcssLightSize_Desc" xml:space="preserve"><value>光源の大きさを設定します。影のぼけ具合に影響します。</value></data>
+<data name="PcssQuality" xml:space="preserve"><value>シャドウ品質</value></data>
+<data name="PcssQuality_Desc" xml:space="preserve"><value>ソフトシャドウのサンプル数を設定します。</value></data>
+<data name="ScanlinePost" xml:space="preserve"><value>トーンマップ後適用</value></data>
+<data name="ScanlinePost_Desc" xml:space="preserve"><value>走査線をトーンマッピングの後に適用します。</value></data>
 </root>

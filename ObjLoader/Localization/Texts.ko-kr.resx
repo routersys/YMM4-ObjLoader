@@ -367,4 +367,25 @@
 <data name="ShadowMode_Desc" xml:space="preserve"><value>이 월드 ID 설정에 대한 그림자 생성을 전환합니다.</value></data>
 <data name="CascadedShadows" xml:space="preserve"><value>계단식 그림자</value></data>
 <data name="CascadedShadows_Desc" xml:space="preserve"><value>계단식 그림자 매핑을 활성화하여 그림자 품질을 향상시킵니다.</value></data>
+<data name="Group_PBR" xml:space="preserve"><value>PBR 설정</value></data>
+<data name="Metallic" xml:space="preserve"><value>메탈릭</value></data>
+<data name="Metallic_Desc" xml:space="preserve"><value>표면의 금속성을 설정합니다.</value></data>
+<data name="Roughness" xml:space="preserve"><value>거칠기</value></data>
+<data name="Roughness_Desc" xml:space="preserve"><value>표면의 거칠기를 설정합니다. 반사 흐림에 영향을 줍니다.</value></data>
+<data name="IBLIntensity" xml:space="preserve"><value>IBL 강도</value></data>
+<data name="IBLIntensity_Desc" xml:space="preserve"><value>이미지 기반 조명의 강도를 설정합니다.</value></data>
+<data name="Group_SSR" xml:space="preserve"><value>SSR</value></data>
+<data name="SSREnabled" xml:space="preserve"><value>SSR 활성화</value></data>
+<data name="SSREnabled_Desc" xml:space="preserve"><value>화면 공간 반사를 활성화합니다.</value></data>
+<data name="SSRStep" xml:space="preserve"><value>단계 크기</value></data>
+<data name="SSRStep_Desc" xml:space="preserve"><value>반사 계산의 정밀도를 설정합니다.</value></data>
+<data name="SSRMaxDist" xml:space="preserve"><value>최대 거리</value></data>
+<data name="SSRMaxDist_Desc" xml:space="preserve"><value>반사 계산의 최대 거리를 설정합니다.</value></data>
+<data name="Group_PCSS" xml:space="preserve"><value>PCSS</value></data>
+<data name="PcssLightSize" xml:space="preserve"><value>광원 크기</value></data>
+<data name="PcssLightSize_Desc" xml:space="preserve"><value>광원의 크기를 설정합니다. 그림자 부드러움에 영향을 줍니다.</value></data>
+<data name="PcssQuality" xml:space="preserve"><value>그림자 품질</value></data>
+<data name="PcssQuality_Desc" xml:space="preserve"><value>소프트 섀도우의 샘플 수를 설정합니다.</value></data>
+<data name="ScanlinePost" xml:space="preserve"><value>톤매핑 후 적용</value></data>
+<data name="ScanlinePost_Desc" xml:space="preserve"><value>톤매핑 후에 스캔라인을 적용합니다.</value></data>
 </root>

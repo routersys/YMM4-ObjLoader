@@ -367,4 +367,25 @@
 <data name="ShadowMode_Desc" xml:space="preserve"><value>يبدل توليد الظل لإعداد معرف العالم هذا.</value></data>
 <data name="CascadedShadows" xml:space="preserve"><value>ظلال متتالية</value></data>
 <data name="CascadedShadows_Desc" xml:space="preserve"><value>يمكّن خرائط الظل المتتالية لتحسين جودة الظل.</value></data>
+<data name="Group_PBR" xml:space="preserve"><value>إعدادات PBR</value></data>
+<data name="Metallic" xml:space="preserve"><value>معدني</value></data>
+<data name="Metallic_Desc" xml:space="preserve"><value>يحدد الخاصية المعدنية للسطح.</value></data>
+<data name="Roughness" xml:space="preserve"><value>خشونة</value></data>
+<data name="Roughness_Desc" xml:space="preserve"><value>يحدد خشونة السطح. يؤثر على ضبابية الانعكاس.</value></data>
+<data name="IBLIntensity" xml:space="preserve"><value>كثافة IBL</value></data>
+<data name="IBLIntensity_Desc" xml:space="preserve"><value>يحدد كثافة الإضاءة القائمة على الصورة.</value></data>
+<data name="Group_SSR" xml:space="preserve"><value>SSR</value></data>
+<data name="SSREnabled" xml:space="preserve"><value>تمكين SSR</value></data>
+<data name="SSREnabled_Desc" xml:space="preserve"><value>يمكّن انعكاسات مساحة الشاشة.</value></data>
+<data name="SSRStep" xml:space="preserve"><value>حجم الخطوة</value></data>
+<data name="SSRStep_Desc" xml:space="preserve"><value>يحدد دقة حساب الانعكاس.</value></data>
+<data name="SSRMaxDist" xml:space="preserve"><value>أقصى مسافة</value></data>
+<data name="SSRMaxDist_Desc" xml:space="preserve"><value>يحدد الحد الأقصى للمسافة لحساب الانعكاس.</value></data>
+<data name="Group_PCSS" xml:space="preserve"><value>PCSS</value></data>
+<data name="PcssLightSize" xml:space="preserve"><value>حجم الضوء</value></data>
+<data name="PcssLightSize_Desc" xml:space="preserve"><value>يحدد حجم مصدر الضوء. يؤثر على نعومة الظل.</value></data>
+<data name="PcssQuality" xml:space="preserve"><value>جودة الظل</value></data>
+<data name="PcssQuality_Desc" xml:space="preserve"><value>يحدد عدد العينات للظلال الناعمة.</value></data>
+<data name="ScanlinePost" xml:space="preserve"><value>تطبيق بعد تخطيط النغمة</value></data>
+<data name="ScanlinePost_Desc" xml:space="preserve"><value>يطبق خطوط المسح بعد تخطيط النغمة.</value></data>
 </root>

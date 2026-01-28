@@ -40,5 +40,12 @@ namespace ObjLoader.Core
         public Matrix4x4 LightViewProj2;
         public Vector4 ShadowParams;
         public Vector4 CascadeSplits;
+        public Vector4 EnvironmentParam;
+        public Vector4 PbrParams;
+        public Vector4 IblParams;
+        public Vector4 SsrParams;
+        public Matrix4x4 InverseViewProj;
+        public Matrix4x4 ViewProj;
+        public Vector4 PcssParams;
     }
 }

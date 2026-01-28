@@ -367,4 +367,25 @@
 <data name="ShadowMode_Desc" xml:space="preserve"><value>切換此世界ID設定的陰影生成。</value></data>
 <data name="CascadedShadows" xml:space="preserve"><value>級聯陰影</value></data>
 <data name="CascadedShadows_Desc" xml:space="preserve"><value>啟用級聯陰影貼圖以提高陰影品質。</value></data>
+<data name="Group_PBR" xml:space="preserve"><value>PBR設定</value></data>
+<data name="Metallic" xml:space="preserve"><value>金屬度</value></data>
+<data name="Metallic_Desc" xml:space="preserve"><value>設定表面的金屬度。</value></data>
+<data name="Roughness" xml:space="preserve"><value>粗糙度</value></data>
+<data name="Roughness_Desc" xml:space="preserve"><value>設定表面的粗糙度。影響反射模糊。</value></data>
+<data name="IBLIntensity" xml:space="preserve"><value>環境光強度 (IBL)</value></data>
+<data name="IBLIntensity_Desc" xml:space="preserve"><value>設定基於圖像的照明強度。</value></data>
+<data name="Group_SSR" xml:space="preserve"><value>SSR</value></data>
+<data name="SSREnabled" xml:space="preserve"><value>啟用SSR</value></data>
+<data name="SSREnabled_Desc" xml:space="preserve"><value>啟用螢幕空間反射。</value></data>
+<data name="SSRStep" xml:space="preserve"><value>步長</value></data>
+<data name="SSRStep_Desc" xml:space="preserve"><value>設定反射計算的精度。</value></data>
+<data name="SSRMaxDist" xml:space="preserve"><value>最大距離</value></data>
+<data name="SSRMaxDist_Desc" xml:space="preserve"><value>設定反射計算的最大距離。</value></data>
+<data name="Group_PCSS" xml:space="preserve"><value>PCSS</value></data>
+<data name="PcssLightSize" xml:space="preserve"><value>光源大小</value></data>
+<data name="PcssLightSize_Desc" xml:space="preserve"><value>設定光源的大小。影響陰影柔和度。</value></data>
+<data name="PcssQuality" xml:space="preserve"><value>陰影品質</value></data>
+<data name="PcssQuality_Desc" xml:space="preserve"><value>設定軟陰影的採樣數。</value></data>
+<data name="ScanlinePost" xml:space="preserve"><value>色調映射後應用</value></data>
+<data name="ScanlinePost_Desc" xml:space="preserve"><value>在色調映射之後應用掃描線。</value></data>
 </root>

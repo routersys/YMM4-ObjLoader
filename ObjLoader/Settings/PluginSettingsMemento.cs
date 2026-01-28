@@ -1,5 +1,4 @@
 ﻿using System.Windows.Media;
-
 namespace ObjLoader.Settings
 {
     public class PluginSettingsMemento
@@ -7,6 +6,7 @@ namespace ObjLoader.Settings
         public CoordinateSystem CoordinateSystem { get; set; }
         public RenderCullMode CullMode { get; set; }
         public RenderQuality RenderQuality { get; set; }
+
         public bool ShadowMappingEnabled { get; set; }
         public bool CascadedShadowsEnabled { get; set; }
         public int ShadowResolution { get; set; }
@@ -20,9 +20,9 @@ namespace ObjLoader.Settings
         public bool AssimpStl { get; set; }
         public bool Assimp3mf { get; set; }
         public bool AssimpPmx { get; set; }
+        public bool IsSpecularFixApplied { get; set; }
 
         public int WorldId { get; set; }
-        public List<WorldParameter>? WorldParameters { get; set; }
 
         public List<Color>? AmbientColors { get; set; }
         public List<Color>? LightColors { get; set; }
@@ -64,6 +64,7 @@ namespace ObjLoader.Settings
         public List<bool>? ScanlineEnabled { get; set; }
         public List<double>? ScanlineIntensity { get; set; }
         public List<double>? ScanlineFrequency { get; set; }
+        public List<bool>? ScanlinePost { get; set; }
 
         public List<bool>? ChromAbEnabled { get; set; }
         public List<double>? ChromAbIntensity { get; set; }
@@ -72,5 +73,7 @@ namespace ObjLoader.Settings
         public List<double>? MonochromeMix { get; set; }
         public List<bool>? PosterizeEnabled { get; set; }
         public List<int>? PosterizeLevels { get; set; }
+
+        public List<WorldParameter>? WorldParameters { get; set; }
     }
 }

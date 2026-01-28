@@ -33,6 +33,7 @@ namespace ObjLoader.Settings
         private bool _assimpStl = false;
         private bool _assimp3mf = false;
         private bool _assimpPmx = false;
+        private bool _isSpecularFixApplied = false;
 
         private int _worldId = 0;
 
@@ -89,6 +90,7 @@ namespace ObjLoader.Settings
                 AssimpStl = _assimpStl,
                 Assimp3mf = _assimp3mf,
                 AssimpPmx = _assimpPmx,
+                IsSpecularFixApplied = _isSpecularFixApplied,
                 WorldId = _worldId,
                 WorldParameters = WorldParameters.Select(w => (WorldParameter)w.Clone()).ToList()
             };
@@ -112,6 +114,7 @@ namespace ObjLoader.Settings
             _assimpStl = m.AssimpStl;
             _assimp3mf = m.Assimp3mf;
             _assimpPmx = m.AssimpPmx;
+            _isSpecularFixApplied = m.IsSpecularFixApplied;
             _worldId = m.WorldId;
 
             if (m.WorldParameters != null && m.WorldParameters.Count > 0)
@@ -165,6 +168,7 @@ namespace ObjLoader.Settings
                     if (m.ScanlineEnabled?.Count > i) w.Scanline.Enabled = m.ScanlineEnabled[i];
                     if (m.ScanlineIntensity?.Count > i) w.Scanline.Intensity = m.ScanlineIntensity[i];
                     if (m.ScanlineFrequency?.Count > i) w.Scanline.Frequency = m.ScanlineFrequency[i];
+                    if (m.ScanlinePost?.Count > i) w.Scanline.ApplyAfterTonemap = m.ScanlinePost[i];
 
                     if (m.ChromAbEnabled?.Count > i) w.Artistic.ChromAbEnabled = m.ChromAbEnabled[i];
                     if (m.ChromAbIntensity?.Count > i) w.Artistic.ChromAbIntensity = m.ChromAbIntensity[i];
@@ -178,6 +182,16 @@ namespace ObjLoader.Settings
                 }
             }
             EnsureWorlds();
+
+            if (!_isSpecularFixApplied)
+            {
+                foreach (var w in WorldParameters)
+                {
+                    w.Lighting.SpecularIntensity = 1.0;
+                }
+                _isSpecularFixApplied = true;
+            }
+
             OnPropertyChanged(string.Empty);
         }
 
@@ -231,6 +245,7 @@ namespace ObjLoader.Settings
         public bool GetScanlineEnabled(int id) => GetWorld(id).Scanline.Enabled;
         public double GetScanlineIntensity(int id) => GetWorld(id).Scanline.Intensity;
         public double GetScanlineFrequency(int id) => GetWorld(id).Scanline.Frequency;
+        public bool GetScanlinePost(int id) => GetWorld(id).Scanline.ApplyAfterTonemap;
 
         public bool GetMonochromeEnabled(int id) => GetWorld(id).Artistic.MonochromeEnabled;
         public Color GetMonochromeColor(int id) => GetWorld(id).Artistic.MonochromeColor;
@@ -238,6 +253,19 @@ namespace ObjLoader.Settings
 
         public bool GetPosterizeEnabled(int id) => GetWorld(id).Artistic.PosterizeEnabled;
         public int GetPosterizeLevels(int id) => GetWorld(id).Artistic.PosterizeLevels;
+
+        public double GetMetallic(int id) => GetWorld(id).PBR.Metallic;
+        public double GetRoughness(int id) => GetWorld(id).PBR.Roughness;
+        public double GetIBLIntensity(int id) => GetWorld(id).PBR.IBLIntensity;
+
+        public bool GetSSREnabled(int id) => GetWorld(id).SSR.Enabled;
+        public double GetSSRStep(int id) => GetWorld(id).SSR.Step;
+        public double GetSSRMaxDist(int id) => GetWorld(id).SSR.MaxDist;
+        public double GetSSRThickness(int id) => GetWorld(id).SSR.Thickness;
+
+        public double GetPcssLightSize(int id) => GetWorld(id).PCSS.LightSize;
+        public int GetPcssQuality(int id) => GetWorld(id).PCSS.Quality;
+
 
         [SettingGroup("Global", nameof(Texts.Group_Global), Order = 0, Icon = "M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,12.5A0.5,0.5 0 0,1 11.5,12A0.5,0.5 0 0,1 12,11.5A0.5,0.5 0 0,1 12.5,12A0.5,0.5 0 0,1 12,12.5M12,7.2C9.9,7.2 8.2,8.9 8.2,11C8.2,14 12,17.5 12,17.5C12,17.5 15.8,14 15.8,11C15.8,8.9 14.1,7.2 12,7.2Z", ResourceType = typeof(Texts))]
         [EnumSetting("Global", nameof(Texts.CoordinateSystem), Description = nameof(Texts.CoordinateSystem_Desc), ResourceType = typeof(Texts))]
@@ -347,14 +375,66 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Lighting.SpecularIntensity != value) { CurrentWorld.Lighting.SpecularIntensity = value; OnPropertyChanged(); } }
         }
 
-        [RangeSetting("Lighting", nameof(Texts.Shininess), 1, 100, Tick = 1, Description = nameof(Texts.Shininess_Desc), ResourceType = typeof(Texts))]
-        public double Shininess
+        [SettingGroup("PBR", nameof(Texts.Group_PBR), Order = 3, ParentId = "Lighting", Icon = "M12,2C6.48,2 2,6.48 2,12C2,17.52 6.48,22 12,22C17.52,22 22,17.52 22,12C22,6.48 17.52,2 12,2M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20Z", ResourceType = typeof(Texts))]
+        [RangeSetting("PBR", nameof(Texts.Metallic), 0, 1, Tick = 0.01, Description = nameof(Texts.Metallic_Desc), ResourceType = typeof(Texts))]
+        public double Metallic
         {
-            get => CurrentWorld.Lighting.Shininess;
-            set { if (CurrentWorld.Lighting.Shininess != value) { CurrentWorld.Lighting.Shininess = value; OnPropertyChanged(); } }
+            get => CurrentWorld.PBR.Metallic;
+            set { if (CurrentWorld.PBR.Metallic != value) { CurrentWorld.PBR.Metallic = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Environment", nameof(Texts.Group_Environment), Order = 3, ParentId = "Lighting", Icon = "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,5.29C7.24,5.84 7.09,6.44 7.09,7.09C7.09,7.74 7.24,8.34 7.5,8.89L3.34,7.18V7M3.34,17L7.5,18.71C7.24,18.16 7.09,17.56 7.09,16.91C7.09,16.26 7.24,15.66 7.5,15.11L3.34,16.82V17M20.66,17L16.5,15.29C16.76,15.84 16.91,16.44 16.91,17.09C16.91,17.74 16.76,18.34 16.5,18.89L20.66,17.18V17M20.66,7L16.5,8.71C16.76,8.16 16.91,7.56 16.91,6.91C16.91,6.26 16.76,5.66 16.5,5.11L20.66,6.82V7M12,22L9.61,18.58C10.35,18.85 11.16,19 12,19C12.84,19 13.65,18.85 14.39,18.58L12,22Z", ResourceType = typeof(Texts))]
+        [RangeSetting("PBR", nameof(Texts.Roughness), 0, 1, Tick = 0.01, Description = nameof(Texts.Roughness_Desc), ResourceType = typeof(Texts))]
+        public double Roughness
+        {
+            get => CurrentWorld.PBR.Roughness;
+            set { if (CurrentWorld.PBR.Roughness != value) { CurrentWorld.PBR.Roughness = value; OnPropertyChanged(); } }
+        }
+
+        [RangeSetting("PBR", nameof(Texts.IBLIntensity), 0, 5, Tick = 0.1, Description = nameof(Texts.IBLIntensity_Desc), ResourceType = typeof(Texts))]
+        public double IBLIntensity
+        {
+            get => CurrentWorld.PBR.IBLIntensity;
+            set { if (CurrentWorld.PBR.IBLIntensity != value) { CurrentWorld.PBR.IBLIntensity = value; OnPropertyChanged(); } }
+        }
+
+        [SettingGroup("SSR", nameof(Texts.Group_SSR), Order = 4, ParentId = "Lighting", Icon = "M2,2H22V22H2V2M4,4V20H20V4H4M11,7H13V9H15V11H13V13H11V11H9V9H11V7Z", ResourceType = typeof(Texts))]
+        [BoolSetting("SSR", nameof(Texts.SSREnabled), Description = nameof(Texts.SSREnabled_Desc), ResourceType = typeof(Texts))]
+        public bool SSREnabled
+        {
+            get => CurrentWorld.SSR.Enabled;
+            set { if (CurrentWorld.SSR.Enabled != value) { CurrentWorld.SSR.Enabled = value; OnPropertyChanged(); } }
+        }
+
+        [RangeSetting("SSR", nameof(Texts.SSRStep), 0.1, 5.0, Tick = 0.1, EnableBy = nameof(SSREnabled), Description = nameof(Texts.SSRStep_Desc), ResourceType = typeof(Texts))]
+        public double SSRStep
+        {
+            get => CurrentWorld.SSR.Step;
+            set { if (CurrentWorld.SSR.Step != value) { CurrentWorld.SSR.Step = value; OnPropertyChanged(); } }
+        }
+
+        [RangeSetting("SSR", nameof(Texts.SSRMaxDist), 1.0, 50.0, Tick = 1.0, EnableBy = nameof(SSREnabled), Description = nameof(Texts.SSRMaxDist_Desc), ResourceType = typeof(Texts))]
+        public double SSRMaxDist
+        {
+            get => CurrentWorld.SSR.MaxDist;
+            set { if (CurrentWorld.SSR.MaxDist != value) { CurrentWorld.SSR.MaxDist = value; OnPropertyChanged(); } }
+        }
+
+        [SettingGroup("PCSS", nameof(Texts.Group_PCSS), Order = 5, ParentId = "Lighting", Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
+        [RangeSetting("PCSS", nameof(Texts.PcssLightSize), 0.0, 5.0, Tick = 0.01, Description = nameof(Texts.PcssLightSize_Desc), ResourceType = typeof(Texts))]
+        public double PcssLightSize
+        {
+            get => CurrentWorld.PCSS.LightSize;
+            set { if (CurrentWorld.PCSS.LightSize != value) { CurrentWorld.PCSS.LightSize = value; OnPropertyChanged(); } }
+        }
+
+        [IntSpinnerSetting("PCSS", nameof(Texts.PcssQuality), 4, 64, Description = nameof(Texts.PcssQuality_Desc), ResourceType = typeof(Texts))]
+        public int PcssQuality
+        {
+            get => CurrentWorld.PCSS.Quality;
+            set { if (CurrentWorld.PCSS.Quality != value) { CurrentWorld.PCSS.Quality = value; OnPropertyChanged(); } }
+        }
+
+        [SettingGroup("Environment", nameof(Texts.Group_Environment), Order = 6, ParentId = "Lighting", Icon = "M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,5.29C7.24,5.84 7.09,6.44 7.09,7.09C7.09,7.74 7.24,8.34 7.5,8.89L3.34,7.18V7M3.34,17L7.5,18.71C7.24,18.16 7.09,17.56 7.09,16.91C7.09,16.26 7.24,15.66 7.5,15.11L3.34,16.82V17M20.66,17L16.5,15.29C16.76,15.84 16.91,16.44 16.91,17.09C16.91,17.74 16.76,18.34 16.5,18.89L20.66,17.18V17M20.66,7L16.5,8.71C16.76,8.16 16.91,7.56 16.91,6.91C16.91,6.26 16.76,5.66 16.5,5.11L20.66,6.82V7M12,22L9.61,18.58C10.35,18.85 11.16,19 12,19C12.84,19 13.65,18.85 14.39,18.58L12,22Z", ResourceType = typeof(Texts))]
         [ColorSetting("Environment", nameof(Texts.LightColor), Description = nameof(Texts.LightColor_Desc), ResourceType = typeof(Texts))]
         public Color LightColor
         {
@@ -362,7 +442,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Lighting.LightColor != value) { CurrentWorld.Lighting.LightColor = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Toon", nameof(Texts.Group_Toon), Order = 4, ParentId = "Lighting", Icon = "M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M11,7H13V9H15V11H13V13H11V11H9V9H11V7Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Toon", nameof(Texts.Group_Toon), Order = 7, ParentId = "Lighting", Icon = "M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19M11,7H13V9H15V11H13V13H11V11H9V9H11V7Z", ResourceType = typeof(Texts))]
         [BoolSetting("Toon", nameof(Texts.ToonEnabled), Description = nameof(Texts.ToonEnabled_Desc), ResourceType = typeof(Texts))]
         public bool ToonEnabled
         {
@@ -384,7 +464,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Toon.Smoothness != value) { CurrentWorld.Toon.Smoothness = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Rim", nameof(Texts.Group_Rim), Order = 5, ParentId = "Lighting", Icon = "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Rim", nameof(Texts.Group_Rim), Order = 8, ParentId = "Lighting", Icon = "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z", ResourceType = typeof(Texts))]
         [BoolSetting("Rim", nameof(Texts.RimEnabled), Description = nameof(Texts.RimEnabled_Desc), ResourceType = typeof(Texts))]
         public bool RimEnabled
         {
@@ -413,7 +493,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Rim.Power != value) { CurrentWorld.Rim.Power = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Outline", nameof(Texts.Group_Outline), Order = 6, ParentId = "Lighting", Icon = "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Outline", nameof(Texts.Group_Outline), Order = 9, ParentId = "Lighting", Icon = "M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6Z", ResourceType = typeof(Texts))]
         [BoolSetting("Outline", nameof(Texts.OutlineEnabled), Description = nameof(Texts.OutlineEnabled_Desc), ResourceType = typeof(Texts))]
         public bool OutlineEnabled
         {
@@ -442,7 +522,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Outline.Power != value) { CurrentWorld.Outline.Power = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Fog", nameof(Texts.Group_Fog), Order = 7, ParentId = "Lighting", Icon = "M3,4H21V8H3V4M3,10H21V14H3V10M3,16H21V20H3V16Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Fog", nameof(Texts.Group_Fog), Order = 10, ParentId = "Lighting", Icon = "M3,4H21V8H3V4M3,10H21V14H3V10M3,16H21V20H3V16Z", ResourceType = typeof(Texts))]
         [BoolSetting("Fog", nameof(Texts.FogEnabled), Description = nameof(Texts.FogEnabled_Desc), ResourceType = typeof(Texts))]
         public bool FogEnabled
         {
@@ -478,7 +558,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Fog.Density != value) { CurrentWorld.Fog.Density = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("PostEffect", nameof(Texts.Group_PostEffect), Order = 8, Icon = "M2,2V22H22V2H2M20,20H4V4H20V20M8,6H16V14H8V6M10,8V12H14V8H10Z", ResourceType = typeof(Texts))]
+        [SettingGroup("PostEffect", nameof(Texts.Group_PostEffect), Order = 11, Icon = "M2,2V22H22V2H2M20,20H4V4H20V20M8,6H16V14H8V6M10,8V12H14V8H10Z", ResourceType = typeof(Texts))]
         [IntSpinnerSetting("PostEffect", nameof(Texts.WorldId), 0, 19, IsGroupHeader = true, Description = nameof(Texts.WorldId_Desc), ResourceType = typeof(Texts))]
         public int PostEffectWorldId
         {
@@ -514,7 +594,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.PostEffect.BrightnessPost != value) { CurrentWorld.PostEffect.BrightnessPost = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Vignette", nameof(Texts.Group_Vignette), Order = 9, ParentId = "PostEffect", Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Vignette", nameof(Texts.Group_Vignette), Order = 12, ParentId = "PostEffect", Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
         [BoolSetting("Vignette", nameof(Texts.VignetteEnabled), Description = nameof(Texts.VignetteEnabled_Desc), ResourceType = typeof(Texts))]
         public bool VignetteEnabled
         {
@@ -550,7 +630,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Vignette.Softness != value) { CurrentWorld.Vignette.Softness = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Scanline", nameof(Texts.Group_Scanline), Order = 10, ParentId = "PostEffect", Icon = "M3,3H21V5H3V3M3,7H21V9H3V7M3,11H21V13H3V11M3,15H21V17H3V15M3,19H21V21H3V19Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Scanline", nameof(Texts.Group_Scanline), Order = 13, ParentId = "PostEffect", Icon = "M3,3H21V5H3V3M3,7H21V9H3V7M3,11H21V13H3V11M3,15H21V17H3V15M3,19H21V21H3V19Z", ResourceType = typeof(Texts))]
         [BoolSetting("Scanline", nameof(Texts.ScanlineEnabled), Description = nameof(Texts.ScanlineEnabled_Desc), ResourceType = typeof(Texts))]
         public bool ScanlineEnabled
         {
@@ -572,7 +652,14 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Scanline.Frequency != value) { CurrentWorld.Scanline.Frequency = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Artistic", nameof(Texts.Group_Artistic), Order = 11, ParentId = "PostEffect", Icon = "M12,3C16.97,3 21,7.03 21,12C21,16.97 16.97,21 12,21C7.03,21 3,16.97 3,12C3,7.03 7.03,3 12,3M12,5C8.13,5 5,8.13 5,12C5,15.87 8.13,19 12,19C15.87,19 19,15.87 19,12C19,8.13 15.87,5 12,5Z", ResourceType = typeof(Texts))]
+        [BoolSetting("Scanline", nameof(Texts.ScanlinePost), EnableBy = nameof(ScanlineEnabled), Description = nameof(Texts.ScanlinePost_Desc), ResourceType = typeof(Texts))]
+        public bool ScanlinePost
+        {
+            get => CurrentWorld.Scanline.ApplyAfterTonemap;
+            set { if (CurrentWorld.Scanline.ApplyAfterTonemap != value) { CurrentWorld.Scanline.ApplyAfterTonemap = value; OnPropertyChanged(); } }
+        }
+
+        [SettingGroup("Artistic", nameof(Texts.Group_Artistic), Order = 14, ParentId = "PostEffect", Icon = "M12,3C16.97,3 21,7.03 21,12C21,16.97 16.97,21 12,21C7.03,21 3,16.97 3,12C3,7.03 7.03,3 12,3M12,5C8.13,5 5,8.13 5,12C5,15.87 8.13,19 12,19C15.87,19 19,15.87 19,12C19,8.13 15.87,5 12,5Z", ResourceType = typeof(Texts))]
         [BoolSetting("Artistic", nameof(Texts.ChromAbEnabled), Description = nameof(Texts.ChromAbEnabled_Desc), ResourceType = typeof(Texts))]
         public bool ChromAbEnabled
         {
@@ -622,7 +709,7 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.Artistic.PosterizeLevels != value) { CurrentWorld.Artistic.PosterizeLevels = value; OnPropertyChanged(); } }
         }
 
-        [SettingGroup("Assimp", nameof(Texts.Group_Assimp), Order = 12, Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Assimp", nameof(Texts.Group_Assimp), Order = 15, Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
         [BoolSetting("Assimp", nameof(Texts.Assimp_Obj), Description = nameof(Texts.Assimp_Obj_Desc), ResourceType = typeof(Texts))]
         public bool AssimpObj { get => _assimpObj; set => SetProperty(ref _assimpObj, value); }
 
@@ -701,6 +788,9 @@ namespace ObjLoader.Settings
         public VignetteSettings Vignette { get; set; } = new();
         public ScanlineSettings Scanline { get; set; } = new();
         public ArtisticSettings Artistic { get; set; } = new();
+        public PbrSettings PBR { get; set; } = new();
+        public SsrSettings SSR { get; set; } = new();
+        public PcssSettings PCSS { get; set; } = new();
 
         public object Clone()
         {
@@ -714,6 +804,9 @@ namespace ObjLoader.Settings
             clone.Vignette = (VignetteSettings)Vignette.Clone();
             clone.Scanline = (ScanlineSettings)Scanline.Clone();
             clone.Artistic = (ArtisticSettings)Artistic.Clone();
+            clone.PBR = (PbrSettings)PBR.Clone();
+            clone.SSR = (SsrSettings)SSR.Clone();
+            clone.PCSS = (PcssSettings)PCSS.Clone();
             return clone;
         }
     }
@@ -724,7 +817,7 @@ namespace ObjLoader.Settings
         public Color AmbientColor { get; set; } = Color.FromRgb(50, 50, 50);
         public Color LightColor { get; set; } = Colors.White;
         public double DiffuseIntensity { get; set; } = 1.0;
-        public double SpecularIntensity { get; set; } = 0.5;
+        public double SpecularIntensity { get; set; } = 1.0;
         public double Shininess { get; set; } = 20.0;
         public object Clone() => MemberwiseClone();
     }
@@ -789,6 +882,7 @@ namespace ObjLoader.Settings
         public bool Enabled { get; set; } = false;
         public double Intensity { get; set; } = 0.2;
         public double Frequency { get; set; } = 100.0;
+        public bool ApplyAfterTonemap { get; set; } = false;
         public object Clone() => MemberwiseClone();
     }
 
@@ -801,6 +895,30 @@ namespace ObjLoader.Settings
         public double MonochromeMix { get; set; } = 1.0;
         public bool PosterizeEnabled { get; set; } = false;
         public int PosterizeLevels { get; set; } = 8;
+        public object Clone() => MemberwiseClone();
+    }
+
+    public class PbrSettings : ICloneable
+    {
+        public double Metallic { get; set; } = 0.0;
+        public double Roughness { get; set; } = 0.5;
+        public double IBLIntensity { get; set; } = 1.0;
+        public object Clone() => MemberwiseClone();
+    }
+
+    public class SsrSettings : ICloneable
+    {
+        public bool Enabled { get; set; } = false;
+        public double Step { get; set; } = 0.5;
+        public double MaxDist { get; set; } = 20.0;
+        public double Thickness { get; set; } = 0.5;
+        public object Clone() => MemberwiseClone();
+    }
+
+    public class PcssSettings : ICloneable
+    {
+        public double LightSize { get; set; } = 1.0;
+        public int Quality { get; set; } = 16;
         public object Clone() => MemberwiseClone();
     }
 }

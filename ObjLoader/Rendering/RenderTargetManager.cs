@@ -42,7 +42,7 @@ namespace ObjLoader.Rendering
                 Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
                 CPUAccessFlags = CpuAccessFlags.None,
-                MiscFlags = ResourceOptionFlags.Shared
+                MiscFlags = ResourceOptionFlags.None
             };
             RenderTargetTexture = device.CreateTexture2D(texDesc);
             _disposer.Collect(RenderTargetTexture);
