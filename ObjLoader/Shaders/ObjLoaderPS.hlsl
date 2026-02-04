@@ -205,12 +205,12 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
 
 float3 FresnelSchlick(float cosTheta, float3 F0)
 {
-    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return F0 + (1.0 - F0) * pow(abs(clamp(1.0 - cosTheta, 0.0, 1.0)), 5.0);
 }
 
 float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
 {
-    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(abs(clamp(1.0 - cosTheta, 0.0, 1.0)), 5.0);
 }
 
 float2 IntegrateBRDF(float NdotV, float roughness)
@@ -319,7 +319,7 @@ float4 PS(PS_IN input) : SV_Target
         texColor = tex.Sample(sam, uv) * BaseColor;
     }
 
-    float3 albedo = pow(texColor.rgb, 2.2);
+    float3 albedo = abs(pow(texColor.rgb, 2.2));
     float metallic = PbrParams.x;
     float roughness = PbrParams.y;
     float ao = PbrParams.z;
@@ -481,7 +481,7 @@ float4 PS(PS_IN input) : SV_Target
         color = ApplyScanline(color, uv);
     }
     
-    color = pow(color, 1.0 / 2.2);
+    color = pow(abs(color), 1.0 / 2.2);
 
     return float4(saturate(color), texColor.a);
 }
