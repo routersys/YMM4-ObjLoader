@@ -34,6 +34,8 @@ namespace ObjLoader.Services
 
     internal class RenderService : IDisposable
     {
+        private static readonly object _globalRenderLock = new object();
+
         private ID3D11Device? _device;
         private ID3D11DeviceContext? _context;
         private ID3D11Texture2D? _renderTarget;
@@ -47,7 +49,8 @@ namespace ObjLoader.Services
         private int _viewportWidth;
         private int _viewportHeight;
 
-        private readonly ID3D11ShaderResourceView[] _nullSrv = new ID3D11ShaderResourceView[] { null! };
+        private readonly ID3D11ShaderResourceView[] _nullSrv = new ID3D11ShaderResourceView[1];
+        private readonly ID3D11ShaderResourceView[] _nullSrv4 = new ID3D11ShaderResourceView[4];
         private readonly ID3D11Buffer[] _cbArray = new ID3D11Buffer[1];
         private readonly ID3D11ShaderResourceView[] _texArray = new ID3D11ShaderResourceView[1];
         private readonly ID3D11SamplerState[] _samplerArray = new ID3D11SamplerState[1];
@@ -63,6 +66,8 @@ namespace ObjLoader.Services
         private readonly List<int> _opaqueParts = new List<int>();
         private readonly List<TransparentPart> _transparentParts = new List<TransparentPart>();
         private readonly PartSorter _partSorter = new PartSorter();
+
+        private bool _isDisposed = false;
 
         private class TransparentPart
         {
@@ -198,7 +203,59 @@ namespace ObjLoader.Services
             double gridScale,
             bool isInteracting)
         {
-            if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
+            lock (_globalRenderLock)
+            {
+                if (_isDisposed) return;
+                if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
+
+                if (IsDeviceLost())
+                {
+                    return;
+                }
+
+                try
+                {
+                    RenderInternal(layers, view, proj, camPos, themeColor, isWireframe, isGridVisible, isInfiniteGrid, gridScale, isInteracting);
+                }
+                catch (SharpGen.Runtime.SharpGenException ex) when (ex.HResult == unchecked((int)0x887A0005) || ex.HResult == unchecked((int)0x887A0006))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Device lost during render: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
+                }
+            }
+        }
+
+        private bool IsDeviceLost()
+        {
+            if (_device == null) return true;
+            try
+            {
+                var reason = _device.DeviceRemovedReason;
+                return reason.Failure;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private void RenderInternal(
+            List<LayerRenderData> layers,
+            System.Numerics.Matrix4x4 view,
+            System.Numerics.Matrix4x4 proj,
+            System.Numerics.Vector3 camPos,
+            System.Windows.Media.Color themeColor,
+            bool isWireframe,
+            bool isGridVisible,
+            bool isInfiniteGrid,
+            double gridScale,
+            bool isInteracting)
+        {
+            if (_context == null || _d3dResources == null || _rtv == null || _dsv == null ||
+                _stagingTexture == null || _resolveTexture == null || _renderTarget == null || SceneImage == null) return;
 
             var settings = PluginSettings.Instance;
 
@@ -212,11 +269,11 @@ namespace ObjLoader.Services
             if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
             {
                 _d3dResources.EnsureShadowMapSize(settings.ShadowResolution, useCascaded);
-                _shadowSrvArray[0] = _d3dResources.ShadowMapSRV!;
             }
-            else if (_shadowSrvArray[0] == null)
+
+            if (_d3dResources.ShadowMapSRV != null)
             {
-                _shadowSrvArray[0] = _d3dResources.ShadowMapSRV!;
+                _shadowSrvArray[0] = _d3dResources.ShadowMapSRV;
             }
 
             var layerWorlds = new Matrix4x4[layers.Count];
@@ -323,7 +380,9 @@ namespace ObjLoader.Services
 
                         lightViewProj = lightView * lightProj;
 
-                        _context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, _d3dResources.ShadowMapDSVs[0]);
+                        _context.PSSetShaderResources(1, _nullSrv);
+
+                        _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), _d3dResources.ShadowMapDSVs[0]);
                         _context.ClearDepthStencilView(_d3dResources.ShadowMapDSVs[0], DepthStencilClearFlags.Depth, 1.0f, 0);
                         _context.RSSetState(_d3dResources.ShadowRasterizerState);
                         _context.RSSetViewport(0, 0, settings.ShadowResolution, settings.ShadowResolution);
@@ -365,6 +424,9 @@ namespace ObjLoader.Services
                                 }
                             }
                         }
+
+                        _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
+                        _context.Flush();
                     }
                 }
             }
@@ -395,7 +457,7 @@ namespace ObjLoader.Services
 
             _context.OMSetRenderTargets(_rtv, _dsv);
             _context.ClearRenderTargetView(_rtv, clearColor);
-            _context.ClearDepthStencilView(_dsv!, DepthStencilClearFlags.Depth, 1.0f, 0);
+            _context.ClearDepthStencilView(_dsv, DepthStencilClearFlags.Depth, 1.0f, 0);
 
             _context.RSSetState(isWireframe ? _d3dResources.WireframeRasterizerState : _d3dResources.RasterizerState);
             _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
@@ -407,7 +469,7 @@ namespace ObjLoader.Services
             _context.VSSetShader(_d3dResources.VertexShader);
             _context.PSSetShader(_d3dResources.PixelShader);
             _context.PSSetSamplers(0, _samplerArray);
-            if (renderShadowMap)
+            if (renderShadowMap && _shadowSrvArray[0] != null)
             {
                 _context.PSSetShaderResources(1, _shadowSrvArray);
                 _context.PSSetSamplers(1, _shadowSamplerArray);
@@ -510,10 +572,12 @@ namespace ObjLoader.Services
                 _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
             }
 
-            _context.PSSetShaderResources(1, _nullSrv);
+            ClearAllResourceBindings();
 
-            _context.ResolveSubresource(_resolveTexture!, 0, _renderTarget!, 0, Format.B8G8R8A8_UNorm);
+            _context.ResolveSubresource(_resolveTexture, 0, _renderTarget, 0, Format.B8G8R8A8_UNorm);
             _context.CopyResource(_stagingTexture, _resolveTexture);
+            _context.Flush();
+
             var map = _context.Map(_stagingTexture, 0, MapMode.Read, D3D11MapFlags.None);
 
             try
@@ -537,6 +601,16 @@ namespace ObjLoader.Services
             }
         }
 
+        private void ClearAllResourceBindings()
+        {
+            if (_context == null) return;
+
+            _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
+
+            _context.PSSetShaderResources(0, _nullSrv4);
+            _context.VSSetShaderResources(0, _nullSrv4);
+        }
+
         private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, Matrix4x4 world, Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting, Matrix4x4 lightViewProj)
         {
             if (_context == null || _d3dResources == null) return;
@@ -545,7 +619,7 @@ namespace ObjLoader.Services
             var part = resource.Parts[partIndex];
             var texView = resource.PartTextures[partIndex];
 
-            _texArray[0] = texView != null ? texView! : _d3dResources.WhiteTextureView!;
+            _texArray[0] = texView ?? _d3dResources.WhiteTextureView!;
             _context.PSSetShaderResources(0, _texArray);
 
             System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
@@ -605,7 +679,7 @@ namespace ObjLoader.Services
 
         private void UpdateConstantBuffer(ref ConstantBufferData data)
         {
-            if (_context == null || _d3dResources == null) return;
+            if (_context == null || _d3dResources == null || _d3dResources.ConstantBuffer == null) return;
             MappedSubresource mapped;
             _context.Map(_d3dResources.ConstantBuffer, 0, MapMode.WriteDiscard, D3D11MapFlags.None, out mapped);
             unsafe { Unsafe.Copy(mapped.DataPointer.ToPointer(), ref data); }
@@ -616,24 +690,30 @@ namespace ObjLoader.Services
 
         public void Dispose()
         {
-            _d3dResources?.Dispose();
-            _d3dResources = null;
-            _rtv?.Dispose(); _rtv = null;
-            _renderTarget?.Dispose(); _renderTarget = null;
-            _dsv?.Dispose(); _dsv = null;
-            _depthStencil?.Dispose(); _depthStencil = null;
-            _stagingTexture?.Dispose(); _stagingTexture = null;
-            _resolveTexture?.Dispose(); _resolveTexture = null;
-            _gridVertexBuffer?.Dispose(); _gridVertexBuffer = null;
-
-            if (_context != null)
+            lock (_globalRenderLock)
             {
-                _context.ClearState();
-                _context.Flush();
-                _context.Dispose();
-                _context = null;
+                if (_isDisposed) return;
+                _isDisposed = true;
+
+                _d3dResources?.Dispose();
+                _d3dResources = null;
+                _rtv?.Dispose(); _rtv = null;
+                _renderTarget?.Dispose(); _renderTarget = null;
+                _dsv?.Dispose(); _dsv = null;
+                _depthStencil?.Dispose(); _depthStencil = null;
+                _stagingTexture?.Dispose(); _stagingTexture = null;
+                _resolveTexture?.Dispose(); _resolveTexture = null;
+                _gridVertexBuffer?.Dispose(); _gridVertexBuffer = null;
+
+                if (_context != null)
+                {
+                    _context.ClearState();
+                    _context.Flush();
+                    _context.Dispose();
+                    _context = null;
+                }
+                _device?.Dispose(); _device = null;
             }
-            _device?.Dispose(); _device = null;
         }
     }
 }

@@ -21,6 +21,19 @@ namespace ObjLoader.Rendering
         private readonly RenderTargetManager _renderTargets;
         private readonly CustomShaderManager _shaderManager;
 
+        private readonly ID3D11Buffer[] _cbArray = new ID3D11Buffer[1];
+        private readonly ID3D11Buffer[] _vbArray = new ID3D11Buffer[1];
+        private readonly int[] _strideArray = new int[1];
+        private readonly int[] _offsetArray = new int[] { 0 };
+        private readonly ID3D11SamplerState[] _samplerArray = new ID3D11SamplerState[1];
+        private readonly ID3D11SamplerState[] _shadowSamplerArray = new ID3D11SamplerState[1];
+
+        private readonly ID3D11ShaderResourceView[] _nullSrv1 = new ID3D11ShaderResourceView[1];
+        private readonly ID3D11ShaderResourceView[] _nullSrv4 = new ID3D11ShaderResourceView[4];
+        private readonly ID3D11ShaderResourceView[] _srvSlot0 = new ID3D11ShaderResourceView[1];
+        private readonly ID3D11ShaderResourceView[] _srvSlot1 = new ID3D11ShaderResourceView[1];
+        private readonly ID3D11ShaderResourceView[] _srvSlot2 = new ID3D11ShaderResourceView[1];
+
         public SceneRenderer(IGraphicsDevicesAndContext devices, D3DResources resources, RenderTargetManager renderTargets, CustomShaderManager shaderManager)
         {
             _devices = devices;
@@ -43,9 +56,14 @@ namespace ObjLoader.Rendering
 
             var context = _devices.D3D.Device.ImmediateContext;
 
+            ClearAllResourceBindings(context);
+
             context.OMSetRenderTargets(_renderTargets.RenderTargetView, _renderTargets.DepthStencilView);
             context.ClearRenderTargetView(_renderTargets.RenderTargetView, new Color4(0, 0, 0, 0));
-            context.ClearDepthStencilView(_renderTargets.DepthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
+            if (_renderTargets.DepthStencilView != null)
+            {
+                context.ClearDepthStencilView(_renderTargets.DepthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
+            }
 
             float aspect = (float)width / height;
             Vector3 cameraPosition = new Vector3((float)camX, (float)camY, (float)camZ);
@@ -107,6 +125,8 @@ namespace ObjLoader.Rendering
 
                 var envLayers = layers.Where((_, idx) => idx != i);
 
+                context.PSSetShaderResources(2, 1, _nullSrv1);
+
                 for (int face = 0; face < 6; face++)
                 {
                     context.OMSetRenderTargets(_resources.EnvironmentRTVs[face], _resources.EnvironmentDSV);
@@ -121,16 +141,27 @@ namespace ObjLoader.Rendering
                     RenderScene(context, envLayers, layerStates, parameter, view, proj, captureCenter.X, captureCenter.Y, captureCenter.Z, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, 512, 512, false);
                 }
 
-                context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, (ID3D11DepthStencilView?)null);
+                context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
                 context.GenerateMips(_resources.EnvironmentSRV);
 
                 context.OMSetRenderTargets(_renderTargets.RenderTargetView, _renderTargets.DepthStencilView);
 
-                RenderScene(context, new[] { currentLayer }, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true);
+                RenderScene(context, new[] { currentLayer }, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null);
+
+                context.PSSetShaderResources(2, 1, _nullSrv1);
             }
 
-            context.OMSetRenderTargets((ID3D11RenderTargetView?)null!, (ID3D11DepthStencilView?)null);
+            ClearAllResourceBindings(context);
+
             context.Flush();
+        }
+
+        private void ClearAllResourceBindings(ID3D11DeviceContext context)
+        {
+            context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
+
+            context.PSSetShaderResources(0, 4, _nullSrv4);
+            context.VSSetShaderResources(0, 4, _nullSrv4);
         }
 
         private void RenderScene(
@@ -156,6 +187,21 @@ namespace ObjLoader.Rendering
             context.RSSetViewport(0, 0, width, height);
             context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
+            if (_resources.ConstantBuffer != null)
+            {
+                _cbArray[0] = _resources.ConstantBuffer;
+            }
+
+            if (_resources.SamplerState != null)
+            {
+                _samplerArray[0] = _resources.SamplerState;
+            }
+
+            if (_resources.ShadowSampler != null)
+            {
+                _shadowSamplerArray[0] = _resources.ShadowSampler;
+            }
+
             foreach (var item in layers)
             {
                 var state = item.State;
@@ -173,25 +219,27 @@ namespace ObjLoader.Rendering
                 context.IASetInputLayout(layout);
                 context.VSSetShader(vs);
                 context.PSSetShader(ps);
-                context.PSSetSamplers(0, new[] { _resources.SamplerState });
+                context.PSSetSamplers(0, _samplerArray);
 
-                if (shadowValid && state.WorldId == activeWorldId)
+                if (shadowValid && state.WorldId == activeWorldId && _resources.ShadowMapSRV != null)
                 {
-                    context.PSSetShaderResources(1, new[] { _resources.ShadowMapSRV! });
-                    context.PSSetSamplers(1, new[] { _resources.ShadowSampler });
+                    _srvSlot1[0] = _resources.ShadowMapSRV;
+                    context.PSSetShaderResources(1, 1, _srvSlot1);
+                    context.PSSetSamplers(1, _shadowSamplerArray);
                 }
                 else
                 {
-                    context.PSSetShaderResources(1, new ID3D11ShaderResourceView[] { null! });
+                    context.PSSetShaderResources(1, 1, _nullSrv1);
                 }
 
-                if (bindEnvironment)
+                if (bindEnvironment && _resources.EnvironmentSRV != null)
                 {
-                    context.PSSetShaderResources(2, new[] { _resources.EnvironmentSRV });
+                    _srvSlot2[0] = _resources.EnvironmentSRV;
+                    context.PSSetShaderResources(2, 1, _srvSlot2);
                 }
                 else
                 {
-                    context.PSSetShaderResources(2, new ID3D11ShaderResourceView[] { null! });
+                    context.PSSetShaderResources(2, 1, _nullSrv1);
                 }
 
                 Matrix4x4 hierarchyMatrix = RenderUtils.GetLayerTransform(state);
@@ -218,7 +266,9 @@ namespace ObjLoader.Rendering
                 Matrix4x4.Invert(viewProj, out var inverseViewProj);
 
                 int stride = Unsafe.SizeOf<ObjVertex>();
-                context.IASetVertexBuffers(0, 1, new[] { resource.VertexBuffer }, new[] { stride }, new[] { 0 });
+                _vbArray[0] = resource.VertexBuffer;
+                _strideArray[0] = stride;
+                context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
                 context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
 
                 int wId = state.WorldId;
@@ -231,8 +281,8 @@ namespace ObjLoader.Rendering
                     var texView = resource.PartTextures[i];
                     bool hasTexture = texView != null;
 
-                    ID3D11ShaderResourceView viewResource = hasTexture ? texView! : _resources.WhiteTextureView!;
-                    context.PSSetShaderResources(0, new ID3D11ShaderResourceView[] { viewResource });
+                    _srvSlot0[0] = hasTexture ? texView! : _resources.WhiteTextureView!;
+                    context.PSSetShaderResources(0, 1, _srvSlot0);
 
                     var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
                     var partColor = part.BaseColor * uiColorVec;
@@ -287,20 +337,25 @@ namespace ObjLoader.Rendering
                         PcssParams = new Vector4((float)settings.GetPcssLightSize(wId), 0.5f, (float)settings.GetPcssQuality(wId), (float)settings.GetPcssQuality(wId))
                     };
 
-                    MappedSubresource mapped;
-                    context.Map(_resources.ConstantBuffer, 0, MapMode.WriteDiscard, MapFlags.None, out mapped);
-                    unsafe
+                    if (_resources.ConstantBuffer != null)
                     {
-                        Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
-                    }
-                    context.Unmap(_resources.ConstantBuffer, 0);
+                        MappedSubresource mapped;
+                        context.Map(_resources.ConstantBuffer, 0, MapMode.WriteDiscard, MapFlags.None, out mapped);
+                        unsafe
+                        {
+                            Unsafe.Copy(mapped.DataPointer.ToPointer(), ref cbData);
+                        }
+                        context.Unmap(_resources.ConstantBuffer, 0);
 
-                    context.VSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
-                    context.PSSetConstantBuffers(0, new[] { _resources.ConstantBuffer });
+                        context.VSSetConstantBuffers(0, _cbArray);
+                        context.PSSetConstantBuffers(0, _cbArray);
+                    }
 
                     context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
                 }
             }
+
+            context.PSSetShaderResources(0, 1, _nullSrv1);
         }
     }
 }

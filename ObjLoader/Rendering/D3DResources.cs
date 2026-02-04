@@ -61,6 +61,9 @@ namespace ObjLoader.Rendering
         private readonly DisposeCollector _disposer = new DisposeCollector();
         private RenderCullMode _currentCullMode;
 
+        private readonly object _shadowMapLock = new object();
+        private bool _isDisposed = false;
+
         public unsafe D3DResources(ID3D11Device device)
         {
             Device = device;
@@ -208,7 +211,7 @@ namespace ObjLoader.Rendering
             ShadowRasterizerState = device.CreateRasterizerState(shadowRasterDesc);
             _disposer.Collect(ShadowRasterizerState);
 
-            EnsureShadowMapSize(2048, false);
+            EnsureShadowMapSizeInternal(2048, false);
 
             var envDesc = new Texture2DDescription
             {
@@ -270,14 +273,18 @@ namespace ObjLoader.Rendering
 
         public void EnsureShadowMapSize(int size, bool useCascaded)
         {
+            lock (_shadowMapLock)
+            {
+                if (_isDisposed) return;
+                EnsureShadowMapSizeInternal(size, useCascaded);
+            }
+        }
+
+        private void EnsureShadowMapSizeInternal(int size, bool useCascaded)
+        {
             if (_currentShadowMapSize == size && IsCascaded == useCascaded && ShadowMapTexture != null) return;
 
-            _disposer.RemoveAndDispose(ref _shadowMapSRV);
-            if (ShadowMapDSVs != null)
-            {
-                foreach (var dsv in ShadowMapDSVs) dsv.Dispose();
-            }
-            _disposer.RemoveAndDispose(ref _shadowMapTexture);
+            DisposeShadowMapResources();
 
             _currentShadowMapSize = size;
             IsCascaded = useCascaded;
@@ -298,39 +305,68 @@ namespace ObjLoader.Rendering
                 MiscFlags = ResourceOptionFlags.None
             };
 
-            ShadowMapTexture = Device.CreateTexture2D(texDesc);
-            _disposer.Collect(ShadowMapTexture);
-
-            ShadowMapDSVs = new ID3D11DepthStencilView[arraySize];
-            for (int i = 0; i < arraySize; i++)
+            try
             {
-                var dsvDesc = new DepthStencilViewDescription
+                ShadowMapTexture = Device.CreateTexture2D(texDesc);
+
+                ShadowMapDSVs = new ID3D11DepthStencilView[arraySize];
+                for (int i = 0; i < arraySize; i++)
                 {
-                    Format = Format.D24_UNorm_S8_UInt,
-                    ViewDimension = DepthStencilViewDimension.Texture2DArray,
-                    Texture2DArray = new Texture2DArrayDepthStencilView { ArraySize = 1, FirstArraySlice = i, MipSlice = 0 }
-                };
-                ShadowMapDSVs[i] = Device.CreateDepthStencilView(ShadowMapTexture, dsvDesc);
-            }
+                    var dsvDesc = new DepthStencilViewDescription
+                    {
+                        Format = Format.D24_UNorm_S8_UInt,
+                        ViewDimension = DepthStencilViewDimension.Texture2DArray,
+                        Texture2DArray = new Texture2DArrayDepthStencilView { ArraySize = 1, FirstArraySlice = i, MipSlice = 0 }
+                    };
+                    ShadowMapDSVs[i] = Device.CreateDepthStencilView(ShadowMapTexture, dsvDesc);
+                }
 
-            var srvDesc = new ShaderResourceViewDescription
+                var srvDesc = new ShaderResourceViewDescription
+                {
+                    Format = Format.R24_UNorm_X8_Typeless,
+                    ViewDimension = ShaderResourceViewDimension.Texture2DArray,
+                    Texture2DArray = new Texture2DArrayShaderResourceView { ArraySize = arraySize, FirstArraySlice = 0, MipLevels = 1, MostDetailedMip = 0 }
+                };
+                ShadowMapSRV = Device.CreateShaderResourceView(ShadowMapTexture, srvDesc);
+            }
+            catch (Exception)
             {
-                Format = Format.R24_UNorm_X8_Typeless,
-                ViewDimension = ShaderResourceViewDimension.Texture2DArray,
-                Texture2DArray = new Texture2DArrayShaderResourceView { ArraySize = arraySize, FirstArraySlice = 0, MipLevels = 1, MostDetailedMip = 0 }
-            };
-            ShadowMapSRV = Device.CreateShaderResourceView(ShadowMapTexture, srvDesc);
-            _disposer.Collect(ShadowMapSRV);
+                DisposeShadowMapResources();
+                throw;
+            }
         }
 
-        private ID3D11Texture2D? _shadowMapTexture;
-        private ID3D11ShaderResourceView? _shadowMapSRV;
+        private void DisposeShadowMapResources()
+        {
+            if (ShadowMapSRV != null)
+            {
+                try { ShadowMapSRV.Dispose(); } catch { }
+                ShadowMapSRV = null;
+            }
+
+            if (ShadowMapDSVs != null)
+            {
+                foreach (var dsv in ShadowMapDSVs)
+                {
+                    try { dsv?.Dispose(); } catch { }
+                }
+                ShadowMapDSVs = null;
+            }
+
+            if (ShadowMapTexture != null)
+            {
+                try { ShadowMapTexture.Dispose(); } catch { }
+                ShadowMapTexture = null;
+            }
+        }
 
         public void UpdateRasterizerState(RenderCullMode mode)
         {
+            if (_isDisposed) return;
+
             if (_currentCullMode != mode)
             {
-                if (_rasterizerState != CullNoneRasterizerState)
+                if (_rasterizerState != CullNoneRasterizerState && _rasterizerState != null)
                 {
                     _disposer.RemoveAndDispose(ref _rasterizerState);
                 }
@@ -368,13 +404,14 @@ namespace ObjLoader.Rendering
 
         public void Dispose()
         {
-            _disposer.RemoveAndDispose(ref _shadowMapSRV);
-            if (ShadowMapDSVs != null)
+            if (_isDisposed) return;
+            _isDisposed = true;
+
+            lock (_shadowMapLock)
             {
-                foreach (var dsv in ShadowMapDSVs) dsv?.Dispose();
-                ShadowMapDSVs = null;
+                DisposeShadowMapResources();
             }
-            _disposer.RemoveAndDispose(ref _shadowMapTexture);
+
             _disposer.DisposeAndClear();
         }
     }

@@ -19,9 +19,7 @@ namespace ObjLoader.Rendering
 {
     public class ObjLoaderSource : IShapeSource
     {
-        private static D3DResources? _sharedResources;
-        private static int _sharedResourcesRefCount;
-        private static readonly object _sharedResourcesLock = new object();
+        private static readonly object _globalRenderLock = new object();
 
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly ObjLoaderParameter _parameter;
@@ -49,6 +47,11 @@ namespace ObjLoader.Rendering
 
         private Dictionary<string, LayerState> _layerStates = new Dictionary<string, LayerState>();
 
+        private bool _isDisposed = false;
+
+        private static readonly ID3D11ShaderResourceView[] _emptySrvArray4 = new ID3D11ShaderResourceView[4];
+        private static readonly ID3D11Buffer[] _emptyBufferArray1 = new ID3D11Buffer[1];
+
         static ObjLoaderSource()
         {
             var app = Application.Current;
@@ -74,24 +77,67 @@ namespace ObjLoader.Rendering
             _parameter = parameter;
             _loader = new ObjModelLoader();
 
-            lock (_sharedResourcesLock)
-            {
-                if (_sharedResources == null)
-                {
-                    _sharedResources = new D3DResources(devices.D3D.Device);
-                }
-                _resources = _sharedResources;
-                _sharedResourcesRefCount++;
-            }
+            _resources = new D3DResources(devices.D3D.Device);
+            _disposer.Collect(_resources);
 
-            _resources = _sharedResources;
             _renderTargets = new RenderTargetManager();
             _shaderManager = new CustomShaderManager(devices);
             _shadowRenderer = new ShadowRenderer(devices, _resources);
             _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager);
         }
 
+        private bool IsDeviceLost()
+        {
+            try
+            {
+                var device = _devices.D3D.Device;
+                if (device == null) return true;
+                var reason = device.DeviceRemovedReason;
+                return reason.Failure;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
         public void Update(TimelineItemSourceDescription desc)
+        {
+            if (_isDisposed) return;
+
+            lock (_globalRenderLock)
+            {
+                if (_isDisposed) return;
+
+                if (IsDeviceLost())
+                {
+                    GpuResourceCache.CleanupInvalidResources();
+                    CreateEmptyCommandList();
+                    return;
+                }
+
+                try
+                {
+                    UpdateInternal(desc);
+                }
+                catch (SharpGen.Runtime.SharpGenException ex) when (
+                    ex.HResult == unchecked((int)0x887A0005) ||
+                    ex.HResult == unchecked((int)0x887A0006) ||
+                    ex.HResult == unchecked((int)0x887A0007))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Device lost: 0x{ex.HResult:X8}");
+                    GpuResourceCache.CleanupInvalidResources();
+                    CreateEmptyCommandList();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
+                    CreateEmptyCommandList();
+                }
+            }
+        }
+
+        private void UpdateInternal(TimelineItemSourceDescription desc)
         {
             _parameter.Duration = (double)desc.ItemDuration.Frame / desc.FPS;
 
@@ -164,7 +210,7 @@ namespace ObjLoader.Rendering
                 double lz = layer.LightZ.GetValue(frame, length, fps);
                 int worldId = (int)layer.WorldId.GetValue(frame, length, fps);
 
-                var state = new LayerState
+                var layerState = new LayerState
                 {
                     X = x,
                     Y = y,
@@ -199,15 +245,15 @@ namespace ObjLoader.Rendering
                     ParentGuid = layer.ParentGuid
                 };
 
-                preCalcStates.Add((layer.Guid, state, layer));
+                preCalcStates.Add((layer.Guid, layerState, layer));
 
                 if (!worldMasterLights.ContainsKey(worldId))
                 {
-                    worldMasterLights[worldId] = state;
+                    worldMasterLights[worldId] = layerState;
                 }
                 else if (layer.Guid == activeGuid)
                 {
-                    worldMasterLights[worldId] = state;
+                    worldMasterLights[worldId] = layerState;
                     activeWorldId = worldId;
                 }
             }
@@ -217,19 +263,19 @@ namespace ObjLoader.Rendering
 
             foreach (var item in preCalcStates)
             {
-                var state = item.State;
-                if (worldMasterLights.TryGetValue(state.WorldId, out var master))
+                var layerState = item.State;
+                if (worldMasterLights.TryGetValue(layerState.WorldId, out var master))
                 {
-                    state.LightX = master.LightX;
-                    state.LightY = master.LightY;
-                    state.LightZ = master.LightZ;
-                    state.IsLightEnabled = master.IsLightEnabled;
-                    state.LightType = master.LightType;
+                    layerState.LightX = master.LightX;
+                    layerState.LightY = master.LightY;
+                    layerState.LightZ = master.LightZ;
+                    layerState.IsLightEnabled = master.IsLightEnabled;
+                    layerState.LightType = master.LightType;
                 }
 
-                currentLayerStates[item.Guid] = state;
+                currentLayerStates[item.Guid] = layerState;
 
-                if (!_layerStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref state))
+                if (!_layerStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref layerState))
                 {
                     layersChanged = true;
                 }
@@ -253,10 +299,10 @@ namespace ObjLoader.Rendering
 
             foreach (var item in preCalcStates)
             {
-                if (!currentLayerStates.TryGetValue(item.Guid, out var state)) continue;
+                if (!currentLayerStates.TryGetValue(item.Guid, out var layerState)) continue;
 
-                bool effectiveVisibility = state.IsVisible;
-                var parentGuid = state.ParentGuid;
+                bool effectiveVisibility = layerState.IsVisible;
+                var parentGuid = layerState.ParentGuid;
                 int depth = 0;
                 while (effectiveVisibility && !string.IsNullOrEmpty(parentGuid) && currentLayerStates.TryGetValue(parentGuid, out var parentState))
                 {
@@ -270,10 +316,10 @@ namespace ObjLoader.Rendering
                     if (depth > 100) break;
                 }
 
-                if (effectiveVisibility && !string.IsNullOrEmpty(state.FilePath))
+                if (effectiveVisibility && !string.IsNullOrEmpty(layerState.FilePath))
                 {
                     GpuResourceCacheItem? resource = null;
-                    if (GpuResourceCache.TryGetValue(state.FilePath, out var cached))
+                    if (GpuResourceCache.TryGetValue(layerState.FilePath, out var cached))
                     {
                         if (cached != null && cached.Device == _devices.D3D.Device)
                         {
@@ -283,10 +329,10 @@ namespace ObjLoader.Rendering
 
                     if (resource == null)
                     {
-                        var model = _loader.Load(state.FilePath);
+                        var model = _loader.Load(layerState.FilePath);
                         if (model.Vertices.Length > 0)
                         {
-                            resource = CreateGpuResource(model, state.FilePath);
+                            resource = CreateGpuResource(model, layerState.FilePath);
                             model = null;
                             GC.Collect(2, GCCollectionMode.Optimized);
                         }
@@ -294,7 +340,7 @@ namespace ObjLoader.Rendering
 
                     if (resource != null)
                     {
-                        layersToRender.Add((item.Data, resource, state));
+                        layersToRender.Add((item.Data, resource, layerState));
                     }
                 }
             }
@@ -361,8 +407,7 @@ namespace ObjLoader.Rendering
 
                         for (int j = 0; j < 8; j++)
                         {
-                            var v = Vector3.Transform(ndc[j], invViewProj);
-                            corners[j] = v;
+                            corners[j] = Vector3.Transform(ndc[j], invViewProj);
                         }
 
                         Vector3 center = Vector3.Zero;
@@ -413,6 +458,9 @@ namespace ObjLoader.Rendering
             }
 
             _sceneRenderer.Render(layersToRender, _layerStates, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId);
+
+            ClearResourceBindings();
+
             CreateCommandList();
 
             _lastCamX = camX;
@@ -425,6 +473,40 @@ namespace ObjLoader.Rendering
             _lastActiveWorldId = activeWorldId;
             _lastShadowResolution = settings.ShadowResolution;
             _lastShadowEnabled = settings.ShadowMappingEnabled;
+        }
+
+        private void ClearResourceBindings()
+        {
+            try
+            {
+                var context = _devices.D3D.Device.ImmediateContext;
+                context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
+                context.PSSetShaderResources(0, 4, _emptySrvArray4);
+                context.VSSetShaderResources(0, 4, _emptySrvArray4);
+                context.VSSetConstantBuffers(0, 1, _emptyBufferArray1);
+                context.PSSetConstantBuffers(0, 1, _emptyBufferArray1);
+                context.Flush();
+            }
+            catch { }
+        }
+
+        private void CreateEmptyCommandList()
+        {
+            try
+            {
+                _disposer.RemoveAndDispose(ref _commandList);
+                _commandList = _devices.DeviceContext.CreateCommandList();
+                _disposer.Collect(_commandList);
+
+                var dc = _devices.DeviceContext;
+                dc.Target = _commandList;
+                dc.BeginDraw();
+                dc.Clear(null);
+                dc.EndDraw();
+                dc.Target = null;
+                _commandList.Close();
+            }
+            catch { }
         }
 
         private bool AreStatesEqual(ref LayerState a, ref LayerState b)
@@ -543,7 +625,6 @@ namespace ObjLoader.Rendering
             _disposer.Collect(_commandList);
 
             var dc = _devices.DeviceContext;
-
             dc.Target = _commandList;
             dc.BeginDraw();
             dc.Clear(null);
@@ -560,21 +641,15 @@ namespace ObjLoader.Rendering
 
         public void Dispose()
         {
-            _shaderManager.Dispose();
-
-            lock (_sharedResourcesLock)
+            lock (_globalRenderLock)
             {
-                _sharedResourcesRefCount--;
-                if (_sharedResourcesRefCount <= 0)
-                {
-                    _sharedResources?.Dispose();
-                    _sharedResources = null;
-                    _sharedResourcesRefCount = 0;
-                }
-            }
+                if (_isDisposed) return;
+                _isDisposed = true;
 
-            _renderTargets.Dispose();
-            _disposer.DisposeAndClear();
+                _shaderManager.Dispose();
+                _renderTargets.Dispose();
+                _disposer.DisposeAndClear();
+            }
         }
     }
 }
