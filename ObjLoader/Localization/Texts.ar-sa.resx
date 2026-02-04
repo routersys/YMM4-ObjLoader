@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>يحدد عدد العينات للظلال الناعمة.</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>تطبيق بعد تخطيط النغمة</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>يطبق خطوط المسح بعد تخطيط النغمة.</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>إعدادات المواد</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>خشونة</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>معدني</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>اللون الأساسي</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>حفظ الإعداد المسبق</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>تحميل الإعداد المسبق</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>إعداد المواد المسبق</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>إعادة التعيين إلى الافتراضي</value></data>
 </root>

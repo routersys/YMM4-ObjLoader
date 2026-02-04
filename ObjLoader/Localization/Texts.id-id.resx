@@ -387,4 +387,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>Mengatur jumlah sampel untuk bayangan lembut.</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>Terapkan Setelah Tonemap</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>Menerapkan scanlines setelah tone mapping.</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>Pengaturan Material</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>Kekasaran</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>Logam</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>Warna Dasar</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>Simpan Preset</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Muat Preset</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Preset Material</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Atur Ulang ke Default</value></data>
 </root>

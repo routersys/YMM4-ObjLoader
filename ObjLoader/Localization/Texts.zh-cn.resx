@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>设置软阴影的采样数。</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>色调映射后应用</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>在色调映射之后应用扫描线。</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>材质设置</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>粗糙度</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>金属度</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>基本色</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>保存预设</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>加载预设</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>材质预设</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>重置为默认值</value></data>
 </root>

@@ -1,20 +1,19 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
 using ObjLoader.Localization;
-using ObjLoader.Parsers;
 using ObjLoader.Plugin;
+using ObjLoader.Rendering;
 using ObjLoader.Services;
 using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using Vortice.Direct3D11;
-using Vortice.DXGI;
+using System.Text.Json;
+using Microsoft.Win32;
 using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
@@ -24,8 +23,10 @@ namespace ObjLoader.ViewModels
     internal class SplitWindowViewModel : Bindable, IDisposable
     {
         private readonly ObjLoaderParameter _parameter;
-        private readonly ObjModelLoader _loader;
         private readonly RenderService _renderService;
+        private readonly PreviewCameraService _cameraService;
+        private readonly ModelManagementService _modelService;
+        private readonly LayerManipulationService _layerService;
         private Color _themeColor = Colors.White;
 
         private GpuResourceCacheItem? _modelResource;
@@ -33,17 +34,9 @@ namespace ObjLoader.ViewModels
         private double _modelHeight;
         private double _modelScale = 1.0;
 
-        private Point _lastMousePos;
-        private bool _isRotating;
-        private bool _isPanning;
-
-        private double _viewRadius = 5.0;
-        private double _viewTheta = Math.PI / 4;
-        private double _viewPhi = Math.PI / 4;
-        private Vector3 _viewTarget = Vector3.Zero;
-
         private int _viewportWidth = 100;
         private int _viewportHeight = 100;
+        private bool _isNarrowMode;
 
         private PartItem? _selectedPart;
 
@@ -60,38 +53,75 @@ namespace ObjLoader.ViewModels
             {
                 if (Set(ref _selectedPart, value))
                 {
+                    OnPropertyChanged(nameof(IsPartSelected));
+                    UpdateMaterialProperties();
                     UpdateFocus();
+                    SavePresetCommand.RaiseCanExecuteChanged();
+                    LoadPresetCommand.RaiseCanExecuteChanged();
+                    ResetMaterialCommand.RaiseCanExecuteChanged();
                 }
             }
         }
 
-        public ActionCommand AddToLayerCommand { get; }
-
-        public class PartItem : Bindable
+        public bool IsPartSelected => _selectedPart != null && _selectedPart.Index != -1;
+        public bool IsNarrowMode
         {
-            public string Name { get; set; } = "";
-            public int Index { get; set; }
-            public Vector3 Center { get; set; }
-            public double Radius { get; set; }
-            public int FaceCount { get; set; }
-
-            public string Detail => string.Format(Texts.SplitWindow_Faces, FaceCount);
-
-            private BitmapSource? _thumbnail;
-            public BitmapSource? Thumbnail
-            {
-                get => _thumbnail;
-                set => Set(ref _thumbnail, value);
-            }
+            get => _isNarrowMode;
+            set => Set(ref _isNarrowMode, value);
         }
+
+        public bool IsInteracting => _cameraService.IsInteracting;
+
+        public double SelectedPartRoughness
+        {
+            get => GetMaterialValue(m => m.Roughness, p => (double)p.Roughness, 0.5);
+            set => SetMaterialValue((m, v) => m.Roughness = v, value);
+        }
+
+        public double SelectedPartMetallic
+        {
+            get => GetMaterialValue(m => m.Metallic, p => (double)p.Metallic, 0.0);
+            set => SetMaterialValue((m, v) => m.Metallic = v, value);
+        }
+
+        public Color SelectedPartBaseColor
+        {
+            get => GetMaterialValue(
+                m => m.BaseColor,
+                p =>
+                {
+                    var c = p.BaseColor;
+                    return Color.FromScRgb(c.W, c.X, c.Y, c.Z);
+                },
+                Colors.White);
+            set => SetMaterialValue((m, v) => m.BaseColor = v, value);
+        }
+
+        public ActionCommand AddToLayerCommand { get; }
+        public ActionCommand SavePresetCommand { get; }
+        public ActionCommand LoadPresetCommand { get; }
+        public ActionCommand ResetMaterialCommand { get; }
 
         public SplitWindowViewModel(ObjLoaderParameter parameter)
         {
             _parameter = parameter;
-            _loader = new ObjModelLoader();
             _renderService = new RenderService();
+            _cameraService = new PreviewCameraService();
+            _modelService = new ModelManagementService();
+            _layerService = new LayerManipulationService();
 
             AddToLayerCommand = new ActionCommand(_ => true, AddToLayer);
+            SavePresetCommand = new ActionCommand(_ => IsPartSelected, SavePreset);
+            LoadPresetCommand = new ActionCommand(_ => IsPartSelected, LoadPreset);
+            ResetMaterialCommand = new ActionCommand(_ => IsPartSelected, ResetMaterial);
+
+            _cameraService.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(PreviewCameraService.IsInteracting))
+                {
+                    OnPropertyChanged(nameof(IsInteracting));
+                }
+            };
 
             _renderService.Initialize();
             LoadModel();
@@ -101,8 +131,13 @@ namespace ObjLoader.ViewModels
 
         private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(ObjLoaderParameter.FilePath) ||
-                e.PropertyName == nameof(ObjLoaderParameter.SelectedLayerIndex))
+            if (e.PropertyName == nameof(ObjLoaderParameter.FilePath))
+            {
+                var layer = GetCurrentLayer();
+                layer?.PartMaterials.Clear();
+                LoadModel();
+            }
+            else if (e.PropertyName == nameof(ObjLoaderParameter.SelectedLayerIndex))
             {
                 LoadModel();
             }
@@ -112,7 +147,9 @@ namespace ObjLoader.ViewModels
         {
             _viewportWidth = width;
             _viewportHeight = height;
+            IsNarrowMode = width < 600;
             _renderService.Resize(width, height);
+            _cameraService.Resize(width, height);
             OnPropertyChanged(nameof(SceneImage));
             UpdateVisuals();
         }
@@ -125,68 +162,165 @@ namespace ObjLoader.ViewModels
 
         public void Zoom(int delta)
         {
-            double scale = delta > 0 ? 0.9 : 1.1;
-            _viewRadius *= scale;
-            if (_viewRadius < 0.01) _viewRadius = 0.01;
+            _cameraService.Zoom(delta);
             UpdateVisuals();
         }
 
         public void StartInteraction(Point pos, MouseButton button)
         {
-            _lastMousePos = pos;
-            if (button == MouseButton.Right) _isRotating = true;
-            if (button == MouseButton.Middle) _isPanning = true;
+            _cameraService.StartInteraction(pos, button);
         }
 
         public void MoveInteraction(Point pos, bool left, bool middle, bool right)
         {
-            if (!_isRotating && !_isPanning) return;
-
-            var dx = pos.X - _lastMousePos.X;
-            var dy = pos.Y - _lastMousePos.Y;
-            _lastMousePos = pos;
-
-            if (_isRotating && right)
+            if (_cameraService.MoveInteraction(pos, left, middle, right))
             {
-                _viewTheta -= dx * 0.01;
-                _viewPhi -= dy * 0.01;
-
-                if (_viewPhi < 0.01) _viewPhi = 0.01;
-                if (_viewPhi > Math.PI - 0.01) _viewPhi = Math.PI - 0.01;
-                UpdateVisuals();
-            }
-            else if (_isPanning && middle)
-            {
-                var camDir = GetCameraPosition() - _viewTarget;
-                var forward = Vector3.Normalize(new Vector3(camDir.X, 0, camDir.Z));
-                var rightDir = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, forward));
-                var upDir = Vector3.UnitY;
-
-                float sensitivity = (float)(_viewRadius * 0.002);
-                _viewTarget -= rightDir * (float)dx * sensitivity;
-                _viewTarget += upDir * (float)dy * sensitivity;
                 UpdateVisuals();
             }
         }
 
         public void EndInteraction()
         {
-            _isRotating = false;
-            _isPanning = false;
+            _cameraService.EndInteraction();
+        }
+
+        private void UpdateMaterialProperties()
+        {
+            OnPropertyChanged(nameof(SelectedPartRoughness));
+            OnPropertyChanged(nameof(SelectedPartMetallic));
+            OnPropertyChanged(nameof(SelectedPartBaseColor));
+        }
+
+        private T GetMaterialValue<T>(Func<PartMaterialData, T> materialSelector, Func<ModelPart, T> modelSelector, T defaultValue)
+        {
+            if (_selectedPart == null || _selectedPart.Index == -1) return defaultValue;
+
+            var layer = GetCurrentLayer();
+            if (layer != null && layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
+            {
+                return materialSelector(material);
+            }
+
+            if (_currentModel != null && _selectedPart.Index >= 0 && _selectedPart.Index < _currentModel.Parts.Count)
+            {
+                return modelSelector(_currentModel.Parts[_selectedPart.Index]);
+            }
+
+            return defaultValue;
+        }
+
+        private void SetMaterialValue<T>(Action<PartMaterialData, T> setter, T value)
+        {
+            if (_selectedPart == null || _selectedPart.Index == -1) return;
+            var layer = GetCurrentLayer();
+            if (layer != null)
+            {
+                if (!layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
+                {
+                    material = CreateMaterialFromModel(_selectedPart.Index);
+                    layer.PartMaterials[_selectedPart.Index] = material;
+                }
+                setter(material, value);
+                _parameter.ForceUpdate();
+                UpdateVisuals();
+                OnPropertyChanged(string.Empty);
+            }
+        }
+
+        private PartMaterialData CreateMaterialFromModel(int partIndex)
+        {
+            var data = new PartMaterialData { Roughness = 0.5, Metallic = 0.0, BaseColor = Colors.White };
+
+            if (_currentModel != null && partIndex >= 0 && partIndex < _currentModel.Parts.Count)
+            {
+                var part = _currentModel.Parts[partIndex];
+                data.Roughness = part.Roughness;
+                data.Metallic = part.Metallic;
+                var c = part.BaseColor;
+                data.BaseColor = Color.FromScRgb(c.W, c.X, c.Y, c.Z);
+            }
+            return data;
+        }
+
+        private void ResetMaterial(object? _)
+        {
+            if (_selectedPart == null || _selectedPart.Index == -1) return;
+
+            var layer = GetCurrentLayer();
+            if (layer != null)
+            {
+                if (layer.PartMaterials.Remove(_selectedPart.Index))
+                {
+                    _parameter.ForceUpdate();
+                    UpdateMaterialProperties();
+                    UpdateVisuals();
+                }
+            }
+        }
+
+        private LayerData? GetCurrentLayer()
+        {
+            if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < _parameter.Layers.Count)
+            {
+                return _parameter.Layers[_parameter.SelectedLayerIndex];
+            }
+            return null;
+        }
+
+        private void SavePreset(object? _)
+        {
+            if (_selectedPart == null || _selectedPart.Index == -1) return;
+
+            var filter = $"{Texts.SplitWindow_MaterialPreset} (*.json)|*.json";
+            var dlg = new SaveFileDialog { Filter = filter };
+            if (dlg.ShowDialog() == true)
+            {
+                var preset = new MaterialPreset
+                {
+                    Roughness = SelectedPartRoughness,
+                    Metallic = SelectedPartMetallic,
+                    BaseColor = SelectedPartBaseColor
+                };
+                File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(preset));
+            }
+        }
+
+        private void LoadPreset(object? _)
+        {
+            if (_selectedPart == null || _selectedPart.Index == -1) return;
+
+            var filter = $"{Texts.SplitWindow_MaterialPreset} (*.json)|*.json";
+            var dlg = new OpenFileDialog { Filter = filter };
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    var json = File.ReadAllText(dlg.FileName);
+                    var preset = JsonSerializer.Deserialize<MaterialPreset>(json);
+                    if (preset != null)
+                    {
+                        SelectedPartRoughness = preset.Roughness;
+                        SelectedPartMetallic = preset.Metallic;
+                        SelectedPartBaseColor = preset.BaseColor;
+                    }
+                }
+                catch { }
+            }
         }
 
         private void AddToLayer(object? parameter)
         {
-            if (_modelResource == null) return;
-
-            var targets = new HashSet<PartItem>();
+            var targets = new List<PartItem>();
 
             if (parameter is PartItem clickedItem)
             {
                 targets.Add(clickedItem);
                 if (SelectedPartItems.Contains(clickedItem))
                 {
-                    foreach (var item in SelectedPartItems) targets.Add(item);
+                    foreach (var item in SelectedPartItems)
+                    {
+                        if (!targets.Contains(item)) targets.Add(item);
+                    }
                 }
             }
             else
@@ -201,174 +335,18 @@ namespace ObjLoader.ViewModels
                 }
             }
 
-            var targetList = targets.Where(t => t.Index != -1).ToList();
-            if (targetList.Count == 0) return;
-
-            LayerData? sourceLayer = null;
-            var currentLayerIndex = _parameter.SelectedLayerIndex;
-            if (currentLayerIndex >= 0 && currentLayerIndex < _parameter.Layers.Count)
-            {
-                var layer = _parameter.Layers[currentLayerIndex];
-                if (IsLayerContainsAnyTarget(layer, targetList))
-                {
-                    sourceLayer = layer;
-                }
-            }
-
-            if (sourceLayer == null)
-            {
-                foreach (var layer in _parameter.Layers)
-                {
-                    if (layer.IsVisible && IsLayerContainsAnyTarget(layer, targetList))
-                    {
-                        sourceLayer = layer;
-                        break;
-                    }
-                }
-            }
-
-            if (sourceLayer == null)
-            {
-                foreach (var layer in _parameter.Layers)
-                {
-                    if (IsLayerContainsAnyTarget(layer, targetList))
-                    {
-                        sourceLayer = layer;
-                        break;
-                    }
-                }
-            }
-
-            if (sourceLayer == null) return;
-
-            if (sourceLayer.VisibleParts == null)
-            {
-                sourceLayer.VisibleParts = new HashSet<int>(Enumerable.Range(0, _modelResource.Parts.Length));
-            }
-
-            var indicesToMove = new HashSet<int>();
-            foreach (var t in targetList)
-            {
-                if (sourceLayer.VisibleParts.Contains(t.Index))
-                {
-                    indicesToMove.Add(t.Index);
-                }
-            }
-
-            if (indicesToMove.Count > 0)
-            {
-                var newVisibleParts = new HashSet<int>(sourceLayer.VisibleParts);
-                foreach (var idx in indicesToMove)
-                {
-                    newVisibleParts.Remove(idx);
-                }
-                sourceLayer.VisibleParts = newVisibleParts;
-
-                if (_currentModel != null)
-                {
-                    sourceLayer.Thumbnail = ThumbnailUtil.CreateThumbnail(_currentModel, 64, 64, 0, -1, sourceLayer.VisibleParts);
-                }
-
-                var partsToRemove = Parts.Where(p => p.Index != -1 && indicesToMove.Contains(p.Index)).ToList();
-                foreach (var p in partsToRemove)
-                {
-                    Parts.Remove(p);
-                }
-
-                var newLayer = sourceLayer.Clone();
-                newLayer.X = new Animation(0, -100000, 100000);
-                newLayer.Y = new Animation(0, -100000, 100000);
-                newLayer.Z = new Animation(0, -100000, 100000);
-                newLayer.Scale = new Animation(100, 0, 100000);
-                newLayer.RotationX = new Animation(0, -36000, 36000);
-                newLayer.RotationY = new Animation(0, -36000, 36000);
-                newLayer.RotationZ = new Animation(0, -36000, 36000);
-
-                if (targetList.Count == 1)
-                {
-                    newLayer.Name = targetList[0].Name;
-                }
-                else
-                {
-                    newLayer.Name = $"{targetList[0].Name} + {targetList.Count - 1}";
-                }
-
-                newLayer.VisibleParts = indicesToMove;
-                newLayer.Guid = Guid.NewGuid().ToString();
-                newLayer.ParentGuid = sourceLayer.Guid;
-
-                if (_currentModel != null)
-                {
-                    newLayer.Thumbnail = ThumbnailUtil.CreateThumbnail(_currentModel, 64, 64, 0, -1, newLayer.VisibleParts);
-                }
-
-                int sourceIndex = -1;
-                for (int i = 0; i < _parameter.Layers.Count; i++)
-                {
-                    if (_parameter.Layers[i].Guid == sourceLayer.Guid)
-                    {
-                        sourceIndex = i;
-                        break;
-                    }
-                }
-
-                int insertIndex;
-                if (sourceIndex != -1)
-                {
-                    insertIndex = sourceIndex + 1;
-                    while (insertIndex < _parameter.Layers.Count)
-                    {
-                        if (_parameter.Layers[insertIndex].ParentGuid == sourceLayer.Guid)
-                        {
-                            insertIndex++;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    insertIndex = _parameter.Layers.Count;
-                }
-
-                _parameter.Layers.Insert(insertIndex, newLayer);
-
-                _parameter.ForceUpdate();
-            }
-        }
-
-        private bool IsLayerContainsAnyTarget(LayerData layer, List<PartItem> targets)
-        {
-            if (layer.VisibleParts == null) return true;
-
-            foreach (var t in targets)
-            {
-                if (layer.VisibleParts.Contains(t.Index)) return true;
-            }
-            return false;
-        }
-
-        private Vector3 GetCameraPosition()
-        {
-            float x = (float)(_viewRadius * Math.Sin(_viewPhi) * Math.Cos(_viewTheta));
-            float z = (float)(_viewRadius * Math.Sin(_viewPhi) * Math.Sin(_viewTheta));
-            float y = (float)(_viewRadius * Math.Cos(_viewPhi));
-            return _viewTarget + new Vector3(x, y, z);
+            _layerService.AddToLayer(_parameter, _modelResource, _currentModel, targets, Parts);
         }
 
         private void UpdateFocus()
         {
             if (_selectedPart == null || _selectedPart.Index == -1)
             {
-                _viewTarget = new Vector3(0, (float)(_modelHeight / 2.0), 0);
-                _viewRadius = _modelScale * 2.5;
+                _cameraService.UpdateFocus(new Vector3(0, (float)(_modelHeight / 2.0), 0), _modelScale * 2.5);
             }
             else
             {
-                _viewTarget = _selectedPart.Center;
-                _viewRadius = _selectedPart.Radius * 2.5;
+                _cameraService.UpdateFocus(_selectedPart.Center, _selectedPart.Radius * 2.5);
             }
             UpdateVisuals();
         }
@@ -377,16 +355,23 @@ namespace ObjLoader.ViewModels
         {
             if (_renderService.SceneImage == null || _modelResource == null) return;
 
-            var camPos = GetCameraPosition();
-            var view = Matrix4x4.CreateLookAt(camPos, _viewTarget, Vector3.UnitY);
-            var aspect = (float)_viewportWidth / _viewportHeight;
-            var proj = Matrix4x4.CreatePerspectiveFieldOfView((float)(45 * Math.PI / 180.0), aspect, 0.1f, 10000.0f);
+            var camPos = _cameraService.GetCameraPosition();
+            var view = _cameraService.GetViewMatrix();
+            var proj = _cameraService.GetProjectionMatrix();
 
             HashSet<int>? visibleParts = null;
             if (_selectedPart != null && _selectedPart.Index != -1)
             {
                 visibleParts = new HashSet<int> { _selectedPart.Index };
             }
+
+            var currentLayerData = GetCurrentLayer();
+            var layerData = currentLayerData != null ? currentLayerData.Clone() : new LayerData();
+            if (currentLayerData != null)
+            {
+                layerData.PartMaterials = currentLayerData.PartMaterials;
+            }
+            layerData.VisibleParts = visibleParts;
 
             var layers = new List<LayerRenderData>
             {
@@ -400,7 +385,8 @@ namespace ObjLoader.ViewModels
                     LightEnabled = true,
                     WorldId = 0,
                     HeightOffset = _modelHeight / 2.0,
-                    VisibleParts = visibleParts
+                    VisibleParts = visibleParts,
+                    Data = layerData
                 }
             };
 
@@ -414,156 +400,36 @@ namespace ObjLoader.ViewModels
                 true,
                 true,
                 _modelScale,
-                false);
+                _cameraService.IsInteracting);
         }
 
-        private unsafe void LoadModel()
+        private void LoadModel()
         {
             _modelResource?.Dispose();
             _modelResource = null;
             _currentModel = null;
-
             Parts.Clear();
-            var path = _parameter.FilePath;
-            if (string.IsNullOrEmpty(path) || !File.Exists(path)) return;
 
-            var model = _loader.Load(path);
-            if (model.Vertices.Length == 0) return;
+            var result = _modelService.LoadModel(_parameter.FilePath, _renderService, _parameter.SelectedLayerIndex, _parameter.Layers);
 
-            _currentModel = model;
+            _currentModel = result.Model;
+            _modelResource = result.Resource;
+            _modelScale = result.Scale;
+            _modelHeight = result.Height;
 
-            var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
-            ID3D11Buffer vb;
-            fixed (ObjVertex* p = model.Vertices) vb = _renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
-
-            var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
-            ID3D11Buffer ib;
-            fixed (int* p = model.Indices) ib = _renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
-
-            var parts = model.Parts.ToArray();
-            var partTextures = new ID3D11ShaderResourceView?[parts.Length];
-            for (int i = 0; i < parts.Length; i++)
+            foreach (var part in result.Parts)
             {
-                if (File.Exists(parts[i].TexturePath))
-                {
-                    try
-                    {
-                        var bytes = File.ReadAllBytes(parts[i].TexturePath);
-                        using var ms = new MemoryStream(bytes);
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = ms;
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-                        var conv = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-                        var pixels = new byte[conv.PixelWidth * conv.PixelHeight * 4];
-                        conv.CopyPixels(pixels, conv.PixelWidth * 4, 0);
-                        var tDesc = new Texture2DDescription { Width = conv.PixelWidth, Height = conv.PixelHeight, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
-                        fixed (byte* p = pixels) { using var t = _renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, conv.PixelWidth * 4) }); partTextures[i] = _renderService.Device.CreateShaderResourceView(t); }
-                    }
-                    catch { }
-                }
+                Parts.Add(part);
             }
 
-            _modelResource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
-
-            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
-            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-            double localMinY = double.MaxValue, localMaxY = double.MinValue;
-
-            foreach (var v in model.Vertices)
+            if (Parts.Count > 0)
             {
-                double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                if (x < minX) minX = x; if (x > maxX) maxX = x;
-                double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                if (y < minY) minY = y; if (y > maxY) maxY = y;
-                if (y < localMinY) localMinY = y; if (y > localMaxY) localMaxY = y;
-                double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-                if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+                SelectedPart = Parts[0];
             }
-
-            _modelScale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
-            _modelHeight = localMaxY - localMinY;
-            if (_modelScale < 0.1) _modelScale = 1.0;
-
-            HashSet<int>? currentVisibleParts = null;
-            if (_parameter.SelectedLayerIndex >= 0 && _parameter.SelectedLayerIndex < _parameter.Layers.Count)
+            else
             {
-                var layer = _parameter.Layers[_parameter.SelectedLayerIndex];
-                if (layer.FilePath == path)
-                {
-                    currentVisibleParts = layer.VisibleParts;
-                }
+                UpdateFocus();
             }
-
-            Parts.Add(new PartItem { Name = Texts.SplitWindow_All, Index = -1, Center = new Vector3(0, (float)(_modelHeight / 2.0), 0), Radius = _modelScale, FaceCount = model.Indices.Length / 3 });
-
-            for (int i = 0; i < parts.Length; i++)
-            {
-                if (currentVisibleParts != null && !currentVisibleParts.Contains(i)) continue;
-
-                var part = parts[i];
-                var name = string.IsNullOrEmpty(part.Name) ? string.Format(Texts.SplitWindow_PartName, i) : part.Name;
-
-                Vector3 center = Vector3.Zero;
-                double radius = 0;
-
-                if (part.IndexCount > 0)
-                {
-                    double pMinX = double.MaxValue, pMinY = double.MaxValue, pMinZ = double.MaxValue;
-                    double pMaxX = double.MinValue, pMaxY = double.MinValue, pMaxZ = double.MinValue;
-
-                    for (int j = 0; j < part.IndexCount; j++)
-                    {
-                        int idx = model.Indices[part.IndexOffset + j];
-                        var v = model.Vertices[idx];
-                        double px = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                        double py = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                        double pz = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-
-                        if (px < pMinX) pMinX = px; if (px > pMaxX) pMaxX = px;
-                        if (py < pMinY) pMinY = py; if (py > pMaxY) pMaxY = py;
-                        if (pz < pMinZ) pMinZ = pz; if (pz > pMaxZ) pMaxZ = pz;
-                    }
-
-                    center = new Vector3((float)((pMinX + pMaxX) / 2.0), (float)((pMinY + pMaxY) / 2.0) + (float)(_modelHeight / 2.0), (float)((pMinZ + pMaxZ) / 2.0));
-                    radius = Math.Max(pMaxX - pMinX, Math.Max(pMaxY - pMinY, pMaxZ - pMinZ));
-                }
-
-                Parts.Add(new PartItem { Name = name, Index = i, Center = center, Radius = radius, FaceCount = part.IndexCount / 3 });
-            }
-
-            _selectedPart = Parts[0];
-            _viewTarget = new Vector3(0, (float)(_modelHeight / 2.0), 0);
-            UpdateVisuals();
-
-            var thumbnailItems = Parts.ToList();
-
-            Task.Run(() =>
-            {
-                foreach (var partItem in thumbnailItems)
-                {
-                    int offset = partItem.Index == -1 ? 0 : parts[partItem.Index].IndexOffset;
-                    int count = partItem.Index == -1 ? -1 : parts[partItem.Index].IndexCount;
-
-                    var bytes = ThumbnailUtil.CreateThumbnail(model, 64, 64, offset, count);
-                    if (bytes != null && bytes.Length > 0)
-                    {
-                        Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                        {
-                            using var ms = new MemoryStream(bytes);
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = ms;
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-                            partItem.Thumbnail = bitmap;
-                        }));
-                    }
-                }
-            });
         }
 
         public void Dispose()

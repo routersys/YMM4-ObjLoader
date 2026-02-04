@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>設定軟陰影的採樣數。</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>色調映射後應用</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>在色調映射之後應用掃描線。</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>材質設定</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>粗糙度</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>金屬度</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>基本色</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>保存預設</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>載入預設</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>材質預設</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>重置為預設值</value></data>
 </root>

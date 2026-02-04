@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>소프트 섀도우의 샘플 수를 설정합니다.</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>톤매핑 후 적용</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>톤매핑 후에 스캔라인을 적용합니다.</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>재질 설정</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>거칠기</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>메탈릭</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>기본 색상</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>프리셋 저장</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>프리셋 ロ드</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>재질 프리셋</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>기본값으로 재설정</value></data>
 </root>

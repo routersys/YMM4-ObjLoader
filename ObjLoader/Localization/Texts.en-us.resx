@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>Sets the number of samples for soft shadows.</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>Apply After Tonemap</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>Applies scanlines after tone mapping.</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>Material Settings</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>Roughness</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>Metallic</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>Base Color</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>Save Preset</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Load Preset</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Material Preset</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Reset to Default</value></data>
 </root>

@@ -30,6 +30,7 @@ namespace ObjLoader.Services
         public double LightX { get; set; }
         public double LightY { get; set; }
         public double LightZ { get; set; }
+        public LayerData? Data { get; set; }
     }
 
     internal class RenderService : IDisposable
@@ -480,7 +481,7 @@ namespace ObjLoader.Services
             }
 
             _context.IASetInputLayout(_d3dResources.InputLayout);
-            _context.IASetPrimitiveTopology(isInteracting ? PrimitiveTopology.PointList : PrimitiveTopology.TriangleList);
+            _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
             for (int i = 0; i < layers.Count; i++)
             {
@@ -631,12 +632,22 @@ namespace ObjLoader.Services
             else
                 finalLightPos = System.Numerics.Vector3.Transform(rawLightPos, world);
 
+            PartMaterialData? material = null;
+            if (layer.Data != null && layer.Data.PartMaterials != null)
+            {
+                layer.Data.PartMaterials.TryGetValue(partIndex, out material);
+            }
+
+            float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
+            float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
+            var materialBaseColor = material != null ? ToVec4(material.BaseColor) : System.Numerics.Vector4.One;
+
             ConstantBufferData cbData = new ConstantBufferData
             {
                 WorldViewProj = Matrix4x4.Transpose(wvp),
                 World = Matrix4x4.Transpose(world),
                 LightPos = new System.Numerics.Vector4(finalLightPos, 1.0f),
-                BaseColor = part.BaseColor,
+                BaseColor = part.BaseColor * materialBaseColor,
                 AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
                 LightColor = ToVec4(settings.GetLightColor(wId)),
                 CameraPos = new System.Numerics.Vector4(0, 0, 0, 1),
@@ -666,15 +677,13 @@ namespace ObjLoader.Services
                 LightViewProj1 = Matrix4x4.Identity,
                 LightViewProj2 = Matrix4x4.Identity,
                 CascadeSplits = new System.Numerics.Vector4(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue),
-                ShadowParams = new System.Numerics.Vector4(settings.ShadowMappingEnabled ? 1 : 0, (float)settings.ShadowBias, (float)settings.ShadowStrength, settings.ShadowResolution)
+                ShadowParams = new System.Numerics.Vector4(settings.ShadowMappingEnabled ? 1 : 0, (float)settings.ShadowBias, (float)settings.ShadowStrength, settings.ShadowResolution),
+                PbrParams = new System.Numerics.Vector4(metallic, roughness, 1.0f, 0)
             };
 
             UpdateConstantBuffer(ref cbData);
 
-            if (isInteracting)
-                _context.DrawIndexed(Math.Max(part.IndexCount / 16, 32), part.IndexOffset, 0);
-            else
-                _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
+            _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
         }
 
         private void UpdateConstantBuffer(ref ConstantBufferData data)

@@ -1,8 +1,6 @@
 ﻿using ObjLoader.Services;
 using ObjLoader.ViewModels;
-using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -128,7 +126,7 @@ namespace ObjLoader.Views
         {
             if (DataContext is SplitWindowViewModel vm && sender is ListView lv)
             {
-                vm.SelectedPartItems = lv.SelectedItems.Cast<SplitWindowViewModel.PartItem>().ToList();
+                vm.SelectedPartItems = lv.SelectedItems.Cast<PartItem>().ToList();
             }
         }
     }

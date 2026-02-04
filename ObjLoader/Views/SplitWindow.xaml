@@ -6,12 +6,14 @@
         xmlns:l="clr-namespace:ObjLoader.Localization"
         xmlns:vm="clr-namespace:ObjLoader.ViewModels"
         xmlns:u="clr-namespace:ObjLoader.Utilities"
+        xmlns:ymm="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
         mc:Ignorable="d"
         Title="{x:Static l:Texts.SplitWindow_Title}" Height="500" Width="800"
         WindowStartupLocation="CenterOwner"
         Closed="Window_Closed">
     <Window.Resources>
         <u:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -26,6 +28,56 @@
               MouseMove="Viewport_MouseMove"
               SizeChanged="Viewport_SizeChanged">
             <Image Source="{Binding SceneImage}" Stretch="Fill"/>
+
+            <Border HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="220" Margin="10" 
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" CornerRadius="0"
+                    Padding="10">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsPartSelected}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsInteracting}" Value="True">
+                                <Setter Property="Opacity" Value="0.3"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ActualWidth}" Value="0">
+                                <Setter Property="Background" Value="#CC000000"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsNarrowMode}" Value="True">
+                                <Setter Property="Background" Value="#CC202020"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="{x:Static l:Texts.SplitWindow_MaterialSettings}" FontWeight="Bold" Margin="0,0,0,10" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
+
+                        <TextBlock Text="{x:Static l:Texts.SplitWindow_Roughness}" Margin="0,5,0,0" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
+                        <Slider Minimum="0" Maximum="1" Value="{Binding SelectedPartRoughness}" Margin="0,2,0,5" SmallChange="0.01" LargeChange="0.1"/>
+                        <TextBlock Text="{Binding SelectedPartRoughness, StringFormat=F2}" HorizontalAlignment="Right" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
+
+                        <TextBlock Text="{x:Static l:Texts.SplitWindow_Metallic}" Margin="0,5,0,0" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
+                        <Slider Minimum="0" Maximum="1" Value="{Binding SelectedPartMetallic}" Margin="0,2,0,5" SmallChange="0.01" LargeChange="0.1"/>
+                        <TextBlock Text="{Binding SelectedPartMetallic, StringFormat=F2}" HorizontalAlignment="Right" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
+
+                        <TextBlock Text="{x:Static l:Texts.SplitWindow_BaseColor}" Margin="0,5,0,0" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
+                        <ymm:ColorPicker Value="{Binding SelectedPartBaseColor}" Margin="0,2,0,10" Height="26"/>
+
+                        <Separator Margin="0,10"/>
+
+                        <StackPanel>
+                            <Button Content="{x:Static l:Texts.SplitWindow_ResetMaterial}" Command="{Binding ResetMaterialCommand}" Margin="0" Height="30" FontSize="14"/>
+                            <Button Content="{x:Static l:Texts.SplitWindow_SavePreset}" Command="{Binding SavePresetCommand}" Margin="0" Height="30" FontSize="14"/>
+                            <Button Content="{x:Static l:Texts.SplitWindow_LoadPreset}" Command="{Binding LoadPresetCommand}" Margin="0" Height="30" FontSize="14"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
         </Grid>
 
         <Grid Grid.Column="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">

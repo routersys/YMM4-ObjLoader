@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>ソフトシャドウのサンプル数を設定します。</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>トーンマップ後適用</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>走査線をトーンマッピングの後に適用します。</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>質感設定</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>粗さ (Roughness)</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>金属度 (Metallic)</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>基本色</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>プリセット保存</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>プリセット読み込み</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>マテリアルプリセット</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>初期値に戻す</value></data>
 </root>

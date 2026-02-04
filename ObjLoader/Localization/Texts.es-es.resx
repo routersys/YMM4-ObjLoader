@@ -388,4 +388,12 @@
 <data name="PcssQuality_Desc" xml:space="preserve"><value>Establece el número de muestras para sombras suaves.</value></data>
 <data name="ScanlinePost" xml:space="preserve"><value>Aplicar después de tonemap</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>Aplica líneas de escaneo después del mapeo de tonos.</value></data>
+<data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>Configuración de material</value></data>
+<data name="SplitWindow_Roughness" xml:space="preserve"><value>Rugosidad</value></data>
+<data name="SplitWindow_Metallic" xml:space="preserve"><value>Metálico</value></data>
+<data name="SplitWindow_BaseColor" xml:space="preserve"><value>Color base</value></data>
+<data name="SplitWindow_SavePreset" xml:space="preserve"><value>Guardar preajuste</value></data>
+<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Cargar preajuste</value></data>
+<data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Preajuste de material</value></data>
+<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Restablecer a los valores predeterminados</value></data>
 </root>

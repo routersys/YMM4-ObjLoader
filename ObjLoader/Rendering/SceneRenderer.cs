@@ -284,8 +284,18 @@ namespace ObjLoader.Rendering
                     _srvSlot0[0] = hasTexture ? texView! : _resources.WhiteTextureView!;
                     context.PSSetShaderResources(0, 1, _srvSlot0);
 
+                    PartMaterialData? material = null;
+                    if (item.Data.PartMaterials != null)
+                    {
+                        item.Data.PartMaterials.TryGetValue(i, out material);
+                    }
+
+                    float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
+                    float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
+                    Vector4 overriddenBaseColor = material != null ? RenderUtils.ToVec4(material.BaseColor) : Vector4.One;
+
                     var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
-                    var partColor = part.BaseColor * uiColorVec;
+                    var partColor = part.BaseColor * uiColorVec * overriddenBaseColor;
 
                     ConstantBufferData cbData = new ConstantBufferData
                     {
@@ -329,7 +339,7 @@ namespace ObjLoader.Rendering
                         CascadeSplits = new Vector4(cascadeSplits[0], cascadeSplits[1], cascadeSplits[2], cascadeSplits[3]),
                         EnvironmentParam = bindEnvironment ? new Vector4(1, 0, 0, 0) : new Vector4(0, 0, 0, 0),
 
-                        PbrParams = new Vector4((float)settings.GetMetallic(wId), (float)settings.GetRoughness(wId), 1.0f, 0),
+                        PbrParams = new Vector4(metallic, roughness, 1.0f, 0),
                         IblParams = new Vector4((float)settings.GetIBLIntensity(wId), 6.0f, 0, 0),
                         SsrParams = new Vector4(settings.GetSSREnabled(wId) ? 1 : 0, (float)settings.GetSSRStep(wId), (float)settings.GetSSRMaxDist(wId), (float)settings.GetSSRThickness(wId)),
                         ViewProj = Matrix4x4.Transpose(viewProj),

@@ -74,6 +74,9 @@ namespace ObjLoader.Core
         private byte[]? _thumbnail;
         public byte[]? Thumbnail { get => _thumbnail; set => Set(ref _thumbnail, value); }
 
+        private Dictionary<int, PartMaterialData> _partMaterials = new Dictionary<int, PartMaterialData>();
+        public Dictionary<int, PartMaterialData> PartMaterials { get => _partMaterials; set => Set(ref _partMaterials, value); }
+
         public LayerData Clone()
         {
             var clone = new LayerData
@@ -107,6 +110,20 @@ namespace ObjLoader.Core
             if (VisibleParts != null)
             {
                 clone.VisibleParts = new HashSet<int>(VisibleParts);
+            }
+
+            if (PartMaterials != null)
+            {
+                clone.PartMaterials = new Dictionary<int, PartMaterialData>();
+                foreach (var kvp in PartMaterials)
+                {
+                    clone.PartMaterials.Add(kvp.Key, new PartMaterialData
+                    {
+                        Roughness = kvp.Value.Roughness,
+                        Metallic = kvp.Value.Metallic,
+                        BaseColor = kvp.Value.BaseColor
+                    });
+                }
             }
 
             return clone;
