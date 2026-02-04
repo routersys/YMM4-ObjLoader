@@ -91,13 +91,11 @@ float FindBlocker(float3 projCoords, float bias, float lightSize, int cascadeInd
     float numBlockers = 0.0;
     float searchWidth = lightSize * PcssParams.y;
     int samples = (int) PcssParams.z;
-    
     for (int i = 0; i < samples; ++i)
     {
         float angle = (float) i / (float) samples * 6.283185;
         float radius = sqrt((float) i / (float) samples);
         float2 offset = float2(cos(angle), sin(angle)) * radius * searchWidth * texelSize;
-        
         float shadowMapDepth = ShadowMap.SampleLevel(sam, float3(projCoords.xy + offset, cascadeIndex), 0).r;
         
         if (shadowMapDepth < (projCoords.z - bias))
@@ -133,10 +131,8 @@ float CalculatePCSS(float3 wPos, float3 N, float3 L)
     float3 projCoords = lpos.xyz / lpos.w;
     projCoords.x = projCoords.x * 0.5 + 0.5;
     projCoords.y = -projCoords.y * 0.5 + 0.5;
-
     if (projCoords.z > 1.0 || projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
         return 1.0;
-
     float bias = GetShadowBias(N, L);
     float currentDepth = projCoords.z;
 
@@ -150,7 +146,8 @@ float CalculatePCSS(float3 wPos, float3 N, float3 L)
             [unroll]
             for (int y = -1; y <= 1; ++y)
             {
-                shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + float2(x, y) * texelSize, cascadeIndex), currentDepth - bias);
+                shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + float2(x, y) * texelSize, cascadeIndex),
+                currentDepth - bias);
             }
         }
         return shadow / 9.0;
@@ -159,14 +156,12 @@ float CalculatePCSS(float3 wPos, float3 N, float3 L)
     float avgBlockerDepth = FindBlocker(projCoords, bias, PcssParams.x, cascadeIndex);
     if (avgBlockerDepth < 0.0)
         return 1.0;
-
     float penumbraRatio = (currentDepth - avgBlockerDepth) / avgBlockerDepth;
     float filterRadius = penumbraRatio * PcssParams.x * PcssParams.y;
     float2 texelSize = 1.0 / ShadowParams.w;
     
     float shadow = 0.0;
     int samples = (int) PcssParams.w;
-    
     for (int i = 0; i < samples; ++i)
     {
         float angle = (float) i / (float) samples * 6.283185;
@@ -243,25 +238,20 @@ float3 CalculateSSR(float3 wPos, float3 N, float3 V, float roughness, out float 
     float thickness = SsrParams.w;
 
     float3 ssrColor = float3(0, 0, 0);
-    
     [loop]
     for (int i = 0; i < maxSteps; i++)
     {
         currentPos += stepVec;
         if (distance(wPos, currentPos) > maxDist)
             break;
-
         float4 clipPos = mul(float4(currentPos, 1.0f), ViewProj);
         if (clipPos.w <= 0.0)
             continue;
-        
         float2 screenUV = (clipPos.xy / clipPos.w) * float2(0.5, -0.5) + 0.5;
         if (screenUV.x < 0.0 || screenUV.x > 1.0 || screenUV.y < 0.0 || screenUV.y > 1.0)
             break;
-
         float depthSample = DepthMap.SampleLevel(sam, screenUV, 0).r;
         float currentDepth = clipPos.z / clipPos.w;
-
         if (currentDepth > depthSample && (currentDepth - depthSample) < thickness)
         {
             float3 start = currentPos - stepVec;
@@ -274,7 +264,6 @@ float3 CalculateSSR(float3 wPos, float3 N, float3 V, float roughness, out float 
                 float2 midUV = (midClip.xy / midClip.w) * float2(0.5, -0.5) + 0.5;
                 float midDepthSample = DepthMap.SampleLevel(sam, midUV, 0).r;
                 float midCurrentDepth = midClip.z / midClip.w;
-                 
                 if (midCurrentDepth > midDepthSample)
                     end = mid;
                 else
@@ -341,7 +330,6 @@ float4 PS(PS_IN input) : SV_Target
     F0 = lerp(F0, albedo, metallic);
 
     float3 Lo = float3(0.0, 0.0, 0.0);
-
     if (LightEnabled > 0.5f)
     {
         float3 lightDir;
@@ -352,7 +340,6 @@ float4 PS(PS_IN input) : SV_Target
             lightDir = normalize(LightPos.xyz);
         else
             lightDir = normalize(LightPos.xyz - input.wPos);
-
         if (type != 2)
         {
             float dist = distance(LightPos.xyz, input.wPos);
@@ -368,10 +355,8 @@ float4 PS(PS_IN input) : SV_Target
 
         float3 L = lightDir;
         float3 H = normalize(V + L);
-        
         float NdotL = max(dot(N, L), 0.0);
         float shadow = 1.0f;
-
         if (ShadowParams.x > 0.5f && (type == 1 || type == 2))
         {
             float sVal = CalculatePCSS(input.wPos, N, L);
@@ -379,11 +364,9 @@ float4 PS(PS_IN input) : SV_Target
         }
 
         float3 radiance = LightColor.rgb * attenuation * shadow * DiffuseIntensity;
-
         float NDF = DistributionGGX(N, H, roughness);
         float G = GeometrySmith(N, V, L, roughness);
         float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-
         float3 numerator = NDF * G * F;
         float denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
         float3 specular = numerator / denominator * SpecularIntensity;
@@ -396,14 +379,12 @@ float4 PS(PS_IN input) : SV_Target
     }
 
     float3 ambient = float3(0, 0, 0);
-    
-    if (EnvironmentParam.x > 0.5f)
+    if (EnvironmentParam.x > 0.5f && LightEnabled > 0.5f)
     {
         float NdotV = max(dot(N, V), 0.0);
         float3 kS = FresnelSchlickRoughness(NdotV, F0, roughness);
         float3 kD = 1.0 - kS;
         kD *= 1.0 - metallic;
-        
         float maxMip = IblParams.y > 0.0 ? IblParams.y : 6.0;
         float3 irradiance = EnvironmentMap.SampleLevel(sam, N, maxMip).rgb;
         float3 diffuse = irradiance * albedo;
@@ -426,11 +407,17 @@ float4 PS(PS_IN input) : SV_Target
     }
     else
     {
-        ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
+        if (LightEnabled > 0.5f)
+        {
+            ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
+        }
+        else
+        {
+            ambient = albedo;
+        }
     }
 
     float3 color = ambient + Lo;
-    
     if (RimParams.x > 0.5f)
     {
         float vdn = 1.0 - max(dot(V, N), 0.0);
@@ -483,14 +470,12 @@ float4 PS(PS_IN input) : SV_Target
     color = (color - 0.5f) * ColorCorrParams.y + 0.5f;
     color = pow(abs(color), 1.0f / ColorCorrParams.z);
     color += ColorCorrParams.w;
-    
     if (ScanlineParams.x > 0.5f && ScanlineParams.w < 0.5f)
     {
         color = ApplyScanline(color, uv);
     }
     
     color = AceSToneMapping(color);
-    
     if (ScanlineParams.x > 0.5f && ScanlineParams.w > 0.5f)
     {
         color = ApplyScanline(color, uv);
