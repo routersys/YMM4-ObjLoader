@@ -58,11 +58,11 @@
                         <TextBlock Text="{x:Static l:Texts.SplitWindow_MaterialSettings}" FontWeight="Bold" Margin="0,0,0,10" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
 
                         <TextBlock Text="{x:Static l:Texts.SplitWindow_Roughness}" Margin="0,5,0,0" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
-                        <Slider Minimum="0" Maximum="1" Value="{Binding SelectedPartRoughness}" Margin="0,2,0,5" SmallChange="0.01" LargeChange="0.1"/>
+                        <Slider Minimum="0" Maximum="1" Value="{Binding SelectedPartRoughness, Delay=16}" Margin="0,2,0,5" SmallChange="0.01" LargeChange="0.1" IsMoveToPointEnabled="True"/>
                         <TextBlock Text="{Binding SelectedPartRoughness, StringFormat=F2}" HorizontalAlignment="Right" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
 
                         <TextBlock Text="{x:Static l:Texts.SplitWindow_Metallic}" Margin="0,5,0,0" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
-                        <Slider Minimum="0" Maximum="1" Value="{Binding SelectedPartMetallic}" Margin="0,2,0,5" SmallChange="0.01" LargeChange="0.1"/>
+                        <Slider Minimum="0" Maximum="1" Value="{Binding SelectedPartMetallic, Delay=16}" Margin="0,2,0,5" SmallChange="0.01" LargeChange="0.1" IsMoveToPointEnabled="True"/>
                         <TextBlock Text="{Binding SelectedPartMetallic, StringFormat=F2}" HorizontalAlignment="Right" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
 
                         <TextBlock Text="{x:Static l:Texts.SplitWindow_BaseColor}" Margin="0,5,0,0" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
