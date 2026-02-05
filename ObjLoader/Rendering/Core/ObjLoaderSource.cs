@@ -1,4 +1,13 @@
-﻿using System.IO;
+﻿using ObjLoader.Cache;
+using ObjLoader.Core;
+using ObjLoader.Parsers;
+using ObjLoader.Plugin;
+using ObjLoader.Rendering.Managers;
+using ObjLoader.Rendering.Renderers;
+using ObjLoader.Rendering.Shaders;
+using ObjLoader.Services.Textures;
+using ObjLoader.Settings;
+using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -8,22 +17,13 @@ using Vortice.Direct3D11;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Player.Video;
-using ObjLoader.Core;
-using ObjLoader.Cache;
-using ObjLoader.Parsers;
-using ObjLoader.Settings;
 using D2D = Vortice.Direct2D1;
-using ObjLoader.Services.Textures;
-using ObjLoader.Rendering.Managers;
-using ObjLoader.Rendering.Renderers;
-using ObjLoader.Rendering.Shaders;
-using ObjLoader.Plugin.Parameters;
 
 namespace ObjLoader.Rendering.Core
 {
     public sealed class ObjLoaderSource : IShapeSource
     {
-        private static readonly object _globalRenderLock = new object();
+        public static readonly object SharedRenderLock = new object();
 
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly ObjLoaderParameter _parameter;
@@ -111,7 +111,7 @@ namespace ObjLoader.Rendering.Core
         {
             if (_isDisposed) return;
 
-            lock (_globalRenderLock)
+            lock (SharedRenderLock)
             {
                 if (_isDisposed) return;
 
@@ -387,10 +387,10 @@ namespace ObjLoader.Rendering.Core
                     var cameraTarget = new Vector3((float)targetX, (float)targetY, (float)targetZ);
                     var viewMatrix = Matrix4x4.CreateLookAt(cameraPos, cameraTarget, Vector3.UnitY);
 
-                    float fov = (float)(Math.Max(1, Math.Min(179, shadowLightState.Fov)) * Math.PI / 180.0);
+                    float fov = (float)(Math.Max(1, Math.Min(RenderingConstants.DefaultFovLimit, shadowLightState.Fov)) * Math.PI / 180.0);
                     float aspect = (float)sw / sh;
-                    float nearPlane = 0.1f;
-                    float farPlane = 1000.0f;
+                    float nearPlane = RenderingConstants.ShadowNearPlane;
+                    float farPlane = RenderingConstants.DefaultFarPlane;
 
                     float[] splitDistances = { nearPlane, nearPlane + (farPlane - nearPlane) * 0.05f, nearPlane + (farPlane - nearPlane) * 0.2f, farPlane };
                     cascadeSplits[0] = splitDistances[1];
@@ -420,7 +420,7 @@ namespace ObjLoader.Rendering.Core
                         foreach (var c in corners) center += c;
                         center /= 8.0f;
 
-                        var lightView = Matrix4x4.CreateLookAt(center + lightDir * 500.0f, center, Vector3.UnitY);
+                        var lightView = Matrix4x4.CreateLookAt(center + lightDir * RenderingConstants.SunLightDistance, center, Vector3.UnitY);
 
                         float minX = float.MaxValue, maxX = float.MinValue;
                         float minY = float.MaxValue, maxY = float.MinValue;
@@ -440,7 +440,7 @@ namespace ObjLoader.Rendering.Core
                         minY = MathF.Floor(minY / worldUnitsPerTexel) * worldUnitsPerTexel;
                         maxY = MathF.Floor(maxY / worldUnitsPerTexel) * worldUnitsPerTexel;
 
-                        var lightProj = Matrix4x4.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ - 1000.0f, -minZ + 1000.0f);
+                        var lightProj = Matrix4x4.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ - RenderingConstants.ShadowOrthoMargin, -minZ + RenderingConstants.ShadowOrthoMargin);
                         lightViewProjs[i] = lightView * lightProj;
                     }
                 }
@@ -448,11 +448,11 @@ namespace ObjLoader.Rendering.Core
                 {
                     Vector3 dir = -Vector3.Normalize(lPos);
                     var lightView = Matrix4x4.CreateLookAt(lPos, lPos + dir, Vector3.UnitY);
-                    var lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, 5000.0f);
+                    var lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlaneExport);
                     for (int i = 0; i < D3DResources.CascadeCount; i++)
                     {
                         lightViewProjs[i] = lightView * lightProj;
-                        cascadeSplits[i] = 10000.0f;
+                        cascadeSplits[i] = RenderingConstants.CascadeSplitInfinity;
                     }
                 }
 
@@ -463,7 +463,9 @@ namespace ObjLoader.Rendering.Core
                 shadowValid = true;
             }
 
-            _sceneRenderer.Render(layersToRender, _layerStates, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId);
+            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged;
+
+            _sceneRenderer.Render(layersToRender, _layerStates, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
 
             ClearResourceBindings();
 
@@ -645,7 +647,7 @@ namespace ObjLoader.Rendering.Core
 
         public void Dispose()
         {
-            lock (_globalRenderLock)
+            lock (SharedRenderLock)
             {
                 if (_isDisposed) return;
                 _isDisposed = true;

@@ -7,7 +7,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
-using ObjLoader.Plugin.Parameters;
+using ObjLoader.Plugin;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels

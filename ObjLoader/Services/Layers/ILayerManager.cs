@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using ObjLoader.Core;
-using ObjLoader.Plugin.Parameters;
+using ObjLoader.Plugin;
 
 namespace ObjLoader.Services.Layers
 {

@@ -50,7 +50,7 @@ namespace ObjLoader.Cache
 
             _cache.AddOrUpdate(key, item, (k, oldValue) =>
             {
-                if (!ReferenceEquals(oldValue, item) && oldValue.Device != item.Device)
+                if (!ReferenceEquals(oldValue, item))
                 {
                     SafeDispose(oldValue);
                 }

@@ -1,7 +1,7 @@
 ﻿using Vortice.Direct3D11;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
-using ObjLoader.Plugin.Parameters;
+using ObjLoader.Plugin;
 
 namespace ObjLoader.Rendering.Shaders
 {

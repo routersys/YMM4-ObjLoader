@@ -15,8 +15,8 @@ using System.Windows.Media;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Rendering.Renderers;
-using ObjLoader.Plugin.Parameters;
 using ObjLoader.Plugin.CameraAnimation;
+using ObjLoader.Plugin;
 
 namespace ObjLoader.ViewModels
 {

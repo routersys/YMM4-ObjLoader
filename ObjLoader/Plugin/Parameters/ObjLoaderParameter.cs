@@ -23,7 +23,7 @@ using ObjLoader.Services.Rendering;
 using ObjLoader.Plugin.CameraAnimation;
 using ObjLoader.Rendering.Core;
 
-namespace ObjLoader.Plugin.Parameters
+namespace ObjLoader.Plugin
 {
     public class ObjLoaderParameter : ShapeParameterBase
     {

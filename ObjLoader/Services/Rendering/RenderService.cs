@@ -16,8 +16,6 @@ namespace ObjLoader.Services.Rendering
 {
     internal class RenderService : IDisposable
     {
-        private static readonly object _globalRenderLock = new object();
-
         private ID3D11Device? _device;
         private ID3D11DeviceContext? _context;
         private ID3D11Texture2D? _renderTarget;
@@ -77,9 +75,10 @@ namespace ObjLoader.Services.Rendering
             if (result.Failure || _device == null) return;
             _d3dResources = new D3DResources(_device!);
 
+            float gSize = RenderingConstants.GridSize;
             float[] gridVerts = {
-                -1000, 0, 1000, -1000, 0, -1000, 1000, 0, 1000,
-                1000, 0, 1000, -1000, 0, -1000, 1000, 0, -1000
+                -gSize, 0, gSize, -gSize, 0, -gSize, gSize, 0, gSize,
+                gSize, 0, gSize, -gSize, 0, -gSize, gSize, 0, -gSize
             };
             var vDesc = new BufferDescription(gridVerts.Length * 4, BindFlags.VertexBuffer, ResourceUsage.Immutable);
             unsafe
@@ -185,7 +184,7 @@ namespace ObjLoader.Services.Rendering
             double gridScale,
             bool isInteracting)
         {
-            lock (_globalRenderLock)
+            lock (ObjLoaderSource.SharedRenderLock)
             {
                 if (_isDisposed) return;
                 if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
@@ -245,7 +244,7 @@ namespace ObjLoader.Services.Rendering
             if (_samplerArray[0] == null) _samplerArray[0] = _d3dResources.SamplerState;
             if (_shadowSamplerArray[0] == null) _shadowSamplerArray[0] = _d3dResources.ShadowSampler;
 
-            _context.PSSetShaderResources(1, _nullSrv);
+            _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
 
             bool useCascaded = settings.CascadedShadowsEnabled;
             if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
@@ -357,12 +356,12 @@ namespace ObjLoader.Services.Rendering
                         {
                             var targetPos = System.Numerics.Vector3.Zero;
                             lightView = Matrix4x4.CreateLookAt(lightPosVec, targetPos, System.Numerics.Vector3.UnitY);
-                            lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, 2000.0f);
+                            lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlanePreview);
                         }
 
                         lightViewProj = lightView * lightProj;
 
-                        _context.PSSetShaderResources(1, _nullSrv);
+                        _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
 
                         _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), _d3dResources.ShadowMapDSVs[0]);
                         _context.ClearDepthStencilView(_d3dResources.ShadowMapDSVs[0], DepthStencilClearFlags.Depth, 1.0f, 0);
@@ -420,21 +419,21 @@ namespace ObjLoader.Services.Rendering
 
             if (brightness < 20)
             {
-                clearColor = new Color4(0.0f, 0.0f, 0.0f, 1.0f);
-                gridColor = new System.Numerics.Vector4(0.5f, 0.5f, 0.5f, 1.0f);
-                axisColor = new System.Numerics.Vector4(0.8f, 0.8f, 0.8f, 1.0f);
+                clearColor = RenderingConstants.ClearColorDark;
+                gridColor = RenderingConstants.GridColorDark;
+                axisColor = RenderingConstants.AxisColorDark;
             }
             else if (brightness < 128)
             {
-                clearColor = new Color4(0.13f, 0.13f, 0.13f, 1.0f);
-                gridColor = new System.Numerics.Vector4(0.65f, 0.65f, 0.65f, 1.0f);
-                axisColor = new System.Numerics.Vector4(0.9f, 0.9f, 0.9f, 1.0f);
+                clearColor = RenderingConstants.ClearColorMedium;
+                gridColor = RenderingConstants.GridColorMedium;
+                axisColor = RenderingConstants.AxisColorMedium;
             }
             else
             {
-                clearColor = new Color4(0.9f, 0.9f, 0.9f, 1.0f);
-                gridColor = new System.Numerics.Vector4(0.4f, 0.4f, 0.4f, 1.0f);
-                axisColor = new System.Numerics.Vector4(0.1f, 0.1f, 0.1f, 1.0f);
+                clearColor = RenderingConstants.ClearColorLight;
+                gridColor = RenderingConstants.GridColorLight;
+                axisColor = RenderingConstants.AxisColorLight;
             }
 
             _context.OMSetRenderTargets(_rtv, _dsv);
@@ -450,15 +449,15 @@ namespace ObjLoader.Services.Rendering
 
             _context.VSSetShader(_d3dResources.VertexShader);
             _context.PSSetShader(_d3dResources.PixelShader);
-            _context.PSSetSamplers(0, _samplerArray);
+            _context.PSSetSamplers(RenderingConstants.SlotStandardSampler, _samplerArray);
             if (renderShadowMap && _shadowSrvArray[0] != null)
             {
-                _context.PSSetShaderResources(1, _shadowSrvArray);
-                _context.PSSetSamplers(1, _shadowSamplerArray);
+                _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _shadowSrvArray);
+                _context.PSSetSamplers(RenderingConstants.SlotShadowSampler, _shadowSamplerArray);
             }
             else
             {
-                _context.PSSetShaderResources(1, _nullSrv);
+                _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
             }
 
             _context.IASetInputLayout(_d3dResources.InputLayout);
@@ -534,7 +533,7 @@ namespace ObjLoader.Services.Rendering
                 Matrix4x4 gridWorld = Matrix4x4.Identity;
                 if (!isInfiniteGrid)
                 {
-                    float finiteScale = (float)(gridScale * 50.0 / 1000.0);
+                    float finiteScale = (float)(gridScale * RenderingConstants.GridScaleBase / RenderingConstants.GridSize);
                     if (finiteScale < 0.001f) finiteScale = 0.001f;
                     gridWorld = Matrix4x4.CreateScale(finiteScale);
                 }
@@ -602,7 +601,7 @@ namespace ObjLoader.Services.Rendering
             var texView = resource.PartTextures[partIndex];
 
             _texArray[0] = texView ?? _d3dResources.WhiteTextureView!;
-            _context.PSSetShaderResources(0, _texArray);
+            _context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, _texArray);
 
             System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
 
@@ -680,7 +679,7 @@ namespace ObjLoader.Services.Rendering
 
         public void Dispose()
         {
-            lock (_globalRenderLock)
+            lock (ObjLoaderSource.SharedRenderLock)
             {
                 if (_isDisposed) return;
                 _isDisposed = true;

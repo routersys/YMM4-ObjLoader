@@ -3,9 +3,8 @@ using System.Windows;
 using ObjLoader.Localization;
 using YukkuriMovieMaker.Plugin.Shape;
 using YukkuriMovieMaker.Project;
-using ObjLoader.Plugin.Parameters;
 
-namespace ObjLoader.Plugin.Core
+namespace ObjLoader.Plugin
 {
     public class ObjLoaderPlugin : IShapePlugin
     {

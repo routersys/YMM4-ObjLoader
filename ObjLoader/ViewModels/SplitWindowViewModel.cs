@@ -16,7 +16,7 @@ using ObjLoader.Services.Layers;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Models;
-using ObjLoader.Plugin.Parameters;
+using ObjLoader.Plugin;
 
 namespace ObjLoader.ViewModels
 {

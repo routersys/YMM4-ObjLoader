@@ -1,4 +1,5 @@
-﻿using ObjLoader.Rendering.Managers.Interfaces;
+﻿using ObjLoader.Rendering.Core;
+using ObjLoader.Rendering.Managers.Interfaces;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -7,9 +8,6 @@ namespace ObjLoader.Rendering.Managers
 {
     internal sealed class EnvironmentMapManager : IEnvironmentMapManager
     {
-        private const int EnvironmentMapSize = 512;
-        private const int FaceCount = 6;
-
         private ID3D11Texture2D? _environmentCubeMap;
         private ID3D11ShaderResourceView? _environmentSRV;
         private ID3D11RenderTargetView[]? _environmentRTVs;
@@ -43,10 +41,10 @@ namespace ObjLoader.Rendering.Managers
         {
             var envDesc = new Texture2DDescription
             {
-                Width = EnvironmentMapSize,
-                Height = EnvironmentMapSize,
+                Width = RenderingConstants.EnvironmentMapSize,
+                Height = RenderingConstants.EnvironmentMapSize,
                 MipLevels = 0,
-                ArraySize = FaceCount,
+                ArraySize = RenderingConstants.EnvironmentMapFaceCount,
                 Format = Format.R8G8B8A8_UNorm,
                 SampleDescription = new SampleDescription(1, 0),
                 Usage = ResourceUsage.Default,
@@ -73,9 +71,9 @@ namespace ObjLoader.Rendering.Managers
 
         private static ID3D11RenderTargetView[] CreateEnvironmentRTVs(ID3D11Device device, ID3D11Texture2D cubeMap)
         {
-            var rtvs = new ID3D11RenderTargetView[FaceCount];
+            var rtvs = new ID3D11RenderTargetView[RenderingConstants.EnvironmentMapFaceCount];
 
-            for (int i = 0; i < FaceCount; i++)
+            for (int i = 0; i < RenderingConstants.EnvironmentMapFaceCount; i++)
             {
                 var rtvDesc = new RenderTargetViewDescription
                 {
@@ -98,8 +96,8 @@ namespace ObjLoader.Rendering.Managers
         {
             var envDepthDesc = new Texture2DDescription
             {
-                Width = EnvironmentMapSize,
-                Height = EnvironmentMapSize,
+                Width = RenderingConstants.EnvironmentMapSize,
+                Height = RenderingConstants.EnvironmentMapSize,
                 MipLevels = 1,
                 ArraySize = 1,
                 Format = Format.D24_UNorm_S8_UInt,

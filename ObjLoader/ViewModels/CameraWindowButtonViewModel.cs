@@ -1,4 +1,4 @@
-﻿using ObjLoader.Plugin.Parameters;
+﻿using ObjLoader.Plugin;
 using ObjLoader.Views;
 using YukkuriMovieMaker.Commons;
 
