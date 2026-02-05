@@ -6,7 +6,7 @@ using ObjLoader.ViewModels;
 using System.Collections.ObjectModel;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Layers
 {
     internal class LayerManipulationService
     {

@@ -2,7 +2,6 @@
 using ObjLoader.Rendering;
 using ObjLoader.Attributes;
 using ObjLoader.Localization;
-using ObjLoader.Services;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
@@ -18,6 +17,9 @@ using System.Runtime.Serialization;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows.Threading;
+using ObjLoader.Services.Layers;
+using ObjLoader.Services.Camera;
+using ObjLoader.Services.Rendering;
 
 namespace ObjLoader.Plugin
 {

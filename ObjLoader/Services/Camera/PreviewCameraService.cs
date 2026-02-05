@@ -4,7 +4,7 @@ using YukkuriMovieMaker.Commons;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Camera
 {
     public class PreviewCameraService : Bindable
     {

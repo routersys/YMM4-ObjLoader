@@ -2,6 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
+using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Textures;
 using ObjLoader.Utilities;
 using ObjLoader.ViewModels;
@@ -14,7 +15,7 @@ using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vector3 = System.Numerics.Vector3;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Models
 {
     internal class ModelLoadResult : IDisposable
     {

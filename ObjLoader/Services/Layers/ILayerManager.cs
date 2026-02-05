@@ -2,7 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Plugin;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Layers
 {
     public interface ILayerManager
     {

@@ -5,7 +5,7 @@ using System.Windows.Media;
 using ObjLoader.Attributes;
 using ObjLoader.ViewModels;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.UI
 {
     public static class MenuBuilder
     {

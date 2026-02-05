@@ -13,7 +13,7 @@ using Vortice.DXGI;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Rendering
 {
     internal class SceneService : IDisposable
     {

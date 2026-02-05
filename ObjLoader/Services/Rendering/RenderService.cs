@@ -12,7 +12,7 @@ using Vortice.Mathematics;
 using D3D11MapFlags = Vortice.Direct3D11.MapFlags;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Rendering
 {
     internal struct LayerRenderData
     {

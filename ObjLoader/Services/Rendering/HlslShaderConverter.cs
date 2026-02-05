@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Rendering
 {
     public interface IShaderConverter
     {

@@ -6,7 +6,7 @@ using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.UI
 {
     public class WindowThemeService : IWindowThemeService
     {

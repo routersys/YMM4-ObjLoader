@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using ObjLoader.Utilities;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Rendering
 {
     public class ShaderService
     {

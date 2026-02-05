@@ -1,6 +1,6 @@
 ﻿using System.Windows.Threading;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Camera
 {
     public class CameraAnimationManager : IDisposable
     {

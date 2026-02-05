@@ -1,6 +1,6 @@
 ﻿using System.Windows.Media.Media3D;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Camera
 {
     public interface ICameraManipulator
     {

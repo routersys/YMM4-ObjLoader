@@ -1,8 +1,7 @@
 ﻿using System.Windows.Media;
-using Vortice.D3DCompiler;
 using ObjLoader.Localization;
 using ObjLoader.Rendering;
-using ObjLoader.Services;
+using ObjLoader.Services.Rendering;
 using ObjLoader.Utilities;
 using YukkuriMovieMaker.Commons;
 

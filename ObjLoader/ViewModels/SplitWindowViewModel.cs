@@ -2,9 +2,6 @@
 using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Plugin;
-using ObjLoader.Rendering;
-using ObjLoader.Services;
-using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -15,8 +12,11 @@ using System.Windows.Media.Imaging;
 using System.Text.Json;
 using Microsoft.Win32;
 using YukkuriMovieMaker.Commons;
-using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
+using ObjLoader.Services.Layers;
+using ObjLoader.Services.Camera;
+using ObjLoader.Services.Rendering;
+using ObjLoader.Services.Models;
 
 namespace ObjLoader.ViewModels
 {

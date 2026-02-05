@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Plugin;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Camera
 {
     public class CameraService
     {

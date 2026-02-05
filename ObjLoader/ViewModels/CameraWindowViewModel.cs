@@ -13,6 +13,8 @@ using Microsoft.Win32;
 using System.IO;
 using System.Xml.Serialization;
 using System.Windows.Media;
+using ObjLoader.Services.Camera;
+using ObjLoader.Services.Rendering;
 
 namespace ObjLoader.ViewModels
 {

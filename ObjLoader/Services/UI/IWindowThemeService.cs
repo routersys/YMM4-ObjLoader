@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.UI
 {
     public interface IWindowThemeService
     {

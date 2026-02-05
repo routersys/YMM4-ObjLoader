@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Media.Media3D;
 
-namespace ObjLoader.Services
+namespace ObjLoader.Services.Camera
 {
     public enum GizmoMode { None, X, Y, Z, XY, YZ, ZX, View }
 
