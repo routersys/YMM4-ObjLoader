@@ -2,9 +2,11 @@
 
 namespace ObjLoader.Services.Textures
 {
-    public class TextureService
+    public sealed class TextureService : ITextureService
     {
         private readonly List<ITextureLoader> _loaders = new List<ITextureLoader>();
+        private readonly object _lock = new object();
+        private bool _disposed;
 
         public TextureService()
         {
@@ -14,28 +16,61 @@ namespace ObjLoader.Services.Textures
 
         public void RegisterLoader(ITextureLoader loader)
         {
-            _loaders.Add(loader);
+            if (loader == null) throw new ArgumentNullException(nameof(loader));
+
+            lock (_lock)
+            {
+                if (_disposed) throw new ObjectDisposedException(nameof(TextureService));
+                _loaders.Add(loader);
+            }
         }
 
         public BitmapSource Load(string path)
         {
-            var loader = _loaders
-                .OrderByDescending(l => l.Priority)
-                .FirstOrDefault(l => l.CanLoad(path));
+            if (string.IsNullOrEmpty(path)) throw new ArgumentNullException(nameof(path));
 
-            if (loader != null)
+            ITextureLoader? selectedLoader;
+
+            lock (_lock)
             {
-                try
-                {
-                    return loader.Load(path);
-                }
-                catch
-                {
-                    throw;
-                }
+                if (_disposed) throw new ObjectDisposedException(nameof(TextureService));
+
+                selectedLoader = _loaders
+                    .OrderByDescending(l => l.Priority)
+                    .FirstOrDefault(l => l.CanLoad(path));
             }
 
-            throw new NotSupportedException($"No suitable loader found for texture: {path}");
+            if (selectedLoader == null)
+            {
+                throw new NotSupportedException($"No suitable loader found for texture: {path}");
+            }
+
+            return selectedLoader.Load(path);
+        }
+
+        public void Dispose()
+        {
+            lock (_lock)
+            {
+                if (_disposed) return;
+                _disposed = true;
+
+                foreach (var loader in _loaders)
+                {
+                    if (loader is IDisposable disposable)
+                    {
+                        try
+                        {
+                            disposable.Dispose();
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+
+                _loaders.Clear();
+            }
         }
     }
 }

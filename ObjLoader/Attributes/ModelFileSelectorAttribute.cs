@@ -1,4 +1,4 @@
-﻿using ObjLoader.Plugin;
+﻿using ObjLoader.Plugin.Parameters;
 using ObjLoader.ViewModels;
 using ObjLoader.Views;
 using System.Reflection;

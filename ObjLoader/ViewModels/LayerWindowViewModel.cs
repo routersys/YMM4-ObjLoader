@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Core;
 using ObjLoader.Parsers;
-using ObjLoader.Plugin;
+using ObjLoader.Plugin.Parameters;
 using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;

@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.Plugin
+namespace ObjLoader.Plugin.CameraAnimation
 {
     public class EasingData : Bindable
     {

@@ -1,5 +1,4 @@
-﻿using ObjLoader.Plugin;
-using ObjLoader.Services;
+﻿using ObjLoader.Services;
 using ObjLoader.Views;
 using ObjLoader.Localization;
 using ObjLoader.Attributes;
@@ -15,6 +14,9 @@ using System.Xml.Serialization;
 using System.Windows.Media;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
+using ObjLoader.Rendering.Renderers;
+using ObjLoader.Plugin.Parameters;
+using ObjLoader.Plugin.CameraAnimation;
 
 namespace ObjLoader.ViewModels
 {

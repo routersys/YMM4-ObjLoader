@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using ObjLoader.Plugin;
+using ObjLoader.Plugin.CameraAnimation;
 
 namespace ObjLoader.Converters
 {

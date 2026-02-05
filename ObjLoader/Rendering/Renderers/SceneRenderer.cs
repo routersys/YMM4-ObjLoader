@@ -1,6 +1,5 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
-using ObjLoader.Plugin;
 using ObjLoader.Settings;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -11,8 +10,13 @@ using Vortice.DXGI;
 using Vortice.Mathematics;
 using YukkuriMovieMaker.Commons;
 using MapFlags = Vortice.Direct3D11.MapFlags;
+using ObjLoader.Rendering.Core;
+using ObjLoader.Rendering.Managers;
+using ObjLoader.Rendering.Utilities;
+using ObjLoader.Rendering.Shaders;
+using ObjLoader.Plugin.Parameters;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Renderers
 {
     internal class SceneRenderer
     {

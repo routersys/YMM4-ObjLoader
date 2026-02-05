@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
-using ObjLoader.Plugin;
+using ObjLoader.Plugin.Parameters;
 using ObjLoader.Utilities;
 using ObjLoader.ViewModels;
 using System.Collections.ObjectModel;

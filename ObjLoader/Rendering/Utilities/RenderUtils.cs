@@ -1,7 +1,8 @@
 ﻿using System.Numerics;
+using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Utilities
 {
     internal static class RenderUtils
     {

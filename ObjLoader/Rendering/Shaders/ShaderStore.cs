@@ -3,7 +3,7 @@ using System.Reflection;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Shaders
 {
     internal static class ShaderStore
     {

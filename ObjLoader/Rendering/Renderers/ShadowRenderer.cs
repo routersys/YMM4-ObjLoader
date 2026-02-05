@@ -1,6 +1,8 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
 using ObjLoader.Plugin;
+using ObjLoader.Rendering.Core;
+using ObjLoader.Rendering.Utilities;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Vortice.Direct3D;
@@ -9,7 +11,7 @@ using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using MapFlags = Vortice.Direct3D11.MapFlags;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Renderers
 {
     internal class ShadowRenderer
     {

@@ -3,7 +3,7 @@ using System.Windows.Media;
 using System.Windows;
 using ObjLoader.Localization;
 
-namespace ObjLoader.Services.Rendering
+namespace ObjLoader.Rendering.Renderers
 {
     internal static class GizmoBuilder
     {

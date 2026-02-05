@@ -1,4 +1,4 @@
-﻿using ObjLoader.Plugin;
+﻿using ObjLoader.Plugin.CameraAnimation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

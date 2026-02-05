@@ -20,8 +20,10 @@ using System.Windows.Threading;
 using ObjLoader.Services.Layers;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
+using ObjLoader.Plugin.CameraAnimation;
+using ObjLoader.Rendering.Core;
 
-namespace ObjLoader.Plugin
+namespace ObjLoader.Plugin.Parameters
 {
     public class ObjLoaderParameter : ShapeParameterBase
     {

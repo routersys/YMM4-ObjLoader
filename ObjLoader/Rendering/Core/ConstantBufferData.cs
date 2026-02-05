@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace ObjLoader.Core
+namespace ObjLoader.Rendering.Core
 {
     [StructLayout(LayoutKind.Sequential)]
     internal struct ConstantBufferData

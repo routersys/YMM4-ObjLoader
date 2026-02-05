@@ -2,7 +2,7 @@
 using YukkuriMovieMaker.Commons;
 using ObjLoader.Core;
 
-namespace ObjLoader.Plugin
+namespace ObjLoader.Plugin.Parameters
 {
     internal class ObjLoaderParameterSharedData
     {

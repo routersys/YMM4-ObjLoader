@@ -1,7 +1,6 @@
 ﻿using System.Windows.Media;
 using ObjLoader.Localization;
-using ObjLoader.Rendering;
-using ObjLoader.Services.Rendering;
+using ObjLoader.Rendering.Shaders;
 using ObjLoader.Utilities;
 using YukkuriMovieMaker.Commons;
 

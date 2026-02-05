@@ -11,14 +11,17 @@ using YukkuriMovieMaker.Player.Video;
 using ObjLoader.Core;
 using ObjLoader.Cache;
 using ObjLoader.Parsers;
-using ObjLoader.Plugin;
 using ObjLoader.Settings;
 using D2D = Vortice.Direct2D1;
 using ObjLoader.Services.Textures;
+using ObjLoader.Rendering.Managers;
+using ObjLoader.Rendering.Renderers;
+using ObjLoader.Rendering.Shaders;
+using ObjLoader.Plugin.Parameters;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Core
 {
-    public class ObjLoaderSource : IShapeSource
+    public sealed class ObjLoaderSource : IShapeSource
     {
         private static readonly object _globalRenderLock = new object();
 
@@ -31,7 +34,7 @@ namespace ObjLoader.Rendering
         private readonly CustomShaderManager _shaderManager;
         private readonly ShadowRenderer _shadowRenderer;
         private readonly SceneRenderer _sceneRenderer;
-        private readonly TextureService _textureService;
+        private readonly ITextureService _textureService;
 
         private D2D.ID2D1CommandList? _commandList;
 
@@ -45,11 +48,11 @@ namespace ObjLoader.Rendering
 
         private int _lastActiveWorldId = -1;
         private int _lastShadowResolution = -1;
-        private bool _lastShadowEnabled = false;
+        private bool _lastShadowEnabled;
 
         private Dictionary<string, LayerState> _layerStates = new Dictionary<string, LayerState>();
 
-        private bool _isDisposed = false;
+        private bool _isDisposed;
 
         private static readonly ID3D11ShaderResourceView[] _emptySrvArray4 = new ID3D11ShaderResourceView[4];
         private static readonly ID3D11Buffer[] _emptyBufferArray1 = new ID3D11Buffer[1];
@@ -63,10 +66,10 @@ namespace ObjLoader.Rendering
                 {
                     if (app.MainWindow != null)
                     {
-                        app.MainWindow.Closing += (s, e) => GpuResourceCache.Clear();
+                        app.MainWindow.Closing += (s, e) => GpuResourceCache.Instance.Clear();
                     }
-                    app.Exit += (s, e) => GpuResourceCache.Clear();
-                    app.Dispatcher.ShutdownStarted += (s, e) => GpuResourceCache.Clear();
+                    app.Exit += (s, e) => GpuResourceCache.Instance.Clear();
+                    app.Dispatcher.ShutdownStarted += (s, e) => GpuResourceCache.Instance.Clear();
                 });
             }
         }
@@ -75,8 +78,8 @@ namespace ObjLoader.Rendering
 
         public ObjLoaderSource(IGraphicsDevicesAndContext devices, ObjLoaderParameter parameter)
         {
-            _devices = devices;
-            _parameter = parameter;
+            _devices = devices ?? throw new ArgumentNullException(nameof(devices));
+            _parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
             _loader = new ObjModelLoader();
             _textureService = new TextureService();
 
@@ -114,7 +117,7 @@ namespace ObjLoader.Rendering
 
                 if (IsDeviceLost())
                 {
-                    GpuResourceCache.CleanupInvalidResources();
+                    GpuResourceCache.Instance.CleanupInvalidResources();
                     CreateEmptyCommandList();
                     return;
                 }
@@ -129,7 +132,7 @@ namespace ObjLoader.Rendering
                     ex.HResult == unchecked((int)0x887A0007))
                 {
                     System.Diagnostics.Debug.WriteLine($"Device lost: 0x{ex.HResult:X8}");
-                    GpuResourceCache.CleanupInvalidResources();
+                    GpuResourceCache.Instance.CleanupInvalidResources();
                     CreateEmptyCommandList();
                 }
                 catch (Exception ex)
@@ -322,7 +325,7 @@ namespace ObjLoader.Rendering
                 if (effectiveVisibility && !string.IsNullOrEmpty(layerState.FilePath))
                 {
                     GpuResourceCacheItem? resource = null;
-                    if (GpuResourceCache.TryGetValue(layerState.FilePath, out var cached))
+                    if (GpuResourceCache.Instance.TryGetValue(layerState.FilePath, out var cached))
                     {
                         if (cached != null && cached.Device == _devices.D3D.Device)
                         {
@@ -336,7 +339,6 @@ namespace ObjLoader.Rendering
                         if (model.Vertices.Length > 0)
                         {
                             resource = CreateGpuResource(model, layerState.FilePath);
-                            model = null;
                             GC.Collect(2, GCCollectionMode.Optimized);
                         }
                     }
@@ -403,7 +405,8 @@ namespace ObjLoader.Rendering
                         var invViewProj = Matrix4x4.Invert(viewMatrix * projMatrix, out var inv) ? inv : Matrix4x4.Identity;
 
                         Vector3[] corners = new Vector3[8];
-                        Vector3[] ndc = {
+                        Vector3[] ndc =
+                        {
                             new Vector3(-1, -1, 0), new Vector3(1, -1, 0), new Vector3(-1, 1, 0), new Vector3(1, 1, 0),
                             new Vector3(-1, -1, 1), new Vector3(1, -1, 1), new Vector3(-1, 1, 1), new Vector3(1, 1, 1)
                         };
@@ -490,7 +493,9 @@ namespace ObjLoader.Rendering
                 context.PSSetConstantBuffers(0, 1, _emptyBufferArray1);
                 context.Flush();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         private void CreateEmptyCommandList()
@@ -509,10 +514,12 @@ namespace ObjLoader.Rendering
                 dc.Target = null;
                 _commandList.Close();
             }
-            catch { }
+            catch
+            {
+            }
         }
 
-        private bool AreStatesEqual(ref LayerState a, ref LayerState b)
+        private static bool AreStatesEqual(ref LayerState a, ref LayerState b)
         {
             return Math.Abs(a.X - b.X) < 1e-5 && Math.Abs(a.Y - b.Y) < 1e-5 && Math.Abs(a.Z - b.Z) < 1e-5 &&
                    Math.Abs(a.Scale - b.Scale) < 1e-5 && Math.Abs(a.Rx - b.Rx) < 1e-5 && Math.Abs(a.Ry - b.Ry) < 1e-5 && Math.Abs(a.Rz - b.Rz) < 1e-5 &&
@@ -527,7 +534,7 @@ namespace ObjLoader.Rendering
                    a.IsVisible == b.IsVisible;
         }
 
-        private bool AreSetsEqual(HashSet<int>? a, HashSet<int>? b)
+        private static bool AreSetsEqual(HashSet<int>? a, HashSet<int>? b)
         {
             if (a == null && b == null) return true;
             if (a == null || b == null) return false;
@@ -604,12 +611,14 @@ namespace ObjLoader.Rendering
                             partTextures[i] = device.CreateShaderResourceView(tex);
                         }
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }
             }
 
             var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
-            GpuResourceCache.AddOrUpdate(filePath, item);
+            GpuResourceCache.Instance.AddOrUpdate(filePath, item);
             return item;
         }
 
@@ -643,6 +652,12 @@ namespace ObjLoader.Rendering
 
                 _shaderManager.Dispose();
                 _renderTargets.Dispose();
+
+                if (_textureService is IDisposable disposableTextureService)
+                {
+                    disposableTextureService.Dispose();
+                }
+
                 _disposer.DisposeAndClear();
             }
         }

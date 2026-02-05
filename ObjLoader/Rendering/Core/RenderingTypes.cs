@@ -2,7 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Settings;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Core
 {
     internal struct LayerState
     {

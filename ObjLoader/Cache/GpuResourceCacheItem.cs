@@ -4,8 +4,11 @@ using ObjLoader.Core;
 
 namespace ObjLoader.Cache
 {
-    internal class GpuResourceCacheItem : IDisposable
+    internal sealed class GpuResourceCacheItem : IDisposable
     {
+        private bool _disposed;
+        private readonly object _disposeLock = new object();
+
         public ID3D11Device Device { get; }
         public ID3D11Buffer VertexBuffer { get; }
         public ID3D11Buffer IndexBuffer { get; }
@@ -25,27 +28,60 @@ namespace ObjLoader.Cache
             Vector3 center,
             float scale)
         {
-            Device = device;
-            VertexBuffer = vb;
-            IndexBuffer = ib;
+            Device = device ?? throw new ArgumentNullException(nameof(device));
+            VertexBuffer = vb ?? throw new ArgumentNullException(nameof(vb));
+            IndexBuffer = ib ?? throw new ArgumentNullException(nameof(ib));
             IndexCount = indexCount;
-            Parts = parts;
-            PartTextures = textures;
+            Parts = parts ?? throw new ArgumentNullException(nameof(parts));
+            PartTextures = textures ?? throw new ArgumentNullException(nameof(textures));
             ModelCenter = center;
             ModelScale = scale;
         }
 
         public void Dispose()
         {
-            VertexBuffer.Dispose();
-            IndexBuffer.Dispose();
-            if (PartTextures != null)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            lock (_disposeLock)
             {
-                foreach (var tex in PartTextures)
+                if (_disposed) return;
+                _disposed = true;
+
+                if (disposing)
                 {
-                    tex?.Dispose();
+                    SafeDispose(VertexBuffer);
+                    SafeDispose(IndexBuffer);
+
+                    if (PartTextures != null)
+                    {
+                        foreach (var tex in PartTextures)
+                        {
+                            SafeDispose(tex);
+                        }
+                    }
                 }
             }
+        }
+
+        private static void SafeDispose(IDisposable? disposable)
+        {
+            if (disposable == null) return;
+            try
+            {
+                disposable.Dispose();
+            }
+            catch
+            {
+            }
+        }
+
+        ~GpuResourceCacheItem()
+        {
+            Dispose(false);
         }
     }
 }

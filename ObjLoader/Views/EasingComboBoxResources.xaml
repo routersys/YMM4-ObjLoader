@@ -1,6 +1,6 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:plugin="clr-namespace:ObjLoader.Plugin"
+                    xmlns:plugin="clr-namespace:ObjLoader.Plugin.CameraAnimation"
                     xmlns:conv="clr-namespace:ObjLoader.Converters"
                     xmlns:l="clr-namespace:ObjLoader.Localization">
 

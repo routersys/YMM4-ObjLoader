@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using ObjLoader.Rendering.Shaders;
 using ObjLoader.Utilities;
 
 namespace ObjLoader.Services.Rendering

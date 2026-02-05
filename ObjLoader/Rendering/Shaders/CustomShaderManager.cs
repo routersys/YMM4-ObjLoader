@@ -1,9 +1,9 @@
 ﻿using Vortice.Direct3D11;
 using Vortice.DXGI;
-using ObjLoader.Plugin;
 using YukkuriMovieMaker.Commons;
+using ObjLoader.Plugin.Parameters;
 
-namespace ObjLoader.Rendering
+namespace ObjLoader.Rendering.Shaders
 {
     internal class CustomShaderManager : IDisposable
     {

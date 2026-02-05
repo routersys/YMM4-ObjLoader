@@ -1,7 +1,7 @@
 ﻿using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
-using ObjLoader.Plugin;
+using ObjLoader.Plugin.Parameters;
 using System.ComponentModel;
 using System.IO;
 using System.Numerics;

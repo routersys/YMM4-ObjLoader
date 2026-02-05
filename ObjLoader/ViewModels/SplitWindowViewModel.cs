@@ -1,7 +1,6 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
 using ObjLoader.Localization;
-using ObjLoader.Plugin;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -17,6 +16,7 @@ using ObjLoader.Services.Layers;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Models;
+using ObjLoader.Plugin.Parameters;
 
 namespace ObjLoader.ViewModels
 {

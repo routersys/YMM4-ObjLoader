@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Windows;
 
-namespace ObjLoader.Plugin
+namespace ObjLoader.Plugin.Core
 {
     public static class VersionChecker
     {

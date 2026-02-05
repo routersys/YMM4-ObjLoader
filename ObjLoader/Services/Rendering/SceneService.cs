@@ -1,7 +1,7 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
 using ObjLoader.Parsers;
-using ObjLoader.Plugin;
+using ObjLoader.Plugin.Parameters;
 using ObjLoader.Settings;
 using System.IO;
 using System.Runtime.CompilerServices;
