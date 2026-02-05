@@ -1,7 +1,5 @@
-﻿using ObjLoader.Services;
-using ObjLoader.Services.UI;
+﻿using ObjLoader.Services.UI;
 using ObjLoader.ViewModels;
-using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,7 +12,7 @@ namespace ObjLoader.Views
 {
     public partial class CameraWindow : Window
     {
-        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+        private readonly IWindowThemeService _themeService = new WindowThemeService();
 
         private Point _labelDragStart;
         private bool _isLabelDragging;

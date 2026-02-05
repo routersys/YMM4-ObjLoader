@@ -1,12 +1,11 @@
-﻿using ObjLoader.Services;
-using ObjLoader.Services.UI;
+﻿using ObjLoader.Services.UI;
 using System.Windows;
 
 namespace ObjLoader.Views
 {
     public partial class NameDialog : Window
     {
-        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+        private readonly IWindowThemeService _themeService = new WindowThemeService();
 
         public string ResultName { get; private set; } = "";
 

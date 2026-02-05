@@ -1,5 +1,4 @@
-﻿using ObjLoader.Services;
-using ObjLoader.Services.UI;
+﻿using ObjLoader.Services.UI;
 using ObjLoader.ViewModels;
 using System.Windows;
 using System.Windows.Input;
@@ -10,7 +9,7 @@ namespace ObjLoader.Views
 {
     public partial class CenterPointWindow : Window
     {
-        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+        private readonly IWindowThemeService _themeService = new WindowThemeService();
 
         private Point _lastMousePos;
         private bool _isRotating;

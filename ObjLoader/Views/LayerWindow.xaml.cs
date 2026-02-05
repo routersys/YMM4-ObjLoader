@@ -1,5 +1,4 @@
-﻿using ObjLoader.Services;
-using ObjLoader.Services.UI;
+﻿using ObjLoader.Services.UI;
 using ObjLoader.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,7 +8,7 @@ namespace ObjLoader.Views
 {
     public partial class LayerWindow : Window
     {
-        private static readonly IWindowThemeService _themeService = new WindowThemeService();
+        private readonly IWindowThemeService _themeService = new WindowThemeService();
 
         public LayerWindow()
         {

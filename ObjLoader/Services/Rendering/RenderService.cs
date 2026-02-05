@@ -714,6 +714,8 @@ namespace ObjLoader.Services.Rendering
                 _resolveTexture?.Dispose(); _resolveTexture = null;
                 _gridVertexBuffer?.Dispose(); _gridVertexBuffer = null;
 
+                SceneImage = null;
+
                 if (_context != null)
                 {
                     _context.ClearState();
