@@ -1,4 +1,5 @@
 ﻿using ObjLoader.Core;
+using ObjLoader.Services.Textures;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,6 +41,8 @@ namespace ObjLoader.Utilities
                     var parts = model.Parts != null && model.Parts.Count > 0
                         ? model.Parts
                         : new List<ModelPart> { new ModelPart { IndexOffset = 0, IndexCount = model.Indices.Length, BaseColor = System.Numerics.Vector4.One } };
+
+                    var textureService = new TextureService();
 
                     for (int i = 0; i < parts.Count; i++)
                     {
@@ -92,13 +95,7 @@ namespace ObjLoader.Utilities
                                 {
                                     try
                                     {
-                                        var bitmap = new BitmapImage();
-                                        bitmap.BeginInit();
-                                        bitmap.UriSource = new Uri(part.TexturePath);
-                                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                                        bitmap.EndInit();
-                                        bitmap.Freeze();
-
+                                        var bitmap = textureService.Load(part.TexturePath);
                                         var brush = new ImageBrush(bitmap) { ViewportUnits = BrushMappingMode.Absolute };
                                         material = new DiffuseMaterial(brush);
                                     }

@@ -2,6 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
+using ObjLoader.Services.Textures;
 using ObjLoader.Utilities;
 using ObjLoader.ViewModels;
 using System.IO;
@@ -32,6 +33,7 @@ namespace ObjLoader.Services
     internal class ModelManagementService
     {
         private readonly ObjModelLoader _loader = new ObjModelLoader();
+        private readonly TextureService _textureService = new TextureService();
 
         public unsafe ModelLoadResult LoadModel(string path, RenderService renderService, int selectedLayerIndex, IList<LayerData> layers)
         {
@@ -60,15 +62,8 @@ namespace ObjLoader.Services
                 {
                     try
                     {
-                        var bytes = File.ReadAllBytes(parts[i].TexturePath);
-                        using var ms = new MemoryStream(bytes);
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = ms;
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-                        var conv = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
+                        var bitmapSource = _textureService.Load(parts[i].TexturePath);
+                        var conv = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
                         var pixels = new byte[conv.PixelWidth * conv.PixelHeight * 4];
                         conv.CopyPixels(pixels, conv.PixelWidth * 4, 0);
                         var tDesc = new Texture2DDescription { Width = conv.PixelWidth, Height = conv.PixelHeight, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };

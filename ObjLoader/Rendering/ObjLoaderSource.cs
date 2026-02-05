@@ -14,6 +14,7 @@ using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Settings;
 using D2D = Vortice.Direct2D1;
+using ObjLoader.Services.Textures;
 
 namespace ObjLoader.Rendering
 {
@@ -30,6 +31,7 @@ namespace ObjLoader.Rendering
         private readonly CustomShaderManager _shaderManager;
         private readonly ShadowRenderer _shadowRenderer;
         private readonly SceneRenderer _sceneRenderer;
+        private readonly TextureService _textureService;
 
         private D2D.ID2D1CommandList? _commandList;
 
@@ -76,6 +78,7 @@ namespace ObjLoader.Rendering
             _devices = devices;
             _parameter = parameter;
             _loader = new ObjModelLoader();
+            _textureService = new TextureService();
 
             _resources = new D3DResources(devices.D3D.Device);
             _disposer.Collect(_resources);
@@ -572,17 +575,9 @@ namespace ObjLoader.Rendering
                 {
                     try
                     {
-                        var bytes = File.ReadAllBytes(tPath);
-                        using var ms = new MemoryStream(bytes);
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.StreamSource = ms;
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-
+                        var bitmapSource = _textureService.Load(tPath);
                         var format = PixelFormats.Bgra32;
-                        var convertedBitmap = new FormatConvertedBitmap(bitmap, format, null, 0);
+                        var convertedBitmap = new FormatConvertedBitmap(bitmapSource, format, null, 0);
 
                         int width = convertedBitmap.PixelWidth;
                         int height = convertedBitmap.PixelHeight;
