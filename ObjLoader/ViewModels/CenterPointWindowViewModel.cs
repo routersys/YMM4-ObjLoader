@@ -10,7 +10,12 @@ using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels
 {
-    public enum SelectionMode { Vertex, Edge, Face }
+    public enum SelectionMode
+    { 
+        Vertex,
+        Edge,
+        Face
+    }
 
     internal class CenterPointWindowViewModel : Bindable, IDisposable
     {

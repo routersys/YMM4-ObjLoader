@@ -1,5 +1,6 @@
 ﻿using System.Windows.Media;
 using ObjLoader.Core;
+using ObjLoader.Plugin;
 using ObjLoader.Settings;
 
 namespace ObjLoader.Rendering.Core

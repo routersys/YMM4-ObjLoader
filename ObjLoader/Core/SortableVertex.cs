@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ObjLoader.Core
+﻿namespace ObjLoader.Core
 {
     internal struct SortableVertex : IComparable<SortableVertex>
     {

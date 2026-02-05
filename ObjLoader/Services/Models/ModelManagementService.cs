@@ -17,20 +17,6 @@ using Vector3 = System.Numerics.Vector3;
 
 namespace ObjLoader.Services.Models
 {
-    internal class ModelLoadResult : IDisposable
-    {
-        public ObjModel? Model { get; set; }
-        public GpuResourceCacheItem? Resource { get; set; }
-        public double Scale { get; set; }
-        public double Height { get; set; }
-        public List<PartItem> Parts { get; set; } = new List<PartItem>();
-
-        public void Dispose()
-        {
-            Resource?.Dispose();
-        }
-    }
-
     internal class ModelManagementService
     {
         private readonly ObjModelLoader _loader = new ObjModelLoader();

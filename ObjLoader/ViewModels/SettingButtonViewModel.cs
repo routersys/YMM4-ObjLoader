@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Core;
 using ObjLoader.Plugin;
-using ObjLoader.Plugin.Core;
+using ObjLoader.Plugin.Utilities;
 using ObjLoader.Settings;
 using ObjLoader.Views;
 using System.Collections.Specialized;
