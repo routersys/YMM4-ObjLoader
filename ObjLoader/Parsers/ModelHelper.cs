@@ -87,6 +87,10 @@ namespace ObjLoader.Parsers
             int len = vertices.Length;
             int i = 0;
 
+            float* xBuf = stackalloc float[vecSize];
+            float* yBuf = stackalloc float[vecSize];
+            float* zBuf = stackalloc float[vecSize];
+
             fixed (ObjVertex* p = vertices)
             {
                 byte* ptr = (byte*)p;
@@ -97,51 +101,21 @@ namespace ObjLoader.Parsers
                     for (int j = 0; j < vecSize; j++)
                     {
                         var v = *(ObjVertex*)(ptr + (i + j) * stride);
-
-                        if (v.Position.X < minX[j])
-                        {
-                            var temp = new float[vecSize];
-                            minX.CopyTo(temp);
-                            temp[j] = v.Position.X;
-                            minX = new Vector<float>(temp);
-                        }
-                        if (v.Position.Y < minY[j])
-                        {
-                            var temp = new float[vecSize];
-                            minY.CopyTo(temp);
-                            temp[j] = v.Position.Y;
-                            minY = new Vector<float>(temp);
-                        }
-                        if (v.Position.Z < minZ[j])
-                        {
-                            var temp = new float[vecSize];
-                            minZ.CopyTo(temp);
-                            temp[j] = v.Position.Z;
-                            minZ = new Vector<float>(temp);
-                        }
-
-                        if (v.Position.X > maxX[j])
-                        {
-                            var temp = new float[vecSize];
-                            maxX.CopyTo(temp);
-                            temp[j] = v.Position.X;
-                            maxX = new Vector<float>(temp);
-                        }
-                        if (v.Position.Y > maxY[j])
-                        {
-                            var temp = new float[vecSize];
-                            maxY.CopyTo(temp);
-                            temp[j] = v.Position.Y;
-                            maxY = new Vector<float>(temp);
-                        }
-                        if (v.Position.Z > maxZ[j])
-                        {
-                            var temp = new float[vecSize];
-                            maxZ.CopyTo(temp);
-                            temp[j] = v.Position.Z;
-                            maxZ = new Vector<float>(temp);
-                        }
+                        xBuf[j] = v.Position.X;
+                        yBuf[j] = v.Position.Y;
+                        zBuf[j] = v.Position.Z;
                     }
+
+                    var vx = new Vector<float>(new Span<float>(xBuf, vecSize));
+                    var vy = new Vector<float>(new Span<float>(yBuf, vecSize));
+                    var vz = new Vector<float>(new Span<float>(zBuf, vecSize));
+
+                    minX = Vector.Min(minX, vx);
+                    minY = Vector.Min(minY, vy);
+                    minZ = Vector.Min(minZ, vz);
+                    maxX = Vector.Max(maxX, vx);
+                    maxY = Vector.Max(maxY, vy);
+                    maxZ = Vector.Max(maxZ, vz);
                 }
             }
 
