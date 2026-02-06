@@ -395,4 +395,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Muat Preset</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Preset Material</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Atur Ulang ke Default</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>String literal tidak ditutup</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>Diharapkan '{0}' tetapi ditemukan '{1}'</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>Diharapkan {0} tetapi ditemukan {1}</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>Diharapkan tipe tetapi ditemukan '{0}'</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>Parsing shader gagal: {0} di baris {1} kolom {2}</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>Konversi shader gagal: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>Argumen tidak boleh null</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>Kode sumber tidak boleh kosong</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>Kesalahan Sintaks</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>Kesalahan Kompilasi</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>Kesalahan Konversi</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>Kesalahan Umum</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>Lokasi</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>Baris</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>Kolom</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>Pesan Kesalahan</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>Konteks Kode</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>File</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>Waktu Validasi</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>Detail Kesalahan Shader</value></data>
 </root>

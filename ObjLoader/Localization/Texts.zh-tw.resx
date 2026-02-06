@@ -396,4 +396,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>載入預設</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>材質預設</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>重置為預設值</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>字串常值未終止</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>需要'{0}'但找到'{1}'</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>需要{0}但找到{1}</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>需要類型但找到'{0}'</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>著色器解析失敗: {0} 在第{1}行第{2}列</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>著色器轉換失敗: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>參數不能為空</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>原始碼不能為空</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>語法錯誤</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>編譯錯誤</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>轉換錯誤</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>一般錯誤</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>位置</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>行</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>列</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>錯誤訊息</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>程式碼內容</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>檔案</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>驗證時間</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>著色器錯誤詳情</value></data>
 </root>

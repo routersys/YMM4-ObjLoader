@@ -396,4 +396,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Load Preset</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Material Preset</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Reset to Default</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>Unterminated string literal</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>Expected '{0}' but found '{1}'</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>Expected {0} but found {1}</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>Expected type but found '{0}'</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>Shader parsing failed: {0} at line {1} column {2}</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>Shader conversion failed: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>Argument cannot be null</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>Source code cannot be empty</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>Syntax Error</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>Compilation Error</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>Conversion Error</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>General Error</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>Location</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>Line</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>Column</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>Error Message</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>Code Context</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>File</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>Validation Time</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>Shader Error Details</value></data>
 </root>

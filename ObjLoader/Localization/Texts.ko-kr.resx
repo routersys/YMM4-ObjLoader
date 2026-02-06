@@ -396,4 +396,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>프리셋 ロ드</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>재질 프리셋</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>기본값으로 재설정</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>문자열 리터럴이 닫히지 않았습니다</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>'{0}'이(가) 필요하지만 '{1}'을(를) 찾았습니다</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>{0}이(가) 필요하지만 {1}을(를) 찾았습니다</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>타입이 필요하지만 '{0}'을(를) 찾았습니다</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>셰이더 파싱 실패: {0} (줄: {1}、열: {2})</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>셰이더 변환 실패: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>인수가 null일 수 없습니다</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>소스 코드가 비어 있을 수 없습니다</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>구문 오류</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>컴파일 오류</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>변환 오류</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>일반 오류</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>위치</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>줄</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>열</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>오류 메시지</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>코드 컨텍스트</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>파일</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>검증 시간</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>셰이더 오류 세부정보</value></data>
 </root>

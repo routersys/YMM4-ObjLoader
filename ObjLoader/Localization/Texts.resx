@@ -396,4 +396,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>プリセット読み込み</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>マテリアルプリセット</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>初期値に戻す</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>文字列リテラルが閉じられていません</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>'{0}'が必要ですが'{1}'が見つかりました</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>{0}が必要ですが{1}が見つかりました</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>型が必要ですが'{0}'が見つかりました</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>シェーダーの解析に失敗しました: {0} (行: {1}、列: {2})</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>シェーダーの変換に失敗しました: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>引数がnullです</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>ソースコードが空です</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>構文エラー</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>コンパイルエラー</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>変換エラー</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>一般エラー</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>エラー位置</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>行</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>列</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>エラーメッセージ</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>コードコンテキスト</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>ファイル</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>検証時刻</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>シェーダーエラー詳細</value></data>
 </root>

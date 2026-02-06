@@ -396,4 +396,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>تحميل الإعداد المسبق</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>إعداد المواد المسبق</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>إعادة التعيين إلى الافتراضي</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>سلسلة نصية غير منتهية</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>متوقع '{0}' لكن وجد '{1}'</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>متوقع {0} لكن وجد {1}</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>متوقع نوع لكن وجد '{0}'</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>فشل تحليل التظليل: {0} في السطر {1} العمود {2}</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>فشل تحويل التظليل: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>الوسيطة لا يمكن أن تكون فارغة</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>الكود المصدري لا يمكن أن يكون فارغًا</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>خطأ في بناء الجملة</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>خطأ في الترجمة</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>خطأ في التحويل</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>خطأ عام</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>الموقع</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>السطر</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>العمود</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>رسالة الخطأ</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>سياق الكود</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>الملف</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>وقت التحقق</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>تفاصيل خطأ التظليل</value></data>
 </root>

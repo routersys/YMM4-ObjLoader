@@ -396,4 +396,24 @@
 <data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Cargar preajuste</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Preajuste de material</value></data>
 <data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Restablecer a los valores predeterminados</value></data>
+<data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>Literal de cadena sin terminar</value></data>
+<data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>Se esperaba '{0}' pero se encontró '{1}'</value></data>
+<data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>Se esperaba {0} pero se encontró {1}</value></data>
+<data name="ShaderParser_ExpectedTypeButFoundText" xml:space="preserve"><value>Se esperaba un tipo pero se encontró '{0}'</value></data>
+<data name="ShaderConversion_ParsingFailed" xml:space="preserve"><value>Error al analizar el shader: {0} en línea {1} columna {2}</value></data>
+<data name="ShaderConversion_ConversionFailed" xml:space="preserve"><value>Error al convertir el shader: {0}</value></data>
+<data name="ShaderConversion_ArgumentNull" xml:space="preserve"><value>El argumento no puede ser nulo</value></data>
+<data name="ShaderConversion_SourceCodeEmpty" xml:space="preserve"><value>El código fuente no puede estar vacío</value></data>
+<data name="ShaderError_Category_Syntax" xml:space="preserve"><value>Error de sintaxis</value></data>
+<data name="ShaderError_Category_Compilation" xml:space="preserve"><value>Error de compilación</value></data>
+<data name="ShaderError_Category_Conversion" xml:space="preserve"><value>Error de conversión</value></data>
+<data name="ShaderError_Category_General" xml:space="preserve"><value>Error general</value></data>
+<data name="ShaderError_Location" xml:space="preserve"><value>Ubicación</value></data>
+<data name="ShaderError_Line" xml:space="preserve"><value>Línea</value></data>
+<data name="ShaderError_Column" xml:space="preserve"><value>Columna</value></data>
+<data name="ShaderError_Message" xml:space="preserve"><value>Mensaje de error</value></data>
+<data name="ShaderError_CodeContext" xml:space="preserve"><value>Contexto del código</value></data>
+<data name="ShaderError_File" xml:space="preserve"><value>Archivo</value></data>
+<data name="ShaderError_ValidationTime" xml:space="preserve"><value>Tiempo de validación</value></data>
+<data name="ShaderError_DialogTitle" xml:space="preserve"><value>Detalles del error del shader</value></data>
 </root>
