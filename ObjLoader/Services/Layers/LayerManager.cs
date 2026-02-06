@@ -8,10 +8,20 @@ namespace ObjLoader.Services.Layers
     {
         private int _selectedLayerIndex;
         private LayerData? _activeLayer;
+        private readonly Dictionary<string, LayerNode> _hierarchyNodes = new();
+        private readonly object _lock = new();
 
         public ObservableCollection<LayerData> Layers { get; } = new ObservableCollection<LayerData>();
         public int SelectedLayerIndex => _selectedLayerIndex;
         public bool IsSwitchingLayer { get; private set; } = false;
+
+        public class LayerNode
+        {
+            public string Id { get; set; } = "";
+            public string? ParentId { get; set; }
+            public bool IsVisible { get; set; } = true;
+            public List<string> ChildIds { get; } = new();
+        }
 
         public void Initialize(ObjLoaderParameter parameter)
         {
@@ -172,6 +182,221 @@ namespace ObjLoader.Services.Layers
                     Layers.Add(layer);
                 }
             }
+        }
+
+        public bool SetParent(string childId, string? parentId)
+        {
+            lock (_lock)
+            {
+                if (parentId == null)
+                {
+                    if (_hierarchyNodes.TryGetValue(childId, out var child))
+                    {
+                        if (child.ParentId != null && _hierarchyNodes.TryGetValue(child.ParentId, out var previousParent))
+                        {
+                            previousParent.ChildIds.Remove(childId);
+                        }
+                        child.ParentId = null;
+                        return true;
+                    }
+                    return false;
+                }
+
+                if (!_hierarchyNodes.TryGetValue(childId, out var childNode) ||
+                    !_hierarchyNodes.TryGetValue(parentId, out var parentNode))
+                {
+                    return false;
+                }
+
+                if (childId == parentId)
+                {
+                    throw new InvalidOperationException($"Layer {childId} cannot be its own parent.");
+                }
+
+                if (WouldCreateCycle(childId, parentId))
+                {
+                    throw new InvalidOperationException(
+                        $"Setting {parentId} as parent of {childId} would create a cycle.");
+                }
+
+                if (childNode.ParentId != null && _hierarchyNodes.TryGetValue(childNode.ParentId, out var oldParent))
+                {
+                    oldParent.ChildIds.Remove(childId);
+                }
+
+                childNode.ParentId = parentId;
+                if (!parentNode.ChildIds.Contains(childId))
+                {
+                    parentNode.ChildIds.Add(childId);
+                }
+
+                return true;
+            }
+        }
+
+        public bool GetEffectiveVisibility(string layerId)
+        {
+            lock (_lock)
+            {
+                var visited = new HashSet<string>();
+                var current = layerId;
+
+                while (current != null)
+                {
+                    if (!visited.Add(current))
+                    {
+                        throw new InvalidOperationException($"Cycle detected for layer: {layerId}");
+                    }
+
+                    if (_hierarchyNodes.TryGetValue(current, out var node))
+                    {
+                        if (!node.IsVisible)
+                        {
+                            return false;
+                        }
+                        current = node.ParentId;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        public List<string> GetAllDescendants(string layerId)
+        {
+            lock (_lock)
+            {
+                var result = new List<string>();
+                var queue = new Queue<string>();
+                var visited = new HashSet<string>();
+
+                if (!_hierarchyNodes.ContainsKey(layerId))
+                {
+                    return result;
+                }
+
+                queue.Enqueue(layerId);
+                visited.Add(layerId);
+
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+
+                    if (_hierarchyNodes.TryGetValue(current, out var node))
+                    {
+                        foreach (var childId in node.ChildIds)
+                        {
+                            if (visited.Add(childId))
+                            {
+                                result.Add(childId);
+                                queue.Enqueue(childId);
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException($"Cycle detected at: {childId}");
+                            }
+                        }
+                    }
+
+                    if (result.Count > 100000)
+                    {
+                        throw new InvalidOperationException("Descendant count exceeds limit.");
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        public ValidationResult ValidateHierarchy()
+        {
+            lock (_lock)
+            {
+                var result = new ValidationResult();
+                var visited = new HashSet<string>();
+
+                foreach (var layer in _hierarchyNodes.Values)
+                {
+                    visited.Clear();
+
+                    var current = layer.Id;
+                    while (current != null)
+                    {
+                        if (!visited.Add(current))
+                        {
+                            result.Errors.Add($"Cycle detected: {string.Join(" → ", visited)} → {current}");
+                            break;
+                        }
+
+                        if (_hierarchyNodes.TryGetValue(current, out var node))
+                        {
+                            current = node.ParentId;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    if (layer.ParentId != null && !_hierarchyNodes.ContainsKey(layer.ParentId))
+                    {
+                        result.Warnings.Add($"Layer {layer.Id} references non-existent parent {layer.ParentId}.");
+                    }
+
+                    foreach (var childId in layer.ChildIds)
+                    {
+                        if (!_hierarchyNodes.TryGetValue(childId, out var child))
+                        {
+                            result.Warnings.Add($"Layer {layer.Id} references non-existent child {childId}.");
+                        }
+                        else if (child.ParentId != layer.Id)
+                        {
+                            result.Errors.Add($"Layer {childId} parent mismatch (expected: {layer.Id}, actual: {child.ParentId}).");
+                        }
+                    }
+                }
+
+                return result;
+            }
+        }
+
+        private bool WouldCreateCycle(string childId, string potentialParentId)
+        {
+            var visited = new HashSet<string>();
+            var current = potentialParentId;
+
+            while (current != null)
+            {
+                if (!visited.Add(current))
+                {
+                    return true;
+                }
+
+                if (current == childId)
+                {
+                    return true;
+                }
+
+                if (_hierarchyNodes.TryGetValue(current, out var node))
+                {
+                    current = node.ParentId;
+                }
+                else
+                {
+                    break;
+                }
+
+                if (visited.Count > 10000)
+                {
+                    throw new InvalidOperationException("Hierarchy depth exceeds limit or existing cycle detected.");
+                }
+            }
+
+            return false;
         }
 
         private void LoadActiveLayer(ObjLoaderParameter parameter)
