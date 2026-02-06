@@ -108,22 +108,33 @@ namespace ObjLoader.Rendering.Renderers
                 };
 
                 Vector3 captureCenter = Vector3.Zero;
-                if (activeLayerTuple.Data != null)
+                if (layers.Count > 0)
                 {
-                    Matrix4x4 hierarchyMatrix = RenderUtils.GetLayerTransform(activeLayerTuple.State);
-                    var currentGuid = activeLayerTuple.State.ParentGuid;
-                    int depth = 0;
-                    while (!string.IsNullOrEmpty(currentGuid) && layerStates.TryGetValue(currentGuid, out var parentState))
+                    Vector3 minBounds = new Vector3(float.MaxValue);
+                    Vector3 maxBounds = new Vector3(float.MinValue);
+
+                    foreach (var item in layers)
                     {
-                        hierarchyMatrix *= RenderUtils.GetLayerTransform(parentState);
-                        currentGuid = parentState.ParentGuid;
-                        depth++;
-                        if (depth > 100) break;
+                        Matrix4x4 hierarchyMatrix = RenderUtils.GetLayerTransform(item.State);
+                        var currentGuid = item.State.ParentGuid;
+                        int depth = 0;
+                        while (!string.IsNullOrEmpty(currentGuid) && layerStates.TryGetValue(currentGuid, out var parentState))
+                        {
+                            hierarchyMatrix *= RenderUtils.GetLayerTransform(parentState);
+                            currentGuid = parentState.ParentGuid;
+                            depth++;
+                            if (depth > 100) break;
+                        }
+
+                        var normalize = Matrix4x4.CreateTranslation(-item.Resource.ModelCenter) * Matrix4x4.CreateScale(item.Resource.ModelScale);
+                        var world = normalize * hierarchyMatrix;
+                        Vector3 pos = world.Translation;
+
+                        minBounds = Vector3.Min(minBounds, pos);
+                        maxBounds = Vector3.Max(maxBounds, pos);
                     }
 
-                    var normalize = Matrix4x4.CreateTranslation(-activeLayerTuple.Resource.ModelCenter) * Matrix4x4.CreateScale(activeLayerTuple.Resource.ModelScale);
-                    var world = normalize * hierarchyMatrix;
-                    captureCenter = world.Translation;
+                    captureCenter = (minBounds + maxBounds) * 0.5f;
                 }
 
                 context.PSSetShaderResources(RenderingConstants.SlotEnvironmentMap, 1, _nullSrv1);
@@ -148,7 +159,8 @@ namespace ObjLoader.Rendering.Renderers
 
             for (int i = 0; i < layers.Count; i++)
             {
-                RenderScene(context, new[] { layers[i] }, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null);
+                var singleLayer = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> { layers[i] };
+                RenderScene(context, singleLayer, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null);
             }
 
             context.PSSetShaderResources(RenderingConstants.SlotEnvironmentMap, 1, _nullSrv1);
