@@ -242,6 +242,7 @@ namespace ObjLoader.Settings
         public double GetSSRStep(int id) => GetWorld(id).SSR.Step;
         public double GetSSRMaxDist(int id) => GetWorld(id).SSR.MaxDist;
         public double GetSSRThickness(int id) => GetWorld(id).SSR.Thickness;
+        public double GetSSRMaxSteps(int id) => GetWorld(id).SSR.MaxSteps;
 
         public double GetPcssLightSize(int id) => GetWorld(id).PCSS.LightSize;
         public int GetPcssQuality(int id) => GetWorld(id).PCSS.Quality;

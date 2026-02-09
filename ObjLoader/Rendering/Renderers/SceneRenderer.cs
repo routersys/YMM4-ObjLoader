@@ -96,7 +96,7 @@ namespace ObjLoader.Rendering.Renderers
             {
                 var targets = new[]
                 {
-                    new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
+                    new Vector3(-1, 0, 0), new Vector3(1, 0, 0),
                     new Vector3(0, 1, 0), new Vector3(0, -1, 0),
                     new Vector3(0, 0, 1), new Vector3(0, 0, -1)
                 };
@@ -106,6 +106,9 @@ namespace ObjLoader.Rendering.Renderers
                     new Vector3(0, 0, -1), new Vector3(0, 0, 1),
                     new Vector3(0, 1, 0), new Vector3(0, 1, 0)
                 };
+
+                ups[2] = new Vector3(0, 0, -1);
+                ups[3] = new Vector3(0, 0, 1);
 
                 Vector3 captureCenter = Vector3.Zero;
                 if (layers.Count > 0)
@@ -146,9 +149,19 @@ namespace ObjLoader.Rendering.Renderers
                     context.ClearDepthStencilView(_resources.EnvironmentDSV, DepthStencilClearFlags.Depth, 1.0f, 0);
 
                     var view = Matrix4x4.CreateLookAt(captureCenter, captureCenter + targets[face], ups[face]);
+
+                    if (face == 3)
+                    {
+                        view *= Matrix4x4.CreateScale(-1, 1, -1);
+                    }
+                    else
+                    {
+                        view *= Matrix4x4.CreateScale(1, 1, -1);
+                    }
+
                     var proj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, RenderingConstants.DefaultNearPlane, RenderingConstants.DefaultFarPlane);
 
-                    RenderScene(context, layers, layerStates, parameter, view, proj, captureCenter.X, captureCenter.Y, captureCenter.Z, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, RenderingConstants.EnvironmentMapSize, RenderingConstants.EnvironmentMapSize, false, _resources.CullNoneRasterizerState, _resources.DepthStencilStateNoWrite);
+                    RenderScene(context, layers, layerStates, parameter, view, proj, captureCenter.X, captureCenter.Y, captureCenter.Z, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, RenderingConstants.EnvironmentMapSize, RenderingConstants.EnvironmentMapSize, false, _resources.CullNoneRasterizerState, _resources.DepthStencilState);
                 }
 
                 context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
@@ -355,10 +368,11 @@ namespace ObjLoader.Rendering.Renderers
 
                         PbrParams = new Vector4(metallic, roughness, 1.0f, 0),
                         IblParams = new Vector4((float)settings.GetIBLIntensity(wId), 6.0f, 0, 0),
-                        SsrParams = new Vector4(settings.GetSSREnabled(wId) ? 1 : 0, (float)settings.GetSSRStep(wId), (float)settings.GetSSRMaxDist(wId), (float)settings.GetSSRThickness(wId)),
+                        SsrParams = new Vector4(settings.GetSSREnabled(wId) ? 1 : 0, (float)settings.GetSSRStep(wId), (float)settings.GetSSRMaxDist(wId), (float)settings.GetSSRMaxSteps(wId)),
                         ViewProj = Matrix4x4.Transpose(viewProj),
                         InverseViewProj = Matrix4x4.Transpose(inverseViewProj),
-                        PcssParams = new Vector4((float)settings.GetPcssLightSize(wId), 0.5f, (float)settings.GetPcssQuality(wId), (float)settings.GetPcssQuality(wId))
+                        PcssParams = new Vector4((float)settings.GetPcssLightSize(wId), 0.5f, (float)settings.GetPcssQuality(wId), (float)settings.GetPcssQuality(wId)),
+                        SsrParams2 = new Vector4((float)settings.GetSSRMaxSteps(wId), (float)settings.GetSSRThickness(wId), 0, 0)
                     };
 
                     if (_resources.ConstantBuffer != null)

@@ -47,5 +47,6 @@ namespace ObjLoader.Rendering.Core
         public Matrix4x4 InverseViewProj;
         public Matrix4x4 ViewProj;
         public Vector4 PcssParams;
+        public Vector4 SsrParams2;
     }
 }

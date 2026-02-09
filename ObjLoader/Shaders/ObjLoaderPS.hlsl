@@ -41,6 +41,7 @@ cbuffer CBuf : register(b0)
     matrix InverseViewProj;
     matrix ViewProj;
     float4 PcssParams;
+    float4 SsrParams2;
 }
 
 Texture2D tex : register(t0);
@@ -84,18 +85,27 @@ float GetShadowBias(float3 N, float3 L)
     return max(ShadowParams.y * (1.0 - NdotL), ShadowParams.y * 0.1);
 }
 
-float FindBlocker(float3 projCoords, float bias, float lightSize, int cascadeIndex)
+float2 VogelDiskSample(int sampleIndex, int samplesCount, float phi)
+{
+    float GoldenAngle = 2.4;
+    float r = sqrt(float(sampleIndex) + 0.5) / sqrt(float(samplesCount));
+    float theta = float(sampleIndex) * GoldenAngle + phi;
+    float2 sine_cosine;
+    sincos(theta, sine_cosine.x, sine_cosine.y);
+    return r * sine_cosine;
+}
+
+float FindBlocker(float3 projCoords, float bias, float lightSize, int cascadeIndex, float randomRotation)
 {
     float2 texelSize = 1.0 / ShadowParams.w;
     float blockerSum = 0.0;
     float numBlockers = 0.0;
     float searchWidth = lightSize * PcssParams.y;
-    int samples = (int) PcssParams.z;
+    int samples = min((int) PcssParams.z, 64);
+    
     for (int i = 0; i < samples; ++i)
     {
-        float angle = (float) i / (float) samples * 6.283185;
-        float radius = sqrt((float) i / (float) samples);
-        float2 offset = float2(cos(angle), sin(angle)) * radius * searchWidth * texelSize;
+        float2 offset = VogelDiskSample(i, samples, randomRotation) * searchWidth * texelSize;
         float shadowMapDepth = ShadowMap.SampleLevel(sam, float3(projCoords.xy + offset, cascadeIndex), 0).r;
         
         if (shadowMapDepth < (projCoords.z - bias))
@@ -115,62 +125,97 @@ float CalculatePCSS(float3 wPos, float3 N, float3 L)
     float dist = distance(wPos, CameraPos.xyz);
     int cascadeIndex = 0;
     matrix lightVP = LightViewProj0;
+    float blendFactor = 0.0;
     
     if (dist > CascadeSplits.x)
     {
         cascadeIndex = 1;
         lightVP = LightViewProj1;
+        blendFactor = saturate((dist - CascadeSplits.x) / (CascadeSplits.x * 0.1));
     }
     if (dist > CascadeSplits.y)
     {
         cascadeIndex = 2;
         lightVP = LightViewProj2;
+        blendFactor = saturate((dist - CascadeSplits.y) / (CascadeSplits.y * 0.1));
     }
     
     float4 lpos = mul(float4(wPos, 1.0f), lightVP);
     float3 projCoords = lpos.xyz / lpos.w;
     projCoords.x = projCoords.x * 0.5 + 0.5;
     projCoords.y = -projCoords.y * 0.5 + 0.5;
+    
     if (projCoords.z > 1.0 || projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
         return 1.0;
+        
     float bias = GetShadowBias(N, L);
     float currentDepth = projCoords.z;
+    float randomRotation = frac(sin(dot(wPos.xy, float2(12.9898, 78.233))) * 43758.5453) * 6.28318;
 
+    float shadow = 0.0;
+    
     if (PcssParams.x <= 0.0)
     {
-        float shadow = 0.0;
         float2 texelSize = 1.0 / ShadowParams.w;
-        [unroll]
-        for (int x = -1; x <= 1; ++x)
+        int samples = 16;
+        
+        for (int i = 0; i < samples; ++i)
         {
-            [unroll]
-            for (int y = -1; y <= 1; ++y)
-            {
-                shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + float2(x, y) * texelSize, cascadeIndex),
-                currentDepth - bias);
-            }
+            float2 offset = VogelDiskSample(i, samples, randomRotation) * texelSize * 2.0;
+            shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + offset, cascadeIndex), currentDepth - bias);
         }
-        return shadow / 9.0;
+        shadow /= float(samples);
     }
-
-    float avgBlockerDepth = FindBlocker(projCoords, bias, PcssParams.x, cascadeIndex);
-    if (avgBlockerDepth < 0.0)
-        return 1.0;
-    float penumbraRatio = (currentDepth - avgBlockerDepth) / avgBlockerDepth;
-    float filterRadius = penumbraRatio * PcssParams.x * PcssParams.y;
-    float2 texelSize = 1.0 / ShadowParams.w;
-    
-    float shadow = 0.0;
-    int samples = (int) PcssParams.w;
-    for (int i = 0; i < samples; ++i)
+    else
     {
-        float angle = (float) i / (float) samples * 6.283185;
-        float radius = sqrt((float) i / (float) samples);
-        float2 offset = float2(cos(angle), sin(angle)) * radius * filterRadius * texelSize;
-        shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + offset, cascadeIndex), currentDepth - bias);
+        float avgBlockerDepth = FindBlocker(projCoords, bias, PcssParams.x, cascadeIndex, randomRotation);
+        
+        if (avgBlockerDepth < 0.0)
+            return 1.0;
+            
+        float penumbraRatio = (currentDepth - avgBlockerDepth) / avgBlockerDepth;
+        float filterRadius = penumbraRatio * PcssParams.x * PcssParams.y;
+        float2 texelSize = 1.0 / ShadowParams.w;
+        
+        int samples = min((int) PcssParams.w, 64);
+        for (int i = 0; i < samples; ++i)
+        {
+            float2 offset = VogelDiskSample(i, samples, randomRotation) * filterRadius * texelSize;
+            shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(projCoords.xy + offset, cascadeIndex), currentDepth - bias);
+        }
+        shadow /= float(samples);
     }
     
-    return shadow / (float) samples;
+    if (cascadeIndex > 0 && blendFactor > 0.0)
+    {
+        int prevCascade = cascadeIndex - 1;
+        matrix prevLightVP = (cascadeIndex == 1) ? LightViewProj0 : LightViewProj1;
+        
+        float4 prevLpos = mul(float4(wPos, 1.0f), prevLightVP);
+        float3 prevProjCoords = prevLpos.xyz / prevLpos.w;
+        prevProjCoords.x = prevProjCoords.x * 0.5 + 0.5;
+        prevProjCoords.y = -prevProjCoords.y * 0.5 + 0.5;
+        
+        if (prevProjCoords.z <= 1.0 && prevProjCoords.x >= 0.0 && prevProjCoords.x <= 1.0 &&
+            prevProjCoords.y >= 0.0 && prevProjCoords.y <= 1.0)
+        {
+            float prevShadow = 0.0;
+            float2 texelSize = 1.0 / ShadowParams.w;
+            int samples = 16;
+            
+            for (int i = 0; i < samples; ++i)
+            {
+                float2 offset = VogelDiskSample(i, samples, randomRotation) * texelSize * 2.0;
+                prevShadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, float3(prevProjCoords.xy + offset, prevCascade),
+                    prevProjCoords.z - bias);
+            }
+            prevShadow /= float(samples);
+            
+            shadow = lerp(prevShadow, shadow, blendFactor);
+        }
+    }
+    
+    return shadow;
 }
 
 float DistributionGGX(float3 N, float3 H, float roughness)
@@ -182,7 +227,7 @@ float DistributionGGX(float3 N, float3 H, float roughness)
     float num = a2;
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
-    return num / denom;
+    return num / max(denom, 0.0001);
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness)
@@ -191,7 +236,7 @@ float GeometrySchlickGGX(float NdotV, float roughness)
     float k = (r * r) / 8.0;
     float num = NdotV;
     float denom = NdotV * (1.0 - k) + k;
-    return num / denom;
+    return num / max(denom, 0.0001);
 }
 
 float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
@@ -205,21 +250,29 @@ float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
 
 float3 FresnelSchlick(float cosTheta, float3 F0)
 {
-    return F0 + (1.0 - F0) * pow(abs(clamp(1.0 - cosTheta, 0.0, 1.0)), 5.0);
+    return F0 + (1.0 - F0) * pow(saturate(1.0 - cosTheta), 5.0);
 }
 
 float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
 {
-    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(abs(clamp(1.0 - cosTheta, 0.0, 1.0)), 5.0);
+    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) *
+        pow(saturate(1.0 - cosTheta), 5.0);
 }
 
 float2 IntegrateBRDF(float NdotV, float roughness)
 {
-    float4 c0 = float4(-1, -0.0275, -0.572, 0.022);
-    float4 c1 = float4(1, 0.0425, 1.04, -0.04);
+    const float4 c0 = float4(-1, -0.0275, -0.572, 0.022);
+    const float4 c1 = float4(1, 0.0425, 1.04, -0.04);
     float4 r = roughness * c0 + c1;
     float a004 = min(r.x * r.x, exp2(-9.28 * NdotV)) * r.x + r.y;
-    return float2(-1.04, 1.04) * a004 + r.zw;
+    float2 AB = float2(-1.04, 1.04) * a004 + r.zw;
+    
+    float smoothness = 1.0 - roughness;
+    float energyBoost = smoothness * smoothness * 0.15;
+    AB.x = min(AB.x * (1.0 + energyBoost), 1.0);
+    AB.y = max(AB.y, 0.0);
+    
+    return AB;
 }
 
 float3 CalculateSSR(float3 wPos, float3 N, float3 V, float roughness, out float hit)
@@ -229,34 +282,42 @@ float3 CalculateSSR(float3 wPos, float3 N, float3 V, float roughness, out float 
         return float3(0, 0, 0);
 
     float3 R = normalize(reflect(-V, N));
-    float stepSize = SsrParams.y;
-    float3 stepVec = R * stepSize;
-    float3 currentPos = wPos;
-    
-    int maxSteps = 32;
+    int maxSteps = (int) SsrParams2.x;
     float maxDist = SsrParams.z;
-    float thickness = SsrParams.w;
-
+    float depthThreshold = SsrParams2.y;
+    
+    float3 currentPos = wPos;
     float3 ssrColor = float3(0, 0, 0);
+    float stepSize = SsrParams.y;
+    
     [loop]
     for (int i = 0; i < maxSteps; i++)
     {
-        currentPos += stepVec;
-        if (distance(wPos, currentPos) > maxDist)
+        float adaptiveStep = stepSize * (1.0 + float(i) * 0.05);
+        currentPos += R * adaptiveStep;
+        
+        float dist = distance(wPos, currentPos);
+        if (dist > maxDist)
             break;
+            
         float4 clipPos = mul(float4(currentPos, 1.0f), ViewProj);
         if (clipPos.w <= 0.0)
             continue;
+            
         float2 screenUV = (clipPos.xy / clipPos.w) * float2(0.5, -0.5) + 0.5;
+        
         if (screenUV.x < 0.0 || screenUV.x > 1.0 || screenUV.y < 0.0 || screenUV.y > 1.0)
             break;
+            
         float depthSample = DepthMap.SampleLevel(sam, screenUV, 0).r;
         float currentDepth = clipPos.z / clipPos.w;
-        if (currentDepth > depthSample && (currentDepth - depthSample) < thickness)
+        float depthDiff = currentDepth - depthSample;
+        
+        if (depthDiff > 0.0 && depthDiff < depthThreshold)
         {
-            float3 start = currentPos - stepVec;
+            float3 start = currentPos - R * adaptiveStep;
             float3 end = currentPos;
-             
+            
             for (int j = 0; j < 8; j++)
             {
                 float3 mid = (start + end) * 0.5;
@@ -264,19 +325,24 @@ float3 CalculateSSR(float3 wPos, float3 N, float3 V, float roughness, out float 
                 float2 midUV = (midClip.xy / midClip.w) * float2(0.5, -0.5) + 0.5;
                 float midDepthSample = DepthMap.SampleLevel(sam, midUV, 0).r;
                 float midCurrentDepth = midClip.z / midClip.w;
+                
                 if (midCurrentDepth > midDepthSample)
                     end = mid;
                 else
                     start = mid;
             }
+            
             currentPos = start;
             float4 finalClip = mul(float4(currentPos, 1.0f), ViewProj);
             float2 finalUV = (finalClip.xy / finalClip.w) * float2(0.5, -0.5) + 0.5;
-             
-            hit = 1.0;
-            float fade = 1.0 - saturate(distance(finalUV, 0.5) * 2.0);
-            fade *= saturate(1.0 - (distance(wPos, currentPos) / maxDist));
-            ssrColor = tex.SampleLevel(sam, finalUV, 0).rgb * fade;
+            
+            float edgeFade = 1.0 - pow(saturate(max(abs(finalUV.x - 0.5), abs(finalUV.y - 0.5)) * 2.0), 2.0);
+            float distFade = 1.0 - saturate(dist / maxDist);
+            float roughnessFade = 1.0 - saturate(roughness * 2.0);
+            float fade = edgeFade * distFade * roughnessFade;
+            
+            hit = fade;
+            ssrColor = tex.SampleLevel(sam, finalUV, roughness * 8.0).rgb * fade;
             break;
         }
     }
@@ -304,6 +370,7 @@ float4 PS(PS_IN input) : SV_Target
 {
     float2 uv = input.uv;
     float4 texColor;
+    
     if (ChromAbParams.x > 0.5f)
     {
         float2 dist = uv - 0.5f;
@@ -319,10 +386,10 @@ float4 PS(PS_IN input) : SV_Target
         texColor = tex.Sample(sam, uv) * BaseColor;
     }
 
-    float3 albedo = abs(pow(texColor.rgb, 2.2));
-    float metallic = PbrParams.x;
-    float roughness = PbrParams.y;
-    float ao = PbrParams.z;
+    float3 albedo = pow(abs(texColor.rgb), 2.2);
+    float metallic = saturate(PbrParams.x);
+    float roughness = saturate(PbrParams.y);
+    float ao = saturate(PbrParams.z);
     
     float3 N = normalize(input.norm);
     float3 V = normalize(CameraPos.xyz - input.wPos);
@@ -330,6 +397,7 @@ float4 PS(PS_IN input) : SV_Target
     F0 = lerp(F0, albedo, metallic);
 
     float3 Lo = float3(0.0, 0.0, 0.0);
+    
     if (LightEnabled > 0.5f)
     {
         float3 lightDir;
@@ -340,6 +408,7 @@ float4 PS(PS_IN input) : SV_Target
             lightDir = normalize(LightPos.xyz);
         else
             lightDir = normalize(LightPos.xyz - input.wPos);
+            
         if (type != 2)
         {
             float dist = distance(LightPos.xyz, input.wPos);
@@ -356,6 +425,7 @@ float4 PS(PS_IN input) : SV_Target
         float3 L = lightDir;
         float3 H = normalize(V + L);
         float NdotL = max(dot(N, L), 0.0);
+        
         float shadow = 1.0f;
         if (ShadowParams.x > 0.5f && (type == 1 || type == 2))
         {
@@ -367,24 +437,28 @@ float4 PS(PS_IN input) : SV_Target
         float NDF = DistributionGGX(N, H, roughness);
         float G = GeometrySmith(N, V, L, roughness);
         float3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+        
         float3 numerator = NDF * G * F;
-        float denominator = 4.0 * max(dot(N, V), 0.0) * NdotL + 0.0001;
+        float denominator = 4.0 * max(dot(N, V), 0.0001) * max(NdotL, 0.0001);
         float3 specular = numerator / denominator * SpecularIntensity;
 
         float3 kS = F;
         float3 kD = float3(1.0, 1.0, 1.0) - kS;
         kD *= 1.0 - metallic;
+        kD = max(kD, 0.0);
 
         Lo += (kD * albedo / PI + specular) * radiance * NdotL;
     }
 
     float3 ambient = float3(0, 0, 0);
+    
     if (EnvironmentParam.x > 0.5f && LightEnabled > 0.5f)
     {
-        float NdotV = max(dot(N, V), 0.0);
+        float NdotV = max(dot(N, V), 0.0001);
         float3 kS = FresnelSchlickRoughness(NdotV, F0, roughness);
-        float3 kD = 1.0 - kS;
+        float3 kD = saturate(1.0 - kS);
         kD *= 1.0 - metallic;
+        
         float maxMip = IblParams.y > 0.0 ? IblParams.y : 6.0;
         float3 irradiance = EnvironmentMap.SampleLevel(sam, N, maxMip).rgb;
         float3 diffuse = irradiance * albedo;
@@ -418,10 +492,11 @@ float4 PS(PS_IN input) : SV_Target
     }
 
     float3 color = ambient + Lo;
+    
     if (RimParams.x > 0.5f)
     {
         float vdn = 1.0 - max(dot(V, N), 0.0);
-        float rim = pow(abs(smoothstep(0.0, 1.0, vdn)), RimParams.z) * RimParams.y;
+        float rim = pow(saturate(vdn), RimParams.z) * RimParams.y;
         color += RimColor.rgb * rim;
     }
 
@@ -470,12 +545,14 @@ float4 PS(PS_IN input) : SV_Target
     color = (color - 0.5f) * ColorCorrParams.y + 0.5f;
     color = pow(abs(color), 1.0f / ColorCorrParams.z);
     color += ColorCorrParams.w;
+    
     if (ScanlineParams.x > 0.5f && ScanlineParams.w < 0.5f)
     {
         color = ApplyScanline(color, uv);
     }
     
     color = AceSToneMapping(color);
+    
     if (ScanlineParams.x > 0.5f && ScanlineParams.w > 0.5f)
     {
         color = ApplyScanline(color, uv);

@@ -416,4 +416,8 @@
 <data name="ShaderError_File" xml:space="preserve"><value>الملف</value></data>
 <data name="ShaderError_ValidationTime" xml:space="preserve"><value>وقت التحقق</value></data>
 <data name="ShaderError_DialogTitle" xml:space="preserve"><value>تفاصيل خطأ التظليل</value></data>
+<data name="SSRMaxSteps" xml:space="preserve"><value>خطوات SSR القصوى</value></data>
+<data name="SSRMaxSteps_Desc" xml:space="preserve"><value>عدد تكرارات تتبع الأشعة (أعلى = جودة أفضل لكن أبطأ)</value></data>
+<data name="SSRDepthThreshold" xml:space="preserve"><value>عتبة عمق SSR</value></data>
+<data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>تفاوت المخزن المؤقت للعمق لاكتشاف الضربة</value></data>
 </root>

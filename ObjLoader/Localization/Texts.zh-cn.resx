@@ -416,4 +416,8 @@
 <data name="ShaderError_File" xml:space="preserve"><value>文件</value></data>
 <data name="ShaderError_ValidationTime" xml:space="preserve"><value>验证时间</value></data>
 <data name="ShaderError_DialogTitle" xml:space="preserve"><value>着色器错误详情</value></data>
+<data name="SSRMaxSteps" xml:space="preserve"><value>SSR最大步数</value></data>
+<data name="SSRMaxSteps_Desc" xml:space="preserve"><value>光线行进迭代次数（越高质量越好但越慢）</value></data>
+<data name="SSRDepthThreshold" xml:space="preserve"><value>SSR深度阈值</value></data>
+<data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>光线命中检测的深度缓冲容差</value></data>
 </root>

@@ -415,4 +415,8 @@
 <data name="ShaderError_File" xml:space="preserve"><value>File</value></data>
 <data name="ShaderError_ValidationTime" xml:space="preserve"><value>Waktu Validasi</value></data>
 <data name="ShaderError_DialogTitle" xml:space="preserve"><value>Detail Kesalahan Shader</value></data>
+<data name="SSRMaxSteps" xml:space="preserve"><value>Langkah Maks SSR</value></data>
+<data name="SSRMaxSteps_Desc" xml:space="preserve"><value>Jumlah iterasi ray marching (lebih tinggi = kualitas lebih baik tapi lebih lambat)</value></data>
+<data name="SSRDepthThreshold" xml:space="preserve"><value>Ambang kedalaman SSR</value></data>
+<data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>Toleransi buffer kedalaman untuk deteksi hit</value></data>
 </root>

@@ -10,6 +10,8 @@ namespace ObjLoader.Services.Layers
         private LayerData? _activeLayer;
         private readonly Dictionary<string, LayerNode> _hierarchyNodes = new();
         private readonly object _lock = new();
+        private readonly HashSet<string> _visited = new();
+        private readonly Queue<string> _queue = new();
 
         public ObservableCollection<LayerData> Layers { get; } = new ObservableCollection<LayerData>();
         public int SelectedLayerIndex => _selectedLayerIndex;
@@ -238,12 +240,12 @@ namespace ObjLoader.Services.Layers
         {
             lock (_lock)
             {
-                var visited = new HashSet<string>();
+                _visited.Clear();
                 var current = layerId;
 
                 while (current != null)
                 {
-                    if (!visited.Add(current))
+                    if (!_visited.Add(current))
                     {
                         throw new InvalidOperationException($"Cycle detected for layer: {layerId}");
                     }
@@ -271,29 +273,29 @@ namespace ObjLoader.Services.Layers
             lock (_lock)
             {
                 var result = new List<string>();
-                var queue = new Queue<string>();
-                var visited = new HashSet<string>();
+                _queue.Clear();
+                _visited.Clear();
 
                 if (!_hierarchyNodes.ContainsKey(layerId))
                 {
                     return result;
                 }
 
-                queue.Enqueue(layerId);
-                visited.Add(layerId);
+                _queue.Enqueue(layerId);
+                _visited.Add(layerId);
 
-                while (queue.Count > 0)
+                while (_queue.Count > 0)
                 {
-                    var current = queue.Dequeue();
+                    var current = _queue.Dequeue();
 
                     if (_hierarchyNodes.TryGetValue(current, out var node))
                     {
                         foreach (var childId in node.ChildIds)
                         {
-                            if (visited.Add(childId))
+                            if (_visited.Add(childId))
                             {
                                 result.Add(childId);
-                                queue.Enqueue(childId);
+                                _queue.Enqueue(childId);
                             }
                             else
                             {
@@ -317,18 +319,17 @@ namespace ObjLoader.Services.Layers
             lock (_lock)
             {
                 var result = new ValidationResult();
-                var visited = new HashSet<string>();
 
                 foreach (var layer in _hierarchyNodes.Values)
                 {
-                    visited.Clear();
+                    _visited.Clear();
 
                     var current = layer.Id;
                     while (current != null)
                     {
-                        if (!visited.Add(current))
+                        if (!_visited.Add(current))
                         {
-                            result.Errors.Add($"Cycle detected: {string.Join(" → ", visited)} → {current}");
+                            result.Errors.Add($"Cycle detected: {string.Join(" → ", _visited)} → {current}");
                             break;
                         }
 
@@ -366,12 +367,12 @@ namespace ObjLoader.Services.Layers
 
         private bool WouldCreateCycle(string childId, string potentialParentId)
         {
-            var visited = new HashSet<string>();
+            _visited.Clear();
             var current = potentialParentId;
 
             while (current != null)
             {
-                if (!visited.Add(current))
+                if (!_visited.Add(current))
                 {
                     return true;
                 }
@@ -390,7 +391,7 @@ namespace ObjLoader.Services.Layers
                     break;
                 }
 
-                if (visited.Count > 10000)
+                if (_visited.Count > 10000)
                 {
                     throw new InvalidOperationException("Hierarchy depth exceeds limit or existing cycle detected.");
                 }

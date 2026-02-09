@@ -416,4 +416,8 @@
 <data name="ShaderError_File" xml:space="preserve"><value>Archivo</value></data>
 <data name="ShaderError_ValidationTime" xml:space="preserve"><value>Tiempo de validación</value></data>
 <data name="ShaderError_DialogTitle" xml:space="preserve"><value>Detalles del error del shader</value></data>
+<data name="SSRMaxSteps" xml:space="preserve"><value>Pasos máximos SSR</value></data>
+<data name="SSRMaxSteps_Desc" xml:space="preserve"><value>Número de iteraciones de ray marching (mayor = mejor calidad pero más lento)</value></data>
+<data name="SSRDepthThreshold" xml:space="preserve"><value>Umbral de profundidad SSR</value></data>
+<data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>Tolerancia del búfer de profundidad para la detección de impactos</value></data>
 </root>

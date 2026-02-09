@@ -416,4 +416,8 @@
 <data name="ShaderError_File" xml:space="preserve"><value>파일</value></data>
 <data name="ShaderError_ValidationTime" xml:space="preserve"><value>검증 시간</value></data>
 <data name="ShaderError_DialogTitle" xml:space="preserve"><value>셰이더 오류 세부정보</value></data>
+<data name="SSRMaxSteps" xml:space="preserve"><value>SSR 최대 단계</value></data>
+<data name="SSRMaxSteps_Desc" xml:space="preserve"><value>레이 마칭 반복 횟수 (높을수록 품질 향상하지만 느림)</value></data>
+<data name="SSRDepthThreshold" xml:space="preserve"><value>SSR 깊이 임계값</value></data>
+<data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>레이 적중 감지를 위한 깊이 버퍼 허용 오차</value></data>
 </root>

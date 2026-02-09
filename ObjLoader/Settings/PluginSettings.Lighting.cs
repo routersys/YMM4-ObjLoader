@@ -95,6 +95,20 @@ namespace ObjLoader.Settings
             set { if (CurrentWorld.SSR.MaxDist != value) { CurrentWorld.SSR.MaxDist = value; OnPropertyChanged(); } }
         }
 
+        [IntSpinnerSetting("SSR", nameof(Texts.SSRMaxSteps), 16, 256, EnableBy = nameof(SSREnabled), Description = nameof(Texts.SSRMaxSteps_Desc), ResourceType = typeof(Texts))]
+        public int SSRMaxSteps
+        {
+            get => CurrentWorld.SSR.MaxSteps;
+            set { if (CurrentWorld.SSR.MaxSteps != value) { CurrentWorld.SSR.MaxSteps = value; OnPropertyChanged(); } }
+        }
+
+        [RangeSetting("SSR", nameof(Texts.SSRDepthThreshold), 0.01, 1.0, Tick = 0.01, EnableBy = nameof(SSREnabled), Description = nameof(Texts.SSRDepthThreshold_Desc), ResourceType = typeof(Texts))]
+        public double SSRDepthThreshold
+        {
+            get => CurrentWorld.SSR.Thickness;
+            set { if (CurrentWorld.SSR.Thickness != value) { CurrentWorld.SSR.Thickness = value; OnPropertyChanged(); } }
+        }
+
         [SettingGroup("PCSS", nameof(Texts.Group_PCSS), Order = 5, ParentId = "Lighting", Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
         [RangeSetting("PCSS", nameof(Texts.PcssLightSize), 0.0, 5.0, Tick = 0.01, Description = nameof(Texts.PcssLightSize_Desc), ResourceType = typeof(Texts))]
         public double PcssLightSize

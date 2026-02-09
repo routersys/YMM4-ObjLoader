@@ -416,4 +416,8 @@
 <data name="ShaderError_File" xml:space="preserve"><value>ファイル</value></data>
 <data name="ShaderError_ValidationTime" xml:space="preserve"><value>検証時刻</value></data>
 <data name="ShaderError_DialogTitle" xml:space="preserve"><value>シェーダーエラー詳細</value></data>
+<data name="SSRMaxSteps" xml:space="preserve"><value>SSR最大ステップ数</value></data>
+<data name="SSRMaxSteps_Desc" xml:space="preserve"><value>レイマーチングの反復回数（高いほど高品質だが低速）</value></data>
+<data name="SSRDepthThreshold" xml:space="preserve"><value>SSR深度許容範囲</value></data>
+<data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>ヒット検出のための深度バッファ許容値</value></data>
 </root>

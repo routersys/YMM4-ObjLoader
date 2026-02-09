@@ -9,17 +9,20 @@ namespace ObjLoader.Rendering.Utilities
         public static Matrix4x4 GetLayerTransform(LayerState state)
         {
             Matrix4x4 axisConversion = Matrix4x4.Identity;
-            switch (state.CoordSystem)
+            if (string.IsNullOrEmpty(state.ParentGuid))
             {
-                case CoordinateSystem.RightHandedZUp:
-                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
-                    break;
-                case CoordinateSystem.LeftHandedYUp:
-                    axisConversion = Matrix4x4.CreateScale(1, 1, -1);
-                    break;
-                case CoordinateSystem.LeftHandedZUp:
-                    axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
-                    break;
+                switch (state.CoordSystem)
+                {
+                    case CoordinateSystem.RightHandedZUp:
+                        axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0));
+                        break;
+                    case CoordinateSystem.LeftHandedYUp:
+                        axisConversion = Matrix4x4.CreateScale(1, 1, -1);
+                        break;
+                    case CoordinateSystem.LeftHandedZUp:
+                        axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1);
+                        break;
+                }
             }
 
             var rotation = Matrix4x4.CreateRotationX((float)(state.Rx * Math.PI / 180.0)) *

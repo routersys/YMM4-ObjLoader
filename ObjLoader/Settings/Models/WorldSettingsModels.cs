@@ -103,6 +103,7 @@ namespace ObjLoader.Settings
         public double Step { get; set; } = 0.5;
         public double MaxDist { get; set; } = 20.0;
         public double Thickness { get; set; } = 0.5;
+        public int MaxSteps { get; set; } = 64;
         public object Clone() => MemberwiseClone();
     }
 
