@@ -1,6 +1,7 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
 using ObjLoader.Localization;
+using ObjLoader.Settings;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -177,7 +178,7 @@ namespace ObjLoader.ViewModels
             }
 
             var currentData = GetCurrentMaterialData();
-            var defaultData = GetDefaultMaterialDataFromModel(_selectedPart.Index);
+            var defaultData = GetDefaultMaterialDataForRendering();
 
             var propWrapper = new PartMaterialProperties(
                 (action) =>
@@ -202,49 +203,40 @@ namespace ObjLoader.ViewModels
                 return material;
             }
 
-            if (_currentModel != null && _selectedPart.Index >= 0 && _selectedPart.Index < _currentModel.Parts.Count)
-            {
-                var part = _currentModel.Parts[_selectedPart.Index];
-                var c = part.BaseColor;
-                return new PartMaterialData
-                {
-                    Roughness = part.Roughness,
-                    Metallic = part.Metallic,
-                    BaseColor = Color.FromScRgb(c.W, c.X, c.Y, c.Z)
-                };
-            }
-
-            return new PartMaterialData { Roughness = 0.5, Metallic = 0.0, BaseColor = Colors.White };
+            return GetDefaultMaterialDataForRendering();
         }
 
-        private PartMaterialData GetDefaultMaterialDataFromModel(int partIndex)
+        private PartMaterialData GetDefaultMaterialDataForRendering()
         {
-            var data = new PartMaterialData { Roughness = 0.5, Metallic = 0.0, BaseColor = Colors.White };
-            if (_currentModel != null && partIndex >= 0 && partIndex < _currentModel.Parts.Count)
+            var settings = PluginSettings.Instance;
+            var baseColor = Colors.White;
+            if (_currentModel != null && _selectedPart != null &&
+                _selectedPart.Index >= 0 && _selectedPart.Index < _currentModel.Parts.Count)
             {
-                var part = _currentModel.Parts[partIndex];
-                data.Roughness = part.Roughness;
-                data.Metallic = part.Metallic;
-                var c = part.BaseColor;
-                data.BaseColor = Color.FromScRgb(c.W, c.X, c.Y, c.Z);
+                var c = _currentModel.Parts[_selectedPart.Index].BaseColor;
+                baseColor = Color.FromScRgb(c.W, c.X, c.Y, c.Z);
             }
-            return data;
+            return new PartMaterialData
+            {
+                Roughness = settings.GetRoughness(0),
+                Metallic = settings.GetMetallic(0),
+                BaseColor = baseColor
+            };
         }
 
         private void UpdateMaterialData(Action<PartMaterialData> updateAction)
         {
             if (_selectedPart == null || _selectedPart.Index == -1) return;
             var layer = GetCurrentLayer();
-            if (layer != null)
+            if (layer == null) return;
+
+            if (!layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
             {
-                if (!layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
-                {
-                    material = GetDefaultMaterialDataFromModel(_selectedPart.Index);
-                    layer.PartMaterials[_selectedPart.Index] = material;
-                }
-                updateAction(material);
-                _parameter.ForceUpdate();
+                material = GetDefaultMaterialDataForRendering();
+                layer.PartMaterials[_selectedPart.Index] = material;
             }
+            updateAction(material);
+            _parameter.ForceUpdate();
         }
 
         private void ResetMaterial(object? _)

@@ -319,10 +319,10 @@ namespace ObjLoader.Rendering.Renderers
 
                     float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
                     float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
-                    Vector4 overriddenBaseColor = material != null ? RenderUtils.ToVec4(material.BaseColor) : Vector4.One;
+                    var resolvedBaseColor = material != null ? RenderUtils.ToVec4(material.BaseColor) : part.BaseColor;
 
                     var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
-                    var partColor = part.BaseColor * uiColorVec * overriddenBaseColor;
+                    var partColor = resolvedBaseColor * uiColorVec;
 
                     ConstantBufferData cbData = new ConstantBufferData
                     {

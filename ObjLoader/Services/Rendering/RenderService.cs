@@ -647,14 +647,13 @@ namespace ObjLoader.Services.Rendering
 
             float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
             float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
-            var materialBaseColor = material != null ? ToVec4(material.BaseColor) : System.Numerics.Vector4.One;
 
             ConstantBufferData cbData = new ConstantBufferData
             {
                 WorldViewProj = Matrix4x4.Transpose(wvp),
                 World = Matrix4x4.Transpose(world),
                 LightPos = new System.Numerics.Vector4(finalLightPos, 1.0f),
-                BaseColor = part.BaseColor * materialBaseColor,
+                BaseColor = material != null ? ToVec4(material.BaseColor) : part.BaseColor,
                 AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
                 LightColor = ToVec4(settings.GetLightColor(wId)),
                 CameraPos = new System.Numerics.Vector4(0, 0, 0, 1),

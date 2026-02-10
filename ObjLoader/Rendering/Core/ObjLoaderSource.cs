@@ -2,6 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
+using ObjLoader.Rendering.Core;
 using ObjLoader.Rendering.Managers;
 using ObjLoader.Rendering.Renderers;
 using ObjLoader.Rendering.Shaders;
@@ -463,7 +464,7 @@ namespace ObjLoader.Rendering.Core
                 shadowValid = true;
             }
 
-            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged;
+            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged;
 
             _sceneRenderer.Render(layersToRender, _layerStates, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
 
