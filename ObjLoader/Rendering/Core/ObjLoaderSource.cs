@@ -548,46 +548,50 @@ namespace ObjLoader.Rendering.Core
         private unsafe GpuResourceCacheItem CreateGpuResource(ObjModel model, string filePath)
         {
             var device = _devices.D3D.Device;
+            ID3D11Buffer? vb = null;
+            ID3D11Buffer? ib = null;
+            ID3D11ShaderResourceView?[]? partTextures = null;
+            bool success = false;
 
-            var vDesc = new BufferDescription(
-                model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(),
-                BindFlags.VertexBuffer,
-                ResourceUsage.Immutable,
-                CpuAccessFlags.None);
-
-            ID3D11Buffer vb;
-            fixed (ObjVertex* pVerts = model.Vertices)
+            try
             {
-                var vData = new SubresourceData(pVerts);
-                vb = device.CreateBuffer(vDesc, vData);
-            }
+                var vDesc = new BufferDescription(
+                    model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(),
+                    BindFlags.VertexBuffer,
+                    ResourceUsage.Immutable,
+                    CpuAccessFlags.None);
 
-            var iDesc = new BufferDescription(
-                model.Indices.Length * sizeof(int),
-                BindFlags.IndexBuffer,
-                ResourceUsage.Immutable,
-                CpuAccessFlags.None);
-
-            ID3D11Buffer ib;
-            fixed (int* pIndices = model.Indices)
-            {
-                var iData = new SubresourceData(pIndices);
-                ib = device.CreateBuffer(iDesc, iData);
-            }
-
-            var parts = model.Parts.ToArray();
-            var partTextures = new ID3D11ShaderResourceView?[parts.Length];
-
-            for (int i = 0; i < parts.Length; i++)
-            {
-                string tPath = parts[i].TexturePath;
-                if (!string.IsNullOrEmpty(tPath) && File.Exists(tPath))
+                fixed (ObjVertex* pVerts = model.Vertices)
                 {
+                    var vData = new SubresourceData(pVerts);
+                    vb = device.CreateBuffer(vDesc, vData);
+                }
+
+                var iDesc = new BufferDescription(
+                    model.Indices.Length * sizeof(int),
+                    BindFlags.IndexBuffer,
+                    ResourceUsage.Immutable,
+                    CpuAccessFlags.None);
+
+                fixed (int* pIndices = model.Indices)
+                {
+                    var iData = new SubresourceData(pIndices);
+                    ib = device.CreateBuffer(iDesc, iData);
+                }
+
+                var parts = model.Parts.ToArray();
+                partTextures = new ID3D11ShaderResourceView?[parts.Length];
+
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    string tPath = parts[i].TexturePath;
+                    if (string.IsNullOrEmpty(tPath) || !File.Exists(tPath)) continue;
+
                     try
                     {
                         var bitmapSource = _textureService.Load(tPath);
-                        var format = PixelFormats.Bgra32;
-                        var convertedBitmap = new FormatConvertedBitmap(bitmapSource, format, null, 0);
+                        if (bitmapSource.CanFreeze && !bitmapSource.IsFrozen) bitmapSource.Freeze();
+                        var convertedBitmap = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
 
                         int width = convertedBitmap.PixelWidth;
                         int height = convertedBitmap.PixelHeight;
@@ -618,11 +622,27 @@ namespace ObjLoader.Rendering.Core
                     {
                     }
                 }
-            }
 
-            var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
-            GpuResourceCache.Instance.AddOrUpdate(filePath, item);
-            return item;
+                var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
+                GpuResourceCache.Instance.AddOrUpdate(filePath, item);
+                success = true;
+                return item;
+            }
+            finally
+            {
+                if (!success)
+                {
+                    if (partTextures != null)
+                    {
+                        foreach (var srv in partTextures)
+                        {
+                            SafeDispose(srv);
+                        }
+                    }
+                    SafeDispose(ib);
+                    SafeDispose(vb);
+                }
+            }
         }
 
         private void CreateCommandList()
@@ -662,6 +682,18 @@ namespace ObjLoader.Rendering.Core
                 }
 
                 _disposer.DisposeAndClear();
+            }
+        }
+
+        private static void SafeDispose(IDisposable? disposable)
+        {
+            if (disposable == null) return;
+            try
+            {
+                disposable.Dispose();
+            }
+            catch
+            {
             }
         }
     }

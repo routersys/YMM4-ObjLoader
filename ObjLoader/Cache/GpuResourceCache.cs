@@ -10,7 +10,7 @@ namespace ObjLoader.Cache
 
         private readonly ConcurrentDictionary<string, GpuResourceCacheItem> _cache = new();
         private readonly object _cleanupLock = new();
-        private bool _disposed;
+        private int _disposed;
 
         public static GpuResourceCache Instance => _instance.Value;
 
@@ -18,21 +18,17 @@ namespace ObjLoader.Cache
         {
         }
 
+        private bool IsDisposed => Volatile.Read(ref _disposed) != 0;
+
         public bool TryGetValue(string key, [NotNullWhen(true)] out GpuResourceCacheItem? item)
         {
-            if (_disposed)
+            if (IsDisposed || string.IsNullOrEmpty(key))
             {
                 item = null;
                 return false;
             }
 
-            if (string.IsNullOrEmpty(key))
-            {
-                item = null;
-                return false;
-            }
-
-            if (_cache.TryGetValue(key, out var val))
+            if (_cache.TryGetValue(key, out var val) && val != null)
             {
                 item = val;
                 return true;
@@ -44,11 +40,16 @@ namespace ObjLoader.Cache
 
         public void AddOrUpdate(string key, GpuResourceCacheItem item)
         {
-            if (_disposed) return;
-            if (string.IsNullOrEmpty(key)) return;
             if (item == null) return;
+            if (string.IsNullOrEmpty(key)) return;
 
-            _cache.AddOrUpdate(key, item, (k, oldValue) =>
+            if (IsDisposed)
+            {
+                SafeDispose(item);
+                return;
+            }
+
+            _cache.AddOrUpdate(key, item, (_, oldValue) =>
             {
                 if (!ReferenceEquals(oldValue, item))
                 {
@@ -56,11 +57,16 @@ namespace ObjLoader.Cache
                 }
                 return item;
             });
+
+            if (IsDisposed && _cache.TryRemove(key, out var removed))
+            {
+                SafeDispose(removed);
+            }
         }
 
         public void Remove(string key)
         {
-            if (_disposed) return;
+            if (IsDisposed) return;
             if (string.IsNullOrEmpty(key)) return;
 
             if (_cache.TryRemove(key, out var item))
@@ -73,10 +79,10 @@ namespace ObjLoader.Cache
         {
             lock (_cleanupLock)
             {
-                var keys = _cache.Keys.ToList();
-                foreach (var key in keys)
+                var snapshot = _cache.ToArray();
+                foreach (var kvp in snapshot)
                 {
-                    if (_cache.TryRemove(key, out var item))
+                    if (_cache.TryRemove(kvp.Key, out var item))
                     {
                         SafeDispose(item);
                     }
@@ -90,21 +96,15 @@ namespace ObjLoader.Cache
 
             lock (_cleanupLock)
             {
-                var keysToRemove = new List<string>();
-
-                foreach (var kvp in _cache)
+                var snapshot = _cache.ToArray();
+                foreach (var kvp in snapshot)
                 {
                     if (kvp.Value?.Device == device)
                     {
-                        keysToRemove.Add(kvp.Key);
-                    }
-                }
-
-                foreach (var key in keysToRemove)
-                {
-                    if (_cache.TryRemove(key, out var item))
-                    {
-                        SafeDispose(item);
+                        if (_cache.TryRemove(kvp.Key, out var item))
+                        {
+                            SafeDispose(item);
+                        }
                     }
                 }
             }
@@ -114,36 +114,35 @@ namespace ObjLoader.Cache
         {
             lock (_cleanupLock)
             {
-                var keysToRemove = new List<string>();
-
-                foreach (var kvp in _cache)
+                var snapshot = _cache.ToArray();
+                foreach (var kvp in snapshot)
                 {
+                    bool shouldRemove = false;
                     var item = kvp.Value;
+
                     if (item == null || item.Device == null)
                     {
-                        keysToRemove.Add(kvp.Key);
-                        continue;
+                        shouldRemove = true;
                     }
-
-                    try
+                    else
                     {
-                        var reason = item.Device.DeviceRemovedReason;
-                        if (reason.Failure)
+                        try
                         {
-                            keysToRemove.Add(kvp.Key);
+                            var reason = item.Device.DeviceRemovedReason;
+                            if (reason.Failure)
+                            {
+                                shouldRemove = true;
+                            }
+                        }
+                        catch
+                        {
+                            shouldRemove = true;
                         }
                     }
-                    catch
-                    {
-                        keysToRemove.Add(kvp.Key);
-                    }
-                }
 
-                foreach (var key in keysToRemove)
-                {
-                    if (_cache.TryRemove(key, out var item))
+                    if (shouldRemove && _cache.TryRemove(kvp.Key, out var removed))
                     {
-                        SafeDispose(item);
+                        SafeDispose(removed);
                     }
                 }
             }
@@ -151,8 +150,7 @@ namespace ObjLoader.Cache
 
         public void Dispose()
         {
-            if (_disposed) return;
-            _disposed = true;
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             Clear();
         }
 

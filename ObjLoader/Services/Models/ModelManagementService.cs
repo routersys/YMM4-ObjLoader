@@ -33,34 +33,65 @@ namespace ObjLoader.Services.Models
 
             result.Model = model;
 
-            var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
-            ID3D11Buffer vb;
-            fixed (ObjVertex* p = model.Vertices) vb = renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
+            ID3D11Buffer? vb = null;
+            ID3D11Buffer? ib = null;
+            ID3D11ShaderResourceView?[]? partTextures = null;
+            bool success = false;
 
-            var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
-            ID3D11Buffer ib;
-            fixed (int* p = model.Indices) ib = renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
-
-            var parts = model.Parts.ToArray();
-            var partTextures = new ID3D11ShaderResourceView?[parts.Length];
-            for (int i = 0; i < parts.Length; i++)
+            try
             {
-                if (File.Exists(parts[i].TexturePath))
+                var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
+                fixed (ObjVertex* p = model.Vertices) vb = renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
+
+                var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
+                fixed (int* p = model.Indices) ib = renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
+
+                var parts = model.Parts.ToArray();
+                partTextures = new ID3D11ShaderResourceView?[parts.Length];
+                for (int i = 0; i < parts.Length; i++)
                 {
+                    if (!File.Exists(parts[i].TexturePath)) continue;
+
                     try
                     {
                         var bitmapSource = _textureService.Load(parts[i].TexturePath);
+                        if (bitmapSource.CanFreeze && !bitmapSource.IsFrozen) bitmapSource.Freeze();
                         var conv = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
-                        var pixels = new byte[conv.PixelWidth * conv.PixelHeight * 4];
-                        conv.CopyPixels(pixels, conv.PixelWidth * 4, 0);
-                        var tDesc = new Texture2DDescription { Width = conv.PixelWidth, Height = conv.PixelHeight, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
-                        fixed (byte* p = pixels) { using var t = renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, conv.PixelWidth * 4) }); partTextures[i] = renderService.Device.CreateShaderResourceView(t); }
+                        int width = conv.PixelWidth;
+                        int height = conv.PixelHeight;
+                        int stride = width * 4;
+                        var pixels = new byte[stride * height];
+                        conv.CopyPixels(pixels, stride, 0);
+                        var tDesc = new Texture2DDescription { Width = width, Height = height, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
+                        fixed (byte* p = pixels)
+                        {
+                            using var t = renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, stride) });
+                            partTextures[i] = renderService.Device.CreateShaderResourceView(t);
+                        }
                     }
-                    catch { }
+                    catch
+                    {
+                    }
+                }
+
+                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
+                success = true;
+            }
+            finally
+            {
+                if (!success)
+                {
+                    if (partTextures != null)
+                    {
+                        foreach (var srv in partTextures)
+                        {
+                            SafeDispose(srv);
+                        }
+                    }
+                    SafeDispose(ib);
+                    SafeDispose(vb);
                 }
             }
-
-            result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
 
             double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
             double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
@@ -93,11 +124,12 @@ namespace ObjLoader.Services.Models
 
             result.Parts.Add(new PartItem { Name = Texts.SplitWindow_All, Index = -1, Center = new Vector3(0, (float)(result.Height / 2.0), 0), Radius = result.Scale, FaceCount = model.Indices.Length / 3 });
 
-            for (int i = 0; i < parts.Length; i++)
+            var parts2 = model.Parts.ToArray();
+            for (int i = 0; i < parts2.Length; i++)
             {
                 if (currentVisibleParts != null && !currentVisibleParts.Contains(i)) continue;
 
-                var part = parts[i];
+                var part = parts2[i];
                 var name = string.IsNullOrEmpty(part.Name) ? string.Format(Texts.SplitWindow_PartName, i) : part.Name;
 
                 Vector3 center = Vector3.Zero;
@@ -160,6 +192,18 @@ namespace ObjLoader.Services.Models
                     }
                 }
             });
+        }
+
+        private static void SafeDispose(IDisposable? disposable)
+        {
+            if (disposable == null) return;
+            try
+            {
+                disposable.Dispose();
+            }
+            catch
+            {
+            }
         }
     }
 }

@@ -6,8 +6,7 @@ namespace ObjLoader.Cache
 {
     internal sealed class GpuResourceCacheItem : IDisposable
     {
-        private bool _disposed;
-        private readonly object _disposeLock = new object();
+        private int _disposed;
 
         public ID3D11Device Device { get; }
         public ID3D11Buffer VertexBuffer { get; }
@@ -40,31 +39,22 @@ namespace ObjLoader.Cache
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
 
-        private void Dispose(bool disposing)
-        {
-            lock (_disposeLock)
+            SafeDispose(VertexBuffer);
+            SafeDispose(IndexBuffer);
+
+            var textures = PartTextures;
+            if (textures != null)
             {
-                if (_disposed) return;
-                _disposed = true;
-
-                if (disposing)
+                for (int i = 0; i < textures.Length; i++)
                 {
-                    SafeDispose(VertexBuffer);
-                    SafeDispose(IndexBuffer);
-
-                    if (PartTextures != null)
-                    {
-                        foreach (var tex in PartTextures)
-                        {
-                            SafeDispose(tex);
-                        }
-                    }
+                    SafeDispose(textures[i]);
+                    textures[i] = null;
                 }
             }
+
+            GC.SuppressFinalize(this);
         }
 
         private static void SafeDispose(IDisposable? disposable)
@@ -81,7 +71,19 @@ namespace ObjLoader.Cache
 
         ~GpuResourceCacheItem()
         {
-            Dispose(false);
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+
+            SafeDispose(VertexBuffer);
+            SafeDispose(IndexBuffer);
+
+            var textures = PartTextures;
+            if (textures != null)
+            {
+                for (int i = 0; i < textures.Length; i++)
+                {
+                    SafeDispose(textures[i]);
+                }
+            }
         }
     }
 }
