@@ -389,13 +389,7 @@
 <data name="ScanlinePost" xml:space="preserve"><value>色調映射後應用</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>在色調映射之後應用掃描線。</value></data>
 <data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>材質設定</value></data>
-<data name="SplitWindow_Roughness" xml:space="preserve"><value>粗糙度</value></data>
-<data name="SplitWindow_Metallic" xml:space="preserve"><value>金屬度</value></data>
-<data name="SplitWindow_BaseColor" xml:space="preserve"><value>基本色</value></data>
-<data name="SplitWindow_SavePreset" xml:space="preserve"><value>保存預設</value></data>
-<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>載入預設</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>材質預設</value></data>
-<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>重置為預設值</value></data>
 <data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>字串常值未終止</value></data>
 <data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>需要'{0}'但找到'{1}'</value></data>
 <data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>需要{0}但找到{1}</value></data>
@@ -420,4 +414,12 @@
 <data name="SSRMaxSteps_Desc" xml:space="preserve"><value>光線行進迭代次數（越高品質越好但越慢）</value></data>
 <data name="SSRDepthThreshold" xml:space="preserve"><value>SSR深度閾值</value></data>
 <data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>光線命中檢測的深度緩衝容差</value></data>
+<data name="Material_Group_Standard" xml:space="preserve"><value>標準</value></data>
+<data name="Material_Roughness" xml:space="preserve"><value>粗糙度</value></data>
+<data name="Material_Metallic" xml:space="preserve"><value>金屬度</value></data>
+<data name="Material_BaseColor" xml:space="preserve"><value>基本色</value></data>
+<data name="Tip_SavePreset" xml:space="preserve"><value>保存預設</value></data>
+<data name="Tip_LoadPreset" xml:space="preserve"><value>載入預設</value></data>
+<data name="Tip_ResetMaterial" xml:space="preserve"><value>重置材質</value></data>
+<data name="Tip_ResetGroup" xml:space="preserve"><value>重置群組</value></data>
 </root>

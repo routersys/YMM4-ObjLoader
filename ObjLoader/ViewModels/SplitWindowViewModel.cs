@@ -39,6 +39,7 @@ namespace ObjLoader.ViewModels
         private bool _isNarrowMode;
 
         private PartItem? _selectedPart;
+        private MaterialSettingsViewModel? _materialSettings;
 
         public WriteableBitmap? SceneImage => _renderService.SceneImage;
 
@@ -54,13 +55,19 @@ namespace ObjLoader.ViewModels
                 if (Set(ref _selectedPart, value))
                 {
                     OnPropertyChanged(nameof(IsPartSelected));
-                    UpdateMaterialProperties();
+                    UpdateMaterialSettings();
                     UpdateFocus();
                     SavePresetCommand.RaiseCanExecuteChanged();
                     LoadPresetCommand.RaiseCanExecuteChanged();
                     ResetMaterialCommand.RaiseCanExecuteChanged();
                 }
             }
+        }
+
+        public MaterialSettingsViewModel? MaterialSettings
+        {
+            get => _materialSettings;
+            set => Set(ref _materialSettings, value);
         }
 
         public bool IsPartSelected => _selectedPart != null && _selectedPart.Index != -1;
@@ -71,31 +78,6 @@ namespace ObjLoader.ViewModels
         }
 
         public bool IsInteracting => _cameraService.IsInteracting;
-
-        public double SelectedPartRoughness
-        {
-            get => GetMaterialValue(m => m.Roughness, p => (double)p.Roughness, 0.5);
-            set => SetMaterialValue((m, v) => m.Roughness = v, value);
-        }
-
-        public double SelectedPartMetallic
-        {
-            get => GetMaterialValue(m => m.Metallic, p => (double)p.Metallic, 0.0);
-            set => SetMaterialValue((m, v) => m.Metallic = v, value);
-        }
-
-        public Color SelectedPartBaseColor
-        {
-            get => GetMaterialValue(
-                m => m.BaseColor,
-                p =>
-                {
-                    var c = p.BaseColor;
-                    return Color.FromScRgb(c.W, c.X, c.Y, c.Z);
-                },
-                Colors.White);
-            set => SetMaterialValue((m, v) => m.BaseColor = v, value);
-        }
 
         public ActionCommand AddToLayerCommand { get; }
         public ActionCommand SavePresetCommand { get; }
@@ -145,6 +127,8 @@ namespace ObjLoader.ViewModels
 
         public void Resize(int width, int height)
         {
+            if (_viewportWidth == width && _viewportHeight == height) return;
+
             _viewportWidth = width;
             _viewportHeight = height;
             IsNarrowMode = width < 600;
@@ -184,53 +168,58 @@ namespace ObjLoader.ViewModels
             _cameraService.EndInteraction();
         }
 
-        private void UpdateMaterialProperties()
+        private void UpdateMaterialSettings()
         {
-            OnPropertyChanged(nameof(SelectedPartRoughness));
-            OnPropertyChanged(nameof(SelectedPartMetallic));
-            OnPropertyChanged(nameof(SelectedPartBaseColor));
+            if (_selectedPart == null || _selectedPart.Index == -1)
+            {
+                MaterialSettings = null;
+                return;
+            }
+
+            var currentData = GetCurrentMaterialData();
+            var defaultData = GetDefaultMaterialDataFromModel(_selectedPart.Index);
+
+            var propWrapper = new PartMaterialProperties(
+                (action) =>
+                {
+                    UpdateMaterialData(action);
+                    UpdateVisuals();
+                },
+                currentData,
+                defaultData
+            );
+
+            MaterialSettings = new MaterialSettingsViewModel(propWrapper, () => _parameter.ForceUpdate());
         }
 
-        private T GetMaterialValue<T>(Func<PartMaterialData, T> materialSelector, Func<ModelPart, T> modelSelector, T defaultValue)
+        private PartMaterialData GetCurrentMaterialData()
         {
-            if (_selectedPart == null || _selectedPart.Index == -1) return defaultValue;
+            if (_selectedPart == null || _selectedPart.Index == -1) return new PartMaterialData();
 
             var layer = GetCurrentLayer();
             if (layer != null && layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
             {
-                return materialSelector(material);
+                return material;
             }
 
             if (_currentModel != null && _selectedPart.Index >= 0 && _selectedPart.Index < _currentModel.Parts.Count)
             {
-                return modelSelector(_currentModel.Parts[_selectedPart.Index]);
-            }
-
-            return defaultValue;
-        }
-
-        private void SetMaterialValue<T>(Action<PartMaterialData, T> setter, T value)
-        {
-            if (_selectedPart == null || _selectedPart.Index == -1) return;
-            var layer = GetCurrentLayer();
-            if (layer != null)
-            {
-                if (!layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
+                var part = _currentModel.Parts[_selectedPart.Index];
+                var c = part.BaseColor;
+                return new PartMaterialData
                 {
-                    material = CreateMaterialFromModel(_selectedPart.Index);
-                    layer.PartMaterials[_selectedPart.Index] = material;
-                }
-                setter(material, value);
-                _parameter.ForceUpdate();
-                UpdateVisuals();
-                OnPropertyChanged(string.Empty);
+                    Roughness = part.Roughness,
+                    Metallic = part.Metallic,
+                    BaseColor = Color.FromScRgb(c.W, c.X, c.Y, c.Z)
+                };
             }
+
+            return new PartMaterialData { Roughness = 0.5, Metallic = 0.0, BaseColor = Colors.White };
         }
 
-        private PartMaterialData CreateMaterialFromModel(int partIndex)
+        private PartMaterialData GetDefaultMaterialDataFromModel(int partIndex)
         {
             var data = new PartMaterialData { Roughness = 0.5, Metallic = 0.0, BaseColor = Colors.White };
-
             if (_currentModel != null && partIndex >= 0 && partIndex < _currentModel.Parts.Count)
             {
                 var part = _currentModel.Parts[partIndex];
@@ -240,6 +229,22 @@ namespace ObjLoader.ViewModels
                 data.BaseColor = Color.FromScRgb(c.W, c.X, c.Y, c.Z);
             }
             return data;
+        }
+
+        private void UpdateMaterialData(Action<PartMaterialData> updateAction)
+        {
+            if (_selectedPart == null || _selectedPart.Index == -1) return;
+            var layer = GetCurrentLayer();
+            if (layer != null)
+            {
+                if (!layer.PartMaterials.TryGetValue(_selectedPart.Index, out var material))
+                {
+                    material = GetDefaultMaterialDataFromModel(_selectedPart.Index);
+                    layer.PartMaterials[_selectedPart.Index] = material;
+                }
+                updateAction(material);
+                _parameter.ForceUpdate();
+            }
         }
 
         private void ResetMaterial(object? _)
@@ -252,7 +257,7 @@ namespace ObjLoader.ViewModels
                 if (layer.PartMaterials.Remove(_selectedPart.Index))
                 {
                     _parameter.ForceUpdate();
-                    UpdateMaterialProperties();
+                    UpdateMaterialSettings();
                     UpdateVisuals();
                 }
             }
@@ -269,17 +274,18 @@ namespace ObjLoader.ViewModels
 
         private void SavePreset(object? _)
         {
-            if (_selectedPart == null || _selectedPart.Index == -1) return;
+            if (MaterialSettings == null) return;
 
             var filter = $"{Texts.SplitWindow_MaterialPreset} (*.json)|*.json";
             var dlg = new SaveFileDialog { Filter = filter };
             if (dlg.ShowDialog() == true)
             {
+                var data = GetCurrentMaterialData();
                 var preset = new MaterialPreset
                 {
-                    Roughness = SelectedPartRoughness,
-                    Metallic = SelectedPartMetallic,
-                    BaseColor = SelectedPartBaseColor
+                    Roughness = data.Roughness,
+                    Metallic = data.Metallic,
+                    BaseColor = data.BaseColor
                 };
                 File.WriteAllText(dlg.FileName, JsonSerializer.Serialize(preset));
             }
@@ -299,9 +305,14 @@ namespace ObjLoader.ViewModels
                     var preset = JsonSerializer.Deserialize<MaterialPreset>(json);
                     if (preset != null)
                     {
-                        SelectedPartRoughness = preset.Roughness;
-                        SelectedPartMetallic = preset.Metallic;
-                        SelectedPartBaseColor = preset.BaseColor;
+                        UpdateMaterialData(m =>
+                        {
+                            m.Roughness = preset.Roughness;
+                            m.Metallic = preset.Metallic;
+                            m.BaseColor = preset.BaseColor;
+                        });
+                        UpdateMaterialSettings();
+                        UpdateVisuals();
                     }
                 }
                 catch { }

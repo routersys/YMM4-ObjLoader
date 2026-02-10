@@ -389,13 +389,7 @@
 <data name="ScanlinePost" xml:space="preserve"><value>Apply After Tonemap</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>Applies scanlines after tone mapping.</value></data>
 <data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>Material Settings</value></data>
-<data name="SplitWindow_Roughness" xml:space="preserve"><value>Roughness</value></data>
-<data name="SplitWindow_Metallic" xml:space="preserve"><value>Metallic</value></data>
-<data name="SplitWindow_BaseColor" xml:space="preserve"><value>Base Color</value></data>
-<data name="SplitWindow_SavePreset" xml:space="preserve"><value>Save Preset</value></data>
-<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Load Preset</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Material Preset</value></data>
-<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Reset to Default</value></data>
 <data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>Unterminated string literal</value></data>
 <data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>Expected '{0}' but found '{1}'</value></data>
 <data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>Expected {0} but found {1}</value></data>
@@ -420,4 +414,12 @@
 <data name="SSRMaxSteps_Desc" xml:space="preserve"><value>Number of ray marching iterations for screen-space reflections</value></data>
 <data name="SSRDepthThreshold" xml:space="preserve"><value>SSR Depth Threshold</value></data>
 <data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>Depth buffer tolerance for ray hit detection</value></data>
+<data name="Material_Group_Standard" xml:space="preserve"><value>Standard</value></data>
+<data name="Material_Roughness" xml:space="preserve"><value>Roughness</value></data>
+<data name="Material_Metallic" xml:space="preserve"><value>Metallic</value></data>
+<data name="Material_BaseColor" xml:space="preserve"><value>Base Color</value></data>
+<data name="Tip_SavePreset" xml:space="preserve"><value>Save Preset</value></data>
+<data name="Tip_LoadPreset" xml:space="preserve"><value>Load Preset</value></data>
+<data name="Tip_ResetMaterial" xml:space="preserve"><value>Reset Material</value></data>
+<data name="Tip_ResetGroup" xml:space="preserve"><value>Reset Group</value></data>
 </root>

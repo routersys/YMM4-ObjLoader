@@ -389,13 +389,7 @@
 <data name="ScanlinePost" xml:space="preserve"><value>色调映射后应用</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>在色调映射之后应用扫描线。</value></data>
 <data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>材质设置</value></data>
-<data name="SplitWindow_Roughness" xml:space="preserve"><value>粗糙度</value></data>
-<data name="SplitWindow_Metallic" xml:space="preserve"><value>金属度</value></data>
-<data name="SplitWindow_BaseColor" xml:space="preserve"><value>基本色</value></data>
-<data name="SplitWindow_SavePreset" xml:space="preserve"><value>保存预设</value></data>
-<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>加载预设</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>材质预设</value></data>
-<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>重置为默认值</value></data>
 <data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>字符串字面量未终止</value></data>
 <data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>需要'{0}'但找到'{1}'</value></data>
 <data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>需要{0}但找到{1}</value></data>
@@ -420,4 +414,12 @@
 <data name="SSRMaxSteps_Desc" xml:space="preserve"><value>光线行进迭代次数（越高质量越好但越慢）</value></data>
 <data name="SSRDepthThreshold" xml:space="preserve"><value>SSR深度阈值</value></data>
 <data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>光线命中检测的深度缓冲容差</value></data>
+<data name="Material_Group_Standard" xml:space="preserve"><value>标准</value></data>
+<data name="Material_Roughness" xml:space="preserve"><value>粗糙度</value></data>
+<data name="Material_Metallic" xml:space="preserve"><value>金属度</value></data>
+<data name="Material_BaseColor" xml:space="preserve"><value>基本色</value></data>
+<data name="Tip_SavePreset" xml:space="preserve"><value>保存预设</value></data>
+<data name="Tip_LoadPreset" xml:space="preserve"><value>加载预设</value></data>
+<data name="Tip_ResetMaterial" xml:space="preserve"><value>重置材质</value></data>
+<data name="Tip_ResetGroup" xml:space="preserve"><value>重置组</value></data>
 </root>

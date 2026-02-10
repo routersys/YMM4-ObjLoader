@@ -19,6 +19,8 @@ namespace ObjLoader.Settings
 
         public List<WorldParameter> WorldParameters { get; set; } = new();
 
+        public Dictionary<string, bool> MaterialExpanderStates { get; set; } = new();
+
         public WorldParameter CurrentWorld
         {
             get

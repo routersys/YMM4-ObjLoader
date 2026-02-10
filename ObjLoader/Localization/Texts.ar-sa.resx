@@ -389,13 +389,7 @@
 <data name="ScanlinePost" xml:space="preserve"><value>تطبيق بعد تخطيط النغمة</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>يطبق خطوط المسح بعد تخطيط النغمة.</value></data>
 <data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>إعدادات المواد</value></data>
-<data name="SplitWindow_Roughness" xml:space="preserve"><value>خشونة</value></data>
-<data name="SplitWindow_Metallic" xml:space="preserve"><value>معدني</value></data>
-<data name="SplitWindow_BaseColor" xml:space="preserve"><value>اللون الأساسي</value></data>
-<data name="SplitWindow_SavePreset" xml:space="preserve"><value>حفظ الإعداد المسبق</value></data>
-<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>تحميل الإعداد المسبق</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>إعداد المواد المسبق</value></data>
-<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>إعادة التعيين إلى الافتراضي</value></data>
 <data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>سلسلة نصية غير منتهية</value></data>
 <data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>متوقع '{0}' لكن وجد '{1}'</value></data>
 <data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>متوقع {0} لكن وجد {1}</value></data>
@@ -420,4 +414,12 @@
 <data name="SSRMaxSteps_Desc" xml:space="preserve"><value>عدد تكرارات تتبع الأشعة (أعلى = جودة أفضل لكن أبطأ)</value></data>
 <data name="SSRDepthThreshold" xml:space="preserve"><value>عتبة عمق SSR</value></data>
 <data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>تفاوت المخزن المؤقت للعمق لاكتشاف الضربة</value></data>
+<data name="Material_Group_Standard" xml:space="preserve"><value>قياسي</value></data>
+<data name="Material_Roughness" xml:space="preserve"><value>خشونة</value></data>
+<data name="Material_Metallic" xml:space="preserve"><value>معدني</value></data>
+<data name="Material_BaseColor" xml:space="preserve"><value>اللون الأساسي</value></data>
+<data name="Tip_SavePreset" xml:space="preserve"><value>حفظ الإعداد المسبق</value></data>
+<data name="Tip_LoadPreset" xml:space="preserve"><value>تحميل الإعداد المسبق</value></data>
+<data name="Tip_ResetMaterial" xml:space="preserve"><value>إعادة تعيين المواد</value></data>
+<data name="Tip_ResetGroup" xml:space="preserve"><value>إعادة تعيين المجموعة</value></data>
 </root>

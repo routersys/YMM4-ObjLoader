@@ -389,13 +389,7 @@
 <data name="ScanlinePost" xml:space="preserve"><value>Aplicar después de tonemap</value></data>
 <data name="ScanlinePost_Desc" xml:space="preserve"><value>Aplica líneas de escaneo después del mapeo de tonos.</value></data>
 <data name="SplitWindow_MaterialSettings" xml:space="preserve"><value>Configuración de material</value></data>
-<data name="SplitWindow_Roughness" xml:space="preserve"><value>Rugosidad</value></data>
-<data name="SplitWindow_Metallic" xml:space="preserve"><value>Metálico</value></data>
-<data name="SplitWindow_BaseColor" xml:space="preserve"><value>Color base</value></data>
-<data name="SplitWindow_SavePreset" xml:space="preserve"><value>Guardar preajuste</value></data>
-<data name="SplitWindow_LoadPreset" xml:space="preserve"><value>Cargar preajuste</value></data>
 <data name="SplitWindow_MaterialPreset" xml:space="preserve"><value>Preajuste de material</value></data>
-<data name="SplitWindow_ResetMaterial" xml:space="preserve"><value>Restablecer a los valores predeterminados</value></data>
 <data name="ShaderParser_UnterminatedString" xml:space="preserve"><value>Literal de cadena sin terminar</value></data>
 <data name="ShaderParser_ExpectedTextFound" xml:space="preserve"><value>Se esperaba '{0}' pero se encontró '{1}'</value></data>
 <data name="ShaderParser_ExpectedTypeFound" xml:space="preserve"><value>Se esperaba {0} pero se encontró {1}</value></data>
@@ -420,4 +414,12 @@
 <data name="SSRMaxSteps_Desc" xml:space="preserve"><value>Número de iteraciones de ray marching (mayor = mejor calidad pero más lento)</value></data>
 <data name="SSRDepthThreshold" xml:space="preserve"><value>Umbral de profundidad SSR</value></data>
 <data name="SSRDepthThreshold_Desc" xml:space="preserve"><value>Tolerancia del búfer de profundidad para la detección de impactos</value></data>
+<data name="Material_Group_Standard" xml:space="preserve"><value>Estándar</value></data>
+<data name="Material_Roughness" xml:space="preserve"><value>Rugosidad</value></data>
+<data name="Material_Metallic" xml:space="preserve"><value>Metálico</value></data>
+<data name="Material_BaseColor" xml:space="preserve"><value>Color base</value></data>
+<data name="Tip_SavePreset" xml:space="preserve"><value>Guardar preajuste</value></data>
+<data name="Tip_LoadPreset" xml:space="preserve"><value>Cargar preajuste</value></data>
+<data name="Tip_ResetMaterial" xml:space="preserve"><value>Restablecer material</value></data>
+<data name="Tip_ResetGroup" xml:space="preserve"><value>Restablecer grupo</value></data>
 </root>
