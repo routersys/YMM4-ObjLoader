@@ -411,7 +411,8 @@ namespace ObjLoader.ViewModels
                 true,
                 true,
                 _modelScale,
-                _cameraService.IsInteracting);
+                _cameraService.IsInteracting,
+                false);
         }
 
         private void LoadModel()

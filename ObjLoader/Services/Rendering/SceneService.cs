@@ -145,7 +145,7 @@ namespace ObjLoader.Services.Rendering
             }
         }
 
-        public void Render(PerspectiveCamera camera, double currentTime, int width, int height, bool isPilotView, Color themeColor, bool isWireframe, bool isGrid, bool isInfinite, bool isInteracting)
+        public void Render(PerspectiveCamera camera, double currentTime, int width, int height, bool isPilotView, Color themeColor, bool isWireframe, bool isGrid, bool isInfinite, bool isInteracting, bool enableShadow = true)
         {
             LoadModel();
 
@@ -319,7 +319,8 @@ namespace ObjLoader.Services.Rendering
                 isGrid,
                 isInfinite,
                 ModelScale,
-                isInteracting);
+                isInteracting,
+                enableShadow);
         }
 
         public void Dispose()

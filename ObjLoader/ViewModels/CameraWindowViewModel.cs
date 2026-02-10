@@ -566,7 +566,7 @@ namespace ObjLoader.ViewModels
         private void UpdateD3DScene()
         {
             bool isInteracting = !string.IsNullOrEmpty(HoveredDirectionName);
-            _sceneService.Render(Camera, CurrentTime, _viewportWidth, _viewportHeight, IsPilotView, _themeColor, _isWireframe, _isGridVisible, _isInfiniteGrid, false);
+            _sceneService.Render(Camera, CurrentTime, _viewportWidth, _viewportHeight, IsPilotView, _themeColor, _isWireframe, _isGridVisible, _isInfiniteGrid, false, false);
         }
 
         private void UpdateSceneCameraVisual()
