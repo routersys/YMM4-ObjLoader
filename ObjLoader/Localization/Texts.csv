@@ -365,11 +365,11 @@ SSRMaxSteps,Maximum ray marching steps for SSR,SSR最大ステップ数,SSR Max 
 SSRMaxSteps_Desc,Number of ray marching iterations (higher = better quality but slower),レイマーチングの反復回数（高いほど高品質だが低速）,Number of ray marching iterations for screen-space reflections,光线行进迭代次数（越高质量越好但越慢）,光線行進迭代次數（越高品質越好但越慢）,레이 마칭 반복 횟수 (높을수록 품질 향상하지만 느림),Número de iteraciones de ray marching (mayor = mejor calidad pero más lento),عدد تكرارات تتبع الأشعة (أعلى = جودة أفضل لكن أبطأ),Jumlah iterasi ray marching (lebih tinggi = kualitas lebih baik tapi lebih lambat),
 SSRDepthThreshold,SSR depth threshold tolerance,SSR深度許容範囲,SSR Depth Threshold,SSR深度阈值,SSR深度閾值,SSR 깊이 임계값,Umbral de profundidad SSR,عتبة عمق SSR,Ambang kedalaman SSR,
 SSRDepthThreshold_Desc,Depth buffer tolerance for ray hit detection,ヒット検出のための深度バッファ許容値,Depth buffer tolerance for ray hit detection,光线命中检测的深度缓冲容差,光線命中檢測的深度緩衝容差,레이 적중 감지를 위한 깊이 버퍼 허용 오차,Tolerancia del búfer de profundidad para la detección de impactos,تفاوت المخزن المؤقت للعمق لاكتشاف الضربة,Toleransi buffer kedalaman untuk deteksi hit,
-Material_Group_Standard,Group Name,標準,Standard,标准,標準,표준,Estándar,قياسي,Standar
-Material_Roughness,Setting Label,粗さ,Roughness,粗糙度,粗糙度,거칠기,Rugosidad,خشونة,Kekasaran
-Material_Metallic,Setting Label,メタリック,Metallic,金属度,金屬度,메탈릭,Metálico,معدني,Metallic
-Material_BaseColor,Setting Label,基本色,Base Color,基本色,基本色,기본 색상,Color base,اللون الأساسي,Warna Dasar
-Tip_SavePreset,Tooltip,プリセットを保存,Save Preset,保存预设,保存預設,프리셋 저장,Guardar preajuste,حفظ الإعداد المسبق,Simpan Preset
-Tip_LoadPreset,Tooltip,プリセットを読み込む,Load Preset,加载预设,載入預設,프리셋 불러오기,Cargar preajuste,تحميل الإعداد المسبق,Muat Preset
-Tip_ResetMaterial,Tooltip,マテリアルをリセット,Reset Material,重置材质,重置材質,재질 초기화,Restablecer material,إعادة تعيين المواد,Reset Material
-Tip_ResetGroup,Tooltip,グループをリセット,Reset Group,重置组,重置群組,그룹 초기화,Restablecer grupo,إعادة تعيين المجموعة,Reset Grup
+Material_Group_Standard,Group Name,標準,Standard,标准,標準,표준,Estándar,قياسي,Standar,
+Material_Roughness,Setting Label,粗さ,Roughness,粗糙度,粗糙度,거칠기,Rugosidad,خشونة,Kekasaran,
+Material_Metallic,Setting Label,メタリック,Metallic,金属度,金屬度,메탈릭,Metálico,معدني,Metallic,
+Material_BaseColor,Setting Label,基本色,Base Color,基本色,基本色,기본 색상,Color base,اللون الأساسي,Warna Dasar,
+Tip_SavePreset,Tooltip,プリセットを保存,Save Preset,保存预设,保存預設,프리셋 저장,Guardar preajuste,حفظ الإعداد المسبق,Simpan Preset,
+Tip_LoadPreset,Tooltip,プリセットを読み込む,Load Preset,加载预设,載入預設,프리셋 불러오기,Cargar preajuste,تحميل الإعداد المسبق,Muat Preset,
+Tip_ResetMaterial,Tooltip,マテリアルをリセット,Reset Material,重置材质,重置材質,재질 초기화,Restablecer material,إعادة تعيين المواد,Reset Material,
+Tip_ResetGroup,Tooltip,グループをリセット,Reset Group,重置组,重置群組,그룹 초기화,Restablecer grupo,إعادة تعيين المجموعة,Reset Grup,
