@@ -422,4 +422,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>プリセットを読み込む</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>マテリアルをリセット</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>グループをリセット</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>3Dモデル</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>サンドボックス設定</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>サンドボックスを有効にする</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>許可されたディレクトリ</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>追加</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>削除</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>クリア</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>リソース管理</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>監査間隔 (分)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>リーク判定閾値 (分)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>自動監査を有効にする</value></data>
+<data name="RunAudit" xml:space="preserve"><value>今すぐ監査を実行</value></data>
+<data name="AuditResults" xml:space="preserve"><value>監査結果</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>アクティブなリソース:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>孤立したリソース:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>総割り当て数:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>総破棄数:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>推定アクティブサイズ (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>リークの可能性があるリソース</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>孤立したリソース一覧</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>キー</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>タイプ</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>経過時間</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>サイズ</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>スタックトレース</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>作成日時</value></data>
 </root>

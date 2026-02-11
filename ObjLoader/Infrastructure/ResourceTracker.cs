@@ -70,18 +70,21 @@ namespace ObjLoader.Infrastructure
             if (IsDisposed) return;
 
             var snapshot = _allocations.ToArray();
+            int removedCount = 0;
+
             foreach (var kvp in snapshot)
             {
                 if (_allocations.TryRemove(kvp.Key, out var allocation))
                 {
                     allocation.MarkDisposed();
                     RecordDisposal(kvp.Key, allocation);
+                    removedCount++;
                 }
             }
 
             lock (_statsLock)
             {
-                _totalDisposals += snapshot.Length;
+                _totalDisposals += removedCount;
                 _totalEstimatedBytes = 0;
             }
         }
@@ -89,13 +92,20 @@ namespace ObjLoader.Infrastructure
         public List<ResourceAllocation> GetLeakedResources(TimeSpan maxAge)
         {
             var leaked = new List<ResourceAllocation>();
+            if (IsDisposed) return leaked;
 
             foreach (var kvp in _allocations)
             {
-                var alloc = kvp.Value;
-                if (!alloc.IsDisposed && alloc.Age > maxAge && alloc.IsAlive())
+                try
                 {
-                    leaked.Add(alloc);
+                    var alloc = kvp.Value;
+                    if (alloc != null && !alloc.IsDisposed && alloc.Age > maxAge && alloc.IsAlive())
+                    {
+                        leaked.Add(alloc);
+                    }
+                }
+                catch
+                {
                 }
             }
 
@@ -105,15 +115,29 @@ namespace ObjLoader.Infrastructure
         public List<ResourceAllocation> GetOrphanedResources()
         {
             var orphaned = new List<ResourceAllocation>();
+            if (IsDisposed) return orphaned;
+
+            var keysToRemove = new List<string>();
 
             foreach (var kvp in _allocations)
             {
-                var alloc = kvp.Value;
-                if (!alloc.IsDisposed && !alloc.IsAlive())
+                try
                 {
-                    orphaned.Add(alloc);
-                    _allocations.TryRemove(kvp.Key, out _);
+                    var alloc = kvp.Value;
+                    if (alloc != null && !alloc.IsDisposed && !alloc.IsAlive())
+                    {
+                        orphaned.Add(alloc);
+                        keysToRemove.Add(kvp.Key);
+                    }
                 }
+                catch
+                {
+                }
+            }
+
+            foreach (var key in keysToRemove)
+            {
+                _allocations.TryRemove(key, out _);
             }
 
             return orphaned;
@@ -127,18 +151,24 @@ namespace ObjLoader.Infrastructure
 
             foreach (var kvp in _allocations)
             {
-                var alloc = kvp.Value;
-                if (!alloc.IsDisposed)
+                try
                 {
-                    if (alloc.IsAlive())
+                    var alloc = kvp.Value;
+                    if (alloc != null && !alloc.IsDisposed)
                     {
-                        activeCount++;
-                        activeBytes += alloc.EstimatedSizeBytes;
+                        if (alloc.IsAlive())
+                        {
+                            activeCount++;
+                            activeBytes += alloc.EstimatedSizeBytes;
+                        }
+                        else
+                        {
+                            orphanedCount++;
+                        }
                     }
-                    else
-                    {
-                        orphanedCount++;
-                    }
+                }
+                catch
+                {
                 }
             }
 
@@ -170,25 +200,32 @@ namespace ObjLoader.Infrastructure
 
         private void RecordDisposal(string key, ResourceAllocation allocation)
         {
-            _disposedHistory.AddOrUpdate(
-                key,
-                _ => new List<ResourceAllocation> { allocation },
-                (_, list) =>
-                {
-                    lock (list)
+            try
+            {
+                _disposedHistory.AddOrUpdate(
+                    key,
+                    _ => new List<ResourceAllocation> { allocation },
+                    (_, list) =>
                     {
-                        list.Add(allocation);
-                        while (list.Count > 10)
+                        lock (list)
                         {
-                            list.RemoveAt(0);
+                            list.Add(allocation);
+                            while (list.Count > 10)
+                            {
+                                list.RemoveAt(0);
+                            }
                         }
-                    }
-                    return list;
-                });
+                        return list;
+                    });
+            }
+            catch
+            {
+            }
         }
 
         public void PurgeHistory()
         {
+            if (IsDisposed) return;
             _disposedHistory.Clear();
         }
 

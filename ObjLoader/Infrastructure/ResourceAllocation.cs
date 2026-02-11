@@ -17,8 +17,8 @@ namespace ObjLoader.Infrastructure
             Key = key ?? string.Empty;
             ResourceType = resourceType ?? "Unknown";
             CreatedAt = DateTime.UtcNow;
-            EstimatedSizeBytes = estimatedSizeBytes;
-            ResourceReference = new WeakReference<IDisposable>(resource);
+            EstimatedSizeBytes = Math.Max(0, estimatedSizeBytes);
+            ResourceReference = new WeakReference<IDisposable>(resource ?? throw new ArgumentNullException(nameof(resource)));
             IsDisposed = false;
 
             try
@@ -39,7 +39,14 @@ namespace ObjLoader.Infrastructure
         public bool IsAlive()
         {
             if (IsDisposed) return false;
-            return ResourceReference.TryGetTarget(out _);
+            try
+            {
+                return ResourceReference.TryGetTarget(out _);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public TimeSpan Age => DateTime.UtcNow - CreatedAt;

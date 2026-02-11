@@ -422,4 +422,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>加载预设</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>重置材质</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>重置组</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>3D模型</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>沙盒设置</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>启用沙盒</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>允许的目录</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>添加</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>删除</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>清除</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>资源管理</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>审计间隔 (分钟)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>泄漏阈值 (分钟)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>启用自动审计</value></data>
+<data name="RunAudit" xml:space="preserve"><value>立即运行审计</value></data>
+<data name="AuditResults" xml:space="preserve"><value>审计结果</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>活动资源:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>孤立资源:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>总分配数:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>总释放数:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>估计活动大小 (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>可能泄漏的资源</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>孤立资源列表</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>键</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>类型</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>时长</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>大小</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>堆栈跟踪</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>创建时间</value></data>
 </root>

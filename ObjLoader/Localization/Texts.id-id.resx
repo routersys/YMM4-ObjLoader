@@ -421,4 +421,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>Muat Preset</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>Reset Material</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>Reset Grup</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>Model 3D</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>Pengaturan Kotak Pasir</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>Aktifkan Sandbox</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>Direktori yang Diizinkan</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>Tambah</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>Hapus</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>Bersihkan</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>Manajemen Sumber Daya</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>Interval Audit (mnt)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>Ambang Kebocoran (mnt)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>Aktifkan Audit Otomatis</value></data>
+<data name="RunAudit" xml:space="preserve"><value>Jalankan Audit Sekarang</value></data>
+<data name="AuditResults" xml:space="preserve"><value>Hasil Audit</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>Sumber Daya Aktif:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>Sumber Daya Yatim:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>Total Alokasi:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>Total Pembuangan:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>Perkiraan Ukuran Aktif (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>Sumber Daya Berpotensi Bocor</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>Daftar Sumber Daya Yatim</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>Kunci</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>Tipe</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>Usia</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>Ukuran</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>Stack Trace</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>Dibuat Pada</value></data>
 </root>

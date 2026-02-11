@@ -422,4 +422,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>Load Preset</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>Reset Material</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>Reset Group</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>3D Model</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>Sandbox Settings</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>Enable Sandbox</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>Allowed Directories</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>Add</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>Remove</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>Clear</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>Resource Management</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>Audit Interval (min)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>Leak Threshold (min)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>Enable Auto Audit</value></data>
+<data name="RunAudit" xml:space="preserve"><value>Run Audit Now</value></data>
+<data name="AuditResults" xml:space="preserve"><value>Audit Results</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>Active Resources:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>Orphaned Resources:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>Total Allocations:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>Total Disposals:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>Estimated Active Size (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>Potentially Leaked Resources</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>Orphaned Resources List</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>Key</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>Type</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>Age</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>Size</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>Stack Trace</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>Created At</value></data>
 </root>

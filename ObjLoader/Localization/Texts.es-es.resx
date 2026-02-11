@@ -422,4 +422,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>Cargar preajuste</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>Restablecer material</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>Restablecer grupo</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>Modelo 3D</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>Configuración de Sandbox</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>Habilitar Sandbox</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>Directorios permitidos</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>Añadir</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>Eliminar</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>Limpiar</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>Gestión de recursos</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>Intervalo de auditoría (min)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>Umbral de fuga (min)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>Habilitar auditoría automática</value></data>
+<data name="RunAudit" xml:space="preserve"><value>Ejecutar auditoría ahora</value></data>
+<data name="AuditResults" xml:space="preserve"><value>Resultados de la auditoría</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>Recursos activos:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>Recursos huérfanos:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>Asignaciones totales:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>Disposiciones totales:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>Tamaño activo estimado (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>Recursos potencialmente filtrados</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>Lista de recursos huérfanos</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>Clave</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>Tipo</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>Edad</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>Tamaño</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>Seguimiento de pila</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>Creado en</value></data>
 </root>

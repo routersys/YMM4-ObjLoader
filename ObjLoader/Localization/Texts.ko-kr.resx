@@ -422,4 +422,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>프리셋 불러오기</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>재질 초기화</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>그룹 초기화</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>3D 모델</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>샌드박스 설정</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>샌드박스 활성화</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>허용된 디렉토리</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>추가</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>삭제</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>지우기</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>리소스 관리</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>감사 간격 (분)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>누출 임계값 (분)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>자동 감사 활성화</value></data>
+<data name="RunAudit" xml:space="preserve"><value>지금 감사 실행</value></data>
+<data name="AuditResults" xml:space="preserve"><value>감사 결과</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>활성 리소스:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>고립된 리소스:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>총 할당 수:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>총 폐기 수:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>예상 활성 크기 (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>누출 가능성이 있는 리소스</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>고립된 리소스 목록</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>키</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>유형</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>경과 시간</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>크기</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>스택 트레이스</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>생성 일시</value></data>
 </root>

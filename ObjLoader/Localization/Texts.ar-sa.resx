@@ -422,4 +422,30 @@
 <data name="Tip_LoadPreset" xml:space="preserve"><value>تحميل الإعداد المسبق</value></data>
 <data name="Tip_ResetMaterial" xml:space="preserve"><value>إعادة تعيين المواد</value></data>
 <data name="Tip_ResetGroup" xml:space="preserve"><value>إعادة تعيين المجموعة</value></data>
+<data name="Settings_3DModel" xml:space="preserve"><value>نموذج ثلاثي الأبعاد</value></data>
+<data name="SandboxSettings" xml:space="preserve"><value>إعدادات صندوق الرمل</value></data>
+<data name="EnableSandbox" xml:space="preserve"><value>تمكين صندوق الرمل</value></data>
+<data name="AllowedDirectories" xml:space="preserve"><value>الدلائل المسموح بها</value></data>
+<data name="AddDirectory" xml:space="preserve"><value>إضافة</value></data>
+<data name="RemoveDirectory" xml:space="preserve"><value>إزالة</value></data>
+<data name="ClearDirectories" xml:space="preserve"><value>مسح</value></data>
+<data name="ResourceManagement" xml:space="preserve"><value>إدارة الموارد</value></data>
+<data name="AuditInterval" xml:space="preserve"><value>فاصل التدقيق (دقيقة)</value></data>
+<data name="LeakThreshold" xml:space="preserve"><value>عتبة التسرب (دقيقة)</value></data>
+<data name="EnableAutoAudit" xml:space="preserve"><value>تمكين التدقيق التلقائي</value></data>
+<data name="RunAudit" xml:space="preserve"><value>تشغيل التدقيق الآن</value></data>
+<data name="AuditResults" xml:space="preserve"><value>نتائج التدقيق</value></data>
+<data name="ActiveResources" xml:space="preserve"><value>الموارد النشطة:</value></data>
+<data name="OrphanedResources" xml:space="preserve"><value>الموارد اليتيمة:</value></data>
+<data name="TotalAllocations" xml:space="preserve"><value>إجمالي المخصصات:</value></data>
+<data name="TotalDisposals" xml:space="preserve"><value>إجمالي التخلص:</value></data>
+<data name="EstimatedActiveBytes" xml:space="preserve"><value>الحجم النشط المقدر (B):</value></data>
+<data name="LeakedResourcesList" xml:space="preserve"><value>الموارد المحتمل تسربها</value></data>
+<data name="OrphanedResourcesList" xml:space="preserve"><value>قائمة الموارد اليتيمة</value></data>
+<data name="KeyHeader" xml:space="preserve"><value>مفتاح</value></data>
+<data name="TypeHeader" xml:space="preserve"><value>نوع</value></data>
+<data name="AgeHeader" xml:space="preserve"><value>عمر</value></data>
+<data name="SizeHeader" xml:space="preserve"><value>حجم</value></data>
+<data name="StackTraceHeader" xml:space="preserve"><value>تتبع المكدس</value></data>
+<data name="CreatedAtHeader" xml:space="preserve"><value>أنشئ في</value></data>
 </root>

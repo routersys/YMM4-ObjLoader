@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 namespace ObjLoader.Infrastructure
@@ -23,6 +25,8 @@ namespace ObjLoader.Infrastructure
 
         private bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
+        public bool IsRunning => _isRunning;
+
         public void Start()
         {
             Start(_auditInterval);
@@ -31,10 +35,29 @@ namespace ObjLoader.Infrastructure
         public void Start(TimeSpan interval)
         {
             if (IsDisposed) return;
+            if (interval.TotalMilliseconds < 100) interval = TimeSpan.FromMinutes(1);
 
             lock (_timerLock)
             {
-                if (_isRunning) return;
+                if (_isRunning && _auditInterval == interval) return;
+
+                StopInternal();
+
+                _auditInterval = interval;
+                _auditTimer = new Timer(OnAuditTick, null, interval, interval);
+                _isRunning = true;
+            }
+        }
+
+        public void Restart(TimeSpan interval)
+        {
+            if (IsDisposed) return;
+            if (interval.TotalMilliseconds < 100) interval = TimeSpan.FromMinutes(1);
+
+            lock (_timerLock)
+            {
+                StopInternal();
+
                 _auditInterval = interval;
                 _auditTimer = new Timer(OnAuditTick, null, interval, interval);
                 _isRunning = true;
@@ -45,15 +68,30 @@ namespace ObjLoader.Infrastructure
         {
             lock (_timerLock)
             {
-                _isRunning = false;
-                _auditTimer?.Change(Timeout.Infinite, Timeout.Infinite);
-                _auditTimer?.Dispose();
+                StopInternal();
+            }
+        }
+
+        private void StopInternal()
+        {
+            _isRunning = false;
+            if (_auditTimer != null)
+            {
+                try
+                {
+                    _auditTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    _auditTimer.Dispose();
+                }
+                catch
+                {
+                }
                 _auditTimer = null;
             }
         }
 
         public void SetLeakThreshold(TimeSpan threshold)
         {
+            if (threshold.TotalMilliseconds < 1000) threshold = TimeSpan.FromMinutes(1);
             _leakThreshold = threshold;
         }
 
@@ -61,50 +99,69 @@ namespace ObjLoader.Infrastructure
         {
             if (IsDisposed) return AuditReport.Empty;
 
-            var tracker = ResourceTracker.Instance;
-            var stats = tracker.GetStats();
-            var leaked = tracker.GetLeakedResources(_leakThreshold);
-            var orphaned = tracker.GetOrphanedResources();
-
-            var report = new AuditReport
-            {
-                Timestamp = DateTime.UtcNow,
-                ActiveResources = stats.ActiveResources,
-                OrphanedResources = stats.OrphanedResources + orphaned.Count,
-                TotalAllocations = stats.TotalAllocations,
-                TotalDisposals = stats.TotalDisposals,
-                EstimatedActiveBytes = stats.EstimatedActiveBytes,
-                LeakedResources = leaked,
-                OrphanedResourceList = orphaned
-            };
-
-            foreach (var leak in leaked)
-            {
-                Debug.WriteLine(
-                    $"[ResourceAuditor] Potential leak: Key={leak.Key}, Type={leak.ResourceType}, Age={leak.Age.TotalMinutes:F1}min, Size={leak.EstimatedSizeBytes}B");
-            }
-
-            foreach (var orphan in orphaned)
-            {
-                Debug.WriteLine(
-                    $"[ResourceAuditor] Orphaned: Key={orphan.Key}, Type={orphan.ResourceType}, CreatedAt={orphan.CreatedAt:O}");
-            }
-
-            if (leaked.Count > 0 || orphaned.Count > 0)
-            {
-                Debug.WriteLine(
-                    $"[ResourceAuditor] Summary: Active={report.ActiveResources}, Leaked={leaked.Count}, Orphaned={orphaned.Count}, TotalAlloc={report.TotalAllocations}, TotalDispose={report.TotalDisposals}, EstBytes={report.EstimatedActiveBytes}");
-            }
-
             try
             {
-                AuditCompleted?.Invoke(report);
-            }
-            catch
-            {
-            }
+                var tracker = ResourceTracker.Instance;
+                var stats = tracker.GetStats();
+                var leaked = tracker.GetLeakedResources(_leakThreshold);
+                var orphaned = tracker.GetOrphanedResources();
 
-            return report;
+                var report = new AuditReport
+                {
+                    Timestamp = DateTime.UtcNow,
+                    ActiveResources = stats.ActiveResources,
+                    OrphanedResources = stats.OrphanedResources + orphaned.Count,
+                    TotalAllocations = stats.TotalAllocations,
+                    TotalDisposals = stats.TotalDisposals,
+                    EstimatedActiveBytes = stats.EstimatedActiveBytes,
+                    LeakedResources = leaked,
+                    OrphanedResourceList = orphaned
+                };
+
+                foreach (var leak in leaked)
+                {
+                    Debug.WriteLine(
+                        $"[ResourceAuditor] Potential leak: Key={leak.Key}, Type={leak.ResourceType}, Age={leak.Age.TotalMinutes:F1}min, Size={leak.EstimatedSizeBytes}B");
+                }
+
+                foreach (var orphan in orphaned)
+                {
+                    Debug.WriteLine(
+                        $"[ResourceAuditor] Orphaned: Key={orphan.Key}, Type={orphan.ResourceType}, CreatedAt={orphan.CreatedAt:O}");
+                }
+
+                if (leaked.Count > 0 || orphaned.Count > 0)
+                {
+                    Debug.WriteLine(
+                        $"[ResourceAuditor] Summary: Active={report.ActiveResources}, Leaked={leaked.Count}, Orphaned={orphaned.Count}, TotalAlloc={report.TotalAllocations}, TotalDispose={report.TotalDisposals}, EstBytes={report.EstimatedActiveBytes}");
+                }
+
+                RaiseAuditCompleted(report);
+
+                return report;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[ResourceAuditor] RunAudit failed: {ex.Message}");
+                return AuditReport.Empty;
+            }
+        }
+
+        private void RaiseAuditCompleted(AuditReport report)
+        {
+            var handler = AuditCompleted;
+            if (handler == null) return;
+
+            foreach (var d in handler.GetInvocationList())
+            {
+                try
+                {
+                    ((Action<AuditReport>)d)(report);
+                }
+                catch
+                {
+                }
+            }
         }
 
         private void OnAuditTick(object? state)
@@ -117,7 +174,7 @@ namespace ObjLoader.Infrastructure
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[ResourceAuditor] Audit failed: {ex.Message}");
+                Debug.WriteLine($"[ResourceAuditor] Audit tick failed: {ex.Message}");
             }
         }
 
@@ -125,6 +182,7 @@ namespace ObjLoader.Infrastructure
         {
             if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             Stop();
+            AuditCompleted = null;
         }
     }
 
