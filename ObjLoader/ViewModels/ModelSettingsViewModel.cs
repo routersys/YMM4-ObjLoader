@@ -1,5 +1,4 @@
 ﻿using ObjLoader.Infrastructure;
-using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
@@ -177,6 +176,17 @@ namespace ObjLoader.ViewModels
         public int MaxPartsLimit => ModelSettings.MaxPartsLimit;
 
         public ICommand RunAuditCommand { get; }
+        public ICommand ResetMaxFileSizeMBCommand { get; }
+        public ICommand ResetMaxGpuMemoryPerModelMBCommand { get; }
+        public ICommand ResetMaxTotalGpuMemoryMBCommand { get; }
+        public ICommand ResetMaxVerticesCommand { get; }
+        public ICommand ResetMaxIndicesCommand { get; }
+        public ICommand ResetMaxPartsCommand { get; }
+        public ICommand ResetAuditIntervalMinutesCommand { get; }
+        public ICommand ResetLeakThresholdMinutesCommand { get; }
+        public ICommand ResetResourceLimitsCommand { get; }
+        public ICommand ResetComplexityLimitsCommand { get; }
+        public ICommand ResetAuditSettingsCommand { get; }
 
         private AuditReport _latestReport = AuditReport.Empty;
         public AuditReport LatestReport
@@ -282,6 +292,35 @@ namespace ObjLoader.ViewModels
                         LatestReport = AuditReport.Empty;
                     }
                 });
+
+            ResetMaxFileSizeMBCommand = new ActionCommand(_ => true, _ => MaxFileSizeMB = ModelSettings.DefaultMaxFileSizeMB);
+            ResetMaxGpuMemoryPerModelMBCommand = new ActionCommand(_ => true, _ => MaxGpuMemoryPerModelMB = ModelSettings.DefaultMaxGpuMemoryPerModelMB);
+            ResetMaxTotalGpuMemoryMBCommand = new ActionCommand(_ => true, _ => MaxTotalGpuMemoryMB = ModelSettings.DefaultMaxTotalGpuMemoryMB);
+            ResetMaxVerticesCommand = new ActionCommand(_ => true, _ => MaxVertices = ModelSettings.DefaultMaxVertices);
+            ResetMaxIndicesCommand = new ActionCommand(_ => true, _ => MaxIndices = ModelSettings.DefaultMaxIndices);
+            ResetMaxPartsCommand = new ActionCommand(_ => true, _ => MaxParts = ModelSettings.DefaultMaxParts);
+            ResetAuditIntervalMinutesCommand = new ActionCommand(_ => true, _ => AuditIntervalMinutes = 5.0);
+            ResetLeakThresholdMinutesCommand = new ActionCommand(_ => true, _ => LeakThresholdMinutes = 30.0);
+
+            ResetResourceLimitsCommand = new ActionCommand(_ => true, _ =>
+            {
+                MaxFileSizeMB = ModelSettings.DefaultMaxFileSizeMB;
+                MaxGpuMemoryPerModelMB = ModelSettings.DefaultMaxGpuMemoryPerModelMB;
+                MaxTotalGpuMemoryMB = ModelSettings.DefaultMaxTotalGpuMemoryMB;
+            });
+
+            ResetComplexityLimitsCommand = new ActionCommand(_ => true, _ =>
+            {
+                MaxVertices = ModelSettings.DefaultMaxVertices;
+                MaxIndices = ModelSettings.DefaultMaxIndices;
+                MaxParts = ModelSettings.DefaultMaxParts;
+            });
+
+            ResetAuditSettingsCommand = new ActionCommand(_ => true, _ =>
+            {
+                AuditIntervalMinutes = 5.0;
+                LeakThresholdMinutes = 30.0;
+            });
 
             _auditHandler = OnAuditCompleted;
             ResourceAuditor.Instance.AuditCompleted += _auditHandler;

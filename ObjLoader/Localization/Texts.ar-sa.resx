@@ -463,4 +463,8 @@
 <data name="IndexCountExceeded" xml:space="preserve"><value>عدد فهارس الملف {0} ‏({1}) يتجاوز الحد ({2}). يمكنك تغيير الحد في إعدادات النموذج.</value></data>
 <data name="PartCountExceeded" xml:space="preserve"><value>عدد أجزاء الملف {0} ‏({1}) يتجاوز الحد ({2}). يمكنك تغيير الحد في إعدادات النموذج.</value></data>
 <data name="SandboxBlocked" xml:space="preserve"><value>تم حظر الوصول إلى {0} بواسطة وضع الحماية. يرجى إضافة دليل مسموح به في إعدادات النموذج.</value></data>
+<data name="ResetValue" xml:space="preserve"><value>إعادة تعيين القيمة</value></data>
+<data name="ResetResourceLimits" xml:space="preserve"><value>إعادة تعيين حدود الموارد</value></data>
+<data name="ResetComplexityLimits" xml:space="preserve"><value>إعادة تعيين حدود التعقيد</value></data>
+<data name="ResetAuditSettings" xml:space="preserve"><value>إعادة تعيين إعدادات التدقيق</value></data>
 </root>

@@ -462,4 +462,8 @@
 <data name="IndexCountExceeded" xml:space="preserve"><value>Jumlah indeks file {0} ({1}) melebihi batas ({2}). Anda dapat mengubah batas di Pengaturan Model.</value></data>
 <data name="PartCountExceeded" xml:space="preserve"><value>Jumlah bagian file {0} ({1}) melebihi batas ({2}). Anda dapat mengubah batas di Pengaturan Model.</value></data>
 <data name="SandboxBlocked" xml:space="preserve"><value>Akses ke {0} diblokir oleh sandbox. Silakan tambahkan direktori yang diizinkan di Pengaturan Model.</value></data>
+<data name="ResetValue" xml:space="preserve"><value>Atur ulang nilai</value></data>
+<data name="ResetResourceLimits" xml:space="preserve"><value>Atur ulang batas sumber daya</value></data>
+<data name="ResetComplexityLimits" xml:space="preserve"><value>Atur ulang batas kompleksitas</value></data>
+<data name="ResetAuditSettings" xml:space="preserve"><value>Atur ulang pengaturan audit</value></data>
 </root>

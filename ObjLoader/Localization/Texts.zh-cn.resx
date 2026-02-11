@@ -463,4 +463,8 @@
 <data name="IndexCountExceeded" xml:space="preserve"><value>文件 {0} 的索引数 ({1}) 超过了限制 ({2})。您可以在模型设置中更改限制。</value></data>
 <data name="PartCountExceeded" xml:space="preserve"><value>文件 {0} 的部件数 ({1}) 超过了限制 ({2})。您可以在模型设置中更改限制。</value></data>
 <data name="SandboxBlocked" xml:space="preserve"><value>沙箱阻止了对 {0} 的访问。请在模型设置中添加允许的目录。</value></data>
+<data name="ResetValue" xml:space="preserve"><value>重置值</value></data>
+<data name="ResetResourceLimits" xml:space="preserve"><value>重置资源限制</value></data>
+<data name="ResetComplexityLimits" xml:space="preserve"><value>重置复杂性限制</value></data>
+<data name="ResetAuditSettings" xml:space="preserve"><value>重置审核设置</value></data>
 </root>

@@ -463,4 +463,8 @@
 <data name="IndexCountExceeded" xml:space="preserve"><value>{0} index count ({1}) exceeds the limit ({2}). You can change the limit in Model Settings.</value></data>
 <data name="PartCountExceeded" xml:space="preserve"><value>{0} part count ({1}) exceeds the limit ({2}). You can change the limit in Model Settings.</value></data>
 <data name="SandboxBlocked" xml:space="preserve"><value>Access to {0} was blocked by sandbox. Please add an allowed directory in Model Settings.</value></data>
+<data name="ResetValue" xml:space="preserve"><value>Reset value</value></data>
+<data name="ResetResourceLimits" xml:space="preserve"><value>Reset resource limits</value></data>
+<data name="ResetComplexityLimits" xml:space="preserve"><value>Reset complexity limits</value></data>
+<data name="ResetAuditSettings" xml:space="preserve"><value>Reset audit settings</value></data>
 </root>
