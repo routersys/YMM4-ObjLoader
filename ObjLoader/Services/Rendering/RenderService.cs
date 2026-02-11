@@ -1,5 +1,6 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
+using ObjLoader.Infrastructure;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
 using System.Runtime.CompilerServices;
@@ -16,6 +17,8 @@ namespace ObjLoader.Services.Rendering
 {
     internal class RenderService : IDisposable
     {
+        private readonly string _instanceId = System.Guid.NewGuid().ToString("N").Substring(0, 8);
+
         private ID3D11Device? _device;
         private ID3D11DeviceContext? _context;
         private ID3D11Texture2D? _renderTarget;
@@ -69,6 +72,8 @@ namespace ObjLoader.Services.Rendering
         public D3DResources? Resources => _d3dResources;
         public ID3D11Device? Device => _device;
 
+        private string TrackingKey(string resourceName) => $"RenderSvc:{_instanceId}:{resourceName}";
+
         public void Initialize()
         {
             var result = D3D11.D3D11CreateDevice(null, DriverType.Hardware, DeviceCreationFlags.BgraSupport, new[] { FeatureLevel.Level_11_0 }, out _device, out _context);
@@ -80,11 +85,14 @@ namespace ObjLoader.Services.Rendering
                 -gSize, 0, gSize, -gSize, 0, -gSize, gSize, 0, gSize,
                 gSize, 0, gSize, -gSize, 0, -gSize, gSize, 0, -gSize
             };
-            var vDesc = new BufferDescription(gridVerts.Length * 4, BindFlags.VertexBuffer, ResourceUsage.Immutable);
+            int gridBufferSize = gridVerts.Length * 4;
+            var vDesc = new BufferDescription(gridBufferSize, BindFlags.VertexBuffer, ResourceUsage.Immutable);
             unsafe
             {
                 fixed (float* p = gridVerts) _gridVertexBuffer = _device.CreateBuffer(vDesc, new SubresourceData(p));
             }
+
+            ResourceTracker.Instance.Register(TrackingKey("GridVertexBuffer"), "ID3D11Buffer:Grid", _gridVertexBuffer, gridBufferSize);
 
             _cbArray[0] = _d3dResources.ConstantBuffer;
             _samplerArray[0] = _d3dResources.SamplerState;
@@ -122,6 +130,8 @@ namespace ObjLoader.Services.Rendering
             _viewportWidth = targetWidth;
             _viewportHeight = targetHeight;
 
+            UnregisterResizeResources();
+
             _rtv?.Dispose();
             _renderTarget?.Dispose();
             _dsv?.Dispose();
@@ -144,6 +154,9 @@ namespace ObjLoader.Services.Rendering
             _renderTarget = _device.CreateTexture2D(texDesc);
             _rtv = _device.CreateRenderTargetView(_renderTarget);
 
+            long renderTargetBytes = (long)targetWidth * targetHeight * 4 * sampleCount;
+            ResourceTracker.Instance.Register(TrackingKey("RenderTarget"), "ID3D11Texture2D:RT", _renderTarget, renderTargetBytes);
+
             var depthDesc = new Texture2DDescription
             {
                 Width = targetWidth,
@@ -159,9 +172,15 @@ namespace ObjLoader.Services.Rendering
             _depthStencil = _device.CreateTexture2D(depthDesc);
             _dsv = _device.CreateDepthStencilView(_depthStencil);
 
+            long depthStencilBytes = (long)targetWidth * targetHeight * 4 * sampleCount;
+            ResourceTracker.Instance.Register(TrackingKey("DepthStencil"), "ID3D11Texture2D:DS", _depthStencil, depthStencilBytes);
+
             var resolveDesc = texDesc;
             resolveDesc.SampleDescription = new SampleDescription(1, 0);
             _resolveTexture = _device.CreateTexture2D(resolveDesc);
+
+            long resolveBytes = (long)targetWidth * targetHeight * 4;
+            ResourceTracker.Instance.Register(TrackingKey("ResolveTexture"), "ID3D11Texture2D:Resolve", _resolveTexture, resolveBytes);
 
             var stagingDesc = resolveDesc;
             stagingDesc.Usage = ResourceUsage.Staging;
@@ -169,7 +188,18 @@ namespace ObjLoader.Services.Rendering
             stagingDesc.CPUAccessFlags = CpuAccessFlags.Read;
             _stagingTexture = _device.CreateTexture2D(stagingDesc);
 
+            long stagingBytes = (long)targetWidth * targetHeight * 4;
+            ResourceTracker.Instance.Register(TrackingKey("StagingTexture"), "ID3D11Texture2D:Staging", _stagingTexture, stagingBytes);
+
             SceneImage = new WriteableBitmap(targetWidth, targetHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32, null);
+        }
+
+        private void UnregisterResizeResources()
+        {
+            ResourceTracker.Instance.Unregister(TrackingKey("RenderTarget"));
+            ResourceTracker.Instance.Unregister(TrackingKey("DepthStencil"));
+            ResourceTracker.Instance.Unregister(TrackingKey("ResolveTexture"));
+            ResourceTracker.Instance.Unregister(TrackingKey("StagingTexture"));
         }
 
         public void Render(
@@ -709,6 +739,9 @@ namespace ObjLoader.Services.Rendering
             {
                 if (_isDisposed) return;
                 _isDisposed = true;
+
+                UnregisterResizeResources();
+                ResourceTracker.Instance.Unregister(TrackingKey("GridVertexBuffer"));
 
                 _d3dResources?.Dispose();
                 _d3dResources = null;

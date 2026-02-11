@@ -16,6 +16,7 @@ namespace ObjLoader.Cache
         public ID3D11ShaderResourceView?[] PartTextures { get; }
         public Vector3 ModelCenter { get; }
         public float ModelScale { get; }
+        public long EstimatedGpuBytes { get; }
 
         public GpuResourceCacheItem(
             ID3D11Device device,
@@ -25,7 +26,8 @@ namespace ObjLoader.Cache
             ModelPart[] parts,
             ID3D11ShaderResourceView?[] textures,
             Vector3 center,
-            float scale)
+            float scale,
+            long estimatedGpuBytes = 0)
         {
             Device = device ?? throw new ArgumentNullException(nameof(device));
             VertexBuffer = vb ?? throw new ArgumentNullException(nameof(vb));
@@ -35,6 +37,7 @@ namespace ObjLoader.Cache
             PartTextures = textures ?? throw new ArgumentNullException(nameof(textures));
             ModelCenter = center;
             ModelScale = scale;
+            EstimatedGpuBytes = estimatedGpuBytes;
         }
 
         public void Dispose()

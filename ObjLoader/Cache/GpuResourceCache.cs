@@ -60,8 +60,7 @@ namespace ObjLoader.Cache
                 return item;
             });
 
-            long estimatedSize = EstimateResourceSize(item);
-            ResourceTracker.Instance.Register(key, "GpuResourceCacheItem", item, estimatedSize);
+            ResourceTracker.Instance.Register(key, "GpuResourceCacheItem", item, item.EstimatedGpuBytes);
 
             if (IsDisposed && _cache.TryRemove(key, out var removed))
             {
@@ -163,34 +162,6 @@ namespace ObjLoader.Cache
             if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             Clear();
             ResourceTracker.Instance.UnregisterAll();
-        }
-
-        private static long EstimateResourceSize(GpuResourceCacheItem item)
-        {
-            long size = 0;
-
-            try
-            {
-                if (item.IndexCount > 0)
-                {
-                    size += item.IndexCount * sizeof(int);
-                }
-
-                if (item.Parts != null)
-                {
-                    size += item.Parts.Length * 128;
-                }
-
-                if (item.PartTextures != null)
-                {
-                    size += item.PartTextures.Length * 4096;
-                }
-            }
-            catch
-            {
-            }
-
-            return size;
         }
 
         private static void SafeDispose(IDisposable? disposable)

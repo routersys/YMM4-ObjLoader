@@ -560,11 +560,13 @@ namespace ObjLoader.Rendering.Core
             ID3D11Buffer? ib = null;
             ID3D11ShaderResourceView?[]? partTextures = null;
             bool success = false;
+            long gpuBytes = 0;
 
             try
             {
+                int vertexBufferSize = model.Vertices.Length * Unsafe.SizeOf<ObjVertex>();
                 var vDesc = new BufferDescription(
-                    model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(),
+                    vertexBufferSize,
                     BindFlags.VertexBuffer,
                     ResourceUsage.Immutable,
                     CpuAccessFlags.None);
@@ -574,9 +576,11 @@ namespace ObjLoader.Rendering.Core
                     var vData = new SubresourceData(pVerts);
                     vb = device.CreateBuffer(vDesc, vData);
                 }
+                gpuBytes += vertexBufferSize;
 
+                int indexBufferSize = model.Indices.Length * sizeof(int);
                 var iDesc = new BufferDescription(
-                    model.Indices.Length * sizeof(int),
+                    indexBufferSize,
                     BindFlags.IndexBuffer,
                     ResourceUsage.Immutable,
                     CpuAccessFlags.None);
@@ -586,6 +590,7 @@ namespace ObjLoader.Rendering.Core
                     var iData = new SubresourceData(pIndices);
                     ib = device.CreateBuffer(iDesc, iData);
                 }
+                gpuBytes += indexBufferSize;
 
                 var parts = model.Parts.ToArray();
                 partTextures = new ID3D11ShaderResourceView?[parts.Length];
@@ -625,13 +630,15 @@ namespace ObjLoader.Rendering.Core
                             using var tex = device.CreateTexture2D(texDesc, new[] { data });
                             partTextures[i] = device.CreateShaderResourceView(tex);
                         }
+
+                        gpuBytes += (long)width * height * 4;
                     }
                     catch
                     {
                     }
                 }
 
-                var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
+                var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
                 GpuResourceCache.Instance.AddOrUpdate(filePath, item);
                 success = true;
                 return item;

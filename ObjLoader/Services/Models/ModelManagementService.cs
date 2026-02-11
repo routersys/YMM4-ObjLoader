@@ -1,5 +1,6 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
+using ObjLoader.Infrastructure;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Services.Rendering;
@@ -37,14 +38,19 @@ namespace ObjLoader.Services.Models
             ID3D11Buffer? ib = null;
             ID3D11ShaderResourceView?[]? partTextures = null;
             bool success = false;
+            long gpuBytes = 0;
 
             try
             {
-                var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
+                int vertexBufferSize = model.Vertices.Length * Unsafe.SizeOf<ObjVertex>();
+                var vDesc = new BufferDescription(vertexBufferSize, BindFlags.VertexBuffer, ResourceUsage.Immutable);
                 fixed (ObjVertex* p = model.Vertices) vb = renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
+                gpuBytes += vertexBufferSize;
 
-                var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
+                int indexBufferSize = model.Indices.Length * sizeof(int);
+                var iDesc = new BufferDescription(indexBufferSize, BindFlags.IndexBuffer, ResourceUsage.Immutable);
                 fixed (int* p = model.Indices) ib = renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
+                gpuBytes += indexBufferSize;
 
                 var parts = model.Parts.ToArray();
                 partTextures = new ID3D11ShaderResourceView?[parts.Length];
@@ -68,13 +74,18 @@ namespace ObjLoader.Services.Models
                             using var t = renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, stride) });
                             partTextures[i] = renderService.Device.CreateShaderResourceView(t);
                         }
+                        gpuBytes += (long)width * height * 4;
                     }
                     catch
                     {
                     }
                 }
 
-                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
+                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
+
+                string trackingKey = $"ModelMgmt:{path}:{System.Guid.NewGuid():N}";
+                ResourceTracker.Instance.Register(trackingKey, "GpuResourceCacheItem:Preview", result.Resource, gpuBytes);
+
                 success = true;
             }
             finally
