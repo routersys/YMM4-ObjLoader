@@ -2,6 +2,7 @@
 using ObjLoader.Rendering;
 using ObjLoader.Attributes;
 using ObjLoader.Localization;
+using ObjLoader.Utilities;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
@@ -51,15 +52,16 @@ namespace ObjLoader.Plugin
             get => _filePath;
             set
             {
-                if (Set(ref _filePath, value))
+                var sanitized = SanitizeModelPath(value);
+                if (Set(ref _filePath, sanitized))
                 {
                     SyncActiveLayer();
                     EnsureLayers();
 
-                    if (!IsSwitchingLayer && _updateSuspendCount == 0 && !string.IsNullOrEmpty(value) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
+                    if (!IsSwitchingLayer && _updateSuspendCount == 0 && !string.IsNullOrEmpty(sanitized) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
                     {
                         var layer = Layers[SelectedLayerIndex];
-                        var fileName = System.IO.Path.GetFileNameWithoutExtension(value);
+                        var fileName = System.IO.Path.GetFileNameWithoutExtension(sanitized);
 
                         if (!string.IsNullOrEmpty(fileName))
                         {
@@ -67,7 +69,7 @@ namespace ObjLoader.Plugin
                             {
                                 layer.Name = fileName;
                             }
-                            else if (layer.FilePath != value)
+                            else if (layer.FilePath != sanitized)
                             {
                                 layer.Name = fileName;
                             }
@@ -84,7 +86,15 @@ namespace ObjLoader.Plugin
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Shader), Description = nameof(Texts.Shader_Desc), ResourceType = typeof(Texts))]
         [ShaderFileSelector(nameof(Texts.Filter_ShaderFiles), ".hlsl", ".fx", ".shader", ".cg", ".glsl", ".vert", ".frag", ".txt")]
-        public string ShaderFilePath { get => _shaderFilePath; set => Set(ref _shaderFilePath, value); }
+        public string ShaderFilePath
+        {
+            get => _shaderFilePath;
+            set
+            {
+                var sanitized = SanitizeShaderPath(value);
+                Set(ref _shaderFilePath, sanitized);
+            }
+        }
         private string _shaderFilePath = string.Empty;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.BaseColor), ResourceType = typeof(Texts))]
@@ -488,6 +498,44 @@ namespace ObjLoader.Plugin
         private void OnPluginSettingsChanged(object? sender, PropertyChangedEventArgs e)
         {
             ForceUpdate();
+        }
+
+        private static string SanitizeModelPath(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+            var result = FileSystemSandbox.Instance.ValidatePath(value);
+            if (result.IsAllowed && result.ResolvedPath != null)
+            {
+                return result.ResolvedPath;
+            }
+
+            var basicResult = PathValidator.Validate(value);
+            if (basicResult.IsValid && basicResult.NormalizedPath != null)
+            {
+                return basicResult.NormalizedPath;
+            }
+
+            return string.Empty;
+        }
+
+        private static string SanitizeShaderPath(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+            var result = FileSystemSandbox.Instance.ValidatePath(value);
+            if (result.IsAllowed && result.ResolvedPath != null)
+            {
+                return result.ResolvedPath;
+            }
+
+            var basicResult = PathValidator.Validate(value);
+            if (basicResult.IsValid && basicResult.NormalizedPath != null)
+            {
+                return basicResult.NormalizedPath;
+            }
+
+            return string.Empty;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
 using ObjLoader.Plugin;
+using ObjLoader.Utilities;
 
 namespace ObjLoader.Core
 {
@@ -31,7 +32,15 @@ namespace ObjLoader.Core
         public bool IsVisible { get => _isVisible; set => Set(ref _isVisible, value); }
 
         private string _filePath = string.Empty;
-        public string FilePath { get => _filePath; set => Set(ref _filePath, value); }
+        public string FilePath
+        {
+            get => _filePath;
+            set
+            {
+                var sanitized = SanitizeFilePath(value);
+                Set(ref _filePath, sanitized);
+            }
+        }
 
         private Color _baseColor = Colors.White;
         public Color BaseColor { get => _baseColor; set => Set(ref _baseColor, value); }
@@ -77,13 +86,31 @@ namespace ObjLoader.Core
         private Dictionary<int, PartMaterialData> _partMaterials = new Dictionary<int, PartMaterialData>();
         public Dictionary<int, PartMaterialData> PartMaterials { get => _partMaterials; set => Set(ref _partMaterials, value); }
 
+        private static string SanitizeFilePath(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+            var result = FileSystemSandbox.Instance.ValidatePath(value);
+            if (result.IsAllowed && result.ResolvedPath != null)
+            {
+                return result.ResolvedPath;
+            }
+
+            var basicResult = PathValidator.Validate(value);
+            if (basicResult.IsValid && basicResult.NormalizedPath != null)
+            {
+                return basicResult.NormalizedPath;
+            }
+
+            return string.Empty;
+        }
+
         public LayerData Clone()
         {
             var clone = new LayerData
             {
                 Name = Name + " (Copy)",
                 IsVisible = IsVisible,
-                FilePath = FilePath,
                 BaseColor = BaseColor,
                 IsLightEnabled = IsLightEnabled,
                 LightType = LightType,
@@ -94,6 +121,7 @@ namespace ObjLoader.Core
                 RotationCenterY = RotationCenterY,
                 RotationCenterZ = RotationCenterZ
             };
+            clone._filePath = _filePath;
             clone.X.CopyFrom(X);
             clone.Y.CopyFrom(Y);
             clone.Z.CopyFrom(Z);

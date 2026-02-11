@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using ObjLoader.Infrastructure;
 using Vortice.Direct3D11;
 
 namespace ObjLoader.Cache
@@ -53,13 +54,18 @@ namespace ObjLoader.Cache
             {
                 if (!ReferenceEquals(oldValue, item))
                 {
+                    ResourceTracker.Instance.Unregister(key);
                     SafeDispose(oldValue);
                 }
                 return item;
             });
 
+            long estimatedSize = EstimateResourceSize(item);
+            ResourceTracker.Instance.Register(key, "GpuResourceCacheItem", item, estimatedSize);
+
             if (IsDisposed && _cache.TryRemove(key, out var removed))
             {
+                ResourceTracker.Instance.Unregister(key);
                 SafeDispose(removed);
             }
         }
@@ -71,6 +77,7 @@ namespace ObjLoader.Cache
 
             if (_cache.TryRemove(key, out var item))
             {
+                ResourceTracker.Instance.Unregister(key);
                 SafeDispose(item);
             }
         }
@@ -84,6 +91,7 @@ namespace ObjLoader.Cache
                 {
                     if (_cache.TryRemove(kvp.Key, out var item))
                     {
+                        ResourceTracker.Instance.Unregister(kvp.Key);
                         SafeDispose(item);
                     }
                 }
@@ -103,6 +111,7 @@ namespace ObjLoader.Cache
                     {
                         if (_cache.TryRemove(kvp.Key, out var item))
                         {
+                            ResourceTracker.Instance.Unregister(kvp.Key);
                             SafeDispose(item);
                         }
                     }
@@ -142,6 +151,7 @@ namespace ObjLoader.Cache
 
                     if (shouldRemove && _cache.TryRemove(kvp.Key, out var removed))
                     {
+                        ResourceTracker.Instance.Unregister(kvp.Key);
                         SafeDispose(removed);
                     }
                 }
@@ -152,6 +162,35 @@ namespace ObjLoader.Cache
         {
             if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             Clear();
+            ResourceTracker.Instance.UnregisterAll();
+        }
+
+        private static long EstimateResourceSize(GpuResourceCacheItem item)
+        {
+            long size = 0;
+
+            try
+            {
+                if (item.IndexCount > 0)
+                {
+                    size += item.IndexCount * sizeof(int);
+                }
+
+                if (item.Parts != null)
+                {
+                    size += item.Parts.Length * 128;
+                }
+
+                if (item.PartTextures != null)
+                {
+                    size += item.PartTextures.Length * 4096;
+                }
+            }
+            catch
+            {
+            }
+
+            return size;
         }
 
         private static void SafeDispose(IDisposable? disposable)

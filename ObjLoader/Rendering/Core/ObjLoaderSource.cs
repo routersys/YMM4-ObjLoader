@@ -8,6 +8,7 @@ using ObjLoader.Rendering.Renderers;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
+using System.Collections.Immutable;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -51,7 +52,7 @@ namespace ObjLoader.Rendering.Core
         private int _lastShadowResolution = -1;
         private bool _lastShadowEnabled;
 
-        private Dictionary<string, LayerState> _layerStates = new Dictionary<string, LayerState>();
+        private ImmutableDictionary<string, LayerState> _layerStates = ImmutableDictionary<string, LayerState>.Empty;
 
         private bool _isDisposed;
 
@@ -265,8 +266,9 @@ namespace ObjLoader.Rendering.Core
                 }
             }
 
-            var currentLayerStates = new Dictionary<string, LayerState>();
+            var newLayerStatesBuilder = ImmutableDictionary.CreateBuilder<string, LayerState>();
             bool layersChanged = false;
+            var previousStates = Volatile.Read(ref _layerStates);
 
             foreach (var item in preCalcStates)
             {
@@ -280,18 +282,20 @@ namespace ObjLoader.Rendering.Core
                     layerState.LightType = master.LightType;
                 }
 
-                currentLayerStates[item.Guid] = layerState;
+                newLayerStatesBuilder[item.Guid] = layerState;
 
-                if (!_layerStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref layerState))
+                if (!previousStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref layerState))
                 {
                     layersChanged = true;
                 }
             }
 
-            if (!layersChanged && _layerStates.Count != currentLayerStates.Count)
+            if (!layersChanged && previousStates.Count != newLayerStatesBuilder.Count)
             {
                 layersChanged = true;
             }
+
+            var newLayerStates = newLayerStatesBuilder.ToImmutable();
 
             bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
             bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
@@ -306,12 +310,12 @@ namespace ObjLoader.Rendering.Core
 
             foreach (var item in preCalcStates)
             {
-                if (!currentLayerStates.TryGetValue(item.Guid, out var layerState)) continue;
+                if (!newLayerStates.TryGetValue(item.Guid, out var layerState)) continue;
 
                 bool effectiveVisibility = layerState.IsVisible;
                 var parentGuid = layerState.ParentGuid;
                 int depth = 0;
-                while (effectiveVisibility && !string.IsNullOrEmpty(parentGuid) && currentLayerStates.TryGetValue(parentGuid, out var parentState))
+                while (effectiveVisibility && !string.IsNullOrEmpty(parentGuid) && newLayerStates.TryGetValue(parentGuid, out var parentState))
                 {
                     if (!parentState.IsVisible)
                     {
@@ -351,7 +355,7 @@ namespace ObjLoader.Rendering.Core
                 }
             }
 
-            _layerStates = currentLayerStates;
+            Interlocked.Exchange(ref _layerStates, newLayerStates);
 
             LayerState shadowLightState = default;
             if (worldMasterLights.TryGetValue(activeWorldId, out var al))
@@ -459,14 +463,18 @@ namespace ObjLoader.Rendering.Core
 
                 if (needsShadowRedraw)
                 {
-                    _shadowRenderer.Render(layersToRender, lightViewProjs, activeWorldId, _layerStates);
+                    var currentStates = Volatile.Read(ref _layerStates);
+                    var mutableStatesForShadow = currentStates.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    _shadowRenderer.Render(layersToRender, lightViewProjs, activeWorldId, mutableStatesForShadow);
                 }
                 shadowValid = true;
             }
 
             bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged;
 
-            _sceneRenderer.Render(layersToRender, _layerStates, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
+            var currentLayerStatesForScene = Volatile.Read(ref _layerStates);
+            var mutableStatesForScene = currentLayerStatesForScene.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            _sceneRenderer.Render(layersToRender, mutableStatesForScene, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
 
             ClearResourceBindings();
 
