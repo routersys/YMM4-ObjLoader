@@ -104,8 +104,9 @@ namespace ObjLoader.Infrastructure
                         leaked.Add(alloc);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to check leaked resource: {ex.Message}");
                 }
             }
 
@@ -130,8 +131,9 @@ namespace ObjLoader.Infrastructure
                         keysToRemove.Add(kvp.Key);
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to check orphaned resource: {ex.Message}");
                 }
             }
 
@@ -167,8 +169,9 @@ namespace ObjLoader.Infrastructure
                         }
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to collect stats: {ex.Message}");
                 }
             }
 
@@ -218,8 +221,9 @@ namespace ObjLoader.Infrastructure
                         return list;
                     });
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to record disposal: {ex.Message}");
             }
         }
 

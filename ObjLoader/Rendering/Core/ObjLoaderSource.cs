@@ -123,8 +123,9 @@ namespace ObjLoader.Rendering.Core
                 var reason = device.DeviceRemovedReason;
                 return reason.Failure;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to check device status: {ex.Message}");
                 return true;
             }
         }
@@ -153,13 +154,13 @@ namespace ObjLoader.Rendering.Core
                     ex.HResult == unchecked((int)0x887A0006) ||
                     ex.HResult == unchecked((int)0x887A0007))
                 {
-                    System.Diagnostics.Debug.WriteLine($"Device lost: 0x{ex.HResult:X8}");
+                    System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Device lost: 0x{ex.HResult:X8}");
                     GpuResourceCache.Instance.CleanupInvalidResources();
                     CreateEmptyCommandList();
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Render error: {ex.Message}");
                     CreateEmptyCommandList();
                 }
             }
@@ -525,8 +526,9 @@ namespace ObjLoader.Rendering.Core
                 context.PSSetConstantBuffers(0, 1, _emptyBufferArray1);
                 context.Flush();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to clear resource bindings: {ex.Message}");
             }
         }
 
@@ -546,8 +548,9 @@ namespace ObjLoader.Rendering.Core
                 dc.Target = null;
                 _commandList.Close();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to create empty command list: {ex.Message}");
             }
         }
 
@@ -662,8 +665,9 @@ namespace ObjLoader.Rendering.Core
                             ArrayPool<byte>.Shared.Return(pixels);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to load texture {tPath}: {ex.Message}");
                     }
                 }
 
@@ -756,8 +760,9 @@ namespace ObjLoader.Rendering.Core
             {
                 disposable.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Dispose failed: {ex.Message}");
             }
         }
     }

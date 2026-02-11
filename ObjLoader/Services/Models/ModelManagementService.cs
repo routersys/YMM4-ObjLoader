@@ -46,8 +46,9 @@ namespace ObjLoader.Services.Models
                     return result;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ModelManagementService: Failed to check file size: {ex.Message}");
                 return result;
             }
 
@@ -98,8 +99,9 @@ namespace ObjLoader.Services.Models
                         }
                         gpuBytes += (long)width * height * 4;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        System.Diagnostics.Debug.WriteLine($"ModelManagementService: Failed to load texture {parts[i].TexturePath}: {ex.Message}");
                     }
                 }
 
@@ -246,8 +248,9 @@ namespace ObjLoader.Services.Models
             {
                 disposable.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"ModelManagementService: Dispose failed: {ex.Message}");
             }
         }
     }

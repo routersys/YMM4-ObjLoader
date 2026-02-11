@@ -149,8 +149,9 @@ namespace ObjLoader.Cache
                                 shouldRemove = true;
                             }
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            System.Diagnostics.Debug.WriteLine($"GpuResourceCache: Failed to check device removed reason: {ex.Message}");
                             shouldRemove = true;
                         }
                     }
@@ -178,8 +179,9 @@ namespace ObjLoader.Cache
             {
                 disposable.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"GpuResourceCache: Dispose failed: {ex.Message}");
             }
         }
     }

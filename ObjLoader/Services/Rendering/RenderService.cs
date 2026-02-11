@@ -256,11 +256,11 @@ namespace ObjLoader.Services.Rendering
                 }
                 catch (SharpGen.Runtime.SharpGenException ex) when (ex.HResult == unchecked((int)0x887A0005) || ex.HResult == unchecked((int)0x887A0006))
                 {
-                    System.Diagnostics.Debug.WriteLine($"Device lost during render: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"RenderService: Device lost during render: {ex.Message}");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"RenderService: Render error: {ex.Message}");
                 }
             }
         }
@@ -273,8 +273,9 @@ namespace ObjLoader.Services.Rendering
                 var reason = _device.DeviceRemovedReason;
                 return reason.Failure;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"RenderService: Failed to check device status: {ex.Message}");
                 return true;
             }
         }

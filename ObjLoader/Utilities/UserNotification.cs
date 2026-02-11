@@ -44,13 +44,15 @@ namespace ObjLoader.Utilities
                     {
                         MessageBox.Show(message, title, MessageBoxButton.OK, icon);
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        System.Diagnostics.Debug.WriteLine($"UserNotification: Failed to show message box: {ex.Message}");
                     }
                 }));
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"UserNotification: Failed to dispatch message box: {ex.Message}");
             }
         }
 

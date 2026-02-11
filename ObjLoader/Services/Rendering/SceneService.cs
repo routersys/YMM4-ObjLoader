@@ -117,8 +117,9 @@ namespace ObjLoader.Services.Rendering
                             }
                             gpuBytes += (long)width * height * 4;
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            System.Diagnostics.Debug.WriteLine($"SceneService: Failed to load texture {parts[i].TexturePath}: {ex.Message}");
                         }
                     }
 
@@ -390,8 +391,9 @@ namespace ObjLoader.Services.Rendering
             {
                 disposable.Dispose();
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"SceneService: Dispose failed: {ex.Message}");
             }
         }
     }
