@@ -5,6 +5,7 @@ using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Textures;
+using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using ObjLoader.ViewModels;
 using System.IO;
@@ -28,6 +29,27 @@ namespace ObjLoader.Services.Models
             var result = new ModelLoadResult();
 
             if (string.IsNullOrEmpty(path) || !File.Exists(path)) return result;
+
+            var modelSettings = ModelSettings.Instance;
+            try
+            {
+                var fileInfo = new FileInfo(path);
+                if (!modelSettings.IsFileSizeAllowed(fileInfo.Length))
+                {
+                    long sizeMB = fileInfo.Length / (1024L * 1024L);
+                    string message = string.Format(
+                        Texts.FileSizeExceeded,
+                        Path.GetFileName(path),
+                        sizeMB,
+                        modelSettings.MaxFileSizeMB);
+                    UserNotification.ShowWarning(message, Texts.ResourceLimitTitle);
+                    return result;
+                }
+            }
+            catch
+            {
+                return result;
+            }
 
             var model = _loader.Load(path);
             if (model.Vertices.Length == 0) return result;
@@ -79,6 +101,18 @@ namespace ObjLoader.Services.Models
                     catch
                     {
                     }
+                }
+
+                if (!modelSettings.IsGpuMemoryPerModelAllowed(gpuBytes))
+                {
+                    long gpuMB = gpuBytes / (1024L * 1024L);
+                    string message = string.Format(
+                        Texts.GpuMemoryExceeded,
+                        Path.GetFileName(path),
+                        gpuMB,
+                        modelSettings.MaxGpuMemoryPerModelMB);
+                    UserNotification.ShowWarning(message, Texts.ResourceLimitTitle);
+                    return result;
                 }
 
                 result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);

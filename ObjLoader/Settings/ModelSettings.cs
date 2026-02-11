@@ -13,6 +13,23 @@ namespace ObjLoader.Settings
         public override object SettingView => new Views.ModelSettingsView { DataContext = new ViewModels.ModelSettingsViewModel(this) };
         public static ModelSettings Instance => Default;
 
+        public const int DefaultMaxFileSizeMB = 500;
+        public const int DefaultMaxGpuMemoryPerModelMB = 2048;
+        public const int DefaultMaxTotalGpuMemoryMB = 8192;
+        public const int DefaultMaxVertices = 10_000_000;
+        public const int DefaultMaxIndices = 30_000_000;
+        public const int DefaultMaxParts = 10000;
+        public const int MinFileSizeMB = 10;
+        public const int MaxFileSizeMBLimit = 10240;
+        public const int MinGpuMemoryMB = 64;
+        public const int MaxGpuMemoryMBLimit = 32768;
+        public const int MinVertices = 10_000;
+        public const int MaxVerticesLimit = 100_000_000;
+        public const int MinIndices = 30_000;
+        public const int MaxIndicesLimit = 300_000_000;
+        public const int MinParts = 10;
+        public const int MaxPartsLimit = 50_000;
+
         private bool _isSandboxEnforced = false;
         public bool IsSandboxEnforced
         {
@@ -48,6 +65,52 @@ namespace ObjLoader.Settings
             set => Set(ref _leakThresholdMinutes, Math.Max(1.0, value));
         }
 
+        private int _maxFileSizeMB = DefaultMaxFileSizeMB;
+        public int MaxFileSizeMB
+        {
+            get => _maxFileSizeMB;
+            set => Set(ref _maxFileSizeMB, Math.Clamp(value, MinFileSizeMB, MaxFileSizeMBLimit));
+        }
+
+        private int _maxGpuMemoryPerModelMB = DefaultMaxGpuMemoryPerModelMB;
+        public int MaxGpuMemoryPerModelMB
+        {
+            get => _maxGpuMemoryPerModelMB;
+            set => Set(ref _maxGpuMemoryPerModelMB, Math.Clamp(value, MinGpuMemoryMB, MaxGpuMemoryMBLimit));
+        }
+
+        private int _maxTotalGpuMemoryMB = DefaultMaxTotalGpuMemoryMB;
+        public int MaxTotalGpuMemoryMB
+        {
+            get => _maxTotalGpuMemoryMB;
+            set => Set(ref _maxTotalGpuMemoryMB, Math.Clamp(value, MinGpuMemoryMB, MaxGpuMemoryMBLimit));
+        }
+
+        private int _maxVertices = DefaultMaxVertices;
+        public int MaxVertices
+        {
+            get => _maxVertices;
+            set => Set(ref _maxVertices, Math.Clamp(value, MinVertices, MaxVerticesLimit));
+        }
+
+        private int _maxIndices = DefaultMaxIndices;
+        public int MaxIndices
+        {
+            get => _maxIndices;
+            set => Set(ref _maxIndices, Math.Clamp(value, MinIndices, MaxIndicesLimit));
+        }
+
+        private int _maxParts = DefaultMaxParts;
+        public int MaxParts
+        {
+            get => _maxParts;
+            set => Set(ref _maxParts, Math.Clamp(value, MinParts, MaxPartsLimit));
+        }
+
+        public long MaxFileSizeBytes => (long)_maxFileSizeMB * 1024L * 1024L;
+        public long MaxGpuMemoryPerModelBytes => (long)_maxGpuMemoryPerModelMB * 1024L * 1024L;
+        public long MaxTotalGpuMemoryBytes => (long)_maxTotalGpuMemoryMB * 1024L * 1024L;
+
         public override void Initialize()
         {
             try
@@ -81,6 +144,53 @@ namespace ObjLoader.Settings
             catch
             {
             }
+        }
+
+        public bool IsFileSizeAllowed(long fileBytes)
+        {
+            return fileBytes <= MaxFileSizeBytes;
+        }
+
+        public bool IsGpuMemoryPerModelAllowed(long gpuBytes)
+        {
+            return gpuBytes <= MaxGpuMemoryPerModelBytes;
+        }
+
+        public bool IsVertexCountAllowed(int count)
+        {
+            return count <= _maxVertices;
+        }
+
+        public bool IsIndexCountAllowed(int count)
+        {
+            return count <= _maxIndices;
+        }
+
+        public bool IsPartCountAllowed(int count)
+        {
+            return count <= _maxParts;
+        }
+
+        public string ValidateModelComplexity(string fileName, int vertexCount, int indexCount, int partCount)
+        {
+            if (!IsVertexCountAllowed(vertexCount))
+            {
+                return string.Format(Texts.VertexCountExceeded, fileName, FormatCount(vertexCount), FormatCount(_maxVertices));
+            }
+            if (!IsIndexCountAllowed(indexCount))
+            {
+                return string.Format(Texts.IndexCountExceeded, fileName, FormatCount(indexCount), FormatCount(_maxIndices));
+            }
+            if (!IsPartCountAllowed(partCount))
+            {
+                return string.Format(Texts.PartCountExceeded, fileName, FormatCount(partCount), FormatCount(_maxParts));
+            }
+            return string.Empty;
+        }
+
+        private static string FormatCount(int value)
+        {
+            return value.ToString("N0");
         }
     }
 }

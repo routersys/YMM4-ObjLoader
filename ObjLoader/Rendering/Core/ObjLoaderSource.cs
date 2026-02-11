@@ -1,5 +1,6 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
+using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering.Managers;
@@ -7,6 +8,7 @@ using ObjLoader.Rendering.Renderers;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
+using ObjLoader.Utilities;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.IO;
@@ -572,7 +574,7 @@ namespace ObjLoader.Rendering.Core
             return a.SetEquals(b);
         }
 
-        private unsafe GpuResourceCacheItem CreateGpuResource(ObjModel model, string filePath)
+        private unsafe GpuResourceCacheItem? CreateGpuResource(ObjModel model, string filePath)
         {
             var device = _devices.D3D.Device;
             ID3D11Buffer? vb = null;
@@ -663,6 +665,19 @@ namespace ObjLoader.Rendering.Core
                     catch
                     {
                     }
+                }
+
+                var modelSettings = ModelSettings.Instance;
+                if (!modelSettings.IsGpuMemoryPerModelAllowed(gpuBytes))
+                {
+                    long gpuMB = gpuBytes / (1024L * 1024L);
+                    string message = string.Format(
+                        Texts.GpuMemoryExceeded,
+                        Path.GetFileName(filePath),
+                        gpuMB,
+                        modelSettings.MaxGpuMemoryPerModelMB);
+                    UserNotification.ShowWarning(message, Texts.ResourceLimitTitle);
+                    return null;
                 }
 
                 var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);

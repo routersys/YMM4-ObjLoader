@@ -448,4 +448,19 @@
 <data name="SizeHeader" xml:space="preserve"><value>Size</value></data>
 <data name="StackTraceHeader" xml:space="preserve"><value>Stack Trace</value></data>
 <data name="CreatedAtHeader" xml:space="preserve"><value>Created At</value></data>
+<data name="ResourceLimits" xml:space="preserve"><value>Resource Limits</value></data>
+<data name="ResourceLimitTitle" xml:space="preserve"><value>Resource Limit</value></data>
+<data name="ComplexityLimits" xml:space="preserve"><value>Model Complexity Limits</value></data>
+<data name="MaxFileSizeMB" xml:space="preserve"><value>Max File Size</value></data>
+<data name="MaxGpuMemoryPerModelMB" xml:space="preserve"><value>Max GPU Memory per Model</value></data>
+<data name="MaxTotalGpuMemoryMB" xml:space="preserve"><value>Max Total GPU Memory</value></data>
+<data name="MaxVertices" xml:space="preserve"><value>Max Vertices</value></data>
+<data name="MaxIndices" xml:space="preserve"><value>Max Indices</value></data>
+<data name="MaxParts" xml:space="preserve"><value>Max Parts</value></data>
+<data name="FileSizeExceeded" xml:space="preserve"><value>{0} file size ({1} MB) exceeds the limit ({2} MB). You can change the limit in Model Settings.</value></data>
+<data name="GpuMemoryExceeded" xml:space="preserve"><value>{0} GPU memory usage ({1} MB) exceeds the limit ({2} MB). You can change the limit in Model Settings.</value></data>
+<data name="VertexCountExceeded" xml:space="preserve"><value>{0} vertex count ({1}) exceeds the limit ({2}). You can change the limit in Model Settings.</value></data>
+<data name="IndexCountExceeded" xml:space="preserve"><value>{0} index count ({1}) exceeds the limit ({2}). You can change the limit in Model Settings.</value></data>
+<data name="PartCountExceeded" xml:space="preserve"><value>{0} part count ({1}) exceeds the limit ({2}). You can change the limit in Model Settings.</value></data>
+<data name="SandboxBlocked" xml:space="preserve"><value>Access to {0} was blocked by sandbox. Please add an allowed directory in Model Settings.</value></data>
 </root>

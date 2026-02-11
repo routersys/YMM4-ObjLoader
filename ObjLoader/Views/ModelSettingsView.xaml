@@ -6,15 +6,147 @@
              xmlns:l="clr-namespace:ObjLoader.Localization"
              xmlns:c="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
              mc:Ignorable="d" 
-             d:DesignHeight="700" d:DesignWidth="800"
+             d:DesignHeight="1000" d:DesignWidth="800"
              Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
              Unloaded="OnUnloaded">
+
+    <UserControl.Resources>
+        <Style x:Key="GhostTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Right"/>
+            <Setter Property="CaretBrush" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"/>
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+                </Trigger>
+                <Trigger Property="IsFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+                </Trigger>
+                <Trigger Property="IsKeyboardFocused" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SectionBorder" TargetType="Border">
+            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,18"/>
+            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+        </Style>
+
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+        </Style>
+
+        <Style x:Key="UnitLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin" Value="4,0,0,0"/>
+        </Style>
+
+        <Style x:Key="SliderRow" TargetType="DockPanel">
+            <Setter Property="Margin" Value="0,0,0,10"/>
+        </Style>
+    </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="15">
         <StackPanel>
 
-            <TextBlock Text="{x:Static l:Texts.SandboxSettings}" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
-            <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Padding="10" Margin="0,0,0,20" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <TextBlock Text="{x:Static l:Texts.ResourceLimits}" Style="{StaticResource SectionHeader}"/>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="{x:Static l:Texts.MaxFileSizeMB}" Margin="0,0,0,2" FontSize="12"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <TextBox DockPanel.Dock="Right" Width="68" Margin="8,0,0,0"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding MaxFileSizeMB, UpdateSourceTrigger=LostFocus}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="MB" Style="{StaticResource UnitLabel}"/>
+                        <Slider Minimum="{Binding MinFileSizeMB}" Maximum="{Binding MaxFileSizeMBLimit}"
+                                Value="{Binding MaxFileSizeMB}" IsSnapToTickEnabled="False"
+                                VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,2,0,10" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.3"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxGpuMemoryPerModelMB}" Margin="0,0,0,2" FontSize="12"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <TextBox DockPanel.Dock="Right" Width="68" Margin="8,0,0,0"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding MaxGpuMemoryPerModelMB, UpdateSourceTrigger=LostFocus}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="MB" Style="{StaticResource UnitLabel}"/>
+                        <Slider Minimum="{Binding MinGpuMemoryMB}" Maximum="{Binding MaxGpuMemoryMBLimit}"
+                                Value="{Binding MaxGpuMemoryPerModelMB}" IsSnapToTickEnabled="False"
+                                VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxTotalGpuMemoryMB}" Margin="0,0,0,2" FontSize="12"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <TextBox DockPanel.Dock="Right" Width="68" Margin="8,0,0,0"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding MaxTotalGpuMemoryMB, UpdateSourceTrigger=LostFocus}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="MB" Style="{StaticResource UnitLabel}"/>
+                        <Slider Minimum="{Binding MinGpuMemoryMB}" Maximum="{Binding MaxGpuMemoryMBLimit}"
+                                Value="{Binding MaxTotalGpuMemoryMB}" IsSnapToTickEnabled="False"
+                                VerticalAlignment="Center"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{x:Static l:Texts.ComplexityLimits}" Style="{StaticResource SectionHeader}"/>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="{x:Static l:Texts.MaxVertices}" Margin="0,0,0,2" FontSize="12"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <TextBox DockPanel.Dock="Right" Width="90" Margin="8,0,0,0"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding MaxVertices, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinVertices}" Maximum="{Binding MaxVerticesLimit}"
+                                Value="{Binding MaxVertices}" IsSnapToTickEnabled="False"
+                                VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,2,0,10" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.3"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxIndices}" Margin="0,0,0,2" FontSize="12"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <TextBox DockPanel.Dock="Right" Width="90" Margin="8,0,0,0"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding MaxIndices, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinIndices}" Maximum="{Binding MaxIndicesLimit}"
+                                Value="{Binding MaxIndices}" IsSnapToTickEnabled="False"
+                                VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,2,0,10" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.3"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxParts}" Margin="0,0,0,2" FontSize="12"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <TextBox DockPanel.Dock="Right" Width="90" Margin="8,0,0,0"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding MaxParts, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinParts}" Maximum="{Binding MaxPartsLimit}"
+                                Value="{Binding MaxParts}" IsSnapToTickEnabled="False"
+                                VerticalAlignment="Center"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="{x:Static l:Texts.SandboxSettings}" Style="{StaticResource SectionHeader}"/>
+            <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
                     <DockPanel Margin="0,0,0,10">
                         <TextBlock Text="{x:Static l:Texts.EnableSandbox}" VerticalAlignment="Center"/>
@@ -40,8 +172,8 @@
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="{x:Static l:Texts.ResourceManagement}" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
-            <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Padding="10" Margin="0,0,0,20" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <TextBlock Text="{x:Static l:Texts.ResourceManagement}" Style="{StaticResource SectionHeader}"/>
+            <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
                     <DockPanel Margin="0,0,0,10">
                         <TextBlock Text="{x:Static l:Texts.EnableAutoAudit}" VerticalAlignment="Center"/>
@@ -59,24 +191,22 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static l:Texts.AuditInterval}" VerticalAlignment="Center" Margin="0,0,10,5"/>
-                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding AuditIntervalMinutes, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,5"
-                                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
-                                 Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
-                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,5"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding AuditIntervalMinutes, UpdateSourceTrigger=LostFocus}"/>
 
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="{x:Static l:Texts.LeakThreshold}" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding LeakThresholdMinutes, UpdateSourceTrigger=LostFocus}"
-                                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
-                                 Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
-                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"
+                                 Style="{StaticResource GhostTextBox}"
+                                 Text="{Binding LeakThresholdMinutes, UpdateSourceTrigger=LostFocus}"/>
                     </Grid>
 
                     <Button Content="{x:Static l:Texts.RunAudit}" Command="{Binding RunAuditCommand}" HorizontalAlignment="Left" Padding="15,5" Margin="0,0,0,10"/>
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="{x:Static l:Texts.AuditResults}" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
-            <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Padding="10" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+            <TextBlock Text="{x:Static l:Texts.AuditResults}" Style="{StaticResource SectionHeader}"/>
+            <Border Style="{StaticResource SectionBorder}">
                 <StackPanel>
                     <WrapPanel Margin="0,0,0,15">
                         <StackPanel Margin="0,0,20,5" Orientation="Horizontal">

@@ -1,4 +1,5 @@
 ﻿using ObjLoader.Infrastructure;
+using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
@@ -91,6 +92,89 @@ namespace ObjLoader.ViewModels
                 }
             }
         }
+
+        public int MaxFileSizeMB
+        {
+            get => _settings.MaxFileSizeMB;
+            set
+            {
+                int clamped = Math.Clamp(value, ModelSettings.MinFileSizeMB, ModelSettings.MaxFileSizeMBLimit);
+                if (_settings.MaxFileSizeMB == clamped) return;
+                _settings.MaxFileSizeMB = clamped;
+                OnPropertyChanged(nameof(MaxFileSizeMB));
+            }
+        }
+
+        public int MaxGpuMemoryPerModelMB
+        {
+            get => _settings.MaxGpuMemoryPerModelMB;
+            set
+            {
+                int clamped = Math.Clamp(value, ModelSettings.MinGpuMemoryMB, ModelSettings.MaxGpuMemoryMBLimit);
+                if (_settings.MaxGpuMemoryPerModelMB == clamped) return;
+                _settings.MaxGpuMemoryPerModelMB = clamped;
+                OnPropertyChanged(nameof(MaxGpuMemoryPerModelMB));
+            }
+        }
+
+        public int MaxTotalGpuMemoryMB
+        {
+            get => _settings.MaxTotalGpuMemoryMB;
+            set
+            {
+                int clamped = Math.Clamp(value, ModelSettings.MinGpuMemoryMB, ModelSettings.MaxGpuMemoryMBLimit);
+                if (_settings.MaxTotalGpuMemoryMB == clamped) return;
+                _settings.MaxTotalGpuMemoryMB = clamped;
+                OnPropertyChanged(nameof(MaxTotalGpuMemoryMB));
+            }
+        }
+
+        public int MaxVertices
+        {
+            get => _settings.MaxVertices;
+            set
+            {
+                int clamped = Math.Clamp(value, ModelSettings.MinVertices, ModelSettings.MaxVerticesLimit);
+                if (_settings.MaxVertices == clamped) return;
+                _settings.MaxVertices = clamped;
+                OnPropertyChanged(nameof(MaxVertices));
+            }
+        }
+
+        public int MaxIndices
+        {
+            get => _settings.MaxIndices;
+            set
+            {
+                int clamped = Math.Clamp(value, ModelSettings.MinIndices, ModelSettings.MaxIndicesLimit);
+                if (_settings.MaxIndices == clamped) return;
+                _settings.MaxIndices = clamped;
+                OnPropertyChanged(nameof(MaxIndices));
+            }
+        }
+
+        public int MaxParts
+        {
+            get => _settings.MaxParts;
+            set
+            {
+                int clamped = Math.Clamp(value, ModelSettings.MinParts, ModelSettings.MaxPartsLimit);
+                if (_settings.MaxParts == clamped) return;
+                _settings.MaxParts = clamped;
+                OnPropertyChanged(nameof(MaxParts));
+            }
+        }
+
+        public int MinFileSizeMB => ModelSettings.MinFileSizeMB;
+        public int MaxFileSizeMBLimit => ModelSettings.MaxFileSizeMBLimit;
+        public int MinGpuMemoryMB => ModelSettings.MinGpuMemoryMB;
+        public int MaxGpuMemoryMBLimit => ModelSettings.MaxGpuMemoryMBLimit;
+        public int MinVertices => ModelSettings.MinVertices;
+        public int MaxVerticesLimit => ModelSettings.MaxVerticesLimit;
+        public int MinIndices => ModelSettings.MinIndices;
+        public int MaxIndicesLimit => ModelSettings.MaxIndicesLimit;
+        public int MinParts => ModelSettings.MinParts;
+        public int MaxPartsLimit => ModelSettings.MaxPartsLimit;
 
         public ICommand RunAuditCommand { get; }
 

@@ -1,8 +1,10 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
+using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Settings;
+using ObjLoader.Utilities;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
@@ -59,6 +61,8 @@ namespace ObjLoader.Services.Rendering
                 _modelResources.Remove(key);
             }
 
+            var modelSettings = ModelSettings.Instance;
+
             foreach (var path in validPaths)
             {
                 if (_modelResources.ContainsKey(path)) continue;
@@ -71,14 +75,17 @@ namespace ObjLoader.Services.Rendering
                 ID3D11Buffer? ib = null;
                 ID3D11ShaderResourceView?[]? partTextures = null;
                 bool success = false;
+                long gpuBytes = 0;
 
                 try
                 {
                     var vDesc = new BufferDescription(model.Vertices.Length * Unsafe.SizeOf<ObjVertex>(), BindFlags.VertexBuffer, ResourceUsage.Immutable);
                     fixed (ObjVertex* p = model.Vertices) vb = _renderService.Device!.CreateBuffer(vDesc, new SubresourceData(p));
+                    gpuBytes += model.Vertices.Length * Unsafe.SizeOf<ObjVertex>();
 
                     var iDesc = new BufferDescription(model.Indices.Length * sizeof(int), BindFlags.IndexBuffer, ResourceUsage.Immutable);
                     fixed (int* p = model.Indices) ib = _renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
+                    gpuBytes += model.Indices.Length * sizeof(int);
 
                     var parts = model.Parts.ToArray();
                     partTextures = new ID3D11ShaderResourceView?[parts.Length];
@@ -108,10 +115,23 @@ namespace ObjLoader.Services.Rendering
                                 using var t = _renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, stride) });
                                 partTextures[i] = _renderService.Device.CreateShaderResourceView(t);
                             }
+                            gpuBytes += (long)width * height * 4;
                         }
                         catch
                         {
                         }
+                    }
+
+                    if (!modelSettings.IsGpuMemoryPerModelAllowed(gpuBytes))
+                    {
+                        long gpuMB = gpuBytes / (1024L * 1024L);
+                        string message = string.Format(
+                            Texts.GpuMemoryExceeded,
+                            Path.GetFileName(path),
+                            gpuMB,
+                            modelSettings.MaxGpuMemoryPerModelMB);
+                        UserNotification.ShowWarning(message, Texts.ResourceLimitTitle);
+                        continue;
                     }
 
                     var resource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);

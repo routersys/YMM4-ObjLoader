@@ -447,4 +447,19 @@
 <data name="SizeHeader" xml:space="preserve"><value>Ukuran</value></data>
 <data name="StackTraceHeader" xml:space="preserve"><value>Stack Trace</value></data>
 <data name="CreatedAtHeader" xml:space="preserve"><value>Dibuat Pada</value></data>
+<data name="ResourceLimits" xml:space="preserve"><value>Batas Sumber Daya</value></data>
+<data name="ResourceLimitTitle" xml:space="preserve"><value>Batas Sumber Daya</value></data>
+<data name="ComplexityLimits" xml:space="preserve"><value>Batas Kompleksitas Model</value></data>
+<data name="MaxFileSizeMB" xml:space="preserve"><value>Ukuran File Maksimum</value></data>
+<data name="MaxGpuMemoryPerModelMB" xml:space="preserve"><value>Memori GPU Maks. per Model</value></data>
+<data name="MaxTotalGpuMemoryMB" xml:space="preserve"><value>Total Memori GPU Maksimum</value></data>
+<data name="MaxVertices" xml:space="preserve"><value>Maks. Vertex</value></data>
+<data name="MaxIndices" xml:space="preserve"><value>Maks. Indeks</value></data>
+<data name="MaxParts" xml:space="preserve"><value>Maks. Bagian</value></data>
+<data name="FileSizeExceeded" xml:space="preserve"><value>Ukuran file {0} ({1} MB) melebihi batas ({2} MB). Anda dapat mengubah batas di Pengaturan Model.</value></data>
+<data name="GpuMemoryExceeded" xml:space="preserve"><value>Penggunaan memori GPU {0} ({1} MB) melebihi batas ({2} MB). Anda dapat mengubah batas di Pengaturan Model.</value></data>
+<data name="VertexCountExceeded" xml:space="preserve"><value>Jumlah vertex file {0} ({1}) melebihi batas ({2}). Anda dapat mengubah batas di Pengaturan Model.</value></data>
+<data name="IndexCountExceeded" xml:space="preserve"><value>Jumlah indeks file {0} ({1}) melebihi batas ({2}). Anda dapat mengubah batas di Pengaturan Model.</value></data>
+<data name="PartCountExceeded" xml:space="preserve"><value>Jumlah bagian file {0} ({1}) melebihi batas ({2}). Anda dapat mengubah batas di Pengaturan Model.</value></data>
+<data name="SandboxBlocked" xml:space="preserve"><value>Akses ke {0} diblokir oleh sandbox. Silakan tambahkan direktori yang diizinkan di Pengaturan Model.</value></data>
 </root>

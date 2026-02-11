@@ -448,4 +448,19 @@
 <data name="SizeHeader" xml:space="preserve"><value>大小</value></data>
 <data name="StackTraceHeader" xml:space="preserve"><value>堆疊追蹤</value></data>
 <data name="CreatedAtHeader" xml:space="preserve"><value>建立時間</value></data>
+<data name="ResourceLimits" xml:space="preserve"><value>資源限制</value></data>
+<data name="ResourceLimitTitle" xml:space="preserve"><value>資源限制</value></data>
+<data name="ComplexityLimits" xml:space="preserve"><value>模型複雜度限制</value></data>
+<data name="MaxFileSizeMB" xml:space="preserve"><value>最大檔案大小</value></data>
+<data name="MaxGpuMemoryPerModelMB" xml:space="preserve"><value>每個模型最大GPU記憶體</value></data>
+<data name="MaxTotalGpuMemoryMB" xml:space="preserve"><value>最大總GPU記憶體</value></data>
+<data name="MaxVertices" xml:space="preserve"><value>最大頂點數</value></data>
+<data name="MaxIndices" xml:space="preserve"><value>最大索引數</value></data>
+<data name="MaxParts" xml:space="preserve"><value>最大部件數</value></data>
+<data name="FileSizeExceeded" xml:space="preserve"><value>檔案 {0} 的大小 ({1} MB) 超過了限制 ({2} MB)。您可以在模型設定中變更限制。</value></data>
+<data name="GpuMemoryExceeded" xml:space="preserve"><value>檔案 {0} 的GPU記憶體使用 ({1} MB) 超過了限制 ({2} MB)。您可以在模型設定中變更限制。</value></data>
+<data name="VertexCountExceeded" xml:space="preserve"><value>檔案 {0} 的頂點數 ({1}) 超過了限制 ({2})。您可以在模型設定中變更限制。</value></data>
+<data name="IndexCountExceeded" xml:space="preserve"><value>檔案 {0} 的索引數 ({1}) 超過了限制 ({2})。您可以在模型設定中變更限制。</value></data>
+<data name="PartCountExceeded" xml:space="preserve"><value>檔案 {0} 的部件數 ({1}) 超過了限制 ({2})。您可以在模型設定中變更限制。</value></data>
+<data name="SandboxBlocked" xml:space="preserve"><value>沙箱阻止了對 {0} 的存取。請在模型設定中新增允許的目錄。</value></data>
 </root>

@@ -2,6 +2,7 @@
 using System.Reflection;
 using ObjLoader.Cache;
 using ObjLoader.Core;
+using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 
@@ -10,10 +11,6 @@ namespace ObjLoader.Parsers
     public partial class ObjModelLoader
     {
         private const string DefaultPluginVersion = "1.0.0";
-        private const long MaxFileSizeBytes = 500L * 1024 * 1024;
-        private const int MaxVertexCount = 10_000_000;
-        private const int MaxIndexCount = 30_000_000;
-        private const int MaxPartCount = 10_000;
         private static readonly string PluginVersion;
         private readonly List<IModelParser> _parsers;
         private readonly ModelCache _cache;
@@ -84,34 +81,77 @@ namespace ObjLoader.Parsers
             };
         }
 
+        private bool ValidateFileSize(string path)
+        {
+            try
+            {
+                var fileInfo = new FileInfo(path);
+                var modelSettings = ModelSettings.Instance;
+                if (!modelSettings.IsFileSizeAllowed(fileInfo.Length))
+                {
+                    long sizeMB = fileInfo.Length / (1024L * 1024L);
+                    string message = string.Format(
+                        Texts.FileSizeExceeded,
+                        Path.GetFileName(path),
+                        sizeMB,
+                        modelSettings.MaxFileSizeMB);
+                    UserNotification.ShowWarning(message, Texts.ResourceLimitTitle);
+                    return false;
+                }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool ValidateModelComplexity(string path, ObjModel model)
+        {
+            var modelSettings = ModelSettings.Instance;
+            string fileName = Path.GetFileName(path);
+            int partCount = model.Parts?.Count ?? 0;
+            string error = modelSettings.ValidateModelComplexity(fileName, model.Vertices.Length, model.Indices.Length, partCount);
+            if (!string.IsNullOrEmpty(error))
+            {
+                UserNotification.ShowWarning(error, Texts.ResourceLimitTitle);
+                return false;
+            }
+            return true;
+        }
+
         public ObjModel Load(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return new ObjModel();
 
-            var fileInfo = new FileInfo(path);
-
-            if (fileInfo.Length > MaxFileSizeBytes) return new ObjModel();
+            if (!ValidateFileSize(path))
+            {
+                return new ObjModel();
+            }
 
             var parser = GetParser(path);
             var parserId = parser?.GetType().Name ?? string.Empty;
             var parserVersion = parser != null && _parserVersions.TryGetValue(parser.GetType(), out var v) ? v : 1;
+            var fileInfo = new FileInfo(path);
 
             if (_cache.TryLoad(path, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion, out var cachedModel))
             {
+                if (!ValidateModelComplexity(path, cachedModel))
+                {
+                    return new ObjModel();
+                }
                 return cachedModel;
             }
 
             var model = parser?.Parse(path) ?? new ObjModel();
 
-            if (model.Vertices.Length > MaxVertexCount ||
-                model.Indices.Length > MaxIndexCount ||
-                (model.Parts != null && model.Parts.Count > MaxPartCount))
-            {
-                return new ObjModel();
-            }
-
             if (model.Vertices.Length > 0)
             {
+                if (!ValidateModelComplexity(path, model))
+                {
+                    return new ObjModel();
+                }
+
                 var thumb = ThumbnailUtil.CreateThumbnail(model);
                 _cache.Save(path, model, thumb, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion);
             }

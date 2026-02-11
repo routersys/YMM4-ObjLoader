@@ -448,4 +448,19 @@
 <data name="SizeHeader" xml:space="preserve"><value>크기</value></data>
 <data name="StackTraceHeader" xml:space="preserve"><value>스택 트레이스</value></data>
 <data name="CreatedAtHeader" xml:space="preserve"><value>생성 일시</value></data>
+<data name="ResourceLimits" xml:space="preserve"><value>리소스 제한</value></data>
+<data name="ResourceLimitTitle" xml:space="preserve"><value>리소스 제한</value></data>
+<data name="ComplexityLimits" xml:space="preserve"><value>모델 복잡도 제한</value></data>
+<data name="MaxFileSizeMB" xml:space="preserve"><value>최대 파일 크기</value></data>
+<data name="MaxGpuMemoryPerModelMB" xml:space="preserve"><value>모델당 최대 GPU 메모리</value></data>
+<data name="MaxTotalGpuMemoryMB" xml:space="preserve"><value>최대 총 GPU 메모리</value></data>
+<data name="MaxVertices" xml:space="preserve"><value>최대 정점 수</value></data>
+<data name="MaxIndices" xml:space="preserve"><value>최대 인덱스 수</value></data>
+<data name="MaxParts" xml:space="preserve"><value>최대 파트 수</value></data>
+<data name="FileSizeExceeded" xml:space="preserve"><value>파일 {0}의 크기 ({1} MB)가 제한 ({2} MB)을 초과합니다. 모델 설정에서 제한을 변경할 수 있습니다.</value></data>
+<data name="GpuMemoryExceeded" xml:space="preserve"><value>파일 {0}의 GPU 메모리 사용량 ({1} MB)이 제한 ({2} MB)을 초과합니다. 모델 설정에서 제한을 변경할 수 있습니다.</value></data>
+<data name="VertexCountExceeded" xml:space="preserve"><value>파일 {0}의 정점 수 ({1})가 제한 ({2})을 초과합니다. 모델 설정에서 제한을 변경할 수 있습니다.</value></data>
+<data name="IndexCountExceeded" xml:space="preserve"><value>파일 {0}의 인덱스 수 ({1})가 제한 ({2})을 초과합니다. 모델 설정에서 제한을 변경할 수 있습니다.</value></data>
+<data name="PartCountExceeded" xml:space="preserve"><value>파일 {0}의 파트 수 ({1})가 제한 ({2})을 초과합니다. 모델 설정에서 제한을 변경할 수 있습니다.</value></data>
+<data name="SandboxBlocked" xml:space="preserve"><value>샌드박스에 의해 {0}에 대한 접근이 차단되었습니다. 모델 설정에서 허용 디렉토리를 추가하세요.</value></data>
 </root>

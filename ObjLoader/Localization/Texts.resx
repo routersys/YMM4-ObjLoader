@@ -448,4 +448,19 @@
 <data name="SizeHeader" xml:space="preserve"><value>サイズ</value></data>
 <data name="StackTraceHeader" xml:space="preserve"><value>スタックトレース</value></data>
 <data name="CreatedAtHeader" xml:space="preserve"><value>作成日時</value></data>
+<data name="ResourceLimits" xml:space="preserve"><value>リソース制限</value></data>
+<data name="ResourceLimitTitle" xml:space="preserve"><value>リソース制限</value></data>
+<data name="ComplexityLimits" xml:space="preserve"><value>モデル複雑度制限</value></data>
+<data name="MaxFileSizeMB" xml:space="preserve"><value>最大ファイルサイズ</value></data>
+<data name="MaxGpuMemoryPerModelMB" xml:space="preserve"><value>モデルあたりの最大GPUメモリ</value></data>
+<data name="MaxTotalGpuMemoryMB" xml:space="preserve"><value>最大合計GPUメモリ</value></data>
+<data name="MaxVertices" xml:space="preserve"><value>最大頂点数</value></data>
+<data name="MaxIndices" xml:space="preserve"><value>最大インデックス数</value></data>
+<data name="MaxParts" xml:space="preserve"><value>最大パート数</value></data>
+<data name="FileSizeExceeded" xml:space="preserve"><value>{0} のファイルサイズ ({1} MB) が制限 ({2} MB) を超えています。モデル設定で制限値を変更できます。</value></data>
+<data name="GpuMemoryExceeded" xml:space="preserve"><value>{0} のGPUメモリ使用量 ({1} MB) が制限 ({2} MB) を超えています。モデル設定で制限値を変更できます。</value></data>
+<data name="VertexCountExceeded" xml:space="preserve"><value>{0} の頂点数 ({1}) が制限 ({2}) を超えています。モデル設定で制限値を変更できます。</value></data>
+<data name="IndexCountExceeded" xml:space="preserve"><value>{0} のインデックス数 ({1}) が制限 ({2}) を超えています。モデル設定で制限値を変更できます。</value></data>
+<data name="PartCountExceeded" xml:space="preserve"><value>{0} のパート数 ({1}) が制限 ({2}) を超えています。モデル設定で制限値を変更できます。</value></data>
+<data name="SandboxBlocked" xml:space="preserve"><value>{0} へのアクセスがサンドボックスによりブロックされました。モデル設定で許可ディレクトリを追加してください。</value></data>
 </root>

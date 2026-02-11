@@ -448,4 +448,19 @@
 <data name="SizeHeader" xml:space="preserve"><value>Tamaño</value></data>
 <data name="StackTraceHeader" xml:space="preserve"><value>Seguimiento de pila</value></data>
 <data name="CreatedAtHeader" xml:space="preserve"><value>Creado en</value></data>
+<data name="ResourceLimits" xml:space="preserve"><value>Límites de recursos</value></data>
+<data name="ResourceLimitTitle" xml:space="preserve"><value>Límite de recursos</value></data>
+<data name="ComplexityLimits" xml:space="preserve"><value>Límites de complejidad</value></data>
+<data name="MaxFileSizeMB" xml:space="preserve"><value>Tamaño máximo de archivo</value></data>
+<data name="MaxGpuMemoryPerModelMB" xml:space="preserve"><value>Memoria GPU máx. por modelo</value></data>
+<data name="MaxTotalGpuMemoryMB" xml:space="preserve"><value>Memoria GPU total máxima</value></data>
+<data name="MaxVertices" xml:space="preserve"><value>Máx. vértices</value></data>
+<data name="MaxIndices" xml:space="preserve"><value>Máx. índices</value></data>
+<data name="MaxParts" xml:space="preserve"><value>Máx. partes</value></data>
+<data name="FileSizeExceeded" xml:space="preserve"><value>El archivo {0} ({1} MB) supera el límite ({2} MB). Puede cambiar el límite en Configuración del modelo.</value></data>
+<data name="GpuMemoryExceeded" xml:space="preserve"><value>El uso de memoria GPU de {0} ({1} MB) supera el límite ({2} MB). Puede cambiar el límite en Configuración del modelo.</value></data>
+<data name="VertexCountExceeded" xml:space="preserve"><value>El archivo {0} tiene {1} vértices, superando el límite de {2}. Puede cambiar el límite en Configuración del modelo.</value></data>
+<data name="IndexCountExceeded" xml:space="preserve"><value>El archivo {0} tiene {1} índices, superando el límite de {2}. Puede cambiar el límite en Configuración del modelo.</value></data>
+<data name="PartCountExceeded" xml:space="preserve"><value>El archivo {0} tiene {1} partes, superando el límite de {2}. Puede cambiar el límite en Configuración del modelo.</value></data>
+<data name="SandboxBlocked" xml:space="preserve"><value>El sandbox bloqueó el acceso a {0}. Agregue un directorio permitido en Configuración del modelo.</value></data>
 </root>
