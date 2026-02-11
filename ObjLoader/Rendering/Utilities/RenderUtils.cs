@@ -6,7 +6,7 @@ namespace ObjLoader.Rendering.Utilities
 {
     internal static class RenderUtils
     {
-        public static Matrix4x4 GetLayerTransform(LayerState state)
+        public static Matrix4x4 GetLayerTransform(in LayerState state)
         {
             Matrix4x4 axisConversion = Matrix4x4.Identity;
             if (string.IsNullOrEmpty(state.ParentGuid))

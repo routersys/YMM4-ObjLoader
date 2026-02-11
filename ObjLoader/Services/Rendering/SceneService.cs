@@ -45,7 +45,7 @@ namespace ObjLoader.Services.Rendering
             foreach (var layer in _parameter.Layers)
             {
                 if (!string.IsNullOrWhiteSpace(layer.FilePath))
-                    validPaths.Add(layer.FilePath.Trim('"'));
+                    validPaths.Add(layer.FilePath);
             }
 
             var keysToRemove = new List<string>();
@@ -274,7 +274,7 @@ namespace ObjLoader.Services.Rendering
                 var layer = layerList[i];
                 if (!layer.IsVisible) continue;
 
-                string filePath = layer.FilePath?.Trim('"') ?? string.Empty;
+                string filePath = layer.FilePath ?? string.Empty;
                 if (string.IsNullOrEmpty(filePath) || !_modelResources.ContainsKey(filePath)) continue;
 
                 var (resource, size, _, _) = _modelResources[filePath];

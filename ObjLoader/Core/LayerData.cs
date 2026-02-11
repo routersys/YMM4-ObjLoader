@@ -90,13 +90,16 @@ namespace ObjLoader.Core
         {
             if (string.IsNullOrWhiteSpace(value)) return string.Empty;
 
-            var result = FileSystemSandbox.Instance.ValidatePath(value);
+            var trimmed = value.Trim().Trim('"');
+            if (string.IsNullOrWhiteSpace(trimmed)) return string.Empty;
+
+            var result = FileSystemSandbox.Instance.ValidatePath(trimmed);
             if (result.IsAllowed && result.ResolvedPath != null)
             {
                 return result.ResolvedPath;
             }
 
-            var basicResult = PathValidator.Validate(value);
+            var basicResult = PathValidator.Validate(trimmed);
             if (basicResult.IsValid && basicResult.NormalizedPath != null)
             {
                 return basicResult.NormalizedPath;

@@ -297,7 +297,7 @@ namespace ObjLoader.Rendering.Core
                     LightZ = lz,
                     IsLightEnabled = layer.IsLightEnabled,
                     LightType = layer.LightType,
-                    FilePath = layer.FilePath?.Trim('"') ?? string.Empty,
+                    FilePath = layer.FilePath ?? string.Empty,
                     ShaderFilePath = _parameter.ShaderFilePath?.Trim('"') ?? string.Empty,
                     BaseColor = layer.BaseColor,
                     WorldId = worldId,
@@ -345,7 +345,7 @@ namespace ObjLoader.Rendering.Core
 
                 _newLayerStatesTemp[item.Guid] = layerState;
 
-                if (!previousStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref layerState))
+                if (!previousStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(in oldState, in layerState))
                 {
                     layersChanged = true;
                 }
@@ -610,7 +610,7 @@ namespace ObjLoader.Rendering.Core
             }
         }
 
-        private static bool AreStatesEqual(ref LayerState a, ref LayerState b)
+        private static bool AreStatesEqual(in LayerState a, in LayerState b)
         {
             return Math.Abs(a.X - b.X) < 1e-5 && Math.Abs(a.Y - b.Y) < 1e-5 && Math.Abs(a.Z - b.Z) < 1e-5 &&
                    Math.Abs(a.Scale - b.Scale) < 1e-5 && Math.Abs(a.Rx - b.Rx) < 1e-5 && Math.Abs(a.Ry - b.Ry) < 1e-5 && Math.Abs(a.Rz - b.Rz) < 1e-5 &&

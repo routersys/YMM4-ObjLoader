@@ -2,11 +2,15 @@
 using System.Numerics;
 using System.Text;
 using ObjLoader.Core;
+using ObjLoader.Settings;
 
 namespace ObjLoader.Cache
 {
     public class ModelCache
     {
+        private const int MaxThumbnailSize = 10 * 1024 * 1024;
+        private const int MaxTexturePathLength = 32_767;
+
         public bool TryLoad(string path, DateTime originalTimestamp, string parserId, int parserVersion, string pluginVersion, out ObjModel model)
         {
             model = new ObjModel();
@@ -45,7 +49,7 @@ namespace ObjLoader.Cache
                 if (!header.IsValid(originalTimestamp.ToBinary(), path, parserId, parserVersion, pluginVersion)) return Array.Empty<byte>();
 
                 int thumbLen = br.ReadInt32();
-                if (thumbLen > 0)
+                if (thumbLen > 0 && thumbLen <= MaxThumbnailSize)
                 {
                     return br.ReadBytes(thumbLen);
                 }
@@ -97,17 +101,30 @@ namespace ObjLoader.Cache
 
         private unsafe ObjModel ReadBody(BinaryReader br, FileStream fs)
         {
+            var limits = ModelSettings.Instance;
+
             int thumbLen = br.ReadInt32();
+            if (thumbLen < 0 || thumbLen > MaxThumbnailSize)
+                throw new InvalidDataException($"Invalid thumbnail length: {thumbLen}");
             if (thumbLen > 0) fs.Seek(thumbLen, SeekOrigin.Current);
 
             int vCount = br.ReadInt32();
             int iCount = br.ReadInt32();
             int pCount = br.ReadInt32();
 
+            if (vCount < 0 || vCount > limits.MaxVertices)
+                throw new InvalidDataException($"Invalid vertex count: {vCount}");
+            if (iCount < 0 || iCount > limits.MaxIndices)
+                throw new InvalidDataException($"Invalid index count: {iCount}");
+            if (pCount < 0 || pCount > limits.MaxParts)
+                throw new InvalidDataException($"Invalid part count: {pCount}");
+
             var parts = new List<ModelPart>(pCount);
             for (int i = 0; i < pCount; i++)
             {
                 int tLen = br.ReadInt32();
+                if (tLen < 0 || tLen > MaxTexturePathLength)
+                    throw new InvalidDataException($"Invalid texture path length: {tLen}");
                 var tBytes = br.ReadBytes(tLen);
                 string texPath = Encoding.UTF8.GetString(tBytes);
                 int iOff = br.ReadInt32();
@@ -119,19 +136,29 @@ namespace ObjLoader.Cache
             Vector3 center = new Vector3(br.ReadSingle(), br.ReadSingle(), br.ReadSingle());
             float scale = br.ReadSingle();
 
+            long requiredVertexBytes = (long)vCount * sizeof(ObjVertex);
+            long requiredIndexBytes = (long)iCount * sizeof(int);
+            long remainingBytes = fs.Length - fs.Position;
+            if (remainingBytes < requiredVertexBytes + requiredIndexBytes)
+                throw new InvalidDataException($"File too small: need {requiredVertexBytes + requiredIndexBytes} bytes, have {remainingBytes}");
+
             var vertices = GC.AllocateUninitializedArray<ObjVertex>(vCount, true);
             var indices = GC.AllocateUninitializedArray<int>(iCount, true);
 
             fixed (ObjVertex* pV = vertices)
             {
                 var span = new Span<byte>(pV, vCount * sizeof(ObjVertex));
-                if (fs.Read(span) != span.Length) throw new Exception();
+                int bytesRead = fs.Read(span);
+                if (bytesRead != span.Length)
+                    throw new InvalidDataException($"Expected {span.Length} vertex bytes, read {bytesRead}");
             }
 
             fixed (int* pI = indices)
             {
                 var span = new Span<byte>(pI, iCount * sizeof(int));
-                if (fs.Read(span) != span.Length) throw new Exception();
+                int bytesRead = fs.Read(span);
+                if (bytesRead != span.Length)
+                    throw new InvalidDataException($"Expected {span.Length} index bytes, read {bytesRead}");
             }
 
             return new ObjModel
@@ -146,6 +173,15 @@ namespace ObjLoader.Cache
 
         private unsafe void WriteCacheFile(string tempPath, CacheHeader header, ObjModel model, byte[] thumbnail)
         {
+            var limits = ModelSettings.Instance;
+
+            if (model.Vertices.Length > limits.MaxVertices)
+                throw new InvalidOperationException($"Vertex count {model.Vertices.Length} exceeds limit {limits.MaxVertices}");
+            if (model.Indices.Length > limits.MaxIndices)
+                throw new InvalidOperationException($"Index count {model.Indices.Length} exceeds limit {limits.MaxIndices}");
+            if (model.Parts.Count > limits.MaxParts)
+                throw new InvalidOperationException($"Part count {model.Parts.Count} exceeds limit {limits.MaxParts}");
+
             using var fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
             using var bw = new BinaryWriter(fs);
 
