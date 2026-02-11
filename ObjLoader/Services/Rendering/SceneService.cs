@@ -166,9 +166,10 @@ namespace ObjLoader.Services.Rendering
                     {
                         if (partTextures != null)
                         {
-                            foreach (var srv in partTextures)
+                            for (int i = 0; i < partTextures.Length; i++)
                             {
-                                SafeDispose(srv);
+                                SafeDispose(partTextures[i]);
+                                partTextures[i] = null;
                             }
                         }
                         SafeDispose(ib);
@@ -227,13 +228,6 @@ namespace ObjLoader.Services.Rendering
             double currentFrame = currentTime * fps;
             int len = (int)(_parameter.Duration * fps);
 
-            var layers = new List<LayerRenderData>();
-            var layerList = _parameter.Layers;
-            int activeIndex = _parameter.SelectedLayerIndex;
-
-            bool isIndexValid = activeIndex >= 0 && activeIndex < layerList.Count;
-            LayerData? activeLayer = isIndexValid ? layerList[activeIndex] : null;
-
             var settings = PluginSettings.Instance;
             Matrix4x4 axisConversion = Matrix4x4.Identity;
             switch (settings.CoordinateSystem)
@@ -243,8 +237,37 @@ namespace ObjLoader.Services.Rendering
                 case CoordinateSystem.LeftHandedZUp: axisConversion = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1); break;
             }
 
+            var layerList = _parameter.Layers;
+            int activeIndex = _parameter.SelectedLayerIndex;
+            bool isIndexValid = activeIndex >= 0 && activeIndex < layerList.Count;
+            LayerData? activeLayer = isIndexValid ? layerList[activeIndex] : null;
+
+            var (localPlacements, globalLiftY) = BuildLocalPlacements(currentFrame, len, fps, settings, activeLayer);
+            var globalPlacements = ResolveHierarchy(localPlacements);
+            var layers = ConvertToRenderData(localPlacements, globalPlacements, axisConversion, globalLiftY, currentFrame, len, fps, activeLayer);
+
+            _renderService.Render(
+                layers,
+                view,
+                proj,
+                new Vector3((float)camPos.X, (float)camPos.Y, (float)camPos.Z),
+                themeColor,
+                isWireframe,
+                isGrid,
+                isInfinite,
+                ModelScale,
+                isInteracting,
+                enableShadow);
+        }
+
+        private (Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> localPlacements, double globalLiftY) BuildLocalPlacements(
+            double currentFrame, int len, int fps, PluginSettings settings, LayerData? activeLayer)
+        {
             var localPlacements = new Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)>();
-            double? globalLiftY = null;
+            double globalLiftY = 0;
+            bool liftComputed = false;
+
+            var layerList = _parameter.Layers;
 
             for (int i = 0; i < layerList.Count; i++)
             {
@@ -280,7 +303,7 @@ namespace ObjLoader.Services.Rendering
                     rz = layer.RotationZ.GetValue((long)currentFrame, len, fps);
                 }
 
-                if (globalLiftY == null)
+                if (!liftComputed)
                 {
                     double h = 0;
                     if (settings.CoordinateSystem == CoordinateSystem.RightHandedZUp || settings.CoordinateSystem == CoordinateSystem.LeftHandedZUp)
@@ -291,6 +314,7 @@ namespace ObjLoader.Services.Rendering
                     globalLiftY = (h * scale / 100.0) / 2.0;
                     ModelHeight = h * scale / 100.0;
                     ModelScale *= scale / 100.0;
+                    liftComputed = true;
                 }
 
                 float fScale = (float)(scale / 100.0);
@@ -306,6 +330,12 @@ namespace ObjLoader.Services.Rendering
                 localPlacements[layer.Guid] = (placement, layer.ParentGuid, layer, resource);
             }
 
+            return (localPlacements, globalLiftY);
+        }
+
+        private Dictionary<string, Matrix4x4> ResolveHierarchy(
+            Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> localPlacements)
+        {
             var globalPlacements = new Dictionary<string, Matrix4x4>();
 
             Matrix4x4 GetGlobalPlacement(string guid, int depth = 0)
@@ -325,6 +355,24 @@ namespace ObjLoader.Services.Rendering
                 return global;
             }
 
+            foreach (var guid in localPlacements.Keys)
+            {
+                GetGlobalPlacement(guid);
+            }
+
+            return globalPlacements;
+        }
+
+        private List<LayerRenderData> ConvertToRenderData(
+            Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> localPlacements,
+            Dictionary<string, Matrix4x4> globalPlacements,
+            Matrix4x4 axisConversion,
+            double globalLiftY,
+            double currentFrame, int len, int fps,
+            LayerData? activeLayer)
+        {
+            var layers = new List<LayerRenderData>();
+
             foreach (var kvp in localPlacements)
             {
                 var guid = kvp.Key;
@@ -332,11 +380,12 @@ namespace ObjLoader.Services.Rendering
                 var layer = info.Layer;
                 var resource = info.Resource;
 
-                var globalPlacement = GetGlobalPlacement(guid);
+                if (!globalPlacements.TryGetValue(guid, out var globalPlacement))
+                    globalPlacement = info.Local;
 
                 var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
 
-                var finalWorld = normalize * axisConversion * globalPlacement * Matrix4x4.CreateTranslation(0, (float)(globalLiftY ?? 0), 0);
+                var finalWorld = normalize * axisConversion * globalPlacement * Matrix4x4.CreateTranslation(0, (float)globalLiftY, 0);
 
                 bool isActive = (activeLayer != null && layer == activeLayer);
                 bool lightEnabled = isActive ? _parameter.IsLightEnabled : layer.IsLightEnabled;
@@ -364,18 +413,7 @@ namespace ObjLoader.Services.Rendering
                 });
             }
 
-            _renderService.Render(
-                layers,
-                view,
-                proj,
-                new Vector3((float)camPos.X, (float)camPos.Y, (float)camPos.Z),
-                themeColor,
-                isWireframe,
-                isGrid,
-                isInfinite,
-                ModelScale,
-                isInteracting,
-                enableShadow);
+            return layers;
         }
 
         public void Dispose()

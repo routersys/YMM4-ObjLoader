@@ -7,13 +7,14 @@ namespace ObjLoader.Cache
     internal sealed class GpuResourceCacheItem : IDisposable
     {
         private int _disposed;
+        private ID3D11ShaderResourceView?[]? _partTextures;
 
         public ID3D11Device Device { get; }
         public ID3D11Buffer VertexBuffer { get; }
         public ID3D11Buffer IndexBuffer { get; }
         public int IndexCount { get; }
         public ModelPart[] Parts { get; }
-        public ID3D11ShaderResourceView?[] PartTextures { get; }
+        public ID3D11ShaderResourceView?[] PartTextures => _partTextures!;
         public Vector3 ModelCenter { get; }
         public float ModelScale { get; }
         public long EstimatedGpuBytes { get; }
@@ -34,7 +35,7 @@ namespace ObjLoader.Cache
             IndexBuffer = ib ?? throw new ArgumentNullException(nameof(ib));
             IndexCount = indexCount;
             Parts = parts ?? throw new ArgumentNullException(nameof(parts));
-            PartTextures = textures ?? throw new ArgumentNullException(nameof(textures));
+            _partTextures = textures ?? throw new ArgumentNullException(nameof(textures));
             ModelCenter = center;
             ModelScale = scale;
             EstimatedGpuBytes = estimatedGpuBytes;
@@ -47,7 +48,8 @@ namespace ObjLoader.Cache
             SafeDispose(VertexBuffer);
             SafeDispose(IndexBuffer);
 
-            var textures = PartTextures;
+            var textures = _partTextures;
+            _partTextures = null;
             if (textures != null)
             {
                 for (int i = 0; i < textures.Length; i++)
@@ -79,12 +81,14 @@ namespace ObjLoader.Cache
             SafeDispose(VertexBuffer);
             SafeDispose(IndexBuffer);
 
-            var textures = PartTextures;
+            var textures = _partTextures;
+            _partTextures = null;
             if (textures != null)
             {
                 for (int i = 0; i < textures.Length; i++)
                 {
                     SafeDispose(textures[i]);
+                    textures[i] = null;
                 }
             }
         }

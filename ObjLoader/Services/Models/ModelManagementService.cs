@@ -130,9 +130,10 @@ namespace ObjLoader.Services.Models
                 {
                     if (partTextures != null)
                     {
-                        foreach (var srv in partTextures)
+                        for (int i = 0; i < partTextures.Length; i++)
                         {
-                            SafeDispose(srv);
+                            SafeDispose(partTextures[i]);
+                            partTextures[i] = null;
                         }
                     }
                     SafeDispose(ib);

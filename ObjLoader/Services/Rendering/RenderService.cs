@@ -48,7 +48,7 @@ namespace ObjLoader.Services.Rendering
         private readonly int[] _offsetArray = new int[] { 0 };
         private readonly ID3D11Buffer[] _vbArray = new ID3D11Buffer[1];
 
-        private readonly List<int> _opaqueParts = new List<int>();
+        private readonly List<(int LayerIndex, int PartIndex)> _opaquePartList = new();
         private readonly List<TransparentPart> _transparentParts = new List<TransparentPart>();
         private readonly PartSorter _partSorter = new PartSorter();
 
@@ -304,13 +304,31 @@ namespace ObjLoader.Services.Rendering
 
             _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
 
-            bool renderShadowMap = false;
-            Matrix4x4 lightViewProj = Matrix4x4.Identity;
+            ComputeLayerTransforms(layers, view, proj);
 
-            if (enableShadow && settings.ShadowMappingEnabled)
+            var (renderShadowMap, lightViewProj) = RenderShadowPass(layers, enableShadow);
+
+            var (gridColor, axisColor) = PrepareRenderTargets(themeColor, isWireframe);
+
+            ClassifyPartsByOpacity(layers, camPos);
+
+            RenderOpaqueParts(layers, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, renderShadowMap);
+
+            RenderTransparentParts(layers, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, isWireframe);
+
+            RenderGridIfVisible(isGridVisible, isInfiniteGrid, gridScale, view, proj, camPos, gridColor, axisColor);
+
+            CopyToStagingTexture();
+        }
+
+        private void ComputeLayerTransforms(List<LayerRenderData> layers, Matrix4x4 view, Matrix4x4 proj)
+        {
+            var settings = PluginSettings.Instance;
+
+            if (settings.ShadowMappingEnabled)
             {
                 bool useCascaded = settings.CascadedShadowsEnabled;
-                if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
+                if (settings.ShadowResolution != _d3dResources!.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
                 {
                     _d3dResources.EnsureShadowMapSize(settings.ShadowResolution, useCascaded);
                 }
@@ -361,129 +379,135 @@ namespace ObjLoader.Services.Rendering
                     world = normalize * axisConversion * placement;
                 }
 
-                var wvp = world * view * proj;
-
                 layerWorlds[i] = world;
-                layerWvps[i] = wvp;
+                layerWvps[i] = world * view * proj;
             }
+        }
 
-            if (enableShadow && settings.ShadowMappingEnabled)
+        private (bool renderShadowMap, Matrix4x4 lightViewProj) RenderShadowPass(List<LayerRenderData> layers, bool enableShadow)
+        {
+            var settings = PluginSettings.Instance;
+            bool renderShadowMap = false;
+            Matrix4x4 lightViewProj = Matrix4x4.Identity;
+
+            if (!enableShadow || !settings.ShadowMappingEnabled) return (false, lightViewProj);
+
+            bool useCascaded = settings.CascadedShadowsEnabled;
+            if (settings.ShadowResolution != _d3dResources!.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
             {
-                bool useCascaded = settings.CascadedShadowsEnabled;
-                if (settings.ShadowResolution != _d3dResources.CurrentShadowMapSize || _d3dResources.IsCascaded != useCascaded)
+                _d3dResources.EnsureShadowMapSize(settings.ShadowResolution, useCascaded);
+            }
+
+            if (_d3dResources.ShadowMapDSVs == null || _d3dResources.ShadowMapDSVs.Length == 0)
+                return (false, lightViewProj);
+
+            LayerRenderData shadowCasterLayer = default;
+            bool foundCaster = false;
+            Matrix4x4 shadowCasterWorld = Matrix4x4.Identity;
+
+            for (int i = 0; i < layers.Count; i++)
+            {
+                var l = layers[i];
+                if (l.LightEnabled && (l.LightType == 1 || l.LightType == 2))
                 {
-                    _d3dResources.EnsureShadowMapSize(settings.ShadowResolution, useCascaded);
+                    shadowCasterLayer = l;
+                    shadowCasterWorld = _cachedLayerWorlds![i];
+                    foundCaster = true;
+                    break;
                 }
+            }
 
-                if (_d3dResources.ShadowMapDSVs != null && _d3dResources.ShadowMapDSVs.Length > 0)
+            if (!foundCaster) return (false, lightViewProj);
+            if (!settings.GetShadowEnabled(shadowCasterLayer.WorldId)) return (false, lightViewProj);
+
+            renderShadowMap = true;
+            if (_d3dResources.ShadowMapSRV != null) _shadowSrvArray[0] = _d3dResources.ShadowMapSRV;
+
+            var rawLightPos = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
+            System.Numerics.Vector3 lightPosVec;
+
+            if (shadowCasterLayer.LightType == 2)
+                lightPosVec = System.Numerics.Vector3.TransformNormal(rawLightPos, shadowCasterWorld);
+            else
+                lightPosVec = System.Numerics.Vector3.Transform(rawLightPos, shadowCasterWorld);
+
+            Matrix4x4 lightView;
+            Matrix4x4 lightProj;
+            float shadowRange = (float)settings.SunLightShadowRange;
+
+            if (shadowCasterLayer.LightType == 2)
+            {
+                var lightDir = System.Numerics.Vector3.Normalize(lightPosVec);
+                if (lightDir.LengthSquared() < 0.0001f) lightDir = System.Numerics.Vector3.UnitY;
+
+                var targetPos = System.Numerics.Vector3.Zero;
+                var camPosShadow = targetPos + lightDir * shadowRange * 0.5f;
+
+                lightView = Matrix4x4.CreateLookAt(camPosShadow, targetPos, System.Numerics.Vector3.UnitY);
+                lightProj = Matrix4x4.CreateOrthographic(shadowRange, shadowRange, 1.0f, shadowRange * 2.0f);
+            }
+            else
+            {
+                var targetPos = System.Numerics.Vector3.Zero;
+                lightView = Matrix4x4.CreateLookAt(lightPosVec, targetPos, System.Numerics.Vector3.UnitY);
+                lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlanePreview);
+            }
+
+            lightViewProj = lightView * lightProj;
+
+            _context!.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
+
+            _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), _d3dResources.ShadowMapDSVs[0]);
+            _context.ClearDepthStencilView(_d3dResources.ShadowMapDSVs[0], DepthStencilClearFlags.Depth, 1.0f, 0);
+            _context.RSSetState(_d3dResources.ShadowRasterizerState);
+            _context.RSSetViewport(0, 0, settings.ShadowResolution, settings.ShadowResolution);
+            _context.VSSetShader(_d3dResources.VertexShader);
+            _context.PSSetShader(null);
+            _context.IASetInputLayout(_d3dResources.InputLayout);
+            _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+
+            for (int i = 0; i < layers.Count; i++)
+            {
+                var layer = layers[i];
+                if (!layer.LightEnabled) continue;
+                if (layer.LightType == 0 && !foundCaster) continue;
+
+                var modelResource = layer.Resource;
+                var world = _cachedLayerWorlds![i];
+                var wvpShadow = world * lightViewProj;
+
+                int stride = Unsafe.SizeOf<ObjVertex>();
+                _vbArray[0] = modelResource.VertexBuffer;
+                _strideArray[0] = stride;
+                _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
+                _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
+
+                ConstantBufferData cbShadow = new ConstantBufferData
                 {
-                    LayerRenderData shadowCasterLayer = default;
-                    bool foundCaster = false;
-                    Matrix4x4 shadowCasterWorld = Matrix4x4.Identity;
+                    WorldViewProj = Matrix4x4.Transpose(wvpShadow),
+                    World = Matrix4x4.Transpose(world)
+                };
+                UpdateConstantBuffer(ref cbShadow);
 
-                    for (int i = 0; i < layers.Count; i++)
+                for (int p = 0; p < modelResource.Parts.Length; p++)
+                {
+                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
+                    var part = modelResource.Parts[p];
+                    if (part.BaseColor.W >= 0.99f)
                     {
-                        var l = layers[i];
-                        if (l.LightEnabled && (l.LightType == 1 || l.LightType == 2))
-                        {
-                            shadowCasterLayer = l;
-                            shadowCasterWorld = layerWorlds[i];
-                            foundCaster = true;
-                            break;
-                        }
-                    }
-
-                    if (foundCaster)
-                    {
-                        if (settings.GetShadowEnabled(shadowCasterLayer.WorldId))
-                        {
-                            renderShadowMap = true;
-                            if (_d3dResources.ShadowMapSRV != null) _shadowSrvArray[0] = _d3dResources.ShadowMapSRV;
-
-                            var rawLightPos = new System.Numerics.Vector3((float)shadowCasterLayer.LightX, (float)shadowCasterLayer.LightY, (float)shadowCasterLayer.LightZ);
-                            System.Numerics.Vector3 lightPosVec;
-
-                            if (shadowCasterLayer.LightType == 2)
-                                lightPosVec = System.Numerics.Vector3.TransformNormal(rawLightPos, shadowCasterWorld);
-                            else
-                                lightPosVec = System.Numerics.Vector3.Transform(rawLightPos, shadowCasterWorld);
-
-                            Matrix4x4 lightView;
-                            Matrix4x4 lightProj;
-                            float shadowRange = (float)settings.SunLightShadowRange;
-
-                            if (shadowCasterLayer.LightType == 2)
-                            {
-                                var lightDir = System.Numerics.Vector3.Normalize(lightPosVec);
-                                if (lightDir.LengthSquared() < 0.0001f) lightDir = System.Numerics.Vector3.UnitY;
-
-                                var targetPos = System.Numerics.Vector3.Zero;
-                                var camPosShadow = targetPos + lightDir * shadowRange * 0.5f;
-
-                                lightView = Matrix4x4.CreateLookAt(camPosShadow, targetPos, System.Numerics.Vector3.UnitY);
-                                lightProj = Matrix4x4.CreateOrthographic(shadowRange, shadowRange, 1.0f, shadowRange * 2.0f);
-                            }
-                            else
-                            {
-                                var targetPos = System.Numerics.Vector3.Zero;
-                                lightView = Matrix4x4.CreateLookAt(lightPosVec, targetPos, System.Numerics.Vector3.UnitY);
-                                lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(60.0 * Math.PI / 180.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlanePreview);
-                            }
-
-                            lightViewProj = lightView * lightProj;
-
-                            _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
-
-                            _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), _d3dResources.ShadowMapDSVs[0]);
-                            _context.ClearDepthStencilView(_d3dResources.ShadowMapDSVs[0], DepthStencilClearFlags.Depth, 1.0f, 0);
-                            _context.RSSetState(_d3dResources.ShadowRasterizerState);
-                            _context.RSSetViewport(0, 0, settings.ShadowResolution, settings.ShadowResolution);
-                            _context.VSSetShader(_d3dResources.VertexShader);
-                            _context.PSSetShader(null);
-                            _context.IASetInputLayout(_d3dResources.InputLayout);
-                            _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-
-                            for (int i = 0; i < layers.Count; i++)
-                            {
-                                var layer = layers[i];
-                                if (!layer.LightEnabled) continue;
-                                if (layer.LightType == 0 && !foundCaster) continue;
-
-                                var modelResource = layer.Resource;
-                                var world = layerWorlds[i];
-                                var wvpShadow = world * lightViewProj;
-
-                                int stride = Unsafe.SizeOf<ObjVertex>();
-                                _vbArray[0] = modelResource.VertexBuffer;
-                                _strideArray[0] = stride;
-                                _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
-                                _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
-
-                                ConstantBufferData cbShadow = new ConstantBufferData
-                                {
-                                    WorldViewProj = Matrix4x4.Transpose(wvpShadow),
-                                    World = Matrix4x4.Transpose(world)
-                                };
-                                UpdateConstantBuffer(ref cbShadow);
-
-                                for (int p = 0; p < modelResource.Parts.Length; p++)
-                                {
-                                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
-                                    var part = modelResource.Parts[p];
-                                    if (part.BaseColor.W >= 0.99f)
-                                    {
-                                        _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
-                                    }
-                                }
-                            }
-
-                            _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
-                            _context.Flush();
-                        }
+                        _context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
                     }
                 }
             }
 
+            _context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
+            _context.Flush();
+
+            return (renderShadowMap, lightViewProj);
+        }
+
+        private (System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor) PrepareRenderTargets(System.Windows.Media.Color themeColor, bool isWireframe)
+        {
             double brightness = themeColor.R * 0.299 + themeColor.G * 0.587 + themeColor.B * 0.114;
             Color4 clearColor;
             System.Numerics.Vector4 gridColor;
@@ -508,18 +532,58 @@ namespace ObjLoader.Services.Rendering
                 axisColor = RenderingConstants.AxisColorLight;
             }
 
-            _context.OMSetRenderTargets(_rtv, _dsv);
-            _context.ClearRenderTargetView(_rtv, clearColor);
-            _context.ClearDepthStencilView(_dsv, DepthStencilClearFlags.Depth, 1.0f, 0);
+            _context!.OMSetRenderTargets(_rtv, _dsv);
+            _context.ClearRenderTargetView(_rtv!, clearColor);
+            _context.ClearDepthStencilView(_dsv!, DepthStencilClearFlags.Depth, 1.0f, 0);
 
-            _context.RSSetState(isWireframe ? _d3dResources.WireframeRasterizerState : _d3dResources.RasterizerState);
+            _context.RSSetState(isWireframe ? _d3dResources!.WireframeRasterizerState : _d3dResources!.RasterizerState);
             _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
             _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
             _context.RSSetViewport(0, 0, _viewportWidth, _viewportHeight);
 
+            return (gridColor, axisColor);
+        }
+
+        private void ClassifyPartsByOpacity(List<LayerRenderData> layers, System.Numerics.Vector3 camPos)
+        {
+            _opaquePartList.Clear();
             _transparentParts.Clear();
 
-            _context.VSSetShader(_d3dResources.VertexShader);
+            for (int i = 0; i < layers.Count; i++)
+            {
+                var layer = layers[i];
+                var modelResource = layer.Resource;
+                var world = _cachedLayerWorlds![i];
+
+                for (int p = 0; p < modelResource.Parts.Length; p++)
+                {
+                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
+
+                    var part = modelResource.Parts[p];
+                    if (part.BaseColor.W < 0.99f)
+                    {
+                        var center = System.Numerics.Vector3.Transform(part.Center, world);
+                        float distSq = System.Numerics.Vector3.DistanceSquared(camPos, center);
+                        _transparentParts.Add(new TransparentPart { LayerIndex = i, PartIndex = p, DistanceSq = distSq });
+                    }
+                    else
+                    {
+                        _opaquePartList.Add((i, p));
+                    }
+                }
+            }
+        }
+
+        private void RenderOpaqueParts(
+            List<LayerRenderData> layers,
+            System.Numerics.Vector4 gridColor,
+            System.Numerics.Vector4 axisColor,
+            bool isInteracting,
+            Matrix4x4 lightViewProj,
+            bool enableShadow,
+            bool renderShadowMap)
+        {
+            _context!.VSSetShader(_d3dResources!.VertexShader);
             _context.PSSetShader(_d3dResources.PixelShader);
             _context.PSSetSamplers(RenderingConstants.SlotStandardSampler, _samplerArray);
             if (renderShadowMap && _shadowSrvArray[0] != null)
@@ -535,99 +599,120 @@ namespace ObjLoader.Services.Rendering
             _context.IASetInputLayout(_d3dResources.InputLayout);
             _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
 
-            for (int i = 0; i < layers.Count; i++)
+            int lastLayerIndex = -1;
+            foreach (var (layerIndex, partIndex) in _opaquePartList)
             {
-                var layer = layers[i];
+                var layer = layers[layerIndex];
                 var modelResource = layer.Resource;
-                var world = layerWorlds[i];
-                var wvp = layerWvps[i];
-                int wId = layer.WorldId;
 
-                int stride = Unsafe.SizeOf<ObjVertex>();
-                _vbArray[0] = modelResource.VertexBuffer;
-                _strideArray[0] = stride;
-                _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
-                _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
-
-                for (int p = 0; p < modelResource.Parts.Length; p++)
+                if (layerIndex != lastLayerIndex)
                 {
-                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
-
-                    var part = modelResource.Parts[p];
-                    if (part.BaseColor.W < 0.99f)
-                    {
-                        var center = System.Numerics.Vector3.Transform(part.Center, world);
-                        float distSq = System.Numerics.Vector3.DistanceSquared(camPos, center);
-                        _transparentParts.Add(new TransparentPart { LayerIndex = i, PartIndex = p, DistanceSq = distSq });
-                    }
-                    else
-                    {
-                        DrawPart(layer, modelResource, p, world, wvp, wId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow);
-                    }
+                    int stride = Unsafe.SizeOf<ObjVertex>();
+                    _vbArray[0] = modelResource.VertexBuffer;
+                    _strideArray[0] = stride;
+                    _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
+                    _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
+                    lastLayerIndex = layerIndex;
                 }
-            }
 
-            if (_transparentParts.Count > 0)
+                DrawPart(layer, modelResource, partIndex, _cachedLayerWorlds![layerIndex], _cachedLayerWvps![layerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow);
+            }
+        }
+
+        private void RenderTransparentParts(
+            List<LayerRenderData> layers,
+            System.Numerics.Vector4 gridColor,
+            System.Numerics.Vector4 axisColor,
+            bool isInteracting,
+            Matrix4x4 lightViewProj,
+            bool enableShadow,
+            bool isWireframe)
+        {
+            if (_transparentParts.Count == 0) return;
+
+            _transparentParts.Sort(_partSorter);
+
+            _context!.OMSetDepthStencilState(_d3dResources!.DepthStencilStateNoWrite);
+            if (!isWireframe)
             {
-                _transparentParts.Sort(_partSorter);
-
-                _context.OMSetDepthStencilState(_d3dResources.DepthStencilStateNoWrite);
-                if (!isWireframe)
-                {
-                    _context.RSSetState(_d3dResources.CullNoneRasterizerState);
-                }
-
-                foreach (var tp in _transparentParts)
-                {
-                    var layer = layers[tp.LayerIndex];
-                    if (layer.VisibleParts != null && !layer.VisibleParts.Contains(tp.PartIndex)) continue;
-
-                    var resource = layer.Resource;
-                    DrawPart(layer, resource, tp.PartIndex, layerWorlds[tp.LayerIndex], layerWvps[tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow);
-                }
-
-                _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
-                if (!isWireframe)
-                {
-                    _context.RSSetState(_d3dResources.RasterizerState);
-                }
+                _context.RSSetState(_d3dResources.CullNoneRasterizerState);
             }
 
-            if (isGridVisible && _gridVertexBuffer != null)
+            int lastLayerIndex = -1;
+            foreach (var tp in _transparentParts)
             {
-                _context.IASetInputLayout(_d3dResources.GridInputLayout);
-                _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
-                _context.IASetVertexBuffers(0, 1, _gridVbArray, _gridStrideArray, _gridOffsetArray);
-                _context.VSSetShader(_d3dResources.GridVertexShader);
-                _context.PSSetShader(_d3dResources.GridPixelShader);
-                _context.OMSetBlendState(_d3dResources.GridBlendState, new Color4(0, 0, 0, 0), -1);
+                var layer = layers[tp.LayerIndex];
+                if (layer.VisibleParts != null && !layer.VisibleParts.Contains(tp.PartIndex)) continue;
 
-                Matrix4x4 gridWorld = Matrix4x4.Identity;
-                if (!isInfiniteGrid)
+                var resource = layer.Resource;
+
+                if (tp.LayerIndex != lastLayerIndex)
                 {
-                    float finiteScale = (float)(gridScale * RenderingConstants.GridScaleBase / RenderingConstants.GridSize);
-                    if (finiteScale < 0.001f) finiteScale = 0.001f;
-                    gridWorld = Matrix4x4.CreateScale(finiteScale);
+                    int stride = Unsafe.SizeOf<ObjVertex>();
+                    _vbArray[0] = resource.VertexBuffer;
+                    _strideArray[0] = stride;
+                    _context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
+                    _context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
+                    lastLayerIndex = tp.LayerIndex;
                 }
 
-                ConstantBufferData gridCb = new ConstantBufferData
-                {
-                    WorldViewProj = Matrix4x4.Transpose(gridWorld * view * proj),
-                    World = Matrix4x4.Transpose(gridWorld),
-                    CameraPos = new System.Numerics.Vector4(camPos, 1),
-                    GridColor = gridColor,
-                    GridAxisColor = axisColor,
-                    Shininess = isInfiniteGrid ? 1.0f : 0.0f
-                };
-                UpdateConstantBuffer(ref gridCb);
-                _context.Draw(6, 0);
-
-                _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
+                DrawPart(layer, resource, tp.PartIndex, _cachedLayerWorlds![tp.LayerIndex], _cachedLayerWvps![tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow);
             }
 
+            _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
+            if (!isWireframe)
+            {
+                _context.RSSetState(_d3dResources.RasterizerState);
+            }
+        }
+
+        private void RenderGridIfVisible(
+            bool isGridVisible,
+            bool isInfiniteGrid,
+            double gridScale,
+            Matrix4x4 view,
+            Matrix4x4 proj,
+            System.Numerics.Vector3 camPos,
+            System.Numerics.Vector4 gridColor,
+            System.Numerics.Vector4 axisColor)
+        {
+            if (!isGridVisible || _gridVertexBuffer == null) return;
+
+            _context!.IASetInputLayout(_d3dResources!.GridInputLayout);
+            _context.IASetPrimitiveTopology(PrimitiveTopology.TriangleList);
+            _context.IASetVertexBuffers(0, 1, _gridVbArray, _gridStrideArray, _gridOffsetArray);
+            _context.VSSetShader(_d3dResources.GridVertexShader);
+            _context.PSSetShader(_d3dResources.GridPixelShader);
+            _context.OMSetBlendState(_d3dResources.GridBlendState, new Color4(0, 0, 0, 0), -1);
+
+            Matrix4x4 gridWorld = Matrix4x4.Identity;
+            if (!isInfiniteGrid)
+            {
+                float finiteScale = (float)(gridScale * RenderingConstants.GridScaleBase / RenderingConstants.GridSize);
+                if (finiteScale < 0.001f) finiteScale = 0.001f;
+                gridWorld = Matrix4x4.CreateScale(finiteScale);
+            }
+
+            ConstantBufferData gridCb = new ConstantBufferData
+            {
+                WorldViewProj = Matrix4x4.Transpose(gridWorld * view * proj),
+                World = Matrix4x4.Transpose(gridWorld),
+                CameraPos = new System.Numerics.Vector4(camPos, 1),
+                GridColor = gridColor,
+                GridAxisColor = axisColor,
+                Shininess = isInfiniteGrid ? 1.0f : 0.0f
+            };
+            UpdateConstantBuffer(ref gridCb);
+            _context.Draw(6, 0);
+
+            _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
+        }
+
+        private void CopyToStagingTexture()
+        {
             ClearAllResourceBindings();
 
-            _context.ResolveSubresource(_resolveTexture, 0, _renderTarget, 0, Format.B8G8R8A8_UNorm);
+            _context!.ResolveSubresource(_resolveTexture, 0, _renderTarget, 0, Format.B8G8R8A8_UNorm);
             _context.CopyResource(_stagingTexture, _resolveTexture);
             _context.Flush();
 
@@ -635,7 +720,7 @@ namespace ObjLoader.Services.Rendering
 
             try
             {
-                SceneImage.Lock();
+                SceneImage!.Lock();
                 unsafe
                 {
                     var srcPtr = (byte*)map.DataPointer;

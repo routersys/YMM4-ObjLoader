@@ -130,6 +130,14 @@ namespace ObjLoader.Rendering.Core
             }
         }
 
+        private bool ValidateDeviceState()
+        {
+            if (!IsDeviceLost()) return true;
+            GpuResourceCache.Instance.CleanupInvalidResources();
+            CreateEmptyCommandList();
+            return false;
+        }
+
         public void Update(TimelineItemSourceDescription desc)
         {
             if (_isDisposed) return;
@@ -138,12 +146,7 @@ namespace ObjLoader.Rendering.Core
             {
                 if (_isDisposed) return;
 
-                if (IsDeviceLost())
-                {
-                    GpuResourceCache.Instance.CleanupInvalidResources();
-                    CreateEmptyCommandList();
-                    return;
-                }
+                if (!ValidateDeviceState()) return;
 
                 try
                 {
@@ -179,13 +182,51 @@ namespace ObjLoader.Rendering.Core
             var length = desc.ItemDuration.Frame;
             var fps = desc.FPS;
 
-            int sw = (int)_parameter.ScreenWidth.GetValue(frame, length, fps);
-            int sh = (int)_parameter.ScreenHeight.GetValue(frame, length, fps);
-            sw = Math.Max(1, sw);
-            sh = Math.Max(1, sh);
-
+            int sw = Math.Max(1, (int)_parameter.ScreenWidth.GetValue(frame, length, fps));
+            int sh = Math.Max(1, (int)_parameter.ScreenHeight.GetValue(frame, length, fps));
             bool resized = _renderTargets.EnsureSize(_devices, sw, sh);
 
+            var (camX, camY, camZ, targetX, targetY, targetZ) = CalculateCameraTransforms(frame, length, fps);
+
+            var settingsVersion = _parameter.SettingsVersion.GetValue(frame, length, fps);
+            var settings = PluginSettings.Instance;
+
+            UpdateResourcesIfNeeded(settings);
+
+            bool settingsChanged = Math.Abs(_lastSettingsVersion - settingsVersion) > 1e-5;
+            bool cameraChanged = Math.Abs(_lastCamX - camX) > 1e-5 || Math.Abs(_lastCamY - camY) > 1e-5 || Math.Abs(_lastCamZ - camZ) > 1e-5 ||
+                                 Math.Abs(_lastTargetX - targetX) > 1e-5 || Math.Abs(_lastTargetY - targetY) > 1e-5 || Math.Abs(_lastTargetZ - targetZ) > 1e-5;
+            bool shadowSettingsChanged = _lastShadowResolution != settings.ShadowResolution || _lastShadowEnabled != settings.ShadowMappingEnabled;
+
+            var (activeWorldId, newLayerStates, layersChanged) = BuildLayerStates(frame, length, fps, settings);
+
+            bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
+            bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
+            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null;
+
+            if (!needsSceneRedraw)
+            {
+                return;
+            }
+
+            ProcessVisibilityHierarchy(newLayerStates);
+
+            Interlocked.Exchange(ref _layerStates, newLayerStates);
+
+            bool shadowValid = RenderShadowsIfApplicable(
+                settings, ref activeWorldId, sw, sh,
+                camX, camY, camZ, targetX, targetY, targetZ, needsShadowRedraw);
+
+            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged;
+            RenderMainScene(sw, sh, camX, camY, camZ, targetX, targetY, targetZ,
+                shadowValid, activeWorldId, needsEnvMapRedraw);
+
+            FinalizeCommandList(camX, camY, camZ, targetX, targetY, targetZ,
+                settingsVersion, activeWorldId, settings);
+        }
+
+        private (double camX, double camY, double camZ, double targetX, double targetY, double targetZ) CalculateCameraTransforms(long frame, long length, int fps)
+        {
             double camX, camY, camZ, targetX, targetY, targetZ;
             if (_parameter.Keyframes.Count > 0)
             {
@@ -203,19 +244,17 @@ namespace ObjLoader.Rendering.Core
                 targetY = _parameter.TargetY.GetValue(frame, length, fps);
                 targetZ = _parameter.TargetZ.GetValue(frame, length, fps);
             }
+            return (camX, camY, camZ, targetX, targetY, targetZ);
+        }
 
-            var settingsVersion = _parameter.SettingsVersion.GetValue(frame, length, fps);
-            var settings = PluginSettings.Instance;
-
+        private void UpdateResourcesIfNeeded(PluginSettings settings)
+        {
             _resources.UpdateRasterizerState(settings.CullMode);
             _resources.EnsureShadowMapSize(settings.ShadowResolution, true);
+        }
 
-            bool settingsChanged = Math.Abs(_lastSettingsVersion - settingsVersion) > 1e-5;
-            bool cameraChanged = Math.Abs(_lastCamX - camX) > 1e-5 || Math.Abs(_lastCamY - camY) > 1e-5 || Math.Abs(_lastCamZ - camZ) > 1e-5 ||
-                                 Math.Abs(_lastTargetX - targetX) > 1e-5 || Math.Abs(_lastTargetY - targetY) > 1e-5 || Math.Abs(_lastTargetZ - targetZ) > 1e-5;
-
-            bool shadowSettingsChanged = _lastShadowResolution != settings.ShadowResolution || _lastShadowEnabled != settings.ShadowMappingEnabled;
-
+        private (int activeWorldId, ImmutableDictionary<string, LayerState> newLayerStates, bool layersChanged) BuildLayerStates(long frame, long length, int fps, PluginSettings settings)
+        {
             _preCalcStates.Clear();
             _worldMasterLights.Clear();
 
@@ -318,16 +357,11 @@ namespace ObjLoader.Rendering.Core
             }
 
             var newLayerStates = _newLayerStatesTemp.ToImmutableDictionary();
+            return (activeWorldId, newLayerStates, layersChanged);
+        }
 
-            bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
-            bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
-            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null;
-
-            if (!needsSceneRedraw)
-            {
-                return;
-            }
-
+        private void ProcessVisibilityHierarchy(ImmutableDictionary<string, LayerState> newLayerStates)
+        {
             _layersToRender.Clear();
 
             foreach (var item in _preCalcStates)
@@ -376,9 +410,14 @@ namespace ObjLoader.Rendering.Core
                     }
                 }
             }
+        }
 
-            Interlocked.Exchange(ref _layerStates, newLayerStates);
-
+        private bool RenderShadowsIfApplicable(
+            PluginSettings settings, ref int activeWorldId, int sw, int sh,
+            double camX, double camY, double camZ,
+            double targetX, double targetY, double targetZ,
+            bool needsShadowRedraw)
+        {
             LayerState shadowLightState = default;
             if (_worldMasterLights.TryGetValue(activeWorldId, out var al))
             {
@@ -392,105 +431,122 @@ namespace ObjLoader.Rendering.Core
 
             Array.Clear(_lightViewProjs, 0, _lightViewProjs.Length);
             Array.Clear(_cascadeSplits, 0, _cascadeSplits.Length);
-            bool shadowValid = false;
 
-            if (settings.ShadowMappingEnabled && shadowLightState.IsLightEnabled && (shadowLightState.LightType == LightType.Sun || shadowLightState.LightType == LightType.Spot))
+            if (!settings.ShadowMappingEnabled || !shadowLightState.IsLightEnabled ||
+                (shadowLightState.LightType != LightType.Sun && shadowLightState.LightType != LightType.Spot))
             {
-                Vector3 lPos = new Vector3((float)shadowLightState.LightX, (float)shadowLightState.LightY, (float)shadowLightState.LightZ);
-                Vector3 lightDir;
-
-                if (shadowLightState.LightType == LightType.Sun)
-                {
-                    lightDir = Vector3.Normalize(lPos == Vector3.Zero ? Vector3.UnitY : lPos);
-                }
-                else
-                {
-                    lightDir = Vector3.Normalize(lPos == Vector3.Zero ? Vector3.UnitY : -lPos);
-                }
-
-                if (shadowLightState.LightType == LightType.Sun)
-                {
-                    var cameraPos = new Vector3((float)camX, (float)camY, (float)camZ);
-                    var cameraTarget = new Vector3((float)targetX, (float)targetY, (float)targetZ);
-                    var viewMatrix = Matrix4x4.CreateLookAt(cameraPos, cameraTarget, Vector3.UnitY);
-
-                    float fov = (float)(Math.Max(1, Math.Min(RenderingConstants.DefaultFovLimit, shadowLightState.Fov)) * Math.PI / 180.0);
-                    float aspect = (float)sw / sh;
-                    float nearPlane = RenderingConstants.ShadowNearPlane;
-                    float farPlane = RenderingConstants.DefaultFarPlane;
-
-                    float[] splitDistances = { nearPlane, nearPlane + (farPlane - nearPlane) * 0.05f, nearPlane + (farPlane - nearPlane) * 0.2f, farPlane };
-                    _cascadeSplits[0] = splitDistances[1];
-                    _cascadeSplits[1] = splitDistances[2];
-                    _cascadeSplits[2] = splitDistances[3];
-
-                    for (int i = 0; i < D3DResources.CascadeCount; i++)
-                    {
-                        float sn = splitDistances[i];
-                        float sf = splitDistances[i + 1];
-                        var projMatrix = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect, sn, sf);
-                        var invViewProj = Matrix4x4.Invert(viewMatrix * projMatrix, out var inv) ? inv : Matrix4x4.Identity;
-
-                        for (int j = 0; j < 8; j++)
-                        {
-                            _frustumCorners[j] = Vector3.Transform(_ndcCorners[j], invViewProj);
-                        }
-
-                        Vector3 center = Vector3.Zero;
-                        for (int j = 0; j < 8; j++) center += _frustumCorners[j];
-                        center /= 8.0f;
-
-                        var lightView = Matrix4x4.CreateLookAt(center + lightDir * RenderingConstants.SunLightDistance, center, Vector3.UnitY);
-
-                        float minX = float.MaxValue, maxX = float.MinValue;
-                        float minY = float.MaxValue, maxY = float.MinValue;
-                        float minZ = float.MaxValue, maxZ = float.MinValue;
-
-                        for (int j = 0; j < 8; j++)
-                        {
-                            var tr = Vector3.Transform(_frustumCorners[j], lightView);
-                            minX = Math.Min(minX, tr.X); maxX = Math.Max(maxX, tr.X);
-                            minY = Math.Min(minY, tr.Y); maxY = Math.Max(maxY, tr.Y);
-                            minZ = Math.Min(minZ, tr.Z); maxZ = Math.Max(maxZ, tr.Z);
-                        }
-
-                        float worldUnitsPerTexel = (maxX - minX) / settings.ShadowResolution;
-                        minX = MathF.Floor(minX / worldUnitsPerTexel) * worldUnitsPerTexel;
-                        maxX = MathF.Floor(maxX / worldUnitsPerTexel) * worldUnitsPerTexel;
-                        minY = MathF.Floor(minY / worldUnitsPerTexel) * worldUnitsPerTexel;
-                        maxY = MathF.Floor(maxY / worldUnitsPerTexel) * worldUnitsPerTexel;
-
-                        var lightProj = Matrix4x4.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ - RenderingConstants.ShadowOrthoMargin, -minZ + RenderingConstants.ShadowOrthoMargin);
-                        _lightViewProjs[i] = lightView * lightProj;
-                    }
-                }
-                else
-                {
-                    Vector3 dir = -Vector3.Normalize(lPos);
-                    var lightView = Matrix4x4.CreateLookAt(lPos, lPos + dir, Vector3.UnitY);
-                    var lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlaneExport);
-                    for (int i = 0; i < D3DResources.CascadeCount; i++)
-                    {
-                        _lightViewProjs[i] = lightView * lightProj;
-                        _cascadeSplits[i] = RenderingConstants.CascadeSplitInfinity;
-                    }
-                }
-
-                if (needsShadowRedraw)
-                {
-                    PopulateDictionary(_mutableStatesForShadow, Volatile.Read(ref _layerStates));
-                    _shadowRenderer.Render(_layersToRender, _lightViewProjs, activeWorldId, _mutableStatesForShadow);
-                }
-                shadowValid = true;
+                return false;
             }
 
-            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged;
+            Vector3 lPos = new Vector3((float)shadowLightState.LightX, (float)shadowLightState.LightY, (float)shadowLightState.LightZ);
+            Vector3 lightDir;
 
+            if (shadowLightState.LightType == LightType.Sun)
+            {
+                lightDir = Vector3.Normalize(lPos == Vector3.Zero ? Vector3.UnitY : lPos);
+                ComputeCascadeShadowMatrices(settings, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, shadowLightState.Fov, lightDir);
+            }
+            else
+            {
+                lightDir = Vector3.Normalize(lPos == Vector3.Zero ? Vector3.UnitY : -lPos);
+                Vector3 dir = -Vector3.Normalize(lPos);
+                var lightView = Matrix4x4.CreateLookAt(lPos, lPos + dir, Vector3.UnitY);
+                var lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlaneExport);
+                for (int i = 0; i < D3DResources.CascadeCount; i++)
+                {
+                    _lightViewProjs[i] = lightView * lightProj;
+                    _cascadeSplits[i] = RenderingConstants.CascadeSplitInfinity;
+                }
+            }
+
+            if (needsShadowRedraw)
+            {
+                PopulateDictionary(_mutableStatesForShadow, Volatile.Read(ref _layerStates));
+                _shadowRenderer.Render(_layersToRender, _lightViewProjs, activeWorldId, _mutableStatesForShadow);
+            }
+
+            return true;
+        }
+
+        private void ComputeCascadeShadowMatrices(
+            PluginSettings settings, int sw, int sh,
+            double camX, double camY, double camZ,
+            double targetX, double targetY, double targetZ,
+            double fovDeg, Vector3 lightDir)
+        {
+            var cameraPos = new Vector3((float)camX, (float)camY, (float)camZ);
+            var cameraTarget = new Vector3((float)targetX, (float)targetY, (float)targetZ);
+            var viewMatrix = Matrix4x4.CreateLookAt(cameraPos, cameraTarget, Vector3.UnitY);
+
+            float fov = (float)(Math.Max(1, Math.Min(RenderingConstants.DefaultFovLimit, fovDeg)) * Math.PI / 180.0);
+            float aspect = (float)sw / sh;
+            float nearPlane = RenderingConstants.ShadowNearPlane;
+            float farPlane = RenderingConstants.DefaultFarPlane;
+
+            float[] splitDistances = { nearPlane, nearPlane + (farPlane - nearPlane) * 0.05f, nearPlane + (farPlane - nearPlane) * 0.2f, farPlane };
+            _cascadeSplits[0] = splitDistances[1];
+            _cascadeSplits[1] = splitDistances[2];
+            _cascadeSplits[2] = splitDistances[3];
+
+            for (int i = 0; i < D3DResources.CascadeCount; i++)
+            {
+                float sn = splitDistances[i];
+                float sf = splitDistances[i + 1];
+                var projMatrix = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect, sn, sf);
+                var invViewProj = Matrix4x4.Invert(viewMatrix * projMatrix, out var inv) ? inv : Matrix4x4.Identity;
+
+                for (int j = 0; j < 8; j++)
+                {
+                    _frustumCorners[j] = Vector3.Transform(_ndcCorners[j], invViewProj);
+                }
+
+                Vector3 center = Vector3.Zero;
+                for (int j = 0; j < 8; j++) center += _frustumCorners[j];
+                center /= 8.0f;
+
+                var lightView = Matrix4x4.CreateLookAt(center + lightDir * RenderingConstants.SunLightDistance, center, Vector3.UnitY);
+
+                float minX = float.MaxValue, maxX = float.MinValue;
+                float minY = float.MaxValue, maxY = float.MinValue;
+                float minZ = float.MaxValue, maxZ = float.MinValue;
+
+                for (int j = 0; j < 8; j++)
+                {
+                    var tr = Vector3.Transform(_frustumCorners[j], lightView);
+                    minX = Math.Min(minX, tr.X); maxX = Math.Max(maxX, tr.X);
+                    minY = Math.Min(minY, tr.Y); maxY = Math.Max(maxY, tr.Y);
+                    minZ = Math.Min(minZ, tr.Z); maxZ = Math.Max(maxZ, tr.Z);
+                }
+
+                float worldUnitsPerTexel = (maxX - minX) / settings.ShadowResolution;
+                minX = MathF.Floor(minX / worldUnitsPerTexel) * worldUnitsPerTexel;
+                maxX = MathF.Floor(maxX / worldUnitsPerTexel) * worldUnitsPerTexel;
+                minY = MathF.Floor(minY / worldUnitsPerTexel) * worldUnitsPerTexel;
+                maxY = MathF.Floor(maxY / worldUnitsPerTexel) * worldUnitsPerTexel;
+
+                var lightProj = Matrix4x4.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ - RenderingConstants.ShadowOrthoMargin, -minZ + RenderingConstants.ShadowOrthoMargin);
+                _lightViewProjs[i] = lightView * lightProj;
+            }
+        }
+
+        private void RenderMainScene(
+            int sw, int sh,
+            double camX, double camY, double camZ,
+            double targetX, double targetY, double targetZ,
+            bool shadowValid, int activeWorldId, bool needsEnvMapRedraw)
+        {
             PopulateDictionary(_mutableStatesForScene, Volatile.Read(ref _layerStates));
-            _sceneRenderer.Render(_layersToRender, _mutableStatesForScene, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, _lightViewProjs, _cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
+            _sceneRenderer.Render(_layersToRender, _mutableStatesForScene, _parameter, sw, sh,
+                camX, camY, camZ, targetX, targetY, targetZ,
+                _lightViewProjs, _cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
+        }
 
+        private void FinalizeCommandList(
+            double camX, double camY, double camZ,
+            double targetX, double targetY, double targetZ,
+            double settingsVersion, int activeWorldId, PluginSettings settings)
+        {
             ClearResourceBindings();
-
             CreateCommandList();
 
             _lastCamX = camX;
@@ -695,9 +751,10 @@ namespace ObjLoader.Rendering.Core
                 {
                     if (partTextures != null)
                     {
-                        foreach (var srv in partTextures)
+                        for (int i = 0; i < partTextures.Length; i++)
                         {
-                            SafeDispose(srv);
+                            SafeDispose(partTextures[i]);
+                            partTextures[i] = null;
                         }
                     }
                     SafeDispose(ib);
