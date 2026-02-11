@@ -50,6 +50,10 @@ namespace ObjLoader.Services.Rendering
         private readonly List<TransparentPart> _transparentParts = new List<TransparentPart>();
         private readonly PartSorter _partSorter = new PartSorter();
 
+        private Matrix4x4[]? _cachedLayerWorlds;
+        private Matrix4x4[]? _cachedLayerWvps;
+        private int _cachedLayerCapacity;
+
         private bool _isDisposed = false;
 
         private class TransparentPart
@@ -202,6 +206,15 @@ namespace ObjLoader.Services.Rendering
             ResourceTracker.Instance.Unregister(TrackingKey("StagingTexture"));
         }
 
+        private void EnsureLayerArrayCapacity(int count)
+        {
+            if (_cachedLayerCapacity >= count && _cachedLayerWorlds != null && _cachedLayerWvps != null) return;
+            int newCapacity = Math.Max(count, 8);
+            _cachedLayerWorlds = new Matrix4x4[newCapacity];
+            _cachedLayerWvps = new Matrix4x4[newCapacity];
+            _cachedLayerCapacity = newCapacity;
+        }
+
         public void Render(
             List<LayerRenderData> layers,
             System.Numerics.Matrix4x4 view,
@@ -293,22 +306,11 @@ namespace ObjLoader.Services.Rendering
                 {
                     _shadowSrvArray[0] = _d3dResources.ShadowMapSRV;
                 }
-
-                if (_d3dResources.ShadowMapDSVs != null && _d3dResources.ShadowMapDSVs.Length > 0)
-                {
-                    var layerWorldsTemp = new Matrix4x4[layers.Count];
-                    Matrix4x4 axisConversionTemp = Matrix4x4.Identity;
-                    switch (settings.CoordinateSystem)
-                    {
-                        case CoordinateSystem.RightHandedZUp: axisConversionTemp = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)); break;
-                        case CoordinateSystem.LeftHandedYUp: axisConversionTemp = Matrix4x4.CreateScale(1, 1, -1); break;
-                        case CoordinateSystem.LeftHandedZUp: axisConversionTemp = Matrix4x4.CreateRotationX((float)(-90 * Math.PI / 180.0)) * Matrix4x4.CreateScale(1, 1, -1); break;
-                    }
-                }
             }
 
-            var layerWorlds = new Matrix4x4[layers.Count];
-            var layerWvps = new Matrix4x4[layers.Count];
+            EnsureLayerArrayCapacity(layers.Count);
+            var layerWorlds = _cachedLayerWorlds!;
+            var layerWvps = _cachedLayerWvps!;
 
             Matrix4x4 axisConversion = Matrix4x4.Identity;
             switch (settings.CoordinateSystem)
@@ -752,6 +754,10 @@ namespace ObjLoader.Services.Rendering
                 _stagingTexture?.Dispose(); _stagingTexture = null;
                 _resolveTexture?.Dispose(); _resolveTexture = null;
                 _gridVertexBuffer?.Dispose(); _gridVertexBuffer = null;
+
+                _cachedLayerWorlds = null;
+                _cachedLayerWvps = null;
+                _cachedLayerCapacity = 0;
 
                 SceneImage = null;
 

@@ -37,6 +37,8 @@ namespace ObjLoader.Rendering.Renderers
         private readonly ID3D11ShaderResourceView[] _srvSlot1 = new ID3D11ShaderResourceView[1];
         private readonly ID3D11ShaderResourceView[] _srvSlot2 = new ID3D11ShaderResourceView[1];
 
+        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> _singleLayerBuffer = new(1);
+
         public SceneRenderer(IGraphicsDevicesAndContext devices, D3DResources resources, RenderTargetManager renderTargets, CustomShaderManager shaderManager)
         {
             _devices = devices;
@@ -172,8 +174,9 @@ namespace ObjLoader.Rendering.Renderers
 
             for (int i = 0; i < layers.Count; i++)
             {
-                var singleLayer = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> { layers[i] };
-                RenderScene(context, singleLayer, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null);
+                _singleLayerBuffer.Clear();
+                _singleLayerBuffer.Add(layers[i]);
+                RenderScene(context, _singleLayerBuffer, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null);
             }
 
             context.PSSetShaderResources(RenderingConstants.SlotEnvironmentMap, 1, _nullSrv1);

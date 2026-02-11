@@ -2,12 +2,12 @@
 using ObjLoader.Core;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
-using ObjLoader.Rendering.Core;
 using ObjLoader.Rendering.Managers;
 using ObjLoader.Rendering.Renderers;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
+using System.Buffers;
 using System.Collections.Immutable;
 using System.IO;
 using System.Numerics;
@@ -58,6 +58,22 @@ namespace ObjLoader.Rendering.Core
 
         private static readonly ID3D11ShaderResourceView[] _emptySrvArray4 = new ID3D11ShaderResourceView[4];
         private static readonly ID3D11Buffer[] _emptyBufferArray1 = new ID3D11Buffer[1];
+
+        private readonly List<(string Guid, LayerState State, LayerData Data)> _preCalcStates = new();
+        private readonly Dictionary<int, LayerState> _worldMasterLights = new();
+        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> _layersToRender = new();
+        private readonly Dictionary<string, LayerState> _newLayerStatesTemp = new();
+        private readonly Dictionary<string, LayerState> _mutableStatesForShadow = new();
+        private readonly Dictionary<string, LayerState> _mutableStatesForScene = new();
+        private readonly Matrix4x4[] _lightViewProjs = new Matrix4x4[D3DResources.CascadeCount];
+        private readonly float[] _cascadeSplits = new float[4];
+        private readonly Vector3[] _frustumCorners = new Vector3[8];
+
+        private static readonly Vector3[] _ndcCorners =
+        {
+            new Vector3(-1, -1, 0), new Vector3(1, -1, 0), new Vector3(-1, 1, 0), new Vector3(1, 1, 0),
+            new Vector3(-1, -1, 1), new Vector3(1, -1, 1), new Vector3(-1, 1, 1), new Vector3(1, 1, 1)
+        };
 
         static ObjLoaderSource()
         {
@@ -195,8 +211,9 @@ namespace ObjLoader.Rendering.Core
 
             bool shadowSettingsChanged = _lastShadowResolution != settings.ShadowResolution || _lastShadowEnabled != settings.ShadowMappingEnabled;
 
-            var preCalcStates = new List<(string Guid, LayerState State, LayerData Data)>();
-            var worldMasterLights = new Dictionary<int, LayerState>();
+            _preCalcStates.Clear();
+            _worldMasterLights.Clear();
+
             var activeGuid = _parameter.ActiveLayerGuid;
             int activeWorldId = 0;
 
@@ -249,31 +266,31 @@ namespace ObjLoader.Rendering.Core
                     Specular = settings.GetSpecularIntensity(worldId),
                     Shininess = settings.GetShininess(worldId),
                     IsVisible = layer.IsVisible,
-                    VisibleParts = layer.VisibleParts != null ? new HashSet<int>(layer.VisibleParts) : null,
+                    VisibleParts = layer.VisibleParts,
                     ParentGuid = layer.ParentGuid
                 };
 
-                preCalcStates.Add((layer.Guid, layerState, layer));
+                _preCalcStates.Add((layer.Guid, layerState, layer));
 
-                if (!worldMasterLights.ContainsKey(worldId))
+                if (!_worldMasterLights.ContainsKey(worldId))
                 {
-                    worldMasterLights[worldId] = layerState;
+                    _worldMasterLights[worldId] = layerState;
                 }
                 else if (layer.Guid == activeGuid)
                 {
-                    worldMasterLights[worldId] = layerState;
+                    _worldMasterLights[worldId] = layerState;
                     activeWorldId = worldId;
                 }
             }
 
-            var newLayerStatesBuilder = ImmutableDictionary.CreateBuilder<string, LayerState>();
+            _newLayerStatesTemp.Clear();
             bool layersChanged = false;
             var previousStates = Volatile.Read(ref _layerStates);
 
-            foreach (var item in preCalcStates)
+            foreach (var item in _preCalcStates)
             {
                 var layerState = item.State;
-                if (worldMasterLights.TryGetValue(layerState.WorldId, out var master))
+                if (_worldMasterLights.TryGetValue(layerState.WorldId, out var master))
                 {
                     layerState.LightX = master.LightX;
                     layerState.LightY = master.LightY;
@@ -282,7 +299,7 @@ namespace ObjLoader.Rendering.Core
                     layerState.LightType = master.LightType;
                 }
 
-                newLayerStatesBuilder[item.Guid] = layerState;
+                _newLayerStatesTemp[item.Guid] = layerState;
 
                 if (!previousStates.TryGetValue(item.Guid, out var oldState) || !AreStatesEqual(ref oldState, ref layerState))
                 {
@@ -290,12 +307,12 @@ namespace ObjLoader.Rendering.Core
                 }
             }
 
-            if (!layersChanged && previousStates.Count != newLayerStatesBuilder.Count)
+            if (!layersChanged && previousStates.Count != _newLayerStatesTemp.Count)
             {
                 layersChanged = true;
             }
 
-            var newLayerStates = newLayerStatesBuilder.ToImmutable();
+            var newLayerStates = _newLayerStatesTemp.ToImmutableDictionary();
 
             bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
             bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
@@ -306,9 +323,9 @@ namespace ObjLoader.Rendering.Core
                 return;
             }
 
-            var layersToRender = new List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)>();
+            _layersToRender.Clear();
 
-            foreach (var item in preCalcStates)
+            foreach (var item in _preCalcStates)
             {
                 if (!newLayerStates.TryGetValue(item.Guid, out var layerState)) continue;
 
@@ -350,7 +367,7 @@ namespace ObjLoader.Rendering.Core
 
                     if (resource != null)
                     {
-                        layersToRender.Add((item.Data, resource, layerState));
+                        _layersToRender.Add((item.Data, resource, layerState));
                     }
                 }
             }
@@ -358,18 +375,18 @@ namespace ObjLoader.Rendering.Core
             Interlocked.Exchange(ref _layerStates, newLayerStates);
 
             LayerState shadowLightState = default;
-            if (worldMasterLights.TryGetValue(activeWorldId, out var al))
+            if (_worldMasterLights.TryGetValue(activeWorldId, out var al))
             {
                 shadowLightState = al;
             }
-            else if (worldMasterLights.Count > 0)
+            else if (_worldMasterLights.Count > 0)
             {
-                shadowLightState = worldMasterLights.Values.First();
+                shadowLightState = _worldMasterLights.Values.First();
                 activeWorldId = shadowLightState.WorldId;
             }
 
-            Matrix4x4[] lightViewProjs = new Matrix4x4[D3DResources.CascadeCount];
-            float[] cascadeSplits = new float[4];
+            Array.Clear(_lightViewProjs, 0, _lightViewProjs.Length);
+            Array.Clear(_cascadeSplits, 0, _cascadeSplits.Length);
             bool shadowValid = false;
 
             if (settings.ShadowMappingEnabled && shadowLightState.IsLightEnabled && (shadowLightState.LightType == LightType.Sun || shadowLightState.LightType == LightType.Spot))
@@ -398,9 +415,9 @@ namespace ObjLoader.Rendering.Core
                     float farPlane = RenderingConstants.DefaultFarPlane;
 
                     float[] splitDistances = { nearPlane, nearPlane + (farPlane - nearPlane) * 0.05f, nearPlane + (farPlane - nearPlane) * 0.2f, farPlane };
-                    cascadeSplits[0] = splitDistances[1];
-                    cascadeSplits[1] = splitDistances[2];
-                    cascadeSplits[2] = splitDistances[3];
+                    _cascadeSplits[0] = splitDistances[1];
+                    _cascadeSplits[1] = splitDistances[2];
+                    _cascadeSplits[2] = splitDistances[3];
 
                     for (int i = 0; i < D3DResources.CascadeCount; i++)
                     {
@@ -409,20 +426,13 @@ namespace ObjLoader.Rendering.Core
                         var projMatrix = Matrix4x4.CreatePerspectiveFieldOfView(fov, aspect, sn, sf);
                         var invViewProj = Matrix4x4.Invert(viewMatrix * projMatrix, out var inv) ? inv : Matrix4x4.Identity;
 
-                        Vector3[] corners = new Vector3[8];
-                        Vector3[] ndc =
-                        {
-                            new Vector3(-1, -1, 0), new Vector3(1, -1, 0), new Vector3(-1, 1, 0), new Vector3(1, 1, 0),
-                            new Vector3(-1, -1, 1), new Vector3(1, -1, 1), new Vector3(-1, 1, 1), new Vector3(1, 1, 1)
-                        };
-
                         for (int j = 0; j < 8; j++)
                         {
-                            corners[j] = Vector3.Transform(ndc[j], invViewProj);
+                            _frustumCorners[j] = Vector3.Transform(_ndcCorners[j], invViewProj);
                         }
 
                         Vector3 center = Vector3.Zero;
-                        foreach (var c in corners) center += c;
+                        for (int j = 0; j < 8; j++) center += _frustumCorners[j];
                         center /= 8.0f;
 
                         var lightView = Matrix4x4.CreateLookAt(center + lightDir * RenderingConstants.SunLightDistance, center, Vector3.UnitY);
@@ -431,9 +441,9 @@ namespace ObjLoader.Rendering.Core
                         float minY = float.MaxValue, maxY = float.MinValue;
                         float minZ = float.MaxValue, maxZ = float.MinValue;
 
-                        foreach (var c in corners)
+                        for (int j = 0; j < 8; j++)
                         {
-                            var tr = Vector3.Transform(c, lightView);
+                            var tr = Vector3.Transform(_frustumCorners[j], lightView);
                             minX = Math.Min(minX, tr.X); maxX = Math.Max(maxX, tr.X);
                             minY = Math.Min(minY, tr.Y); maxY = Math.Max(maxY, tr.Y);
                             minZ = Math.Min(minZ, tr.Z); maxZ = Math.Max(maxZ, tr.Z);
@@ -446,7 +456,7 @@ namespace ObjLoader.Rendering.Core
                         maxY = MathF.Floor(maxY / worldUnitsPerTexel) * worldUnitsPerTexel;
 
                         var lightProj = Matrix4x4.CreateOrthographicOffCenter(minX, maxX, minY, maxY, -maxZ - RenderingConstants.ShadowOrthoMargin, -minZ + RenderingConstants.ShadowOrthoMargin);
-                        lightViewProjs[i] = lightView * lightProj;
+                        _lightViewProjs[i] = lightView * lightProj;
                     }
                 }
                 else
@@ -456,25 +466,23 @@ namespace ObjLoader.Rendering.Core
                     var lightProj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, 1.0f, RenderingConstants.SpotLightFarPlaneExport);
                     for (int i = 0; i < D3DResources.CascadeCount; i++)
                     {
-                        lightViewProjs[i] = lightView * lightProj;
-                        cascadeSplits[i] = RenderingConstants.CascadeSplitInfinity;
+                        _lightViewProjs[i] = lightView * lightProj;
+                        _cascadeSplits[i] = RenderingConstants.CascadeSplitInfinity;
                     }
                 }
 
                 if (needsShadowRedraw)
                 {
-                    var currentStates = Volatile.Read(ref _layerStates);
-                    var mutableStatesForShadow = currentStates.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-                    _shadowRenderer.Render(layersToRender, lightViewProjs, activeWorldId, mutableStatesForShadow);
+                    PopulateDictionary(_mutableStatesForShadow, Volatile.Read(ref _layerStates));
+                    _shadowRenderer.Render(_layersToRender, _lightViewProjs, activeWorldId, _mutableStatesForShadow);
                 }
                 shadowValid = true;
             }
 
             bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged;
 
-            var currentLayerStatesForScene = Volatile.Read(ref _layerStates);
-            var mutableStatesForScene = currentLayerStatesForScene.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-            _sceneRenderer.Render(layersToRender, mutableStatesForScene, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
+            PopulateDictionary(_mutableStatesForScene, Volatile.Read(ref _layerStates));
+            _sceneRenderer.Render(_layersToRender, _mutableStatesForScene, _parameter, sw, sh, camX, camY, camZ, targetX, targetY, targetZ, _lightViewProjs, _cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
 
             ClearResourceBindings();
 
@@ -490,6 +498,15 @@ namespace ObjLoader.Rendering.Core
             _lastActiveWorldId = activeWorldId;
             _lastShadowResolution = settings.ShadowResolution;
             _lastShadowEnabled = settings.ShadowMappingEnabled;
+        }
+
+        private static void PopulateDictionary(Dictionary<string, LayerState> target, ImmutableDictionary<string, LayerState> source)
+        {
+            target.Clear();
+            foreach (var kvp in source)
+            {
+                target[kvp.Key] = kvp.Value;
+            }
         }
 
         private void ClearResourceBindings()
@@ -609,29 +626,37 @@ namespace ObjLoader.Rendering.Core
                         int width = convertedBitmap.PixelWidth;
                         int height = convertedBitmap.PixelHeight;
                         int stride = width * 4;
-                        byte[] pixels = new byte[stride * height];
-                        convertedBitmap.CopyPixels(pixels, stride, 0);
-
-                        var texDesc = new Texture2DDescription
+                        int requiredSize = stride * height;
+                        byte[] pixels = ArrayPool<byte>.Shared.Rent(requiredSize);
+                        try
                         {
-                            Width = width,
-                            Height = height,
-                            MipLevels = 1,
-                            ArraySize = 1,
-                            Format = Format.B8G8R8A8_UNorm,
-                            SampleDescription = new SampleDescription(1, 0),
-                            Usage = ResourceUsage.Immutable,
-                            BindFlags = BindFlags.ShaderResource
-                        };
+                            convertedBitmap.CopyPixels(pixels, stride, 0);
 
-                        fixed (byte* p = pixels)
-                        {
-                            var data = new SubresourceData(p, stride);
-                            using var tex = device.CreateTexture2D(texDesc, new[] { data });
-                            partTextures[i] = device.CreateShaderResourceView(tex);
+                            var texDesc = new Texture2DDescription
+                            {
+                                Width = width,
+                                Height = height,
+                                MipLevels = 1,
+                                ArraySize = 1,
+                                Format = Format.B8G8R8A8_UNorm,
+                                SampleDescription = new SampleDescription(1, 0),
+                                Usage = ResourceUsage.Immutable,
+                                BindFlags = BindFlags.ShaderResource
+                            };
+
+                            fixed (byte* p = pixels)
+                            {
+                                var data = new SubresourceData(p, stride);
+                                using var tex = device.CreateTexture2D(texDesc, new[] { data });
+                                partTextures[i] = device.CreateShaderResourceView(tex);
+                            }
+
+                            gpuBytes += (long)width * height * 4;
                         }
-
-                        gpuBytes += (long)width * height * 4;
+                        finally
+                        {
+                            ArrayPool<byte>.Shared.Return(pixels);
+                        }
                     }
                     catch
                     {
@@ -695,6 +720,13 @@ namespace ObjLoader.Rendering.Core
                 {
                     disposableTextureService.Dispose();
                 }
+
+                _preCalcStates.Clear();
+                _worldMasterLights.Clear();
+                _layersToRender.Clear();
+                _newLayerStatesTemp.Clear();
+                _mutableStatesForShadow.Clear();
+                _mutableStatesForScene.Clear();
 
                 _disposer.DisposeAndClear();
             }
