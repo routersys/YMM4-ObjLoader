@@ -17,6 +17,8 @@ namespace ObjLoader.Services.Rendering
 {
     internal class RenderService : IDisposable
     {
+        private const int MaxLayerArrayCapacity = 1024;
+
         private readonly string _instanceId = System.Guid.NewGuid().ToString("N").Substring(0, 8);
 
         private ID3D11Device? _device;
@@ -208,7 +210,17 @@ namespace ObjLoader.Services.Rendering
 
         private void EnsureLayerArrayCapacity(int count)
         {
-            if (_cachedLayerCapacity >= count && _cachedLayerWorlds != null && _cachedLayerWvps != null) return;
+            if (_cachedLayerCapacity >= count && _cachedLayerWorlds != null && _cachedLayerWvps != null)
+            {
+                if (_cachedLayerCapacity > MaxLayerArrayCapacity && count <= MaxLayerArrayCapacity)
+                {
+                    int shrunkCapacity = Math.Max(count, 8);
+                    _cachedLayerWorlds = new Matrix4x4[shrunkCapacity];
+                    _cachedLayerWvps = new Matrix4x4[shrunkCapacity];
+                    _cachedLayerCapacity = shrunkCapacity;
+                }
+                return;
+            }
             int newCapacity = Math.Max(count, 8);
             _cachedLayerWorlds = new Matrix4x4[newCapacity];
             _cachedLayerWvps = new Matrix4x4[newCapacity];

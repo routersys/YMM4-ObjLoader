@@ -10,6 +10,10 @@ namespace ObjLoader.Parsers
     public partial class ObjModelLoader
     {
         private const string DefaultPluginVersion = "1.0.0";
+        private const long MaxFileSizeBytes = 500L * 1024 * 1024;
+        private const int MaxVertexCount = 10_000_000;
+        private const int MaxIndexCount = 30_000_000;
+        private const int MaxPartCount = 10_000;
         private static readonly string PluginVersion;
         private readonly List<IModelParser> _parsers;
         private readonly ModelCache _cache;
@@ -84,10 +88,13 @@ namespace ObjLoader.Parsers
         {
             if (string.IsNullOrWhiteSpace(path) || !File.Exists(path)) return new ObjModel();
 
+            var fileInfo = new FileInfo(path);
+
+            if (fileInfo.Length > MaxFileSizeBytes) return new ObjModel();
+
             var parser = GetParser(path);
             var parserId = parser?.GetType().Name ?? string.Empty;
             var parserVersion = parser != null && _parserVersions.TryGetValue(parser.GetType(), out var v) ? v : 1;
-            var fileInfo = new FileInfo(path);
 
             if (_cache.TryLoad(path, fileInfo.LastWriteTimeUtc, parserId, parserVersion, PluginVersion, out var cachedModel))
             {
@@ -95,6 +102,13 @@ namespace ObjLoader.Parsers
             }
 
             var model = parser?.Parse(path) ?? new ObjModel();
+
+            if (model.Vertices.Length > MaxVertexCount ||
+                model.Indices.Length > MaxIndexCount ||
+                (model.Parts != null && model.Parts.Count > MaxPartCount))
+            {
+                return new ObjModel();
+            }
 
             if (model.Vertices.Length > 0)
             {

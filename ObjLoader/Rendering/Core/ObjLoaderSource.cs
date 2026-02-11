@@ -27,6 +27,8 @@ namespace ObjLoader.Rendering.Core
     {
         public static readonly object SharedRenderLock = new object();
 
+        private const int MaxHierarchyDepth = 100;
+
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly ObjLoaderParameter _parameter;
         private readonly DisposeCollector _disposer = new DisposeCollector();
@@ -341,7 +343,7 @@ namespace ObjLoader.Rendering.Core
                     }
                     parentGuid = parentState.ParentGuid;
                     depth++;
-                    if (depth > 100) break;
+                    if (depth > MaxHierarchyDepth) break;
                 }
 
                 if (effectiveVisibility && !string.IsNullOrEmpty(layerState.FilePath))

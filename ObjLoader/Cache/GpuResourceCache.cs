@@ -50,15 +50,22 @@ namespace ObjLoader.Cache
                 return;
             }
 
+            GpuResourceCacheItem? itemToDispose = null;
+
             _cache.AddOrUpdate(key, item, (_, oldValue) =>
             {
                 if (!ReferenceEquals(oldValue, item))
                 {
                     ResourceTracker.Instance.Unregister(key);
-                    SafeDispose(oldValue);
+                    itemToDispose = oldValue;
                 }
                 return item;
             });
+
+            if (itemToDispose != null)
+            {
+                SafeDispose(itemToDispose);
+            }
 
             ResourceTracker.Instance.Register(key, "GpuResourceCacheItem", item, item.EstimatedGpuBytes);
 

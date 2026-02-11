@@ -6,6 +6,9 @@ namespace ObjLoader.Services.Layers
 {
     public class LayerManager : ILayerManager
     {
+        private const int MaxHierarchyDepth = 100;
+        private const int MaxDescendantCount = 10000;
+
         private int _selectedLayerIndex;
         private LayerData? _activeLayer;
         private readonly Dictionary<string, LayerNode> _hierarchyNodes = new();
@@ -242,12 +245,18 @@ namespace ObjLoader.Services.Layers
             {
                 _visited.Clear();
                 var current = layerId;
+                int depth = 0;
 
                 while (current != null)
                 {
                     if (!_visited.Add(current))
                     {
                         throw new InvalidOperationException($"Cycle detected for layer: {layerId}");
+                    }
+
+                    if (depth > MaxHierarchyDepth)
+                    {
+                        throw new InvalidOperationException($"Hierarchy depth exceeds limit ({MaxHierarchyDepth}) for layer: {layerId}");
                     }
 
                     if (_hierarchyNodes.TryGetValue(current, out var node))
@@ -262,6 +271,8 @@ namespace ObjLoader.Services.Layers
                     {
                         break;
                     }
+
+                    depth++;
                 }
 
                 return true;
@@ -304,9 +315,9 @@ namespace ObjLoader.Services.Layers
                         }
                     }
 
-                    if (result.Count > 100000)
+                    if (result.Count > MaxDescendantCount)
                     {
-                        throw new InvalidOperationException("Descendant count exceeds limit.");
+                        throw new InvalidOperationException($"Descendant count exceeds limit ({MaxDescendantCount}).");
                     }
                 }
 
@@ -323,6 +334,7 @@ namespace ObjLoader.Services.Layers
                 foreach (var layer in _hierarchyNodes.Values)
                 {
                     _visited.Clear();
+                    int depth = 0;
 
                     var current = layer.Id;
                     while (current != null)
@@ -330,6 +342,12 @@ namespace ObjLoader.Services.Layers
                         if (!_visited.Add(current))
                         {
                             result.Errors.Add($"Cycle detected: {string.Join(" → ", _visited)} → {current}");
+                            break;
+                        }
+
+                        if (depth > MaxHierarchyDepth)
+                        {
+                            result.Errors.Add($"Hierarchy depth exceeds limit ({MaxHierarchyDepth}) at layer: {current}");
                             break;
                         }
 
@@ -341,6 +359,8 @@ namespace ObjLoader.Services.Layers
                         {
                             break;
                         }
+
+                        depth++;
                     }
 
                     if (layer.ParentId != null && !_hierarchyNodes.ContainsKey(layer.ParentId))
@@ -369,6 +389,7 @@ namespace ObjLoader.Services.Layers
         {
             _visited.Clear();
             var current = potentialParentId;
+            int depth = 0;
 
             while (current != null)
             {
@@ -391,9 +412,10 @@ namespace ObjLoader.Services.Layers
                     break;
                 }
 
-                if (_visited.Count > 10000)
+                depth++;
+                if (depth > MaxHierarchyDepth)
                 {
-                    throw new InvalidOperationException("Hierarchy depth exceeds limit or existing cycle detected.");
+                    throw new InvalidOperationException($"Hierarchy depth exceeds limit ({MaxHierarchyDepth}) or existing cycle detected.");
                 }
             }
 

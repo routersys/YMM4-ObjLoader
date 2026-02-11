@@ -17,6 +17,8 @@ namespace ObjLoader.Services.Rendering
 {
     internal class SceneService : IDisposable
     {
+        private const int MaxHierarchyDepth = 100;
+
         private readonly ObjLoaderParameter _parameter;
         private readonly ObjModelLoader _loader;
         private readonly RenderService _renderService;
@@ -285,15 +287,16 @@ namespace ObjLoader.Services.Rendering
 
             var globalPlacements = new Dictionary<string, Matrix4x4>();
 
-            Matrix4x4 GetGlobalPlacement(string guid)
+            Matrix4x4 GetGlobalPlacement(string guid, int depth = 0)
             {
                 if (globalPlacements.TryGetValue(guid, out var cached)) return cached;
                 if (!localPlacements.TryGetValue(guid, out var info)) return Matrix4x4.Identity;
+                if (depth > MaxHierarchyDepth) return Matrix4x4.Identity;
 
                 var parentMat = Matrix4x4.Identity;
                 if (!string.IsNullOrEmpty(info.ParentId) && localPlacements.ContainsKey(info.ParentId))
                 {
-                    parentMat = GetGlobalPlacement(info.ParentId);
+                    parentMat = GetGlobalPlacement(info.ParentId, depth + 1);
                 }
 
                 var global = info.Local * parentMat;

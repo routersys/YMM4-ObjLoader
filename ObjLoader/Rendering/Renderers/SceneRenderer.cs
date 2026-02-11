@@ -19,6 +19,8 @@ namespace ObjLoader.Rendering.Renderers
 {
     internal class SceneRenderer
     {
+        private const int MaxHierarchyDepth = 100;
+
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly D3DResources _resources;
         private readonly RenderTargetManager _renderTargets;
@@ -128,7 +130,7 @@ namespace ObjLoader.Rendering.Renderers
                             hierarchyMatrix *= RenderUtils.GetLayerTransform(parentState);
                             currentGuid = parentState.ParentGuid;
                             depth++;
-                            if (depth > 100) break;
+                            if (depth > MaxHierarchyDepth) break;
                         }
 
                         var normalize = Matrix4x4.CreateTranslation(-item.Resource.ModelCenter) * Matrix4x4.CreateScale(item.Resource.ModelScale);
@@ -280,7 +282,7 @@ namespace ObjLoader.Rendering.Renderers
                     hierarchyMatrix *= RenderUtils.GetLayerTransform(parentState);
                     currentGuid = parentState.ParentGuid;
                     depth++;
-                    if (depth > 100) break;
+                    if (depth > MaxHierarchyDepth) break;
                 }
 
                 var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
