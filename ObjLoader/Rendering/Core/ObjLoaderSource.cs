@@ -26,6 +26,7 @@ namespace ObjLoader.Rendering.Core
         public static readonly object SharedRenderLock = new object();
 
         private const int MaxHierarchyDepth = 100;
+        private const string CacheKeyPrefix = "export:";
 
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly ObjLoaderParameter _parameter;
@@ -110,6 +111,8 @@ namespace ObjLoader.Rendering.Core
             _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager);
         }
 
+        private string GetDeviceCacheKey(string filePath) => $"{CacheKeyPrefix}{_devices.D3D.Device.NativePointer:X}:{filePath}";
+
         private bool IsDeviceLost()
         {
             try
@@ -189,9 +192,9 @@ namespace ObjLoader.Rendering.Core
 
             UpdateResourcesIfNeeded(settings);
 
-            bool settingsChanged = Math.Abs(_lastSettingsVersion - settingsVersion) > 1e-5;
-            bool cameraChanged = Math.Abs(_lastCamX - camX) > 1e-5 || Math.Abs(_lastCamY - camY) > 1e-5 || Math.Abs(_lastCamZ - camZ) > 1e-5 ||
-                                 Math.Abs(_lastTargetX - targetX) > 1e-5 || Math.Abs(_lastTargetY - targetY) > 1e-5 || Math.Abs(_lastTargetZ - targetZ) > 1e-5;
+            bool settingsChanged = Math.Abs(_lastSettingsVersion - settingsVersion) > RenderingConstants.StateComparisonEpsilon;
+            bool cameraChanged = Math.Abs(_lastCamX - camX) > RenderingConstants.StateComparisonEpsilon || Math.Abs(_lastCamY - camY) > RenderingConstants.StateComparisonEpsilon || Math.Abs(_lastCamZ - camZ) > RenderingConstants.StateComparisonEpsilon ||
+                                 Math.Abs(_lastTargetX - targetX) > RenderingConstants.StateComparisonEpsilon || Math.Abs(_lastTargetY - targetY) > RenderingConstants.StateComparisonEpsilon || Math.Abs(_lastTargetZ - targetZ) > RenderingConstants.StateComparisonEpsilon;
             bool shadowSettingsChanged = _lastShadowResolution != settings.ShadowResolution || _lastShadowEnabled != settings.ShadowMappingEnabled;
 
             var (activeWorldId, newLayerStates, layersChanged) = BuildLayerStates(frame, length, fps, settings);
@@ -385,7 +388,8 @@ namespace ObjLoader.Rendering.Core
                 if (effectiveVisibility && !string.IsNullOrEmpty(layerState.FilePath))
                 {
                     GpuResourceCacheItem? resource = null;
-                    if (GpuResourceCache.Instance.TryGetValue(layerState.FilePath, out var cached))
+                    string cacheKey = GetDeviceCacheKey(layerState.FilePath);
+                    if (GpuResourceCache.Instance.TryGetValue(cacheKey, out var cached))
                     {
                         if (cached != null && cached.Device == _devices.D3D.Device)
                         {
@@ -610,15 +614,15 @@ namespace ObjLoader.Rendering.Core
 
         private static bool AreStatesEqual(in LayerState a, in LayerState b)
         {
-            return Math.Abs(a.X - b.X) < 1e-5 && Math.Abs(a.Y - b.Y) < 1e-5 && Math.Abs(a.Z - b.Z) < 1e-5 &&
-                   Math.Abs(a.Scale - b.Scale) < 1e-5 && Math.Abs(a.Rx - b.Rx) < 1e-5 && Math.Abs(a.Ry - b.Ry) < 1e-5 && Math.Abs(a.Rz - b.Rz) < 1e-5 &&
-                   Math.Abs(a.Cx - b.Cx) < 1e-5 && Math.Abs(a.Cy - b.Cy) < 1e-5 && Math.Abs(a.Cz - b.Cz) < 1e-5 &&
-                   Math.Abs(a.Fov - b.Fov) < 1e-5 && Math.Abs(a.LightX - b.LightX) < 1e-5 && Math.Abs(a.LightY - b.LightY) < 1e-5 && Math.Abs(a.LightZ - b.LightZ) < 1e-5 &&
+            return Math.Abs(a.X - b.X) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Y - b.Y) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Z - b.Z) < RenderingConstants.StateComparisonEpsilon &&
+                   Math.Abs(a.Scale - b.Scale) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Rx - b.Rx) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Ry - b.Ry) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Rz - b.Rz) < RenderingConstants.StateComparisonEpsilon &&
+                   Math.Abs(a.Cx - b.Cx) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Cy - b.Cy) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Cz - b.Cz) < RenderingConstants.StateComparisonEpsilon &&
+                   Math.Abs(a.Fov - b.Fov) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.LightX - b.LightX) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.LightY - b.LightY) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.LightZ - b.LightZ) < RenderingConstants.StateComparisonEpsilon &&
                    a.IsLightEnabled == b.IsLightEnabled && a.LightType == b.LightType && string.Equals(a.FilePath, b.FilePath, StringComparison.Ordinal) &&
                    string.Equals(a.ShaderFilePath, b.ShaderFilePath, StringComparison.Ordinal) && a.BaseColor == b.BaseColor &&
                    a.Projection == b.Projection && a.CoordSystem == b.CoordSystem && a.CullMode == b.CullMode &&
-                   a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < 1e-5 &&
-                   Math.Abs(a.Specular - b.Specular) < 1e-5 && Math.Abs(a.Shininess - b.Shininess) < 1e-5 && a.WorldId == b.WorldId &&
+                   a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < RenderingConstants.StateComparisonEpsilon &&
+                   Math.Abs(a.Specular - b.Specular) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Shininess - b.Shininess) < RenderingConstants.StateComparisonEpsilon && a.WorldId == b.WorldId &&
                    AreSetsEqual(a.VisibleParts, b.VisibleParts) && string.Equals(a.ParentGuid, b.ParentGuid, StringComparison.Ordinal) &&
                    a.IsVisible == b.IsVisible;
         }
@@ -704,7 +708,8 @@ namespace ObjLoader.Rendering.Core
                 }
 
                 var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
-                GpuResourceCache.Instance.AddOrUpdate(filePath, item);
+                string cacheKey = GetDeviceCacheKey(filePath);
+                GpuResourceCache.Instance.AddOrUpdate(cacheKey, item);
                 success = true;
                 return item;
             }

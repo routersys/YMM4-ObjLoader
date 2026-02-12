@@ -11,7 +11,6 @@ namespace ObjLoader.Services.Layers
 
         private int _selectedLayerIndex;
         private LayerData? _activeLayer;
-        private readonly Dictionary<string, LayerNode> _hierarchyNodes = new();
         private readonly object _lock = new();
         private readonly HashSet<string> _visited = new();
         private readonly Queue<string> _queue = new();
@@ -19,14 +18,6 @@ namespace ObjLoader.Services.Layers
         public ObservableCollection<LayerData> Layers { get; } = new ObservableCollection<LayerData>();
         public int SelectedLayerIndex => _selectedLayerIndex;
         public bool IsSwitchingLayer { get; private set; } = false;
-
-        public class LayerNode
-        {
-            public string Id { get; set; } = "";
-            public string? ParentId { get; set; }
-            public bool IsVisible { get; set; } = true;
-            public List<string> ChildIds { get; } = new();
-        }
 
         public void Initialize(ObjLoaderParameter parameter)
         {
@@ -193,25 +184,17 @@ namespace ObjLoader.Services.Layers
         {
             lock (_lock)
             {
+                var child = Layers.FirstOrDefault(l => l.Guid == childId);
+                if (child == null) return false;
+
                 if (parentId == null)
                 {
-                    if (_hierarchyNodes.TryGetValue(childId, out var child))
-                    {
-                        if (child.ParentId != null && _hierarchyNodes.TryGetValue(child.ParentId, out var previousParent))
-                        {
-                            previousParent.ChildIds.Remove(childId);
-                        }
-                        child.ParentId = null;
-                        return true;
-                    }
-                    return false;
+                    child.ParentGuid = string.Empty;
+                    return true;
                 }
 
-                if (!_hierarchyNodes.TryGetValue(childId, out var childNode) ||
-                    !_hierarchyNodes.TryGetValue(parentId, out var parentNode))
-                {
-                    return false;
-                }
+                var parent = Layers.FirstOrDefault(l => l.Guid == parentId);
+                if (parent == null) return false;
 
                 if (childId == parentId)
                 {
@@ -224,17 +207,7 @@ namespace ObjLoader.Services.Layers
                         $"Setting {parentId} as parent of {childId} would create a cycle.");
                 }
 
-                if (childNode.ParentId != null && _hierarchyNodes.TryGetValue(childNode.ParentId, out var oldParent))
-                {
-                    oldParent.ChildIds.Remove(childId);
-                }
-
-                childNode.ParentId = parentId;
-                if (!parentNode.ChildIds.Contains(childId))
-                {
-                    parentNode.ChildIds.Add(childId);
-                }
-
+                child.ParentGuid = parentId;
                 return true;
             }
         }
@@ -247,7 +220,7 @@ namespace ObjLoader.Services.Layers
                 var current = layerId;
                 int depth = 0;
 
-                while (current != null)
+                while (!string.IsNullOrEmpty(current))
                 {
                     if (!_visited.Add(current))
                     {
@@ -259,19 +232,12 @@ namespace ObjLoader.Services.Layers
                         throw new InvalidOperationException($"Hierarchy depth exceeds limit ({MaxHierarchyDepth}) for layer: {layerId}");
                     }
 
-                    if (_hierarchyNodes.TryGetValue(current, out var node))
-                    {
-                        if (!node.IsVisible)
-                        {
-                            return false;
-                        }
-                        current = node.ParentId;
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    var layer = Layers.FirstOrDefault(l => l.Guid == current);
+                    if (layer == null) break;
 
+                    if (!layer.IsVisible) return false;
+
+                    current = layer.ParentGuid;
                     depth++;
                 }
 
@@ -287,7 +253,7 @@ namespace ObjLoader.Services.Layers
                 _queue.Clear();
                 _visited.Clear();
 
-                if (!_hierarchyNodes.ContainsKey(layerId))
+                if (!Layers.Any(l => l.Guid == layerId))
                 {
                     return result;
                 }
@@ -299,19 +265,16 @@ namespace ObjLoader.Services.Layers
                 {
                     var current = _queue.Dequeue();
 
-                    if (_hierarchyNodes.TryGetValue(current, out var node))
+                    foreach (var child in Layers.Where(l => l.ParentGuid == current))
                     {
-                        foreach (var childId in node.ChildIds)
+                        if (_visited.Add(child.Guid))
                         {
-                            if (_visited.Add(childId))
-                            {
-                                result.Add(childId);
-                                _queue.Enqueue(childId);
-                            }
-                            else
-                            {
-                                throw new InvalidOperationException($"Cycle detected at: {childId}");
-                            }
+                            result.Add(child.Guid);
+                            _queue.Enqueue(child.Guid);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Cycle detected at: {child.Guid}");
                         }
                     }
 
@@ -331,13 +294,13 @@ namespace ObjLoader.Services.Layers
             {
                 var result = new ValidationResult();
 
-                foreach (var layer in _hierarchyNodes.Values)
+                foreach (var layer in Layers)
                 {
                     _visited.Clear();
                     int depth = 0;
 
-                    var current = layer.Id;
-                    while (current != null)
+                    var current = layer.Guid;
+                    while (!string.IsNullOrEmpty(current))
                     {
                         if (!_visited.Add(current))
                         {
@@ -351,33 +314,16 @@ namespace ObjLoader.Services.Layers
                             break;
                         }
 
-                        if (_hierarchyNodes.TryGetValue(current, out var node))
-                        {
-                            current = node.ParentId;
-                        }
-                        else
-                        {
-                            break;
-                        }
+                        var found = Layers.FirstOrDefault(l => l.Guid == current);
+                        if (found == null) break;
 
+                        current = found.ParentGuid;
                         depth++;
                     }
 
-                    if (layer.ParentId != null && !_hierarchyNodes.ContainsKey(layer.ParentId))
+                    if (!string.IsNullOrEmpty(layer.ParentGuid) && !Layers.Any(l => l.Guid == layer.ParentGuid))
                     {
-                        result.Warnings.Add($"Layer {layer.Id} references non-existent parent {layer.ParentId}.");
-                    }
-
-                    foreach (var childId in layer.ChildIds)
-                    {
-                        if (!_hierarchyNodes.TryGetValue(childId, out var child))
-                        {
-                            result.Warnings.Add($"Layer {layer.Id} references non-existent child {childId}.");
-                        }
-                        else if (child.ParentId != layer.Id)
-                        {
-                            result.Errors.Add($"Layer {childId} parent mismatch (expected: {layer.Id}, actual: {child.ParentId}).");
-                        }
+                        result.Warnings.Add($"Layer {layer.Guid} references non-existent parent {layer.ParentGuid}.");
                     }
                 }
 
@@ -391,27 +337,15 @@ namespace ObjLoader.Services.Layers
             var current = potentialParentId;
             int depth = 0;
 
-            while (current != null)
+            while (!string.IsNullOrEmpty(current))
             {
-                if (!_visited.Add(current))
-                {
-                    return true;
-                }
+                if (!_visited.Add(current)) return true;
+                if (current == childId) return true;
 
-                if (current == childId)
-                {
-                    return true;
-                }
+                var layer = Layers.FirstOrDefault(l => l.Guid == current);
+                if (layer == null) break;
 
-                if (_hierarchyNodes.TryGetValue(current, out var node))
-                {
-                    current = node.ParentId;
-                }
-                else
-                {
-                    break;
-                }
-
+                current = layer.ParentGuid;
                 depth++;
                 if (depth > MaxHierarchyDepth)
                 {

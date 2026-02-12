@@ -83,14 +83,13 @@ namespace ObjLoader.Rendering.Renderers
 
             if (projectionType == ProjectionType.Parallel)
             {
-                if (cameraPosition == target) cameraPosition.Z -= 2.0f;
+                if (cameraPosition == target) cameraPosition.Z -= RenderingConstants.CameraFallbackOffsetParallel;
                 mainView = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
-                float orthoSize = 2.0f;
-                mainProj = Matrix4x4.CreateOrthographic(orthoSize * aspect, orthoSize, RenderingConstants.DefaultNearPlane, RenderingConstants.DefaultFarPlane);
+                mainProj = Matrix4x4.CreateOrthographic(RenderingConstants.DefaultOrthoSize * aspect, RenderingConstants.DefaultOrthoSize, RenderingConstants.DefaultNearPlane, RenderingConstants.DefaultFarPlane);
             }
             else
             {
-                if (cameraPosition == target) cameraPosition.Z -= 2.5f;
+                if (cameraPosition == target) cameraPosition.Z -= RenderingConstants.CameraFallbackOffsetPerspective;
                 mainView = Matrix4x4.CreateLookAt(cameraPosition, target, Vector3.UnitY);
                 float radFov = (float)(Math.Max(1, Math.Min(RenderingConstants.DefaultFovLimit, fov)) * Math.PI / 180.0);
                 mainProj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, RenderingConstants.DefaultNearPlane, RenderingConstants.DefaultFarPlane);
@@ -376,7 +375,7 @@ namespace ObjLoader.Rendering.Renderers
                         SsrParams = new Vector4(settings.GetSSREnabled(wId) ? 1 : 0, (float)settings.GetSSRStep(wId), (float)settings.GetSSRMaxDist(wId), (float)settings.GetSSRMaxSteps(wId)),
                         ViewProj = Matrix4x4.Transpose(viewProj),
                         InverseViewProj = Matrix4x4.Transpose(inverseViewProj),
-                        PcssParams = new Vector4((float)settings.GetPcssLightSize(wId), 0.5f, (float)settings.GetPcssQuality(wId), (float)settings.GetPcssQuality(wId)),
+                        PcssParams = new Vector4((float)settings.GetPcssLightSize(wId), RenderingConstants.PcssDefaultSearchFactor, (float)settings.GetPcssQuality(wId), (float)settings.GetPcssQuality(wId)),
                         SsrParams2 = new Vector4((float)settings.GetSSRMaxSteps(wId), (float)settings.GetSSRThickness(wId), 0, 0)
                     };
 

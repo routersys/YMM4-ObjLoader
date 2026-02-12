@@ -71,11 +71,7 @@ namespace ObjLoader.Cache
                 var header = new CacheHeader(originalTimestamp.ToBinary(), path, parserId, parserVersion, pluginVersion);
                 WriteCacheFile(tempPath, header, model, thumbnail);
 
-                if (File.Exists(cachePath))
-                {
-                    File.Delete(cachePath);
-                }
-                File.Move(tempPath, cachePath);
+                File.Move(tempPath, cachePath, true);
             }
             catch
             {

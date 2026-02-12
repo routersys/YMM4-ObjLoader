@@ -19,6 +19,12 @@ namespace ObjLoader.Rendering.Core
         public const float GridScaleBase = 50.0f;
         public const float DefaultFovLimit = 179.0f;
 
+        public const float CameraFallbackOffsetParallel = 2.0f;
+        public const float CameraFallbackOffsetPerspective = 2.5f;
+        public const double StateComparisonEpsilon = 1e-5;
+        public const float PcssDefaultSearchFactor = 0.5f;
+        public const float DefaultOrthoSize = 2.0f;
+
         public const int SlotStandardTexture = 0;
         public const int SlotShadowMap = 1;
         public const int SlotEnvironmentMap = 2;
