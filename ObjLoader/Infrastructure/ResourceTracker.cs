@@ -12,6 +12,9 @@ namespace ObjLoader.Infrastructure
         private long _totalDisposals;
         private long _totalEstimatedBytes;
         private int _disposed;
+        private long _disposalsSinceLastPurge;
+        private const long PurgeThreshold = 500;
+        private const int MaxHistoryKeys = 1000;
 
         public static ResourceTracker Instance => _instance.Value;
 
@@ -220,10 +223,44 @@ namespace ObjLoader.Infrastructure
                         }
                         return list;
                     });
+
+                var count = Interlocked.Increment(ref _disposalsSinceLastPurge);
+                if (count >= PurgeThreshold)
+                {
+                    Interlocked.Exchange(ref _disposalsSinceLastPurge, 0);
+                    TrimHistory();
+                }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to record disposal: {ex.Message}");
+            }
+        }
+
+        private void TrimHistory()
+        {
+            try
+            {
+                if (_disposedHistory.Count <= MaxHistoryKeys) return;
+
+                var keysToRemove = new List<string>();
+                foreach (var kvp in _disposedHistory)
+                {
+                    if (!_allocations.ContainsKey(kvp.Key))
+                    {
+                        keysToRemove.Add(kvp.Key);
+                    }
+                }
+
+                foreach (var key in keysToRemove)
+                {
+                    _disposedHistory.TryRemove(key, out _);
+                    if (_disposedHistory.Count <= MaxHistoryKeys) break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to trim history: {ex.Message}");
             }
         }
 

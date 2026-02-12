@@ -279,6 +279,9 @@ namespace ObjLoader.Rendering.Core
                 double lz = layer.LightZ.GetValue(frame, length, fps);
                 int worldId = (int)layer.WorldId.GetValue(frame, length, fps);
 
+                var visibleParts = layer.VisibleParts;
+                HashSet<int>? copiedVisibleParts = visibleParts != null ? new HashSet<int>(visibleParts) : null;
+
                 var layerState = new LayerState
                 {
                     X = x,
@@ -310,7 +313,7 @@ namespace ObjLoader.Rendering.Core
                     Specular = settings.GetSpecularIntensity(worldId),
                     Shininess = settings.GetShininess(worldId),
                     IsVisible = layer.IsVisible,
-                    VisibleParts = layer.VisibleParts,
+                    VisibleParts = copiedVisibleParts,
                     ParentGuid = layer.ParentGuid
                 };
 
@@ -356,7 +359,7 @@ namespace ObjLoader.Rendering.Core
                 layersChanged = true;
             }
 
-            var newLayerStates = _newLayerStatesTemp.ToImmutableDictionary();
+            var newLayerStates = layersChanged ? _newLayerStatesTemp.ToImmutableDictionary() : previousStates;
             return (activeWorldId, newLayerStates, layersChanged);
         }
 
@@ -400,7 +403,6 @@ namespace ObjLoader.Rendering.Core
                         if (model.Vertices.Length > 0)
                         {
                             resource = CreateGpuResource(model, layerState.FilePath);
-                            GC.Collect(2, GCCollectionMode.Optimized);
                         }
                     }
 

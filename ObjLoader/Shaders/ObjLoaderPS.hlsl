@@ -101,7 +101,7 @@ float FindBlocker(float3 projCoords, float bias, float lightSize, int cascadeInd
     float blockerSum = 0.0;
     float numBlockers = 0.0;
     float searchWidth = lightSize * PcssParams.y;
-    int samples = min((int) PcssParams.z, 64);
+    int samples = min((int) round(PcssParams.z), 64);
     
     for (int i = 0; i < samples; ++i)
     {
@@ -177,7 +177,7 @@ float CalculatePCSS(float3 wPos, float3 N, float3 L)
         float filterRadius = penumbraRatio * PcssParams.x * PcssParams.y;
         float2 texelSize = 1.0 / ShadowParams.w;
         
-        int samples = min((int) PcssParams.w, 64);
+        int samples = min((int) round(PcssParams.w), 64);
         for (int i = 0; i < samples; ++i)
         {
             float2 offset = VogelDiskSample(i, samples, randomRotation) * filterRadius * texelSize;

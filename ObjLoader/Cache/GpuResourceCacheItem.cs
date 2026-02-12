@@ -73,24 +73,5 @@ namespace ObjLoader.Cache
             {
             }
         }
-
-        ~GpuResourceCacheItem()
-        {
-            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-
-            SafeDispose(VertexBuffer);
-            SafeDispose(IndexBuffer);
-
-            var textures = _partTextures;
-            _partTextures = null;
-            if (textures != null)
-            {
-                for (int i = 0; i < textures.Length; i++)
-                {
-                    SafeDispose(textures[i]);
-                    textures[i] = null;
-                }
-            }
-        }
     }
 }
