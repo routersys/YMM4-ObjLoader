@@ -482,4 +482,29 @@
 <data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>지원되지 않는 PSD 압축 형식</value></data>
 <data name="Error_DimensionsInvalid" xml:space="preserve"><value>이미지 크기가 잘못되었습니다</value></data>
 <data name="Error_DimensionsTooLarge" xml:space="preserve"><value>이미지 크기가 너무 커서 로드할 수 없습니다</value></data>
+<data name="Dashboard" xml:space="preserve"><value>리소스 대시보드</value></data>
+<data name="EstimatedMemoryMB" xml:space="preserve"><value>예상 메모리 사용량 (MB):</value></data>
+<data name="GpuCacheEntries" xml:space="preserve"><value>GPU 캐시 항목 수:</value></data>
+<data name="TotalGpuMemoryMB" xml:space="preserve"><value>GPU 캐시 합계 (MB):</value></data>
+<data name="LastUpdated" xml:space="preserve"><value>마지막 업데이트:</value></data>
+<data name="MemoryGraph" xml:space="preserve"><value>메모리 사용 그래프</value></data>
+<data name="TrackerMemory" xml:space="preserve"><value>트래커 (MB)</value></data>
+<data name="GpuCacheMemory" xml:space="preserve"><value>GPU 캐시 (MB)</value></data>
+<data name="ResourceActions" xml:space="preserve"><value>리소스 작업</value></data>
+<data name="ClearGpuCache" xml:space="preserve"><value>GPU 캐시 지우기</value></data>
+<data name="ForceDisposeLeak" xml:space="preserve"><value>누출 강제 해제</value></data>
+<data name="ResetAllResources" xml:space="preserve"><value>모든 리소스 재설정</value></data>
+<data name="CopyToClipboard" xml:space="preserve"><value>클립보드에 복사</value></data>
+<data name="CopiedToClipboard" xml:space="preserve"><value>클립보드에 복사됨</value></data>
+<data name="GpuCacheManagement" xml:space="preserve"><value>GPU 캐시 관리</value></data>
+<data name="GpuCacheFileHeader" xml:space="preserve"><value>파일</value></data>
+<data name="GpuCacheMemoryHeader" xml:space="preserve"><value>GPU 메모리 (MB)</value></data>
+<data name="GpuCachePartsHeader" xml:space="preserve"><value>파트 수</value></data>
+<data name="RemoveSelected" xml:space="preserve"><value>선택 항목 삭제</value></data>
+<data name="ClearAll" xml:space="preserve"><value>전체 지우기</value></data>
+<data name="ConfirmClearGpuCache" xml:space="preserve"><value>모든 GPU 캐시를 지우시겠습니까? 모델을 다시 로드해야 합니다.</value></data>
+<data name="ConfirmResetAll" xml:space="preserve"><value>모든 리소스를 재설정하시겠습니까? GPU 캐시; 풀 및 누출된 리소스가 해제됩니다.</value></data>
+<data name="ConfirmTitle" xml:space="preserve"><value>확인</value></data>
+<data name="DisposedCount" xml:space="preserve"><value>{0} 개의 리소스가 해제되었습니다.</value></data>
+<data name="RefreshGpuCache" xml:space="preserve"><value>GPU 캐시 목록 새로고침</value></data>
 </root>

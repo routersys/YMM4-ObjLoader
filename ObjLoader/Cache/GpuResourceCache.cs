@@ -21,6 +21,41 @@ namespace ObjLoader.Cache
 
         private bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 
+        public int Count => _cache.Count;
+
+        public long TotalEstimatedBytes
+        {
+            get
+            {
+                long total = 0;
+                foreach (var kvp in _cache)
+                {
+                    if (kvp.Value != null)
+                        total += kvp.Value.EstimatedGpuBytes;
+                }
+                return total;
+            }
+        }
+
+        public List<GpuCacheSnapshot> GetSnapshot()
+        {
+            var result = new List<GpuCacheSnapshot>();
+            foreach (var kvp in _cache)
+            {
+                var item = kvp.Value;
+                if (item != null)
+                {
+                    result.Add(new GpuCacheSnapshot
+                    {
+                        Key = kvp.Key,
+                        EstimatedGpuMB = item.EstimatedGpuBytes / (1024.0 * 1024.0),
+                        PartCount = item.Parts?.Length ?? 0
+                    });
+                }
+            }
+            return result;
+        }
+
         public bool TryGetValue(string key, [NotNullWhen(true)] out GpuResourceCacheItem? item)
         {
             if (IsDisposed || string.IsNullOrEmpty(key))

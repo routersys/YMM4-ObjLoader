@@ -482,4 +482,29 @@
 <data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>不支持的PSD压缩格式</value></data>
 <data name="Error_DimensionsInvalid" xml:space="preserve"><value>图像尺寸无效</value></data>
 <data name="Error_DimensionsTooLarge" xml:space="preserve"><value>图像尺寸过大，无法加载</value></data>
+<data name="Dashboard" xml:space="preserve"><value>资源仪表盘</value></data>
+<data name="EstimatedMemoryMB" xml:space="preserve"><value>估计内存使用量 (MB):</value></data>
+<data name="GpuCacheEntries" xml:space="preserve"><value>GPU缓存条目数:</value></data>
+<data name="TotalGpuMemoryMB" xml:space="preserve"><value>GPU缓存总量 (MB):</value></data>
+<data name="LastUpdated" xml:space="preserve"><value>最后更新:</value></data>
+<data name="MemoryGraph" xml:space="preserve"><value>内存使用图表</value></data>
+<data name="TrackerMemory" xml:space="preserve"><value>跟踪器 (MB)</value></data>
+<data name="GpuCacheMemory" xml:space="preserve"><value>GPU缓存 (MB)</value></data>
+<data name="ResourceActions" xml:space="preserve"><value>资源操作</value></data>
+<data name="ClearGpuCache" xml:space="preserve"><value>清除GPU缓存</value></data>
+<data name="ForceDisposeLeak" xml:space="preserve"><value>强制释放泄漏</value></data>
+<data name="ResetAllResources" xml:space="preserve"><value>重置所有资源</value></data>
+<data name="CopyToClipboard" xml:space="preserve"><value>复制到剪贴板</value></data>
+<data name="CopiedToClipboard" xml:space="preserve"><value>已复制到剪贴板</value></data>
+<data name="GpuCacheManagement" xml:space="preserve"><value>GPU缓存管理</value></data>
+<data name="GpuCacheFileHeader" xml:space="preserve"><value>文件</value></data>
+<data name="GpuCacheMemoryHeader" xml:space="preserve"><value>GPU内存 (MB)</value></data>
+<data name="GpuCachePartsHeader" xml:space="preserve"><value>部件数</value></data>
+<data name="RemoveSelected" xml:space="preserve"><value>删除选中</value></data>
+<data name="ClearAll" xml:space="preserve"><value>清除全部</value></data>
+<data name="ConfirmClearGpuCache" xml:space="preserve"><value>清除所有GPU缓存？需要重新加载模型。</value></data>
+<data name="ConfirmResetAll" xml:space="preserve"><value>重置所有资源？GPU缓存、池和泄漏资源将被释放。</value></data>
+<data name="ConfirmTitle" xml:space="preserve"><value>确认</value></data>
+<data name="DisposedCount" xml:space="preserve"><value>已释放 {0} 个资源。</value></data>
+<data name="RefreshGpuCache" xml:space="preserve"><value>刷新GPU缓存列表</value></data>
 </root>

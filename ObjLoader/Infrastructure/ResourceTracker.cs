@@ -270,6 +270,63 @@ namespace ObjLoader.Infrastructure
             _disposedHistory.Clear();
         }
 
+        public int ForceDisposeLeaked(TimeSpan maxAge)
+        {
+            if (IsDisposed) return 0;
+
+            var leaked = GetLeakedResources(maxAge);
+            int disposed = 0;
+
+            foreach (var alloc in leaked)
+            {
+                try
+                {
+                    if (alloc.ResourceReference.TryGetTarget(out var resource))
+                    {
+                        resource.Dispose();
+                        disposed++;
+                    }
+                    alloc.MarkDisposed();
+                    _allocations.TryRemove(alloc.Key, out _);
+                    RecordDisposal(alloc.Key, alloc);
+
+                    lock (_statsLock)
+                    {
+                        _totalDisposals++;
+                        _totalEstimatedBytes -= alloc.EstimatedSizeBytes;
+                        if (_totalEstimatedBytes < 0) _totalEstimatedBytes = 0;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"ResourceTracker: Failed to force dispose leaked resource: {ex.Message}");
+                }
+            }
+            return disposed;
+        }
+
+        public List<ResourceAllocation> GetAllActiveAllocations()
+        {
+            var result = new List<ResourceAllocation>();
+            if (IsDisposed) return result;
+
+            foreach (var kvp in _allocations)
+            {
+                try
+                {
+                    var alloc = kvp.Value;
+                    if (alloc != null && !alloc.IsDisposed && alloc.IsAlive())
+                    {
+                        result.Add(alloc);
+                    }
+                }
+                catch
+                {
+                }
+            }
+            return result;
+        }
+
         public void Dispose()
         {
             if (Interlocked.Exchange(ref _disposed, 1) != 0) return;

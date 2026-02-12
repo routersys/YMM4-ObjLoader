@@ -1,9 +1,15 @@
-﻿using ObjLoader.Infrastructure;
+﻿using ObjLoader.Cache;
+using ObjLoader.Infrastructure;
+using ObjLoader.Localization;
+using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels
@@ -13,6 +19,10 @@ namespace ObjLoader.ViewModels
         private readonly ModelSettings _settings;
         private readonly Action<AuditReport> _auditHandler;
         private bool _disposed;
+
+        private readonly DispatcherTimer _dashboardTimer;
+        private readonly CircularBuffer<double> _trackerMemoryHistory = new(60);
+        private readonly CircularBuffer<double> _gpuCacheMemoryHistory = new(60);
 
         public bool IsSandboxEnforced
         {
@@ -187,12 +197,83 @@ namespace ObjLoader.ViewModels
         public ICommand ResetResourceLimitsCommand { get; }
         public ICommand ResetComplexityLimitsCommand { get; }
         public ICommand ResetAuditSettingsCommand { get; }
+        public ICommand ClearGpuCacheCommand { get; }
+        public ICommand ForceDisposeLeakedCommand { get; }
+        public ICommand ResetAllResourcesCommand { get; }
+        public ICommand CopyDashboardCommand { get; }
+        public ICommand CopyLeakedResourcesCommand { get; }
+        public ICommand CopyOrphanedResourcesCommand { get; }
+        public ICommand RefreshGpuCacheCommand { get; }
+        public ActionCommand RemoveSelectedCacheCommand { get; }
+        public ICommand ClearAllCacheCommand { get; }
 
         private AuditReport _latestReport = AuditReport.Empty;
         public AuditReport LatestReport
         {
             get => _latestReport;
             private set => Set(ref _latestReport, value);
+        }
+
+        private double _estimatedMemoryMB;
+        public double EstimatedMemoryMB
+        {
+            get => _estimatedMemoryMB;
+            private set => Set(ref _estimatedMemoryMB, value);
+        }
+
+        private int _gpuCacheEntryCount;
+        public int GpuCacheEntryCount
+        {
+            get => _gpuCacheEntryCount;
+            private set => Set(ref _gpuCacheEntryCount, value);
+        }
+
+        private double _totalGpuCacheMemoryMB;
+        public double TotalGpuCacheMemoryMB
+        {
+            get => _totalGpuCacheMemoryMB;
+            private set => Set(ref _totalGpuCacheMemoryMB, value);
+        }
+
+        private string _lastUpdatedText = string.Empty;
+        public string LastUpdatedText
+        {
+            get => _lastUpdatedText;
+            private set => Set(ref _lastUpdatedText, value);
+        }
+
+        private PointCollection _trackerGraphPoints = new();
+        public PointCollection TrackerGraphPoints
+        {
+            get => _trackerGraphPoints;
+            private set => Set(ref _trackerGraphPoints, value);
+        }
+
+        private PointCollection _gpuCacheGraphPoints = new();
+        public PointCollection GpuCacheGraphPoints
+        {
+            get => _gpuCacheGraphPoints;
+            private set => Set(ref _gpuCacheGraphPoints, value);
+        }
+
+        private double _graphMaxValue = 1.0;
+        public double GraphMaxValue
+        {
+            get => _graphMaxValue;
+            private set => Set(ref _graphMaxValue, value);
+        }
+
+        public ObservableCollection<GpuCacheSnapshot> GpuCacheItems { get; } = new();
+
+        private GpuCacheSnapshot? _selectedCacheItem;
+        public GpuCacheSnapshot? SelectedCacheItem
+        {
+            get => _selectedCacheItem;
+            set
+            {
+                if (Set(ref _selectedCacheItem, value))
+                    RemoveSelectedCacheCommand?.RaiseCanExecuteChanged();
+            }
         }
 
         public ModelSettingsViewModel(ModelSettings settings)
@@ -322,8 +403,268 @@ namespace ObjLoader.ViewModels
                 LeakThresholdMinutes = 30.0;
             });
 
+            ClearGpuCacheCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    var result = MessageBox.Show(
+                        Texts.ConfirmClearGpuCache,
+                        Texts.ConfirmTitle,
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question);
+                    if (result != MessageBoxResult.Yes) return;
+
+                    lock (ObjLoaderSource.SharedRenderLock)
+                    {
+                        GpuResourceCache.Instance.Clear();
+                    }
+                    RefreshDashboard();
+                    RefreshGpuCacheList();
+                }
+                catch
+                {
+                }
+            });
+
+            ForceDisposeLeakedCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    int disposed;
+                    lock (ObjLoaderSource.SharedRenderLock)
+                    {
+                        disposed = ResourceTracker.Instance.ForceDisposeLeaked(
+                            TimeSpan.FromMinutes(Math.Max(1.0, _settings.LeakThresholdMinutes)));
+                    }
+                    LatestReport = ResourceAuditor.Instance.RunAudit();
+                    RefreshDashboard();
+                    MessageBox.Show(
+                        string.Format(Texts.DisposedCount, disposed),
+                        Texts.ConfirmTitle,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                }
+                catch
+                {
+                }
+            });
+
+            ResetAllResourcesCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    var result = MessageBox.Show(
+                        Texts.ConfirmResetAll,
+                        Texts.ConfirmTitle,
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning);
+                    if (result != MessageBoxResult.Yes) return;
+
+                    lock (ObjLoaderSource.SharedRenderLock)
+                    {
+                        GpuResourceCache.Instance.Clear();
+                        ResourceTracker.Instance.ForceDisposeLeaked(TimeSpan.Zero);
+                    }
+                    ResourceTracker.Instance.PurgeHistory();
+                    LatestReport = ResourceAuditor.Instance.RunAudit();
+                    RefreshDashboard();
+                    RefreshGpuCacheList();
+                }
+                catch
+                {
+                }
+            });
+
+            CopyDashboardCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"== {Texts.Dashboard} ==");
+                    sb.AppendLine($"{Texts.ActiveResources} {LatestReport.ActiveResources}");
+                    sb.AppendLine($"{Texts.OrphanedResources} {LatestReport.OrphanedResources}");
+                    sb.AppendLine($"{Texts.TotalAllocations} {LatestReport.TotalAllocations}");
+                    sb.AppendLine($"{Texts.TotalDisposals} {LatestReport.TotalDisposals}");
+                    sb.AppendLine($"{Texts.EstimatedMemoryMB} {EstimatedMemoryMB:F2}");
+                    sb.AppendLine($"{Texts.GpuCacheEntries} {GpuCacheEntryCount}");
+                    sb.AppendLine($"{Texts.TotalGpuMemoryMB} {TotalGpuCacheMemoryMB:F2}");
+
+                    Clipboard.SetText(sb.ToString());
+                }
+                catch
+                {
+                }
+            });
+
+            CopyLeakedResourcesCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    CopyResourceListToClipboard(LatestReport.LeakedResources, Texts.LeakedResourcesList);
+                }
+                catch
+                {
+                }
+            });
+
+            CopyOrphanedResourcesCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    CopyResourceListToClipboard(LatestReport.OrphanedResourceList, Texts.OrphanedResourcesList);
+                }
+                catch
+                {
+                }
+            });
+
+            RefreshGpuCacheCommand = new ActionCommand(_ => true, _ => RefreshGpuCacheList());
+
+            RemoveSelectedCacheCommand = new ActionCommand(
+                _ => SelectedCacheItem != null,
+                _ =>
+                {
+                    try
+                    {
+                        if (SelectedCacheItem == null) return;
+                        var key = SelectedCacheItem.Key;
+                        lock (ObjLoaderSource.SharedRenderLock)
+                        {
+                            GpuResourceCache.Instance.Remove(key);
+                        }
+                        RefreshGpuCacheList();
+                        RefreshDashboard();
+                    }
+                    catch
+                    {
+                    }
+                });
+
+            ClearAllCacheCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    lock (ObjLoaderSource.SharedRenderLock)
+                    {
+                        GpuResourceCache.Instance.Clear();
+                    }
+                    RefreshGpuCacheList();
+                    RefreshDashboard();
+                }
+                catch
+                {
+                }
+            });
+
             _auditHandler = OnAuditCompleted;
             ResourceAuditor.Instance.AuditCompleted += _auditHandler;
+
+
+            _dashboardTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(2)
+            };
+            _dashboardTimer.Tick += OnDashboardTimerTick;
+            _dashboardTimer.Start();
+
+
+            RefreshDashboard();
+            RefreshGpuCacheList();
+        }
+
+        private void OnDashboardTimerTick(object? sender, EventArgs e)
+        {
+            if (_disposed) return;
+            RefreshDashboard();
+        }
+
+        private void RefreshDashboard()
+        {
+            try
+            {
+                var stats = ResourceTracker.Instance.GetStats();
+                double memMB = stats.EstimatedActiveBytes / (1024.0 * 1024.0);
+                EstimatedMemoryMB = Math.Round(memMB, 2);
+
+                var cache = GpuResourceCache.Instance;
+                GpuCacheEntryCount = cache.Count;
+                double gpuMB = cache.TotalEstimatedBytes / (1024.0 * 1024.0);
+                TotalGpuCacheMemoryMB = Math.Round(gpuMB, 2);
+
+                LastUpdatedText = DateTime.Now.ToString("HH:mm:ss");
+
+                OnPropertyChanged(nameof(LatestReport));
+
+                _trackerMemoryHistory.Add(memMB);
+                _gpuCacheMemoryHistory.Add(gpuMB);
+                UpdateGraphPoints();
+            }
+            catch
+            {
+            }
+        }
+
+        private void UpdateGraphPoints()
+        {
+            const double graphWidth = 400.0;
+            const double graphHeight = 100.0;
+
+            var trackerData = _trackerMemoryHistory.ToArray();
+            var gpuData = _gpuCacheMemoryHistory.ToArray();
+
+            double max = 1.0;
+            foreach (var v in trackerData) if (v > max) max = v;
+            foreach (var v in gpuData) if (v > max) max = v;
+            max = Math.Ceiling(max * 1.1);
+            if (max < 1.0) max = 1.0;
+            GraphMaxValue = max;
+
+            TrackerGraphPoints = BuildPointCollection(trackerData, graphWidth, graphHeight, max);
+            GpuCacheGraphPoints = BuildPointCollection(gpuData, graphWidth, graphHeight, max);
+        }
+
+        private static PointCollection BuildPointCollection(double[] data, double width, double height, double maxValue)
+        {
+            var points = new PointCollection();
+            if (data.Length == 0) return points;
+
+            double stepX = data.Length > 1 ? width / (data.Length - 1) : 0;
+            for (int i = 0; i < data.Length; i++)
+            {
+                double x = i * stepX;
+                double y = height - (data[i] / maxValue * height);
+                points.Add(new Point(x, Math.Max(0, Math.Min(height, y))));
+            }
+            return points;
+        }
+
+        private void RefreshGpuCacheList()
+        {
+            try
+            {
+                var snapshot = GpuResourceCache.Instance.GetSnapshot();
+                GpuCacheItems.Clear();
+                foreach (var item in snapshot)
+                {
+                    item.EstimatedGpuMB = Math.Round(item.EstimatedGpuMB, 2);
+                    GpuCacheItems.Add(item);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private static void CopyResourceListToClipboard(List<ResourceAllocation> resources, string title)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"== {title} ==");
+            sb.AppendLine("Key\tType\tAge\tCreatedAt\tSize(B)\tStackTrace");
+            foreach (var r in resources)
+            {
+                sb.AppendLine($"{r.Key}\t{r.ResourceType}\t{r.Age:hh\\:mm\\:ss}\t{r.CreatedAt:yyyy-MM-dd HH:mm:ss}\t{r.EstimatedSizeBytes}\t{r.StackTrace}");
+            }
+            Clipboard.SetText(sb.ToString());
         }
 
         private void OnAuditCompleted(AuditReport report)
@@ -385,6 +726,8 @@ namespace ObjLoader.ViewModels
 
             try
             {
+                _dashboardTimer.Stop();
+                _dashboardTimer.Tick -= OnDashboardTimerTick;
                 ResourceAuditor.Instance.AuditCompleted -= _auditHandler;
             }
             catch

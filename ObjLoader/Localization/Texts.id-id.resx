@@ -481,4 +481,29 @@
 <data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>Format kompresi PSD tidak didukung</value></data>
 <data name="Error_DimensionsInvalid" xml:space="preserve"><value>Dimensi gambar tidak valid</value></data>
 <data name="Error_DimensionsTooLarge" xml:space="preserve"><value>Dimensi gambar terlalu besar untuk memori</value></data>
+<data name="Dashboard" xml:space="preserve"><value>Dasbor Sumber Daya</value></data>
+<data name="EstimatedMemoryMB" xml:space="preserve"><value>Estimasi Memori (MB):</value></data>
+<data name="GpuCacheEntries" xml:space="preserve"><value>Entri Cache GPU:</value></data>
+<data name="TotalGpuMemoryMB" xml:space="preserve"><value>Total Cache GPU (MB):</value></data>
+<data name="LastUpdated" xml:space="preserve"><value>Terakhir Diperbarui:</value></data>
+<data name="MemoryGraph" xml:space="preserve"><value>Grafik Penggunaan Memori</value></data>
+<data name="TrackerMemory" xml:space="preserve"><value>Pelacak (MB)</value></data>
+<data name="GpuCacheMemory" xml:space="preserve"><value>Cache GPU (MB)</value></data>
+<data name="ResourceActions" xml:space="preserve"><value>Tindakan Sumber Daya</value></data>
+<data name="ClearGpuCache" xml:space="preserve"><value>Bersihkan Cache GPU</value></data>
+<data name="ForceDisposeLeak" xml:space="preserve"><value>Paksa Buang Kebocoran</value></data>
+<data name="ResetAllResources" xml:space="preserve"><value>Reset Semua Sumber Daya</value></data>
+<data name="CopyToClipboard" xml:space="preserve"><value>Salin ke Papan Klip</value></data>
+<data name="CopiedToClipboard" xml:space="preserve"><value>Disalin ke papan klip</value></data>
+<data name="GpuCacheManagement" xml:space="preserve"><value>Manajemen Cache GPU</value></data>
+<data name="GpuCacheFileHeader" xml:space="preserve"><value>File</value></data>
+<data name="GpuCacheMemoryHeader" xml:space="preserve"><value>Memori GPU (MB)</value></data>
+<data name="GpuCachePartsHeader" xml:space="preserve"><value>Bagian</value></data>
+<data name="RemoveSelected" xml:space="preserve"><value>Hapus Terpilih</value></data>
+<data name="ClearAll" xml:space="preserve"><value>Bersihkan Semua</value></data>
+<data name="ConfirmClearGpuCache" xml:space="preserve"><value>Bersihkan semua cache GPU? Model perlu dimuat ulang.</value></data>
+<data name="ConfirmResetAll" xml:space="preserve"><value>Reset semua sumber daya? Cache GPU; pool; dan sumber daya bocor akan dirilis.</value></data>
+<data name="ConfirmTitle" xml:space="preserve"><value>Konfirmasi</value></data>
+<data name="DisposedCount" xml:space="preserve"><value>{0} sumber daya dibuang.</value></data>
+<data name="RefreshGpuCache" xml:space="preserve"><value>Segarkan Daftar Cache GPU</value></data>
 </root>

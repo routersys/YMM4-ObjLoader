@@ -309,34 +309,151 @@
             </Border>
 
             <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;" ToolTip="{x:Static l:Texts.CopyToClipboard}" Command="{Binding CopyDashboardCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.Dashboard}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.ActiveResources}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.ActiveResources}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.OrphanedResources}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.OrphanedResources}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.EstimatedMemoryMB}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding EstimatedMemoryMB, StringFormat={}{0:F2}}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.TotalAllocations}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.TotalAllocations}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.TotalDisposals}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.TotalDisposals}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.GpuCacheEntries}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding GpuCacheEntryCount}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,16,0" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.TotalGpuMemoryMB}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding TotalGpuCacheMemoryMB, StringFormat={}{0:F2}}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,0" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.LastUpdated}" Margin="0,0,8,0" FontSize="13" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                            <TextBlock Text="{Binding LastUpdatedText}" FontSize="13" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <TextBlock Text="{x:Static l:Texts.MemoryGraph}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Height="120" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Stretch">
+                            <TextBlock Text="{Binding GraphMaxValue, StringFormat={}{0:F0}}" FontSize="10" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" VerticalAlignment="Top"/>
+                            <TextBlock Text="0" FontSize="10" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" VerticalAlignment="Bottom" Margin="0,80,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+                            <Canvas ClipToBounds="True">
+                                <Line X1="0" Y1="25" X2="9999" Y2="25" Stroke="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" StrokeThickness="0.5" StrokeDashArray="4 2"/>
+                                <Line X1="0" Y1="50" X2="9999" Y2="50" Stroke="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" StrokeThickness="0.5" StrokeDashArray="4 2"/>
+                                <Line X1="0" Y1="75" X2="9999" Y2="75" Stroke="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" StrokeThickness="0.5" StrokeDashArray="4 2"/>
+                                <Polyline Points="{Binding TrackerGraphPoints}" Stroke="#4CAF50" StrokeThickness="2" Fill="Transparent"/>
+                                <Polyline Points="{Binding GpuCacheGraphPoints}" Stroke="#2196F3" StrokeThickness="2" Fill="Transparent"/>
+                            </Canvas>
+                        </Border>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                        <Rectangle Width="16" Height="3" Fill="#4CAF50" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Texts.TrackerMemory}" FontSize="12" Margin="0,0,24,0"/>
+                        <Rectangle Width="16" Height="3" Fill="#2196F3" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Texts.GpuCacheMemory}" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <TextBlock Text="{x:Static l:Texts.ResourceActions}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <WrapPanel>
+                    <Button Content="{x:Static l:Texts.ClearGpuCache}" Command="{Binding ClearGpuCacheCommand}" Margin="0,0,12,8" Padding="16,8" FontSize="13"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                    <Button Content="{x:Static l:Texts.ForceDisposeLeak}" Command="{Binding ForceDisposeLeakedCommand}" Margin="0,0,12,8" Padding="16,8" FontSize="13"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                    <Button Content="{x:Static l:Texts.ResetAllResources}" Command="{Binding ResetAllResourcesCommand}" Margin="0,0,0,8" Padding="16,8" FontSize="13"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="#D32F2F" BorderBrush="#D32F2F"/>
+                </WrapPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.RefreshGpuCache}" Command="{Binding RefreshGpuCacheCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.GpuCacheManagement}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <DataGrid ItemsSource="{Binding GpuCacheItems}" SelectedItem="{Binding SelectedCacheItem, Mode=TwoWay}" AutoGenerateColumns="False" Height="200" Margin="0,0,0,12"
+                              Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                              Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                              BorderThickness="1"
+                              HeadersVisibility="Column" IsReadOnly="True" CanUserAddRows="False"
+                              PreviewMouseWheel="OnPreviewMouseWheel"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <DataGrid.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="0"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static l:Texts.GpuCacheFileHeader}" Binding="{Binding Key}" Width="*"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.GpuCacheMemoryHeader}" Binding="{Binding EstimatedGpuMB, StringFormat={}{0:F2}}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.GpuCachePartsHeader}" Binding="{Binding PartCount}" Width="Auto"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{x:Static l:Texts.RemoveSelected}" Command="{Binding RemoveSelectedCacheCommand}" Margin="0,0,12,0" Padding="16,8" FontSize="13"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                        <Button Content="{x:Static l:Texts.ClearAll}" Command="{Binding ClearAllCacheCommand}" Padding="16,8" FontSize="13"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="#D32F2F" BorderBrush="#D32F2F"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
                 <TextBlock Text="{x:Static l:Texts.AuditResults}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
             </DockPanel>
             <Border Style="{StaticResource SectionBorder}" Margin="0">
                 <StackPanel>
-                    <WrapPanel Margin="0,0,0,24">
-                        <StackPanel Margin="0,0,32,12" Orientation="Horizontal">
-                            <TextBlock Text="{x:Static l:Texts.ActiveResources}" Margin="0,0,8,0" FontSize="13"/>
-                            <TextBlock Text="{Binding LatestReport.ActiveResources}" FontWeight="Bold" FontSize="13"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,32,12" Orientation="Horizontal">
-                            <TextBlock Text="{x:Static l:Texts.OrphanedResources}" Margin="0,0,8,0" FontSize="13"/>
-                            <TextBlock Text="{Binding LatestReport.OrphanedResources}" FontWeight="Bold" FontSize="13"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,32,12" Orientation="Horizontal">
-                            <TextBlock Text="{x:Static l:Texts.TotalAllocations}" Margin="0,0,8,0" FontSize="13"/>
-                            <TextBlock Text="{Binding LatestReport.TotalAllocations}" FontWeight="Bold" FontSize="13"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,32,12" Orientation="Horizontal">
-                            <TextBlock Text="{x:Static l:Texts.TotalDisposals}" Margin="0,0,8,0" FontSize="13"/>
-                            <TextBlock Text="{Binding LatestReport.TotalDisposals}" FontWeight="Bold" FontSize="13"/>
-                        </StackPanel>
-                        <StackPanel Margin="0,0,32,12" Orientation="Horizontal">
-                            <TextBlock Text="{x:Static l:Texts.EstimatedActiveBytes}" Margin="0,0,8,0" FontSize="13"/>
-                            <TextBlock Text="{Binding LatestReport.EstimatedActiveBytes}" FontWeight="Bold" FontSize="13"/>
-                        </StackPanel>
-                    </WrapPanel>
-
-                    <TextBlock Text="{x:Static l:Texts.LeakedResourcesList}" FontWeight="Bold" Margin="0,0,0,8" FontSize="14"/>
+                    <DockPanel Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;" ToolTip="{x:Static l:Texts.CopyToClipboard}" Command="{Binding CopyLeakedResourcesCommand}" FontSize="14"/>
+                        <TextBlock Text="{x:Static l:Texts.LeakedResourcesList}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    </DockPanel>
                     <DataGrid ItemsSource="{Binding LatestReport.LeakedResources}" AutoGenerateColumns="False" Height="200" Margin="0,0,0,24"
                               Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
                               Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
@@ -360,7 +477,10 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
-                    <TextBlock Text="{x:Static l:Texts.OrphanedResourcesList}" FontWeight="Bold" Margin="0,0,0,8" FontSize="14"/>
+                    <DockPanel Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;" ToolTip="{x:Static l:Texts.CopyToClipboard}" Command="{Binding CopyOrphanedResourcesCommand}" FontSize="14"/>
+                        <TextBlock Text="{x:Static l:Texts.OrphanedResourcesList}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    </DockPanel>
                     <DataGrid ItemsSource="{Binding LatestReport.OrphanedResourceList}" AutoGenerateColumns="False" Height="200"
                               Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
                               Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"

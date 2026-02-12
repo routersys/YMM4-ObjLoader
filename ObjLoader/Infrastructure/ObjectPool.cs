@@ -18,6 +18,9 @@ namespace ObjLoader.Infrastructure
             _pool = new ConcurrentBag<T>();
         }
 
+        public int Count => Volatile.Read(ref _count);
+        public int MaxSize => _maxSize;
+
         public T Rent()
         {
             if (_pool.TryTake(out var item))
