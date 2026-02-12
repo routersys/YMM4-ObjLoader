@@ -467,4 +467,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>리소스 제한 초기화</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>복잡성 제한 초기화</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>감사 설정 초기화</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>텍스처 로드 오류</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>유효하지 않은 DDS 파일 (매직 넘버 오류)</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>DDS 헤더 크기가 잘못되었습니다</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>CPU 디코딩에 지원되지 않는 압축 DDS 형식: {0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>지원되지 않는 DDS 형식 (RGB/RGBA 만 해당)</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>지원되지 않는 DDS 비트 심도 (24/32 비트 만 해당)</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>DDS 픽셀 데이터를 읽지 못했습니다</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>유효하지 않은 PSD 파일 (서명 오류)</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>지원되지 않는 PSD 버전 (버전 1 만 해당)</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>지원되지 않는 PSD 색상 모드 (RGB 만 해당)</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>지원되지 않는 PSD 비트 심도 (8 비트 만 해당)</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>PSD 채널 부족 (최소 3 개)</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>지원되지 않는 PSD 압축 형식</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>이미지 크기가 잘못되었습니다</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>이미지 크기가 너무 커서 로드할 수 없습니다</value></data>
 </root>

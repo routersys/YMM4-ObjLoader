@@ -467,4 +467,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>Restablecer límites de recursos</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>Restablecer límites de complejidad</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>Restablecer configuración de auditoría</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>Error de Carga de Textura</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>Archivo DDS inválido (Número mágico incorrecto)</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>Tamaño de encabezado DDS incorrecto</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>Formato DDS comprimido no compatible para decodificación CPU: {0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>Formato DDS no compatible (Solo RGB/RGBA)</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>Profundidad de bits DDS no compatible (Solo 24/32-bit)</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>Error al leer datos de píxeles DDS</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>Archivo PSD inválido (Firma incorrecta)</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>Versión PSD no compatible (Solo Versión 1)</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>Modo de color PSD no compatible (Solo RGB)</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>Profundidad de bits PSD no compatible (Solo 8-bit)</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>Canales PSD insuficientes (Mínimo 3)</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>Formato de compresión PSD no compatible</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>Dimensiones de imagen no válidas</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>Dimensiones de imagen demasiado grandes para la memoria</value></data>
 </root>

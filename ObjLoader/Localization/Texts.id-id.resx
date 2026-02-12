@@ -466,4 +466,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>Atur ulang batas sumber daya</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>Atur ulang batas kompleksitas</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>Atur ulang pengaturan audit</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>Kesalahan Memuat Tekstur</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>File DDS tidak valid (Nomor Magic salah)</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>Ukuran header DDS salah</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>Format DDS terkompresi tidak didukung untuk decoding CPU: {0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>Format DDS tidak didukung (Hanya RGB/RGBA)</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>Kedalaman bit DDS tidak didukung (Hanya 24/32-bit)</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>Gagal membaca data piksel DDS</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>File PSD tidak valid (Tanda tangan salah)</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>Versi PSD tidak didukung (Hanya Versi 1)</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>Mode warna PSD tidak didukung (Hanya RGB)</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>Kedalaman bit PSD tidak didukung (Hanya 8-bit)</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>Saluran PSD tidak cukup (Minimal 3)</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>Format kompresi PSD tidak didukung</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>Dimensi gambar tidak valid</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>Dimensi gambar terlalu besar untuk memori</value></data>
 </root>

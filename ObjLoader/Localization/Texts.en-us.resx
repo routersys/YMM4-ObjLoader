@@ -467,4 +467,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>Reset resource limits</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>Reset complexity limits</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>Reset audit settings</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>Texture Load Error</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>Invalid DDS file (Incorrect Magic Number)</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>Invalid DDS header size</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>Compressed DDS format not supported for CPU decoding: {0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>Unsupported DDS format (Only RGB/RGBA)</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>Unsupported DDS bit depth (Only 24/32-bit)</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>Failed to read DDS pixel data</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>Invalid PSD file (Incorrect Signature)</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>Unsupported PSD version (Only Version 1)</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>Unsupported PSD color mode (Only RGB)</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>Unsupported PSD bit depth (Only 8-bit)</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>Insufficient PSD channels (Minimum 3)</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>Unsupported PSD compression format</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>Invalid image dimensions</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>Image dimensions too large for memory</value></data>
 </root>

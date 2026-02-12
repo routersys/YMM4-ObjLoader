@@ -467,4 +467,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>إعادة تعيين حدود الموارد</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>إعادة تعيين حدود التعقيد</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>إعادة تعيين إعدادات التدقيق</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>خطأ في تحميل الملمس</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>ملف DDS غير صالح (رقم سحري غير صحيح)</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>حجم رأس DDS غير صحيح</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>تنسيق DDS المضغوط غير مدعوم لفك تشفير وحدة المعالجة المركزية: {0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>تنسيق DDS غير مدعوم (RGB/RGBA فقط)</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>عمق بت DDS غير مدعوم (فقط 24/32 بت)</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>فشل في قراءة بيانات بكسل DDS</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>ملف PSD غير صالح (توقيع غير صحيح)</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>إصدار PSD غير مدعوم (الإصدار 1 فقط)</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>وضع ألوان PSD غير مدعوم (RGB فقط)</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>عمق بت PSD غير مدعوم (8 بت فقط)</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>قنوات PSD غير كافية (الحد الأدنى 3)</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>تنسيق ضغط PSD غير مدعوم</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>أبعاد الصورة غير صالحة</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>أبعاد الصورة كبيرة جدًا بالنسبة للذاكرة</value></data>
 </root>

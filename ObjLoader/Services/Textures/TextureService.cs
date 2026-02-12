@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using ObjLoader.Services.Textures.Loaders;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -21,6 +22,8 @@ namespace ObjLoader.Services.Textures
 
         public TextureService()
         {
+            RegisterLoader(new DdsTextureLoader());
+            RegisterLoader(new PsdTextureLoader());
             RegisterLoader(new TgaTextureLoader());
             RegisterLoader(new StandardTextureLoader());
         }

@@ -467,4 +467,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>リソース制限をリセット</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>複雑度制限をリセット</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>監査設定をリセット</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>テクスチャ読み込みエラー</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>DDSファイルが無効です (Magic Number 不正)</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>DDSヘッダーサイズが不正です</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>圧縮DDS形式はCPUデコードでサポートされていません: {0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>このDDS形式はサポートされていません (RGB/RGBAのみ)</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>DDSビット深度がサポートされていません (24/32bitのみ)</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>DDSピクセルデータの読み込みに失敗しました</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>PSDファイルが無効です (Signature 不正)</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>PSDバージョンがサポートされていません (Version 1のみ)</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>PSDカラーモードがサポートされていません (RGBのみ)</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>PSDビット深度がサポートされていません (8bitのみ)</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>PSDチャンネル数が不足しています (3以上必須)</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>PSD圧縮形式がサポートされていません</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>画像サイズが無効です</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>画像サイズが大きすぎて読み込めません</value></data>
 </root>

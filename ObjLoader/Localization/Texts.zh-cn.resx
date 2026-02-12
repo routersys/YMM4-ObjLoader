@@ -467,4 +467,19 @@
 <data name="ResetResourceLimits" xml:space="preserve"><value>重置资源限制</value></data>
 <data name="ResetComplexityLimits" xml:space="preserve"><value>重置复杂性限制</value></data>
 <data name="ResetAuditSettings" xml:space="preserve"><value>重置审核设置</value></data>
+<data name="Title_LoadError" xml:space="preserve"><value>纹理加载错误</value></data>
+<data name="Error_DdsInvalidMagic" xml:space="preserve"><value>DDS文件无效（幻数错误）</value></data>
+<data name="Error_DdsInvalidHeaderSize" xml:space="preserve"><value>DDS标头大小不正确</value></data>
+<data name="Error_DdsCompressedNotSupported" xml:space="preserve"><value>不支持CPU解码的压缩DDS格式：{0}</value></data>
+<data name="Error_DdsFormatNotSupported" xml:space="preserve"><value>不支持的DDS格式（仅RGB/RGBA）</value></data>
+<data name="Error_DdsBitDepthNotSupported" xml:space="preserve"><value>不支持的DDS位深度（仅24/32位）</value></data>
+<data name="Error_DdsDataReadFailed" xml:space="preserve"><value>读取DDS像素数据失败</value></data>
+<data name="Error_PsdInvalidSignature" xml:space="preserve"><value>PSD文件无效（签名错误）</value></data>
+<data name="Error_PsdVersionNotSupported" xml:space="preserve"><value>不支持的PSD版本（仅版本1）</value></data>
+<data name="Error_PsdColorModeNotSupported" xml:space="preserve"><value>不支持的PSD颜色模式（仅RGB）</value></data>
+<data name="Error_PsdBitDepthNotSupported" xml:space="preserve"><value>不支持的PSD位深度（仅8位）</value></data>
+<data name="Error_PsdInsufficientChannels" xml:space="preserve"><value>PSD通道不足（至少3个）</value></data>
+<data name="Error_PsdCompressionNotSupported" xml:space="preserve"><value>不支持的PSD压缩格式</value></data>
+<data name="Error_DimensionsInvalid" xml:space="preserve"><value>图像尺寸无效</value></data>
+<data name="Error_DimensionsTooLarge" xml:space="preserve"><value>图像尺寸过大，无法加载</value></data>
 </root>
