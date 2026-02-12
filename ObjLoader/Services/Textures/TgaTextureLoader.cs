@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Buffers;
+using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -13,7 +14,20 @@ namespace ObjLoader.Services.Textures
             return path.EndsWith(".tga", StringComparison.OrdinalIgnoreCase);
         }
 
+        public bool CanLoadRaw(string path)
+        {
+            return path.EndsWith(".tga", StringComparison.OrdinalIgnoreCase);
+        }
+
         public BitmapSource Load(string path)
+        {
+            using var raw = LoadRaw(path);
+            var bmp = BitmapSource.Create(raw.Width, raw.Height, 96, 96, PixelFormats.Bgra32, null, raw.Pixels, raw.Stride);
+            if (bmp.CanFreeze) bmp.Freeze();
+            return bmp;
+        }
+
+        public TextureRawData LoadRaw(string path)
         {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             using var br = new BinaryReader(fs);
@@ -39,80 +53,87 @@ namespace ObjLoader.Services.Textures
             }
 
             int stride = width * 4;
-            byte[] pixels = new byte[height * stride];
             int pixelCount = width * height;
-            int currentPixel = 0;
-
-            byte[] rawData = new byte[pixelCount * 4];
+            var rawData = new TextureRawData(width, height);
+            var pixels = rawData.Pixels;
             int rawIdx = 0;
 
-            if (imageType == 2)
+            try
             {
-                for (int i = 0; i < pixelCount; i++)
+                if (imageType == 2)
                 {
-                    byte b = br.ReadByte();
-                    byte g = br.ReadByte();
-                    byte r = br.ReadByte();
-                    byte a = pixelDepth == 32 ? br.ReadByte() : (byte)255;
-                    rawData[rawIdx++] = b;
-                    rawData[rawIdx++] = g;
-                    rawData[rawIdx++] = r;
-                    rawData[rawIdx++] = a;
-                }
-            }
-            else if (imageType == 10)
-            {
-                while (currentPixel < pixelCount)
-                {
-                    byte header = br.ReadByte();
-                    int count = (header & 0x7F) + 1;
-                    if ((header & 0x80) != 0)
+                    for (int i = 0; i < pixelCount; i++)
                     {
-                        byte b = br.ReadByte();
-                        byte g = br.ReadByte();
-                        byte r = br.ReadByte();
-                        byte a = pixelDepth == 32 ? br.ReadByte() : (byte)255;
-                        for (int i = 0; i < count; i++)
-                        {
-                            rawData[rawIdx++] = b;
-                            rawData[rawIdx++] = g;
-                            rawData[rawIdx++] = r;
-                            rawData[rawIdx++] = a;
-                            currentPixel++;
-                        }
+                        pixels[rawIdx++] = br.ReadByte();
+                        pixels[rawIdx++] = br.ReadByte();
+                        pixels[rawIdx++] = br.ReadByte();
+                        pixels[rawIdx++] = pixelDepth == 32 ? br.ReadByte() : (byte)255;
                     }
-                    else
+                }
+                else if (imageType == 10)
+                {
+                    int currentPixel = 0;
+                    while (currentPixel < pixelCount)
                     {
-                        for (int i = 0; i < count; i++)
+                        byte header = br.ReadByte();
+                        int count = (header & 0x7F) + 1;
+                        if ((header & 0x80) != 0)
                         {
                             byte b = br.ReadByte();
                             byte g = br.ReadByte();
                             byte r = br.ReadByte();
                             byte a = pixelDepth == 32 ? br.ReadByte() : (byte)255;
-                            rawData[rawIdx++] = b;
-                            rawData[rawIdx++] = g;
-                            rawData[rawIdx++] = r;
-                            rawData[rawIdx++] = a;
-                            currentPixel++;
+                            for (int i = 0; i < count; i++)
+                            {
+                                pixels[rawIdx++] = b;
+                                pixels[rawIdx++] = g;
+                                pixels[rawIdx++] = r;
+                                pixels[rawIdx++] = a;
+                                currentPixel++;
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < count; i++)
+                            {
+                                pixels[rawIdx++] = br.ReadByte();
+                                pixels[rawIdx++] = br.ReadByte();
+                                pixels[rawIdx++] = br.ReadByte();
+                                pixels[rawIdx++] = pixelDepth == 32 ? br.ReadByte() : (byte)255;
+                                currentPixel++;
+                            }
                         }
                     }
                 }
-            }
 
-            bool isTopLeft = (imageDescriptor & 0x20) != 0;
-            if (!isTopLeft)
-            {
-                for (int y = 0; y < height; y++)
+                bool isTopLeft = (imageDescriptor & 0x20) != 0;
+                if (!isTopLeft)
                 {
-                    Array.Copy(rawData, y * stride, pixels, (height - 1 - y) * stride, stride);
+                    byte[] tempRow = ArrayPool<byte>.Shared.Rent(stride);
+                    try
+                    {
+                        for (int y = 0; y < height / 2; y++)
+                        {
+                            int topOffset = y * stride;
+                            int bottomOffset = (height - 1 - y) * stride;
+                            Buffer.BlockCopy(pixels, topOffset, tempRow, 0, stride);
+                            Buffer.BlockCopy(pixels, bottomOffset, pixels, topOffset, stride);
+                            Buffer.BlockCopy(tempRow, 0, pixels, bottomOffset, stride);
+                        }
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(tempRow);
+                    }
                 }
-            }
-            else
-            {
-                Array.Copy(rawData, pixels, rawData.Length);
-            }
 
-            return BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, stride);
+                return rawData;
+            }
+            catch
+            {
+                rawData.Dispose();
+                throw;
+            }
         }
     }
 }

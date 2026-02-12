@@ -12,6 +12,11 @@ namespace ObjLoader.Services.Textures
             return true;
         }
 
+        public bool CanLoadRaw(string path)
+        {
+            return false;
+        }
+
         public BitmapSource Load(string path)
         {
             var bytes = File.ReadAllBytes(path);
@@ -23,6 +28,11 @@ namespace ObjLoader.Services.Textures
             bitmap.EndInit();
             bitmap.Freeze();
             return bitmap;
+        }
+
+        public TextureRawData LoadRaw(string path)
+        {
+            throw new NotSupportedException();
         }
     }
 }
