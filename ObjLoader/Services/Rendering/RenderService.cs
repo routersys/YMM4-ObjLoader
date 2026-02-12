@@ -532,7 +532,7 @@ namespace ObjLoader.Services.Rendering
                 axisColor = RenderingConstants.AxisColorLight;
             }
 
-            _context!.OMSetRenderTargets(_rtv, _dsv);
+            _context!.OMSetRenderTargets(_rtv!, _dsv);
             _context.ClearRenderTargetView(_rtv!, clearColor);
             _context.ClearDepthStencilView(_dsv!, DepthStencilClearFlags.Depth, 1.0f, 0);
 
@@ -716,7 +716,7 @@ namespace ObjLoader.Services.Rendering
             _context.CopyResource(_stagingTexture, _resolveTexture);
             _context.Flush();
 
-            var map = _context.Map(_stagingTexture, 0, MapMode.Read, D3D11MapFlags.None);
+            var map = _context.Map(_stagingTexture!, 0, MapMode.Read, D3D11MapFlags.None);
 
             try
             {

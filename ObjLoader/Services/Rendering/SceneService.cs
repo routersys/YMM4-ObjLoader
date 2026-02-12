@@ -3,15 +3,14 @@ using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
+using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using Vortice.Direct3D11;
-using Vortice.DXGI;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
 
@@ -20,11 +19,14 @@ namespace ObjLoader.Services.Rendering
     internal class SceneService : IDisposable
     {
         private const int MaxHierarchyDepth = 100;
+        private const string CacheKeyPrefix = "scene:";
 
         private readonly ObjLoaderParameter _parameter;
         private readonly ObjModelLoader _loader;
         private readonly RenderService _renderService;
-        private readonly Dictionary<string, (GpuResourceCacheItem Resource, Vector3 Size, Vector3 Min, Vector3 Max)> _modelResources = new();
+        private readonly ITextureService _textureService;
+        private readonly Dictionary<string, (Vector3 Size, Vector3 Min, Vector3 Max)> _boundingData = new();
+        private readonly HashSet<string> _managedCacheKeys = new();
 
         public double ModelScale { get; private set; } = 1.0;
         public double ModelHeight { get; private set; } = 1.0;
@@ -34,7 +36,10 @@ namespace ObjLoader.Services.Rendering
             _parameter = parameter;
             _renderService = renderService;
             _loader = new ObjModelLoader();
+            _textureService = new TextureService();
         }
+
+        private static string ToCacheKey(string path) => $"{CacheKeyPrefix}{path}";
 
         public unsafe void LoadModel()
         {
@@ -49,7 +54,7 @@ namespace ObjLoader.Services.Rendering
             }
 
             var keysToRemove = new List<string>();
-            foreach (var key in _modelResources.Keys)
+            foreach (var key in _boundingData.Keys)
             {
                 if (!validPaths.Contains(key))
                     keysToRemove.Add(key);
@@ -57,15 +62,25 @@ namespace ObjLoader.Services.Rendering
 
             foreach (var key in keysToRemove)
             {
-                _modelResources[key].Resource.Dispose();
-                _modelResources.Remove(key);
+                string cacheKey = ToCacheKey(key);
+                GpuResourceCache.Instance.Remove(cacheKey);
+                _managedCacheKeys.Remove(cacheKey);
+                _boundingData.Remove(key);
             }
 
             var modelSettings = ModelSettings.Instance;
 
             foreach (var path in validPaths)
             {
-                if (_modelResources.ContainsKey(path)) continue;
+                if (_boundingData.ContainsKey(path))
+                {
+                    string cacheKey = ToCacheKey(path);
+                    if (GpuResourceCache.Instance.TryGetValue(cacheKey, out var existing) && existing.Device == _renderService.Device)
+                    {
+                        continue;
+                    }
+                }
+
                 if (!File.Exists(path)) continue;
 
                 var model = _loader.Load(path);
@@ -95,27 +110,9 @@ namespace ObjLoader.Services.Rendering
 
                         try
                         {
-                            var bytes = File.ReadAllBytes(parts[i].TexturePath);
-                            using var ms = new MemoryStream(bytes);
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.StreamSource = ms;
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-                            var conv = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0);
-                            int width = conv.PixelWidth;
-                            int height = conv.PixelHeight;
-                            int stride = width * 4;
-                            var pixels = new byte[stride * height];
-                            conv.CopyPixels(pixels, stride, 0);
-                            var tDesc = new Texture2DDescription { Width = width, Height = height, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
-                            fixed (byte* p = pixels)
-                            {
-                                using var t = _renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, stride) });
-                                partTextures[i] = _renderService.Device.CreateShaderResourceView(t);
-                            }
-                            gpuBytes += (long)width * height * 4;
+                            var (srv, texGpuBytes) = _textureService.CreateShaderResourceView(parts[i].TexturePath, _renderService.Device);
+                            partTextures[i] = srv;
+                            gpuBytes += texGpuBytes;
                         }
                         catch (Exception ex)
                         {
@@ -135,7 +132,11 @@ namespace ObjLoader.Services.Rendering
                         continue;
                     }
 
-                    var resource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale);
+                    var resource = new GpuResourceCacheItem(_renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
+
+                    string cacheKey = ToCacheKey(path);
+                    GpuResourceCache.Instance.AddOrUpdate(cacheKey, resource);
+                    _managedCacheKeys.Add(cacheKey);
 
                     double localMinX = double.MaxValue, localMaxX = double.MinValue;
                     double localMinY = double.MaxValue, localMaxY = double.MinValue;
@@ -157,7 +158,7 @@ namespace ObjLoader.Services.Rendering
                     Vector3 min = new Vector3((float)localMinX, (float)localMinY, (float)localMinZ);
                     Vector3 max = new Vector3((float)localMaxX, (float)localMaxY, (float)localMaxZ);
 
-                    _modelResources[path] = (resource, size, min, max);
+                    _boundingData[path] = (size, min, max);
                     success = true;
                 }
                 finally
@@ -178,12 +179,12 @@ namespace ObjLoader.Services.Rendering
                 }
             }
 
-            if (_modelResources.Count > 0)
+            if (_boundingData.Count > 0)
             {
                 double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
                 double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
 
-                foreach (var entry in _modelResources.Values)
+                foreach (var entry in _boundingData.Values)
                 {
                     if (entry.Min.X < minX) minX = entry.Min.X;
                     if (entry.Min.Y < minY) minY = entry.Min.Y;
@@ -198,6 +199,16 @@ namespace ObjLoader.Services.Rendering
                 ModelHeight = maxY - minY;
                 if (ModelScale < 0.1) ModelScale = 1.0;
             }
+        }
+
+        private GpuResourceCacheItem? GetCachedResource(string path)
+        {
+            string cacheKey = ToCacheKey(path);
+            if (GpuResourceCache.Instance.TryGetValue(cacheKey, out var cached) && cached.Device == _renderService.Device)
+            {
+                return cached;
+            }
+            return null;
         }
 
         public void Render(PerspectiveCamera camera, double currentTime, int width, int height, bool isPilotView, Color themeColor, bool isWireframe, bool isGrid, bool isInfinite, bool isInteracting, bool enableShadow = true)
@@ -275,9 +286,13 @@ namespace ObjLoader.Services.Rendering
                 if (!layer.IsVisible) continue;
 
                 string filePath = layer.FilePath ?? string.Empty;
-                if (string.IsNullOrEmpty(filePath) || !_modelResources.ContainsKey(filePath)) continue;
+                if (string.IsNullOrEmpty(filePath)) continue;
 
-                var (resource, size, _, _) = _modelResources[filePath];
+                var resource = GetCachedResource(filePath);
+                if (resource == null) continue;
+
+                if (!_boundingData.TryGetValue(filePath, out var bounds)) continue;
+
                 bool isActive = (activeLayer != null && layer == activeLayer);
 
                 double x, y, z, scale, rx, ry, rz;
@@ -307,9 +322,9 @@ namespace ObjLoader.Services.Rendering
                 {
                     double h = 0;
                     if (settings.CoordinateSystem == CoordinateSystem.RightHandedZUp || settings.CoordinateSystem == CoordinateSystem.LeftHandedZUp)
-                        h = size.Z;
+                        h = bounds.Size.Z;
                     else
-                        h = size.Y;
+                        h = bounds.Size.Y;
 
                     globalLiftY = (h * scale / 100.0) / 2.0;
                     ModelHeight = h * scale / 100.0;
@@ -418,8 +433,17 @@ namespace ObjLoader.Services.Rendering
 
         public void Dispose()
         {
-            foreach (var entry in _modelResources) entry.Value.Resource.Dispose();
-            _modelResources.Clear();
+            foreach (var cacheKey in _managedCacheKeys)
+            {
+                GpuResourceCache.Instance.Remove(cacheKey);
+            }
+            _managedCacheKeys.Clear();
+            _boundingData.Clear();
+
+            if (_textureService is IDisposable disposableTextureService)
+            {
+                disposableTextureService.Dispose();
+            }
         }
 
         private static void SafeDispose(IDisposable? disposable)

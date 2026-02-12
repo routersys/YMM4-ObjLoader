@@ -409,6 +409,7 @@ namespace ObjLoader.ViewModels
 
         private void LoadModel()
         {
+            _modelService.UnregisterTracking();
             _modelResource?.Dispose();
             _modelResource = null;
             _currentModel = null;
@@ -439,6 +440,7 @@ namespace ObjLoader.ViewModels
         public void Dispose()
         {
             _parameter.PropertyChanged -= OnParameterPropertyChanged;
+            _modelService.UnregisterTracking();
             _modelResource?.Dispose();
             _renderService.Dispose();
         }

@@ -11,10 +11,8 @@ using ObjLoader.ViewModels;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Vortice.Direct3D11;
-using Vortice.DXGI;
 using Vector3 = System.Numerics.Vector3;
 
 namespace ObjLoader.Services.Models
@@ -23,6 +21,7 @@ namespace ObjLoader.Services.Models
     {
         private readonly ObjModelLoader _loader = new ObjModelLoader();
         private readonly TextureService _textureService = new TextureService();
+        private string? _lastTrackingKey;
 
         public unsafe ModelLoadResult LoadModel(string path, RenderService renderService, int selectedLayerIndex, IList<LayerData> layers)
         {
@@ -83,21 +82,9 @@ namespace ObjLoader.Services.Models
 
                     try
                     {
-                        var bitmapSource = _textureService.Load(parts[i].TexturePath);
-                        if (bitmapSource.CanFreeze && !bitmapSource.IsFrozen) bitmapSource.Freeze();
-                        var conv = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
-                        int width = conv.PixelWidth;
-                        int height = conv.PixelHeight;
-                        int stride = width * 4;
-                        var pixels = new byte[stride * height];
-                        conv.CopyPixels(pixels, stride, 0);
-                        var tDesc = new Texture2DDescription { Width = width, Height = height, MipLevels = 1, ArraySize = 1, Format = Format.B8G8R8A8_UNorm, SampleDescription = new SampleDescription(1, 0), Usage = ResourceUsage.Immutable, BindFlags = BindFlags.ShaderResource };
-                        fixed (byte* p = pixels)
-                        {
-                            using var t = renderService.Device.CreateTexture2D(tDesc, new[] { new SubresourceData(p, stride) });
-                            partTextures[i] = renderService.Device.CreateShaderResourceView(t);
-                        }
-                        gpuBytes += (long)width * height * 4;
+                        var (srv, texGpuBytes) = _textureService.CreateShaderResourceView(parts[i].TexturePath, renderService.Device);
+                        partTextures[i] = srv;
+                        gpuBytes += texGpuBytes;
                     }
                     catch (Exception ex)
                     {
@@ -119,8 +106,14 @@ namespace ObjLoader.Services.Models
 
                 result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
 
-                string trackingKey = $"ModelMgmt:{path}:{System.Guid.NewGuid():N}";
+                if (!string.IsNullOrEmpty(_lastTrackingKey))
+                {
+                    ResourceTracker.Instance.Unregister(_lastTrackingKey);
+                }
+
+                string trackingKey = $"ModelMgmt:{path}";
                 ResourceTracker.Instance.Register(trackingKey, "GpuResourceCacheItem:Preview", result.Resource, gpuBytes);
+                _lastTrackingKey = trackingKey;
 
                 success = true;
             }
@@ -240,6 +233,15 @@ namespace ObjLoader.Services.Models
                     }
                 }
             });
+        }
+
+        public void UnregisterTracking()
+        {
+            if (!string.IsNullOrEmpty(_lastTrackingKey))
+            {
+                ResourceTracker.Instance.Unregister(_lastTrackingKey);
+                _lastTrackingKey = null;
+            }
         }
 
         private static void SafeDispose(IDisposable? disposable)

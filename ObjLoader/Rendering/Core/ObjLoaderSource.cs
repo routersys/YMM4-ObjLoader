@@ -9,16 +9,12 @@ using ObjLoader.Rendering.Shaders;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
-using System.Buffers;
 using System.Collections.Immutable;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using Vortice.Direct3D11;
-using Vortice.DXGI;
 using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Player.Video;
 using D2D = Vortice.Direct2D1;
@@ -684,44 +680,9 @@ namespace ObjLoader.Rendering.Core
 
                     try
                     {
-                        var bitmapSource = _textureService.Load(tPath);
-                        if (bitmapSource.CanFreeze && !bitmapSource.IsFrozen) bitmapSource.Freeze();
-                        var convertedBitmap = new FormatConvertedBitmap(bitmapSource, PixelFormats.Bgra32, null, 0);
-
-                        int width = convertedBitmap.PixelWidth;
-                        int height = convertedBitmap.PixelHeight;
-                        int stride = width * 4;
-                        int requiredSize = stride * height;
-                        byte[] pixels = ArrayPool<byte>.Shared.Rent(requiredSize);
-                        try
-                        {
-                            convertedBitmap.CopyPixels(pixels, stride, 0);
-
-                            var texDesc = new Texture2DDescription
-                            {
-                                Width = width,
-                                Height = height,
-                                MipLevels = 1,
-                                ArraySize = 1,
-                                Format = Format.B8G8R8A8_UNorm,
-                                SampleDescription = new SampleDescription(1, 0),
-                                Usage = ResourceUsage.Immutable,
-                                BindFlags = BindFlags.ShaderResource
-                            };
-
-                            fixed (byte* p = pixels)
-                            {
-                                var data = new SubresourceData(p, stride);
-                                using var tex = device.CreateTexture2D(texDesc, new[] { data });
-                                partTextures[i] = device.CreateShaderResourceView(tex);
-                            }
-
-                            gpuBytes += (long)width * height * 4;
-                        }
-                        finally
-                        {
-                            ArrayPool<byte>.Shared.Return(pixels);
-                        }
+                        var (srv, texGpuBytes) = _textureService.CreateShaderResourceView(tPath, device);
+                        partTextures[i] = srv;
+                        gpuBytes += texGpuBytes;
                     }
                     catch (Exception ex)
                     {
