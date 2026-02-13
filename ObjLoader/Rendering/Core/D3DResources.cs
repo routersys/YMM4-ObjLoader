@@ -38,6 +38,7 @@ namespace ObjLoader.Rendering.Core
         public ID3D11RasterizerState CullNoneRasterizerState { get; }
         public ID3D11SamplerState ShadowSampler { get; }
         public ID3D11RasterizerState ShadowRasterizerState { get; }
+        public bool IsDisposed => _isDisposed;
 
         public ID3D11RasterizerState RasterizerState
         {
@@ -82,10 +83,11 @@ namespace ObjLoader.Rendering.Core
         public bool IsCascaded => _shadowMapManager.IsCascaded;
         public const int CascadeCount = ShadowMapManager.CascadeCount;
 
-        public ID3D11Texture2D EnvironmentCubeMap => _environmentMapManager.EnvironmentCubeMap;
-        public ID3D11ShaderResourceView EnvironmentSRV => _environmentMapManager.EnvironmentSRV;
-        public ID3D11RenderTargetView[] EnvironmentRTVs => _environmentMapManager.EnvironmentRTVs;
-        public ID3D11DepthStencilView EnvironmentDSV => _environmentMapManager.EnvironmentDSV;
+        public bool IsEnvironmentMapInitialized => _environmentMapManager.IsInitialized;
+        public ID3D11Texture2D? EnvironmentCubeMap => _environmentMapManager.EnvironmentCubeMap;
+        public ID3D11ShaderResourceView? EnvironmentSRV => _environmentMapManager.EnvironmentSRV;
+        public ID3D11RenderTargetView[]? EnvironmentRTVs => _environmentMapManager.EnvironmentRTVs;
+        public ID3D11DepthStencilView? EnvironmentDSV => _environmentMapManager.EnvironmentDSV;
 
         public unsafe D3DResources(ID3D11Device device)
         {
@@ -150,9 +152,6 @@ namespace ObjLoader.Rendering.Core
 
             ShadowRasterizerState = CreateShadowRasterizerState(device);
             _disposer.Collect(ShadowRasterizerState);
-
-            _shadowMapManager.EnsureShadowMapSize(device, 2048, false);
-            _environmentMapManager.Initialize(device);
         }
 
         private static ID3D11InputLayout CreateInputLayout(ID3D11Device device, byte[] vsByteCode)
@@ -311,6 +310,13 @@ namespace ObjLoader.Rendering.Core
             _shadowMapManager.EnsureShadowMapSize(_device, size, useCascaded);
         }
 
+        public void EnsureEnvironmentMap()
+        {
+            if (_isDisposed) return;
+            if (!_environmentMapManager.IsInitialized)
+                _environmentMapManager.Initialize(_device);
+        }
+
         public void UpdateRasterizerState(RenderCullMode mode)
         {
             if (_isDisposed) return;
@@ -364,6 +370,15 @@ namespace ObjLoader.Rendering.Core
             _shadowMapManager.Dispose();
             _environmentMapManager.Dispose();
             _disposer.DisposeAndClear();
+
+            try
+            {
+                _device.ImmediateContext.ClearState();
+                _device.ImmediateContext.Flush();
+            }
+            catch
+            {
+            }
         }
     }
 }

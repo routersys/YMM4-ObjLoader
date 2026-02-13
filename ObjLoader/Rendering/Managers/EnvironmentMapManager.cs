@@ -17,10 +17,11 @@ namespace ObjLoader.Rendering.Managers
         private readonly object _lock = new object();
         private bool _disposed;
 
-        public ID3D11Texture2D EnvironmentCubeMap => _environmentCubeMap ?? throw new ObjectDisposedException(nameof(EnvironmentMapManager));
-        public ID3D11ShaderResourceView EnvironmentSRV => _environmentSRV ?? throw new ObjectDisposedException(nameof(EnvironmentMapManager));
-        public ID3D11RenderTargetView[] EnvironmentRTVs => _environmentRTVs ?? throw new ObjectDisposedException(nameof(EnvironmentMapManager));
-        public ID3D11DepthStencilView EnvironmentDSV => _environmentDSV ?? throw new ObjectDisposedException(nameof(EnvironmentMapManager));
+        public bool IsInitialized => _environmentCubeMap != null;
+        public ID3D11Texture2D? EnvironmentCubeMap => _environmentCubeMap;
+        public ID3D11ShaderResourceView? EnvironmentSRV => _environmentSRV;
+        public ID3D11RenderTargetView[]? EnvironmentRTVs => _environmentRTVs;
+        public ID3D11DepthStencilView? EnvironmentDSV => _environmentDSV;
 
         public void Initialize(ID3D11Device device)
         {
@@ -29,6 +30,7 @@ namespace ObjLoader.Rendering.Managers
             lock (_lock)
             {
                 if (_disposed) throw new ObjectDisposedException(nameof(EnvironmentMapManager));
+                if (_environmentCubeMap != null) return;
 
                 _environmentCubeMap = CreateEnvironmentCubeMap(device);
                 _environmentSRV = CreateEnvironmentSRV(device, _environmentCubeMap);

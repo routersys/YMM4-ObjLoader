@@ -95,7 +95,7 @@ namespace ObjLoader.Rendering.Renderers
                 mainProj = Matrix4x4.CreatePerspectiveFieldOfView(radFov, aspect, RenderingConstants.DefaultNearPlane, RenderingConstants.DefaultFarPlane);
             }
 
-            if (updateEnvironmentMap)
+            if (updateEnvironmentMap && _resources.EnvironmentRTVs != null && _resources.EnvironmentDSV != null)
             {
                 var targets = new[]
                 {

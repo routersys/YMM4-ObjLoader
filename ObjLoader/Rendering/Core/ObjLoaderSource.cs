@@ -85,10 +85,22 @@ namespace ObjLoader.Rendering.Core
                 {
                     if (app.MainWindow != null)
                     {
-                        app.MainWindow.Closing += (s, e) => GpuResourceCache.Instance.Clear();
+                        app.MainWindow.Closing += (s, e) =>
+                        {
+                            GpuResourceCache.Instance.Clear();
+                            D3DResourcesPool.ClearAll();
+                        };
                     }
-                    app.Exit += (s, e) => GpuResourceCache.Instance.Clear();
-                    app.Dispatcher.ShutdownStarted += (s, e) => GpuResourceCache.Instance.Clear();
+                    app.Exit += (s, e) =>
+                    {
+                        GpuResourceCache.Instance.Clear();
+                        D3DResourcesPool.ClearAll();
+                    };
+                    app.Dispatcher.ShutdownStarted += (s, e) =>
+                    {
+                        GpuResourceCache.Instance.Clear();
+                        D3DResourcesPool.ClearAll();
+                    };
                 });
             }
         }
@@ -102,8 +114,7 @@ namespace ObjLoader.Rendering.Core
             _loader = new ObjModelLoader();
             _textureService = new TextureService();
 
-            _resources = new D3DResources(devices.D3D.Device);
-            _disposer.Collect(_resources);
+            _resources = D3DResourcesPool.Acquire(devices.D3D.Device);
 
             _renderTargets = new RenderTargetManager();
             _shaderManager = new CustomShaderManager(devices);
@@ -250,6 +261,7 @@ namespace ObjLoader.Rendering.Core
         {
             _resources.UpdateRasterizerState(settings.CullMode);
             _resources.EnsureShadowMapSize(settings.ShadowResolution, true);
+            _resources.EnsureEnvironmentMap();
         }
 
         private (int activeWorldId, ImmutableDictionary<string, LayerState> newLayerStates, bool layersChanged) BuildLayerStates(long frame, long length, int fps, PluginSettings settings)
@@ -758,24 +770,26 @@ namespace ObjLoader.Rendering.Core
             {
                 if (_isDisposed) return;
                 _isDisposed = true;
-
-                _shaderManager.Dispose();
-                _renderTargets.Dispose();
-
-                if (_textureService is IDisposable disposableTextureService)
-                {
-                    disposableTextureService.Dispose();
-                }
-
-                _preCalcStates.Clear();
-                _worldMasterLights.Clear();
-                _layersToRender.Clear();
-                _newLayerStatesTemp.Clear();
-                _mutableStatesForShadow.Clear();
-                _mutableStatesForScene.Clear();
-
-                _disposer.DisposeAndClear();
             }
+
+            _shaderManager.Dispose();
+            _renderTargets.Dispose();
+
+            if (_textureService is IDisposable disposableTextureService)
+            {
+                disposableTextureService.Dispose();
+            }
+
+            _preCalcStates.Clear();
+            _worldMasterLights.Clear();
+            _layersToRender.Clear();
+            _newLayerStatesTemp.Clear();
+            _mutableStatesForShadow.Clear();
+            _mutableStatesForScene.Clear();
+
+            _disposer.DisposeAndClear();
+
+            D3DResourcesPool.Release(_devices.D3D.Device);
         }
 
         private static void SafeDispose(IDisposable? disposable)
