@@ -29,6 +29,14 @@ namespace ObjLoader.Settings
         public const int MaxIndicesLimit = 300_000_000;
         public const int MinParts = 10;
         public const int MaxPartsLimit = 50_000;
+        public const double DefaultD3DResourceReleaseDelay = 5.0;
+
+        private double _d3dResourceReleaseDelay = DefaultD3DResourceReleaseDelay;
+        public double D3DResourceReleaseDelay
+        {
+            get => _d3dResourceReleaseDelay;
+            set => Set(ref _d3dResourceReleaseDelay, Math.Max(0.0, value));
+        }
 
         private bool _isSandboxEnforced = false;
         public bool IsSandboxEnforced

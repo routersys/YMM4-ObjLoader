@@ -507,4 +507,6 @@
 <data name="ConfirmTitle" xml:space="preserve"><value>Confirmation</value></data>
 <data name="DisposedCount" xml:space="preserve"><value>{0} resource(s) disposed.</value></data>
 <data name="RefreshGpuCache" xml:space="preserve"><value>Refresh GPU Cache List</value></data>
+<data name="D3DResourceReleaseDelay" xml:space="preserve"><value>Resource Release Delay (sec)</value></data>
+<data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>Sets the delay time before releasing unused GPU resources.</value></data>
 </root>

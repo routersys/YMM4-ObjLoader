@@ -102,6 +102,18 @@ namespace ObjLoader.ViewModels
             }
         }
 
+        public double D3DResourceReleaseDelay
+        {
+            get => _settings.D3DResourceReleaseDelay;
+            set
+            {
+                double clamped = Math.Max(0.0, Math.Min(3600.0, value));
+                if (Math.Abs(_settings.D3DResourceReleaseDelay - clamped) < 0.001) return;
+                _settings.D3DResourceReleaseDelay = clamped;
+                OnPropertyChanged(nameof(D3DResourceReleaseDelay));
+            }
+        }
+
         public int MaxFileSizeMB
         {
             get => _settings.MaxFileSizeMB;
@@ -194,6 +206,7 @@ namespace ObjLoader.ViewModels
         public ICommand ResetMaxPartsCommand { get; }
         public ICommand ResetAuditIntervalMinutesCommand { get; }
         public ICommand ResetLeakThresholdMinutesCommand { get; }
+        public ICommand ResetD3DResourceReleaseDelayCommand { get; }
         public ICommand ResetResourceLimitsCommand { get; }
         public ICommand ResetComplexityLimitsCommand { get; }
         public ICommand ResetAuditSettingsCommand { get; }
@@ -382,6 +395,7 @@ namespace ObjLoader.ViewModels
             ResetMaxPartsCommand = new ActionCommand(_ => true, _ => MaxParts = ModelSettings.DefaultMaxParts);
             ResetAuditIntervalMinutesCommand = new ActionCommand(_ => true, _ => AuditIntervalMinutes = 5.0);
             ResetLeakThresholdMinutesCommand = new ActionCommand(_ => true, _ => LeakThresholdMinutes = 30.0);
+            ResetD3DResourceReleaseDelayCommand = new ActionCommand(_ => true, _ => D3DResourceReleaseDelay = ModelSettings.DefaultD3DResourceReleaseDelay);
 
             ResetResourceLimitsCommand = new ActionCommand(_ => true, _ =>
             {
@@ -401,6 +415,7 @@ namespace ObjLoader.ViewModels
             {
                 AuditIntervalMinutes = 5.0;
                 LeakThresholdMinutes = 30.0;
+                D3DResourceReleaseDelay = ModelSettings.DefaultD3DResourceReleaseDelay;
             });
 
             ClearGpuCacheCommand = new ActionCommand(_ => true, _ =>

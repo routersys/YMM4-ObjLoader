@@ -507,4 +507,6 @@
 <data name="ConfirmTitle" xml:space="preserve"><value>確認</value></data>
 <data name="DisposedCount" xml:space="preserve"><value>{0} 件のリソースを解放しました。</value></data>
 <data name="RefreshGpuCache" xml:space="preserve"><value>GPUキャッシュ一覧を更新</value></data>
+<data name="D3DResourceReleaseDelay" xml:space="preserve"><value>リソース解放遅延 (秒)</value></data>
+<data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>使用されなくなったGPUリソースを解放するまでの待機時間を設定します。</value></data>
 </root>

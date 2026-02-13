@@ -293,6 +293,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static l:Texts.AuditInterval}" VerticalAlignment="Center" Margin="0,0,16,12" FontSize="13"/>
@@ -302,6 +303,10 @@
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="{x:Static l:Texts.LeakThreshold}" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="13"/>
                         <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource GhostTextBox}" Text="{Binding LeakThresholdMinutes, UpdateSourceTrigger=LostFocus}"/>
                         <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetLeakThresholdMinutesCommand}" FontSize="14"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{x:Static l:Texts.D3DResourceReleaseDelay}" VerticalAlignment="Center" Margin="0,12,16,0" FontSize="13"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Margin="0,12,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding D3DResourceReleaseDelay, UpdateSourceTrigger=LostFocus}"/>
+                        <Button Grid.Row="2" Grid.Column="2" Margin="6,12,0,0" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetD3DResourceReleaseDelayCommand}" FontSize="14"/>
                     </Grid>
 
                     <Button Content="&#xE773;" ToolTip="{x:Static l:Texts.RunAudit}" Command="{Binding RunAuditCommand}" HorizontalAlignment="Left" Style="{StaticResource IconButtonStyle}" FontSize="20" Margin="0"/>

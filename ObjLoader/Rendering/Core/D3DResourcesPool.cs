@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using ObjLoader.Settings;
+using System.Collections.Concurrent;
 using Vortice.Direct3D11;
 
 namespace ObjLoader.Rendering.Core
@@ -6,7 +7,6 @@ namespace ObjLoader.Rendering.Core
     internal sealed class D3DResourcesPool
     {
         private static readonly ConcurrentDictionary<nint, PoolEntry> _pool = new();
-        private static readonly TimeSpan ReleaseDelay = TimeSpan.FromSeconds(5);
 
         private sealed class PoolEntry
         {
@@ -61,6 +61,7 @@ namespace ObjLoader.Rendering.Core
                 {
                     int gen = ++entry.Generation;
                     entry.ReleaseTimer?.Dispose();
+                    var delay = TimeSpan.FromSeconds(ModelSettings.Instance.D3DResourceReleaseDelay);
                     entry.ReleaseTimer = new Timer(_ =>
                     {
                         lock (entry.Lock)
@@ -74,7 +75,7 @@ namespace ObjLoader.Rendering.Core
                                 entry.ReleaseTimer = null;
                             }
                         }
-                    }, null, ReleaseDelay, Timeout.InfiniteTimeSpan);
+                    }, null, delay, Timeout.InfiniteTimeSpan);
                 }
             }
         }

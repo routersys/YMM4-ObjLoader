@@ -506,4 +506,6 @@
 <data name="ConfirmTitle" xml:space="preserve"><value>Konfirmasi</value></data>
 <data name="DisposedCount" xml:space="preserve"><value>{0} sumber daya dibuang.</value></data>
 <data name="RefreshGpuCache" xml:space="preserve"><value>Segarkan Daftar Cache GPU</value></data>
+<data name="D3DResourceReleaseDelay" xml:space="preserve"><value>Penundaan Rilis Sumber Daya (detik)</value></data>
+<data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>Mengatur waktu penundaan sebelum melepaskan sumber daya GPU yang tidak digunakan.</value></data>
 </root>

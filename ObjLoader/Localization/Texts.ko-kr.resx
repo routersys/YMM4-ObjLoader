@@ -507,4 +507,6 @@
 <data name="ConfirmTitle" xml:space="preserve"><value>확인</value></data>
 <data name="DisposedCount" xml:space="preserve"><value>{0} 개의 리소스가 해제되었습니다.</value></data>
 <data name="RefreshGpuCache" xml:space="preserve"><value>GPU 캐시 목록 새로고침</value></data>
+<data name="D3DResourceReleaseDelay" xml:space="preserve"><value>리소스 해제 지연 (초)</value></data>
+<data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>사용하지 않는 GPU 리소스를 해제하기 전의 지연 시간을 설정합니다.</value></data>
 </root>
