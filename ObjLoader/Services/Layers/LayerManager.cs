@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using ObjLoader.Core;
 using ObjLoader.Plugin;
 
@@ -14,10 +15,48 @@ namespace ObjLoader.Services.Layers
         private readonly object _lock = new();
         private readonly HashSet<string> _visited = new();
         private readonly Queue<string> _queue = new();
+        private readonly Dictionary<string, LayerData> _guidIndex = new();
+        private readonly Dictionary<string, List<LayerData>> _childrenIndex = new();
 
         public ObservableCollection<LayerData> Layers { get; } = new ObservableCollection<LayerData>();
         public int SelectedLayerIndex => _selectedLayerIndex;
         public bool IsSwitchingLayer { get; private set; } = false;
+
+        public LayerManager()
+        {
+            Layers.CollectionChanged += OnLayersCollectionChanged;
+        }
+
+        private void OnLayersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            RebuildIndices();
+        }
+
+        private void RebuildIndices()
+        {
+            _guidIndex.Clear();
+            _childrenIndex.Clear();
+            foreach (var layer in Layers)
+            {
+                _guidIndex[layer.Guid] = layer;
+                var parentGuid = layer.ParentGuid ?? string.Empty;
+                if (!string.IsNullOrEmpty(parentGuid))
+                {
+                    if (!_childrenIndex.TryGetValue(parentGuid, out var children))
+                    {
+                        children = new List<LayerData>();
+                        _childrenIndex[parentGuid] = children;
+                    }
+                    children.Add(layer);
+                }
+            }
+        }
+
+        private LayerData? FindByGuid(string guid)
+        {
+            _guidIndex.TryGetValue(guid, out var layer);
+            return layer;
+        }
 
         public void Initialize(ObjLoaderParameter parameter)
         {
@@ -60,7 +99,7 @@ namespace ObjLoader.Services.Layers
 
             if (Layers.Count > 0)
             {
-                var targetLayer = Layers.FirstOrDefault(l => l.Guid == parameter.ActiveLayerGuid);
+                var targetLayer = FindByGuid(parameter.ActiveLayerGuid);
 
                 if (targetLayer != null)
                 {
@@ -184,16 +223,17 @@ namespace ObjLoader.Services.Layers
         {
             lock (_lock)
             {
-                var child = Layers.FirstOrDefault(l => l.Guid == childId);
+                var child = FindByGuid(childId);
                 if (child == null) return false;
 
                 if (parentId == null)
                 {
                     child.ParentGuid = string.Empty;
+                    RebuildIndices();
                     return true;
                 }
 
-                var parent = Layers.FirstOrDefault(l => l.Guid == parentId);
+                var parent = FindByGuid(parentId);
                 if (parent == null) return false;
 
                 if (childId == parentId)
@@ -208,6 +248,7 @@ namespace ObjLoader.Services.Layers
                 }
 
                 child.ParentGuid = parentId;
+                RebuildIndices();
                 return true;
             }
         }
@@ -232,7 +273,7 @@ namespace ObjLoader.Services.Layers
                         throw new InvalidOperationException($"Hierarchy depth exceeds limit ({MaxHierarchyDepth}) for layer: {layerId}");
                     }
 
-                    var layer = Layers.FirstOrDefault(l => l.Guid == current);
+                    var layer = FindByGuid(current);
                     if (layer == null) break;
 
                     if (!layer.IsVisible) return false;
@@ -253,7 +294,7 @@ namespace ObjLoader.Services.Layers
                 _queue.Clear();
                 _visited.Clear();
 
-                if (!Layers.Any(l => l.Guid == layerId))
+                if (!_guidIndex.ContainsKey(layerId))
                 {
                     return result;
                 }
@@ -265,16 +306,19 @@ namespace ObjLoader.Services.Layers
                 {
                     var current = _queue.Dequeue();
 
-                    foreach (var child in Layers.Where(l => l.ParentGuid == current))
+                    if (_childrenIndex.TryGetValue(current, out var children))
                     {
-                        if (_visited.Add(child.Guid))
+                        foreach (var child in children)
                         {
-                            result.Add(child.Guid);
-                            _queue.Enqueue(child.Guid);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Cycle detected at: {child.Guid}");
+                            if (_visited.Add(child.Guid))
+                            {
+                                result.Add(child.Guid);
+                                _queue.Enqueue(child.Guid);
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException($"Cycle detected at: {child.Guid}");
+                            }
                         }
                     }
 
@@ -314,14 +358,14 @@ namespace ObjLoader.Services.Layers
                             break;
                         }
 
-                        var found = Layers.FirstOrDefault(l => l.Guid == current);
+                        var found = FindByGuid(current);
                         if (found == null) break;
 
                         current = found.ParentGuid;
                         depth++;
                     }
 
-                    if (!string.IsNullOrEmpty(layer.ParentGuid) && !Layers.Any(l => l.Guid == layer.ParentGuid))
+                    if (!string.IsNullOrEmpty(layer.ParentGuid) && !_guidIndex.ContainsKey(layer.ParentGuid))
                     {
                         result.Warnings.Add($"Layer {layer.Guid} references non-existent parent {layer.ParentGuid}.");
                     }
@@ -342,7 +386,7 @@ namespace ObjLoader.Services.Layers
                 if (!_visited.Add(current)) return true;
                 if (current == childId) return true;
 
-                var layer = Layers.FirstOrDefault(l => l.Guid == current);
+                var layer = FindByGuid(current);
                 if (layer == null) break;
 
                 current = layer.ParentGuid;

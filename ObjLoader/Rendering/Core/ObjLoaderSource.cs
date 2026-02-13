@@ -111,7 +111,7 @@ namespace ObjLoader.Rendering.Core
             _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager);
         }
 
-        private string GetDeviceCacheKey(string filePath) => $"{CacheKeyPrefix}{_devices.D3D.Device.NativePointer:X}:{filePath}";
+        private static string GetCacheKey(string filePath) => $"{CacheKeyPrefix}{filePath}";
 
         private bool IsDeviceLost()
         {
@@ -388,7 +388,7 @@ namespace ObjLoader.Rendering.Core
                 if (effectiveVisibility && !string.IsNullOrEmpty(layerState.FilePath))
                 {
                     GpuResourceCacheItem? resource = null;
-                    string cacheKey = GetDeviceCacheKey(layerState.FilePath);
+                    string cacheKey = GetCacheKey(layerState.FilePath);
                     if (GpuResourceCache.Instance.TryGetValue(cacheKey, out var cached))
                     {
                         if (cached != null && cached.Device == _devices.D3D.Device)
@@ -708,7 +708,7 @@ namespace ObjLoader.Rendering.Core
                 }
 
                 var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
-                string cacheKey = GetDeviceCacheKey(filePath);
+                string cacheKey = GetCacheKey(filePath);
                 GpuResourceCache.Instance.AddOrUpdate(cacheKey, item);
                 success = true;
                 return item;
