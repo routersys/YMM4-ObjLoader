@@ -98,7 +98,8 @@ public sealed class ShaderFileSelectorViewModel : Bindable
         var dialog = new OpenFileDialog
         {
             Filter = _filter,
-            FileName = FilePath
+            FileName = FilePath,
+            ClientGuid = new Guid("12457855-3258-4569-8547-214589652145")
         };
 
         if (dialog.ShowDialog() == true)

@@ -155,7 +155,8 @@ namespace ObjLoader.ViewModels
             var dialog = new OpenFileDialog
             {
                 Filter = _filterString,
-                FileName = FilePath
+                FileName = FilePath,
+                ClientGuid = new Guid("870C9532-8409-4C45-B4C2-436323631988")
             };
 
             if (dialog.ShowDialog() == true)
