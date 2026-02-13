@@ -9,23 +9,32 @@ public sealed class HlslParser
     {
         "Texture1D", "Texture2D", "Texture3D", "TextureCube",
         "Texture1DArray", "Texture2DArray", "TextureCubeArray",
-        "RWTexture1D", "RWTexture2D", "RWTexture3D"
+        "Texture2DMS", "Texture2DMSArray",
+        "RWTexture1D", "RWTexture2D", "RWTexture3D",
+        "RWTexture1DArray", "RWTexture2DArray"
     };
 
     private static readonly HashSet<string> ResourceTypes = new(StringComparer.Ordinal)
     {
         "SamplerState", "SamplerComparisonState",
-        "Buffer", "StructuredBuffer", "RWBuffer", "RWStructuredBuffer"
+        "Buffer", "StructuredBuffer", "RWBuffer", "RWStructuredBuffer",
+        "ByteAddressBuffer", "RWByteAddressBuffer",
+        "AppendStructuredBuffer", "ConsumeStructuredBuffer",
+        "RaytracingAccelerationStructure"
     };
 
     private static readonly HashSet<string> TypeModifiers = new(StringComparer.Ordinal)
     {
-        "const", "static", "uniform", "extern", "inline"
+        "const", "static", "uniform", "extern", "inline",
+        "volatile", "precise", "nointerpolation", "noperspective",
+        "centroid", "sample", "linear", "globallycoherent",
+        "snorm", "unorm", "row_major", "column_major"
     };
 
-    private static readonly HashSet<string> ParameterModifiers = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> ParameterModifiers = new(StringComparer.OrdinalIgnoreCase)
     {
-        "in", "out", "inout"
+        "in", "out", "inout",
+        "point", "line", "triangle", "lineadj", "triangleadj"
     };
 
     private readonly IReadOnlyList<Token> _tokens;
@@ -41,6 +50,7 @@ public sealed class HlslParser
     public ShaderAst Parse()
     {
         var ast = new ShaderAst();
+        var pendingAttributes = new List<AttributeDefinition>();
 
         while (_position < _tokens.Count)
         {
@@ -53,53 +63,93 @@ public sealed class HlslParser
                 continue;
             }
 
+            if (token.Type == TokenType.Attribute)
+            {
+                pendingAttributes.Add(ParseAttributeFromToken(token));
+                Advance();
+                continue;
+            }
+
             if (token.Type == TokenType.Keyword)
             {
                 if (string.Equals(token.Text, "struct", StringComparison.Ordinal))
                 {
+                    pendingAttributes.Clear();
                     ast.AddStructure(ParseStruct());
+                    continue;
+                }
+
+                if (string.Equals(token.Text, "typedef", StringComparison.Ordinal))
+                {
+                    pendingAttributes.Clear();
+                    ast.AddTypedef(ParseTypedef());
                     continue;
                 }
 
                 if (string.Equals(token.Text, "cbuffer", StringComparison.Ordinal) ||
                     string.Equals(token.Text, "tbuffer", StringComparison.Ordinal))
                 {
+                    pendingAttributes.Clear();
                     ast.AddConstantBuffer(ParseConstantBuffer());
                     continue;
                 }
 
                 if (IsResourceType(token.Text))
                 {
+                    pendingAttributes.Clear();
                     ast.AddGlobalVariable(ParseGlobalVariable());
                     continue;
                 }
 
-                if (!TryParseDeclaration(out var declaration))
+                if (!TryParseDeclaration(pendingAttributes, out var declaration))
                 {
+                    pendingAttributes.Clear();
                     Advance();
                     continue;
                 }
 
+                pendingAttributes.Clear();
                 AddDeclarationToAst(ast, declaration!);
                 continue;
             }
 
             if (token.Type == TokenType.Identifier)
             {
-                if (!TryParseDeclaration(out var declaration))
+                if (!TryParseDeclaration(pendingAttributes, out var declaration))
                 {
+                    pendingAttributes.Clear();
                     Advance();
                     continue;
                 }
 
+                pendingAttributes.Clear();
                 AddDeclarationToAst(ast, declaration!);
                 continue;
             }
 
+            pendingAttributes.Clear();
             Advance();
         }
 
         return ast;
+    }
+
+    private static AttributeDefinition ParseAttributeFromToken(Token token)
+    {
+        var text = token.Text;
+        if (text.StartsWith('[')) text = text[1..];
+        if (text.EndsWith(']')) text = text[..^1];
+
+        var parenIndex = text.IndexOf('(');
+        if (parenIndex >= 0)
+        {
+            var name = text[..parenIndex].Trim();
+            var args = text[(parenIndex + 1)..];
+            if (args.EndsWith(')')) args = args[..^1];
+            return new AttributeDefinition { Name = name, Arguments = args.Trim() };
+        }
+
+        return new AttributeDefinition { Name = text.Trim(), Arguments = string.Empty };
     }
 
     private static void AddDeclarationToAst(ShaderAst ast, object declaration)
@@ -115,12 +165,12 @@ public sealed class HlslParser
         }
     }
 
-    private bool TryParseDeclaration(out object? declaration)
+    private bool TryParseDeclaration(List<AttributeDefinition> attributes, out object? declaration)
     {
         var savedPosition = _position;
         try
         {
-            declaration = ParseDeclaration();
+            declaration = ParseDeclaration(attributes);
             return true;
         }
         catch
@@ -133,6 +183,20 @@ public sealed class HlslParser
 
     private static bool IsResourceType(string text) =>
         TextureTypes.Contains(text) || ResourceTypes.Contains(text);
+
+    private TypedefDeclaration ParseTypedef()
+    {
+        Expect("typedef");
+        var originalType = ParseType();
+        var aliasName = Expect(TokenType.Identifier).Text;
+        Expect(";");
+
+        return new TypedefDeclaration
+        {
+            OriginalType = originalType,
+            AliasName = aliasName
+        };
+    }
 
     private StructDefinition ParseStruct()
     {
@@ -249,13 +313,19 @@ public sealed class HlslParser
         };
     }
 
-    private void ParseRegisterSpecification()
+    private string? ParseRegisterSpecification()
     {
         Advance();
         Expect("register");
         Expect("(");
-        Expect(TokenType.Identifier);
+        var reg = Expect(TokenType.Identifier).Text;
+        if (Check(","))
+        {
+            Advance();
+            Expect(TokenType.Identifier);
+        }
         Expect(")");
+        return reg;
     }
 
     private VariableDeclaration ParseVariableDeclaration()
@@ -263,7 +333,7 @@ public sealed class HlslParser
         var type = ParseType();
         var name = Expect(TokenType.Identifier).Text;
 
-        type = ParseArraySpecification(type);
+        name += ParseArraySpecification();
 
         string? semantic = null;
         if (Check(":"))
@@ -290,27 +360,26 @@ public sealed class HlslParser
         };
     }
 
-    private string ParseArraySpecification(string baseType)
+    private string ParseArraySpecification()
     {
-        if (!Check("["))
-        {
-            return baseType;
-        }
+        var sb = new StringBuilder();
 
-        var type = new StringBuilder(baseType);
-        type.Append('[');
-        Advance();
-
-        if (!Check("]"))
+        while (Check("["))
         {
-            type.Append(Current().Text);
+            sb.Append('[');
             Advance();
+
+            while (!Check("]") && _position < _tokens.Count)
+            {
+                sb.Append(Current().Text);
+                Advance();
+            }
+
+            sb.Append(']');
+            Expect("]");
         }
 
-        type.Append(']');
-        Expect("]");
-
-        return type.ToString();
+        return sb.ToString();
     }
 
     private VariableDeclaration ParseGlobalVariable()
@@ -318,11 +387,12 @@ public sealed class HlslParser
         var type = ParseType();
         var name = Expect(TokenType.Identifier).Text;
 
-        type = ParseArraySpecification(type);
+        name += ParseArraySpecification();
 
+        string? registerSlot = null;
         if (Check(":"))
         {
-            ParseRegisterSpecification();
+            registerSlot = ParseRegisterSpecification();
         }
 
         if (Check("="))
@@ -338,21 +408,38 @@ public sealed class HlslParser
         return new VariableDeclaration
         {
             Type = type,
-            Name = name
+            Name = name,
+            RegisterSlot = registerSlot
         };
     }
 
-    private object ParseDeclaration()
+    private object ParseDeclaration(List<AttributeDefinition>? attributes = null)
     {
         var type = ParseType();
         var name = Expect(TokenType.Identifier).Text;
 
         if (Check("("))
         {
-            return ParseFunction(type, name);
+            return ParseFunction(type, name, attributes);
         }
 
-        type = ParseArraySpecification(type);
+        name += ParseArraySpecification();
+
+        string? registerSlot = null;
+        if (Check(":"))
+        {
+            var savedPos = _position;
+            Advance();
+            if (Check("register"))
+            {
+                _position = savedPos;
+                registerSlot = ParseRegisterSpecification();
+            }
+            else
+            {
+                _position = savedPos;
+            }
+        }
 
         if (Check("="))
         {
@@ -367,11 +454,12 @@ public sealed class HlslParser
         return new VariableDeclaration
         {
             Type = type,
-            Name = name
+            Name = name,
+            RegisterSlot = registerSlot
         };
     }
 
-    private FunctionDefinition ParseFunction(string returnType, string name)
+    private FunctionDefinition ParseFunction(string returnType, string name, List<AttributeDefinition>? attributes)
     {
         Expect("(");
 
@@ -395,7 +483,8 @@ public sealed class HlslParser
                 Name = name,
                 Parameters = parameters,
                 ReturnSemantic = returnSemantic,
-                Body = string.Empty
+                Body = string.Empty,
+                Attributes = attributes?.ToArray() ?? Array.Empty<AttributeDefinition>()
             };
         }
 
@@ -407,7 +496,8 @@ public sealed class HlslParser
             Name = name,
             Parameters = parameters,
             ReturnSemantic = returnSemantic,
-            Body = body
+            Body = body,
+            Attributes = attributes?.ToArray() ?? Array.Empty<AttributeDefinition>()
         };
     }
 
@@ -423,17 +513,18 @@ public sealed class HlslParser
                 break;
             }
 
-            var modifier = string.Empty;
-            if (ParameterModifiers.Contains(Current().Text))
+            var modifier = new StringBuilder();
+            while (ParameterModifiers.Contains(Current().Text))
             {
-                modifier = Current().Text + " ";
+                if (modifier.Length > 0) modifier.Append(' ');
+                modifier.Append(Current().Text);
                 Advance();
             }
 
             var paramType = ParseType();
             var paramName = Expect(TokenType.Identifier).Text;
 
-            paramType = ParseArraySpecification(paramType);
+            paramName += ParseArraySpecification();
 
             string? semantic = null;
             if (Check(":"))
@@ -442,9 +533,11 @@ public sealed class HlslParser
                 semantic = Expect(TokenType.Identifier).Text;
             }
 
+            var fullType = modifier.Length > 0 ? modifier + " " + paramType : paramType;
+
             parameters.Add(new ParameterDeclaration
             {
-                Type = modifier + paramType,
+                Type = fullType,
                 Name = paramName,
                 Semantic = semantic
             });
@@ -552,12 +645,33 @@ public sealed class HlslParser
         {
             type.Append('<');
             Advance();
-            type.Append(Current().Text);
-            Advance();
-            if (Check(">"))
+            var depth = 1;
+            while (depth > 0 && _position < _tokens.Count)
             {
-                type.Append('>');
-                Advance();
+                if (Check("<"))
+                {
+                    depth++;
+                    type.Append('<');
+                    Advance();
+                }
+                else if (Check(">"))
+                {
+                    depth--;
+                    type.Append('>');
+                    Advance();
+                }
+                else
+                {
+                    if (Check(","))
+                    {
+                        type.Append(", ");
+                    }
+                    else
+                    {
+                        type.Append(Current().Text);
+                    }
+                    Advance();
+                }
             }
         }
 

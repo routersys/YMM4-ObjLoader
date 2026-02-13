@@ -10,6 +10,7 @@ public enum TokenType
     StringLiteral,
     Operator,
     Preprocessor,
+    Attribute,
     EndOfFile
 }
 
@@ -25,18 +26,46 @@ public sealed class HlslTokenizer
         "bool", "bool2", "bool3", "bool4",
         "half", "half2", "half3", "half4",
         "double", "double2", "double3", "double4",
+        "min16float", "min16float2", "min16float3", "min16float4",
+        "min16int", "min16int2", "min16int3", "min16int4",
+        "min16uint", "min16uint2", "min16uint3", "min16uint4",
+        "min10float", "min10float2", "min10float3", "min10float4",
+        "float16_t", "float16_t2", "float16_t3", "float16_t4",
+        "int16_t", "int16_t2", "int16_t3", "int16_t4",
+        "uint16_t", "uint16_t2", "uint16_t3", "uint16_t4",
+        "int64_t", "uint64_t",
         "matrix", "float4x4", "float3x3", "float2x2",
-        "struct", "cbuffer", "tbuffer",
+        "float4x3", "float3x4", "float4x2", "float2x4", "float3x2", "float2x3",
+        "struct", "class", "interface",
+        "cbuffer", "tbuffer",
         "Texture1D", "Texture2D", "Texture3D", "TextureCube",
         "Texture1DArray", "Texture2DArray", "TextureCubeArray",
+        "Texture2DMS", "Texture2DMSArray",
         "RWTexture1D", "RWTexture2D", "RWTexture3D",
+        "RWTexture1DArray", "RWTexture2DArray",
         "SamplerState", "SamplerComparisonState",
         "Buffer", "StructuredBuffer", "RWBuffer", "RWStructuredBuffer",
-        "void", "return", "if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue",
+        "ByteAddressBuffer", "RWByteAddressBuffer",
+        "AppendStructuredBuffer", "ConsumeStructuredBuffer",
+        "InputPatch", "OutputPatch",
+        "PointStream", "LineStream", "TriangleStream",
+        "RaytracingAccelerationStructure",
+        "RayDesc", "RayQuery",
+        "globallycoherent",
+        "void", "return", "if", "else", "for", "while", "do",
+        "switch", "case", "default", "break", "continue", "discard",
         "const", "static", "uniform", "extern", "inline",
+        "volatile", "precise", "nointerpolation", "noperspective",
+        "centroid", "sample", "linear",
+        "groupshared",
         "register", "packoffset",
         "in", "out", "inout",
-        "true", "false"
+        "true", "false",
+        "typedef",
+        "namespace",
+        "point", "line", "triangle", "lineadj", "triangleadj",
+        "snorm", "unorm",
+        "row_major", "column_major"
     };
 
     private static readonly HashSet<string> DoubleCharOperators = new(StringComparer.Ordinal)
@@ -106,6 +135,15 @@ public sealed class HlslTokenizer
             return ReadPreprocessor(startLine, startColumn);
         }
 
+        if (current == '[')
+        {
+            var attr = TryReadAttribute(startLine, startColumn);
+            if (attr is not null)
+            {
+                return attr;
+            }
+        }
+
         if (current == '"')
         {
             return ReadStringLiteral(startLine, startColumn);
@@ -122,6 +160,86 @@ public sealed class HlslTokenizer
         }
 
         return ReadOperatorOrPunctuation(startLine, startColumn);
+    }
+
+    private Token? TryReadAttribute(int line, int column)
+    {
+        var savedPosition = _position;
+        var savedLine = _line;
+        var savedColumn = _column;
+
+        Advance();
+        SkipWhitespace();
+
+        if (_position >= _source.Length || (!char.IsAsciiLetter(_source[_position]) && _source[_position] != '_'))
+        {
+            _position = savedPosition;
+            _line = savedLine;
+            _column = savedColumn;
+            return null;
+        }
+
+        var nameStart = _position;
+        while (_position < _source.Length && IsIdentifierChar(_source[_position]))
+        {
+            Advance();
+        }
+        var name = _source[nameStart.._position];
+
+        if (!IsKnownAttribute(name))
+        {
+            _position = savedPosition;
+            _line = savedLine;
+            _column = savedColumn;
+            return null;
+        }
+
+        SkipWhitespace();
+
+        var fullText = "[" + name;
+
+        if (_position < _source.Length && _source[_position] == '(')
+        {
+            Advance();
+            var depth = 1;
+            var argsStart = _position;
+            while (_position < _source.Length && depth > 0)
+            {
+                if (_source[_position] == '(') depth++;
+                else if (_source[_position] == ')') depth--;
+                if (depth > 0) Advance();
+            }
+            var args = _source[argsStart.._position];
+            if (_position < _source.Length) Advance();
+            fullText += "(" + args + ")";
+        }
+
+        SkipWhitespace();
+        if (_position < _source.Length && _source[_position] == ']')
+        {
+            Advance();
+        }
+
+        fullText += "]";
+
+        return new Token(TokenType.Attribute, fullText, line, column);
+    }
+
+    private static readonly HashSet<string> KnownAttributes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "numthreads", "maxvertexcount", "domain", "partitioning",
+        "outputtopology", "outputcontrolpoints", "patchconstantfunc",
+        "maxtessfactor", "instance",
+        "earlydepthstencil", "flatten", "branch", "unroll", "loop",
+        "forcecase", "call",
+        "fastopt", "allow_uav_condition",
+        "WaveSize", "NodeDispatch", "NodeLaunch",
+        "shader", "RootSignature"
+    };
+
+    private static bool IsKnownAttribute(string name)
+    {
+        return KnownAttributes.Contains(name);
     }
 
     private Token ReadIdentifierOrKeyword(int line, int column)
@@ -151,6 +269,17 @@ public sealed class HlslTokenizer
             Advance();
             Advance();
             while (_position < _source.Length && IsHexDigit(_source[_position]))
+            {
+                Advance();
+            }
+        }
+        else if (_position + 1 < _source.Length &&
+                 _source[_position] == '0' &&
+                 char.ToLowerInvariant(_source[_position + 1]) == 'b')
+        {
+            Advance();
+            Advance();
+            while (_position < _source.Length && (_source[_position] == '0' || _source[_position] == '1'))
             {
                 Advance();
             }
@@ -185,7 +314,7 @@ public sealed class HlslTokenizer
             }
         }
 
-        if (_position < _source.Length && char.IsAsciiLetter(_source[_position]))
+        while (_position < _source.Length && char.IsAsciiLetter(_source[_position]))
         {
             Advance();
         }

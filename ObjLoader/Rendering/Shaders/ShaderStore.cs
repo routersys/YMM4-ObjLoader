@@ -1,5 +1,8 @@
-﻿using System.IO;
+﻿using System.Collections.Concurrent;
+using System.IO;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using Vortice.D3DCompiler;
 using Vortice.Direct3D;
 
@@ -13,17 +16,42 @@ namespace ObjLoader.Rendering.Shaders
         private static byte[]? _cachedGridVertexShaderByteCode;
         private static readonly object _lock = new object();
 
-        public static (Blob? Blob, string? Error) Compile(string source, string entryPoint, string profile)
+        private static readonly ConcurrentDictionary<string, (byte[]? ByteCode, string? Error)> _compilationCache = new();
+
+        public static (byte[]? ByteCode, string? Error) Compile(string source, string entryPoint, string profile)
         {
+            var cacheKey = ComputeCacheKey(source, entryPoint, profile);
+
+            if (_compilationCache.TryGetValue(cacheKey, out var cached))
+            {
+                return cached;
+            }
+
             try
             {
-                var blob = Compiler.Compile(source, entryPoint, "CustomShader", profile, ShaderFlags.OptimizationLevel3, EffectFlags.None);
-                return (blob, null);
+                using var blob = Compiler.Compile(source, entryPoint, "CustomShader", profile, ShaderFlags.OptimizationLevel3, EffectFlags.None);
+                var byteCode = blob.AsBytes().ToArray();
+                _compilationCache.TryAdd(cacheKey, (byteCode, null));
+                return (byteCode, null);
             }
             catch (Exception ex)
             {
+                _compilationCache.TryAdd(cacheKey, (null, ex.Message));
                 return (null, ex.Message);
             }
+        }
+
+        public static void ClearCache()
+        {
+            _compilationCache.Clear();
+        }
+
+        private static string ComputeCacheKey(string source, string entryPoint, string profile)
+        {
+            var combined = source + "\0" + entryPoint + "\0" + profile;
+            var bytes = Encoding.UTF8.GetBytes(combined);
+            var hash = SHA256.HashData(bytes);
+            return Convert.ToHexString(hash);
         }
 
         public static (byte[] VS, byte[] PS, byte[] GridVS, byte[] GridPS) GetByteCodes()

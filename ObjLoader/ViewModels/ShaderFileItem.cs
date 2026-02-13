@@ -160,20 +160,18 @@ public sealed class ShaderFileItem : Bindable
             }
 
             var vsResult = ShaderStore.Compile(convertedSource, "VS", "vs_5_0");
-            if (vsResult.Blob == null)
+            if (vsResult.ByteCode == null)
             {
                 HandleCompilationError("VS", vsResult.Error!, convertedSource);
                 return;
             }
-            using var vsBlob = vsResult.Blob;
 
             var psResult = ShaderStore.Compile(convertedSource, "PS", "ps_5_0");
-            if (psResult.Blob == null)
+            if (psResult.ByteCode == null)
             {
                 HandleCompilationError("PS", psResult.Error!, convertedSource);
                 return;
             }
-            using var psBlob = psResult.Blob;
 
             StatusColor = Brushes.LightGreen;
             StatusMessage = Texts.Shader_Status_Success;

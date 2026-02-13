@@ -87,16 +87,21 @@ public sealed class HlslShaderConverter : IShaderConverter
 
     private static string BuildShaderCode(ShaderAst ast)
     {
-        var builder = new StringBuilder(2048);
+        var builder = new StringBuilder(4096);
 
         AppendPreprocessorDirectives(builder, ast);
         AppendStandardResources(builder, ast);
+        AppendTypedefs(builder, ast);
         AppendStructures(builder, ast);
         AppendConstantBuffers(builder, ast);
         AppendGlobalVariables(builder, ast);
         AppendHelperFunctions(builder, ast);
         AppendVertexShader(builder, ast);
         AppendPixelShader(builder, ast);
+        AppendGeometryShader(builder, ast);
+        AppendHullShader(builder, ast);
+        AppendDomainShader(builder, ast);
+        AppendComputeShader(builder, ast);
 
         return builder.ToString();
     }
@@ -129,6 +134,8 @@ public sealed class HlslShaderConverter : IShaderConverter
             builder.AppendLine();
         }
 
+        AppendUserResources(builder, ast);
+
         var hasVSIN = ast.HasStruct("VS_IN");
         var hasPSIN = ast.HasStruct("PS_IN");
 
@@ -144,6 +151,81 @@ public sealed class HlslShaderConverter : IShaderConverter
         {
             builder.AppendLine();
         }
+    }
+
+    private static void AppendUserResources(StringBuilder builder, ShaderAst ast)
+    {
+        var nextTextureSlot = 1;
+        var nextSamplerSlot = 1;
+
+        foreach (var variable in ast.GlobalVariables)
+        {
+            if (string.Equals(variable.Name, "tex", StringComparison.Ordinal) ||
+                string.Equals(variable.Name, "sam", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var isTexture = variable.Type.Contains("Texture", StringComparison.Ordinal);
+            var isSampler = variable.Type.Contains("Sampler", StringComparison.Ordinal);
+
+            if (!isTexture && !isSampler)
+            {
+                continue;
+            }
+
+            builder.Append(variable.Type);
+            builder.Append(' ');
+            builder.Append(variable.Name);
+
+            if (variable.RegisterSlot is not null)
+            {
+                builder.Append(" : register(");
+                builder.Append(variable.RegisterSlot);
+                builder.Append(')');
+            }
+            else if (isTexture)
+            {
+                builder.Append(" : register(t");
+                builder.Append(nextTextureSlot);
+                builder.Append(')');
+                nextTextureSlot++;
+            }
+            else if (isSampler)
+            {
+                builder.Append(" : register(s");
+                builder.Append(nextSamplerSlot);
+                builder.Append(')');
+                nextSamplerSlot++;
+            }
+
+            builder.AppendLine(";");
+        }
+
+        var userTextures = ast.GetTextures();
+        var userSamplers = ast.GetSamplers();
+        if (userTextures.Count > 0 || userSamplers.Count > 0)
+        {
+            builder.AppendLine();
+        }
+    }
+
+    private static void AppendTypedefs(StringBuilder builder, ShaderAst ast)
+    {
+        if (ast.Typedefs.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var td in ast.Typedefs)
+        {
+            builder.Append("typedef ");
+            builder.Append(td.OriginalType);
+            builder.Append(' ');
+            builder.Append(td.AliasName);
+            builder.AppendLine(";");
+        }
+        builder.AppendLine();
     }
 
     private static void AppendStructures(StringBuilder builder, ShaderAst ast)
@@ -201,12 +283,23 @@ public sealed class HlslShaderConverter : IShaderConverter
 
     private static void AppendGlobalVariables(StringBuilder builder, ShaderAst ast)
     {
-        if (ast.GlobalVariables.Count == 0)
+        var nonResourceVars = new List<VariableDeclaration>();
+        foreach (var variable in ast.GlobalVariables)
+        {
+            if (variable.Type.Contains("Texture", StringComparison.Ordinal) ||
+                variable.Type.Contains("Sampler", StringComparison.Ordinal))
+            {
+                continue;
+            }
+            nonResourceVars.Add(variable);
+        }
+
+        if (nonResourceVars.Count == 0)
         {
             return;
         }
 
-        foreach (var variable in ast.GlobalVariables)
+        foreach (var variable in nonResourceVars)
         {
             builder.Append(variable.Type);
             builder.Append(' ');
@@ -223,16 +316,22 @@ public sealed class HlslShaderConverter : IShaderConverter
         builder.AppendLine();
     }
 
+    private static readonly HashSet<string> ShaderEntryPoints = new(StringComparer.Ordinal)
+    {
+        "VS", "PS", "GS", "HS", "DS", "CS",
+        "vert", "frag", "geom", "hull", "domain", "compute", "main"
+    };
+
     private static void AppendHelperFunctions(StringBuilder builder, ShaderAst ast)
     {
         foreach (var function in ast.Functions)
         {
-            if (string.Equals(function.Name, "VS", StringComparison.Ordinal) ||
-                string.Equals(function.Name, "PS", StringComparison.Ordinal))
+            if (ShaderEntryPoints.Contains(function.Name))
             {
                 continue;
             }
 
+            AppendFunctionAttributes(builder, function);
             AppendFunctionSignature(builder, function);
 
             if (string.IsNullOrWhiteSpace(function.Body))
@@ -242,21 +341,26 @@ public sealed class HlslShaderConverter : IShaderConverter
             else
             {
                 builder.AppendLine(" {");
-
-                var bodyLines = function.Body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in bodyLines)
-                {
-                    var trimmedLine = line.Trim();
-                    if (!string.IsNullOrWhiteSpace(trimmedLine))
-                    {
-                        builder.Append("    ");
-                        builder.AppendLine(trimmedLine);
-                    }
-                }
-
+                AppendFunctionBody(builder, function.Body);
                 builder.AppendLine("}");
             }
             builder.AppendLine();
+        }
+    }
+
+    private static void AppendFunctionAttributes(StringBuilder builder, FunctionDefinition function)
+    {
+        foreach (var attr in function.Attributes)
+        {
+            builder.Append('[');
+            builder.Append(attr.Name);
+            if (!string.IsNullOrEmpty(attr.Arguments))
+            {
+                builder.Append('(');
+                builder.Append(attr.Arguments);
+                builder.Append(')');
+            }
+            builder.AppendLine("]");
         }
     }
 
@@ -295,29 +399,36 @@ public sealed class HlslShaderConverter : IShaderConverter
         }
     }
 
+    private static void AppendFunctionBody(StringBuilder builder, string body)
+    {
+        var bodyLines = body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in bodyLines)
+        {
+            var trimmedLine = line.Trim();
+            if (!string.IsNullOrWhiteSpace(trimmedLine))
+            {
+                builder.Append("    ");
+                builder.AppendLine(trimmedLine);
+            }
+        }
+    }
+
+    private static void AppendFullFunction(StringBuilder builder, FunctionDefinition function)
+    {
+        AppendFunctionAttributes(builder, function);
+        AppendFunctionSignature(builder, function);
+        builder.AppendLine(" {");
+        AppendFunctionBody(builder, function.Body);
+        builder.AppendLine("}");
+        builder.AppendLine();
+    }
+
     private static void AppendVertexShader(StringBuilder builder, ShaderAst ast)
     {
-        if (ast.HasFunction("VS"))
+        var vsFunc = ast.GetFunction("VS");
+        if (vsFunc is not null)
         {
-            var vsFunc = ast.Functions.First(f =>
-                string.Equals(f.Name, "VS", StringComparison.Ordinal));
-
-            AppendFunctionSignature(builder, vsFunc);
-            builder.AppendLine(" {");
-
-            var bodyLines = vsFunc.Body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in bodyLines)
-            {
-                var trimmedLine = line.Trim();
-                if (!string.IsNullOrWhiteSpace(trimmedLine))
-                {
-                    builder.Append("    ");
-                    builder.AppendLine(trimmedLine);
-                }
-            }
-
-            builder.AppendLine("}");
-            builder.AppendLine();
+            AppendFullFunction(builder, vsFunc);
             return;
         }
 
@@ -344,35 +455,16 @@ public sealed class HlslShaderConverter : IShaderConverter
 
     private static void AppendPixelShader(StringBuilder builder, ShaderAst ast)
     {
-        if (ast.HasFunction("PS"))
+        var psFunc = ast.GetFunction("PS");
+        if (psFunc is not null)
         {
-            var psFunc = ast.Functions.First(f =>
-                string.Equals(f.Name, "PS", StringComparison.Ordinal));
-
-            AppendFunctionSignature(builder, psFunc);
-            builder.AppendLine(" {");
-
-            var bodyLines = psFunc.Body.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in bodyLines)
-            {
-                var trimmedLine = line.Trim();
-                if (!string.IsNullOrWhiteSpace(trimmedLine))
-                {
-                    builder.Append("    ");
-                    builder.AppendLine(trimmedLine);
-                }
-            }
-
-            builder.AppendLine("}");
-            builder.AppendLine();
+            AppendFullFunction(builder, psFunc);
             return;
         }
 
         if (ast.HasFunction("frag"))
         {
-            var fragFunc = ast.Functions.First(f =>
-                string.Equals(f.Name, "frag", StringComparison.Ordinal));
-
+            var fragFunc = ast.GetFunction("frag")!;
             var hasInputParam = fragFunc.Parameters.Any(p =>
                 p.Type.Contains("PS_IN", StringComparison.Ordinal));
 
@@ -398,8 +490,7 @@ public sealed class HlslShaderConverter : IShaderConverter
 
         if (ast.HasFunction("main"))
         {
-            var mainFunc = ast.Functions.First(f =>
-                string.Equals(f.Name, "main", StringComparison.Ordinal));
+            var mainFunc = ast.GetFunction("main")!;
 
             if (mainFunc.Parameters.Count == 1 &&
                 mainFunc.Parameters[0].Type.Contains("float2", StringComparison.Ordinal))
@@ -424,6 +515,70 @@ public sealed class HlslShaderConverter : IShaderConverter
 
         builder.AppendLine(DefaultPS);
         builder.AppendLine();
+    }
+
+    private static void AppendGeometryShader(StringBuilder builder, ShaderAst ast)
+    {
+        var gsFunc = ast.GetFunction("GS");
+        if (gsFunc is not null)
+        {
+            AppendFullFunction(builder, gsFunc);
+            return;
+        }
+
+        var geomFunc = ast.GetFunction("geom");
+        if (geomFunc is not null)
+        {
+            AppendFullFunction(builder, geomFunc with { Name = "GS" });
+        }
+    }
+
+    private static void AppendHullShader(StringBuilder builder, ShaderAst ast)
+    {
+        var hsFunc = ast.GetFunction("HS");
+        if (hsFunc is not null)
+        {
+            AppendFullFunction(builder, hsFunc);
+            return;
+        }
+
+        var hullFunc = ast.GetFunction("hull");
+        if (hullFunc is not null)
+        {
+            AppendFullFunction(builder, hullFunc with { Name = "HS" });
+        }
+    }
+
+    private static void AppendDomainShader(StringBuilder builder, ShaderAst ast)
+    {
+        var dsFunc = ast.GetFunction("DS");
+        if (dsFunc is not null)
+        {
+            AppendFullFunction(builder, dsFunc);
+            return;
+        }
+
+        var domainFunc = ast.GetFunction("domain");
+        if (domainFunc is not null)
+        {
+            AppendFullFunction(builder, domainFunc with { Name = "DS" });
+        }
+    }
+
+    private static void AppendComputeShader(StringBuilder builder, ShaderAst ast)
+    {
+        var csFunc = ast.GetFunction("CS");
+        if (csFunc is not null)
+        {
+            AppendFullFunction(builder, csFunc);
+            return;
+        }
+
+        var computeFunc = ast.GetFunction("compute");
+        if (computeFunc is not null)
+        {
+            AppendFullFunction(builder, computeFunc with { Name = "CS" });
+        }
     }
 }
 
