@@ -1,6 +1,7 @@
 ﻿using ObjLoader.Infrastructure;
 using ObjLoader.Localization;
 using ObjLoader.Utilities;
+using Vortice.DXGI;
 using YukkuriMovieMaker.Plugin;
 
 namespace ObjLoader.Settings
@@ -135,6 +136,50 @@ namespace ObjLoader.Settings
                     {
                         if (!string.IsNullOrWhiteSpace(root))
                             FileSystemSandbox.Instance.AddAllowedRoot(root);
+                    }
+                }
+
+                if (DXGI.CreateDXGIFactory1(out IDXGIFactory1? factory).Success && factory != null)
+                {
+                    using (factory)
+                    {
+                        long maxDedicatedVideoMemory = 0;
+                        long maxSharedSystemMemory = 0;
+
+                        for (int i = 0; factory.EnumAdapters1(i, out var adapter).Success; i++)
+                        {
+                            using (adapter)
+                            {
+                                var desc = adapter.Description1;
+                                if ((desc.Flags & AdapterFlags.Software) == 0)
+                                {
+                                    if ((long)desc.DedicatedVideoMemory > maxDedicatedVideoMemory)
+                                    {
+                                        maxDedicatedVideoMemory = (long)desc.DedicatedVideoMemory;
+                                        maxSharedSystemMemory = (long)desc.SharedSystemMemory;
+                                    }
+                                }
+                            }
+                        }
+
+                        long clampTargetMemory = 0;
+                        if (maxDedicatedVideoMemory > 512 * 1024 * 1024)
+                        {
+                            clampTargetMemory = maxDedicatedVideoMemory;
+                        }
+                        else if (maxSharedSystemMemory > 0)
+                        {
+                            clampTargetMemory = maxSharedSystemMemory;
+                        }
+
+                        if (clampTargetMemory > 0)
+                        {
+                            int maxMB = (int)(clampTargetMemory / (1024 * 1024));
+                            if (maxMB <= DefaultMaxTotalGpuMemoryMB)
+                            {
+                                MaxTotalGpuMemoryMB = Math.Min(MaxTotalGpuMemoryMB, maxMB);
+                            }
+                        }
                     }
                 }
 
