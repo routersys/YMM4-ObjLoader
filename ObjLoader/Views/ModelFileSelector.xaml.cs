@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Assets;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.Views

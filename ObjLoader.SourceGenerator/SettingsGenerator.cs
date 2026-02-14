@@ -56,6 +56,7 @@ namespace ObjLoader.SourceGenerator
             sb.AppendLine("using System.Reflection;");
             sb.AppendLine("using System.Linq;");
             sb.AppendLine("using ObjLoader.ViewModels;");
+            sb.AppendLine("using ObjLoader.ViewModels.Settings;");
             sb.AppendLine("using ObjLoader.Infrastructure;");
             sb.AppendLine("using YukkuriMovieMaker.Commons;");
             sb.AppendLine("using System.ComponentModel;");

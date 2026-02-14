@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:ObjLoader.Localization"
-        xmlns:vm="clr-namespace:ObjLoader.ViewModels"
+        xmlns:vm="clr-namespace:ObjLoader.ViewModels.Camera"
         mc:Ignorable="d"
         Title="{x:Static l:Texts.Window_CenterPoint}" Height="500" Width="800"
         WindowStartupLocation="CenterOwner" Topmost="True" ResizeMode="CanResize"

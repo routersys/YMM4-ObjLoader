@@ -7,7 +7,7 @@ using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Splitter;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows;

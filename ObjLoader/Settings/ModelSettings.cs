@@ -11,7 +11,7 @@ namespace ObjLoader.Settings
         public override string Name => Texts.Settings_3DModel;
         public override SettingsCategory Category => SettingsCategory.Shape;
         public override bool HasSettingView => true;
-        public override object SettingView => new Views.ModelSettingsView { DataContext = new ViewModels.ModelSettingsViewModel(this) };
+        public override object SettingView => new Views.ModelSettingsView { DataContext = new ViewModels.Settings.ModelSettingsViewModel(this) };
         public static ModelSettings Instance => Default;
 
         public const int DefaultMaxFileSizeMB = 500;

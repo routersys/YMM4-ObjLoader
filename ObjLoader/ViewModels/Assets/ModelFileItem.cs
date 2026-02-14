@@ -2,7 +2,7 @@
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Assets
 {
     public class ModelFileItem
     {

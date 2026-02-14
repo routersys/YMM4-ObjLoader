@@ -1,5 +1,5 @@
 ﻿using ObjLoader.Plugin;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Settings;
 using ObjLoader.Views;
 using System.Windows;
 using YukkuriMovieMaker.Commons;

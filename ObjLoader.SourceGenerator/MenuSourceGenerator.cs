@@ -101,6 +101,7 @@ namespace ObjLoader.SourceGenerator
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections.ObjectModel;");
             sb.AppendLine("using ObjLoader.ViewModels;");
+            sb.AppendLine("using ObjLoader.ViewModels.Common;");
             sb.AppendLine("using ObjLoader.Localization;");
             sb.AppendLine("using System.Windows.Media;");
             sb.AppendLine("using System.Windows.Shapes;");

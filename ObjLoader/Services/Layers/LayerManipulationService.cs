@@ -2,7 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Plugin;
 using ObjLoader.Utilities;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Splitter;
 using System.Collections.ObjectModel;
 using YukkuriMovieMaker.Commons;
 

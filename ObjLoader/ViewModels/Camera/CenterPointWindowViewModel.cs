@@ -8,15 +8,8 @@ using System.Numerics;
 using System.Windows.Media.Media3D;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Camera
 {
-    public enum SelectionMode
-    { 
-        Vertex,
-        Edge,
-        Face
-    }
-
     internal class CenterPointWindowViewModel : Bindable, IDisposable
     {
         private readonly ObjLoaderParameter _parameter;

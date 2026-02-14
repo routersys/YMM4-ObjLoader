@@ -8,7 +8,7 @@ using System.ComponentModel;
 using System.Windows;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Layers
 {
     internal class LayerWindowViewModel : Bindable, IDisposable
     {

@@ -6,7 +6,7 @@ using System.Windows.Data;
 using ObjLoader.Infrastructure;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Settings
 {
     internal class SettingWindowViewModel : Bindable
     {

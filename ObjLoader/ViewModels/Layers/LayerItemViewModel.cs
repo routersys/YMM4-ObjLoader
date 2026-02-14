@@ -9,7 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Layers
 {
     internal class LayerItemViewModel : Bindable, IDisposable
     {

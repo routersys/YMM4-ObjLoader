@@ -1,7 +1,7 @@
 ﻿using ObjLoader.Plugin;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Settings
 {
     internal class Reset3DTransformViewModel : Bindable
     {

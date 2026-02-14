@@ -1,5 +1,5 @@
 ﻿using ObjLoader.Services.UI;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Camera;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;

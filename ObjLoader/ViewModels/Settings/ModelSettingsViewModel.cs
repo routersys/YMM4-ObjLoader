@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Settings
 {
     internal class ModelSettingsViewModel : Bindable, IDisposable
     {

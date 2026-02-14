@@ -1,5 +1,5 @@
 ﻿using ObjLoader.Plugin;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Assets;
 using ObjLoader.Views;
 using System.Reflection;
 using System.Windows;

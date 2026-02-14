@@ -1,10 +1,9 @@
-﻿using ObjLoader.Localization;
-using System.Windows.Media;
+using ObjLoader.Localization;
 using System.Windows.Media.Imaging;
 using YukkuriMovieMaker.Commons;
 using Vector3 = System.Numerics.Vector3;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Splitter
 {
     public class PartItem : Bindable
     {
@@ -22,12 +21,5 @@ namespace ObjLoader.ViewModels
             get => _thumbnail;
             set => Set(ref _thumbnail, value);
         }
-    }
-
-    public class MaterialPreset
-    {
-        public double Roughness { get; set; }
-        public double Metallic { get; set; }
-        public Color BaseColor { get; set; }
     }
 }

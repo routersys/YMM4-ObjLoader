@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Cache;
 using ObjLoader.Core;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Splitter;
 
 namespace ObjLoader.Services.Models
 {

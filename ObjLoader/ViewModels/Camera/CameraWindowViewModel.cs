@@ -1,24 +1,25 @@
-﻿using ObjLoader.Services;
-using ObjLoader.Views;
+﻿using ObjLoader.Attributes;
 using ObjLoader.Localization;
-using ObjLoader.Attributes;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows;
-using System.Windows.Media.Media3D;
-using System.Windows.Media.Imaging;
-using YukkuriMovieMaker.Commons;
-using Microsoft.Win32;
-using System.IO;
-using System.Xml.Serialization;
-using System.Windows.Media;
+using ObjLoader.Plugin;
+using ObjLoader.Plugin.CameraAnimation;
+using ObjLoader.Rendering.Renderers;
+using ObjLoader.Services;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
-using ObjLoader.Rendering.Renderers;
-using ObjLoader.Plugin.CameraAnimation;
-using ObjLoader.Plugin;
+using ObjLoader.Views;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
+using System.Xml.Serialization;
+using YukkuriMovieMaker.Commons;
+using Microsoft.Win32;
+using ObjLoader.ViewModels.Common;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Camera
 {
     public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManipulator
     {
@@ -50,7 +51,7 @@ namespace ObjLoader.ViewModels
         private bool _isSnapping = false;
         private bool _isTargetFixed = true;
 
-        private System.Windows.Media.Color _themeColor = System.Windows.Media.Colors.White;
+        private Color _themeColor = Colors.White;
 
         private double _currentTime = 0;
         private double _maxDuration = 10.0;
@@ -542,7 +543,7 @@ namespace ObjLoader.ViewModels
             }
         }
 
-        public void UpdateThemeColor(System.Windows.Media.Color color)
+        public void UpdateThemeColor(Color color)
         {
             _themeColor = color;
         }

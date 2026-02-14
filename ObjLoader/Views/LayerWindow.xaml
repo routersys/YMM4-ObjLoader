@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:ObjLoader.Localization"
-        xmlns:vm="clr-namespace:ObjLoader.ViewModels"
+        xmlns:layers="clr-namespace:ObjLoader.ViewModels.Layers"
         xmlns:c="clr-namespace:ObjLoader.Converters"
         mc:Ignorable="d"
         Title="{x:Static l:Texts.LayerSettings}" Height="300" Width="250"

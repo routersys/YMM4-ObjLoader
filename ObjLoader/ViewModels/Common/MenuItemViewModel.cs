@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Windows.Input;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Common
 {
     public class MenuItemViewModel : Bindable
     {

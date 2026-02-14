@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Windows.Shapes;
 using System.Windows.Media;
 using ObjLoader.Attributes;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Common;
 
 namespace ObjLoader.Services.UI
 {

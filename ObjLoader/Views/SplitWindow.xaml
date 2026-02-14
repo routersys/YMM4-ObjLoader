@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:l="clr-namespace:ObjLoader.Localization"
-        xmlns:vm="clr-namespace:ObjLoader.ViewModels"
+        xmlns:settings="clr-namespace:ObjLoader.ViewModels.Settings"
         xmlns:u="clr-namespace:ObjLoader.Utilities"
         xmlns:ymm="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
         mc:Ignorable="d"
@@ -15,7 +15,7 @@
         <u:BindingProxy x:Key="Proxy" Data="{Binding}"/>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
-        <DataTemplate DataType="{x:Type vm:MaterialRangeItemViewModel}">
+        <DataTemplate DataType="{x:Type settings:MaterialRangeItemViewModel}">
             <StackPanel Margin="0,0,0,5">
                 <TextBlock Text="{Binding Label}" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
                 <Grid>
@@ -29,14 +29,14 @@
             </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:MaterialColorItemViewModel}">
+        <DataTemplate DataType="{x:Type settings:MaterialColorItemViewModel}">
             <StackPanel Margin="0,0,0,5">
                 <TextBlock Text="{Binding Label}" Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"/>
                 <ymm:ColorPicker Value="{Binding Value}" Margin="0,2,0,0" Height="26"/>
             </StackPanel>
         </DataTemplate>
 
-        <DataTemplate DataType="{x:Type vm:MaterialGroupViewModel}">
+        <DataTemplate DataType="{x:Type settings:MaterialGroupViewModel}">
             <Expander IsExpanded="{Binding IsExpanded}" Margin="0,0,0,5">
                 <Expander.Header>
                     <Grid Width="{Binding RelativeSource={RelativeSource AncestorType=Expander}, Path=ActualWidth}">

@@ -7,8 +7,11 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using YukkuriMovieMaker.Commons;
+using ObjLoader.ViewModels.Layers;
+using ObjLoader.ViewModels.Splitter;
+using ObjLoader.ViewModels.Camera;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Settings
 {
     internal class SettingButtonViewModel : Bindable
     {

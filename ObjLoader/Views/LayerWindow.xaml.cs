@@ -1,5 +1,5 @@
 ﻿using ObjLoader.Services.UI;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Layers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;

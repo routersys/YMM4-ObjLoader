@@ -2,7 +2,7 @@
 using ObjLoader.Views;
 using YukkuriMovieMaker.Commons;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Camera
 {
     public class CameraWindowButtonViewModel : Bindable
     {

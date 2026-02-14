@@ -2,6 +2,7 @@
 using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Settings;
+using ObjLoader.ViewModels.Settings;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -19,7 +20,7 @@ using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Models;
 using ObjLoader.Plugin;
 
-namespace ObjLoader.ViewModels
+namespace ObjLoader.ViewModels.Splitter
 {
     internal class SplitWindowViewModel : Bindable, IDisposable
     {

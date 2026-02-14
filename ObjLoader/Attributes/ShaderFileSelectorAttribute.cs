@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Windows;
 using ObjLoader.Localization;
-using ObjLoader.ViewModels;
+using ObjLoader.ViewModels.Assets;
 using ObjLoader.Views;
 using YukkuriMovieMaker.Commons;
 
