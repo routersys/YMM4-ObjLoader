@@ -1,0 +1,369 @@
+﻿<UserControl x:Class="ObjLoader.Views.Controls.ModelSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:l="clr-namespace:ObjLoader.Localization"
+             xmlns:c="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="1000" d:DesignWidth="800"
+             Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"
+             Unloaded="OnUnloaded">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Controls/ModelSettingsView.Resources.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+        <StackPanel>
+
+            <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE777;" ToolTip="{x:Static l:Texts.ResetResourceLimits}" Command="{Binding ResetResourceLimitsCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.ResourceLimits}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="{x:Static l:Texts.MaxFileSizeMB}" Margin="0,0,0,4" FontSize="13"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetMaxFileSizeMBCommand}" FontSize="14"/>
+                        <TextBlock DockPanel.Dock="Right" Text="MB" Style="{StaticResource UnitLabel}"/>
+                        <TextBox DockPanel.Dock="Right" Width="80" Margin="12,0,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding MaxFileSizeMB, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinFileSizeMB}" Maximum="{Binding MaxFileSizeMBLimit}" Value="{Binding MaxFileSizeMB}" IsSnapToTickEnabled="False" VerticalAlignment="Center" PreviewMouseWheel="OnPreviewMouseWheel"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,8,0,16" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.2"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxGpuMemoryPerModelMB}" Margin="0,0,0,4" FontSize="13"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetMaxGpuMemoryPerModelMBCommand}" FontSize="14"/>
+                        <TextBlock DockPanel.Dock="Right" Text="MB" Style="{StaticResource UnitLabel}"/>
+                        <TextBox DockPanel.Dock="Right" Width="80" Margin="12,0,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding MaxGpuMemoryPerModelMB, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinGpuMemoryMB}" Maximum="{Binding MaxGpuMemoryMBLimit}" Value="{Binding MaxGpuMemoryPerModelMB}" IsSnapToTickEnabled="False" VerticalAlignment="Center" PreviewMouseWheel="OnPreviewMouseWheel"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,8,0,16" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.2"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxTotalGpuMemoryMB}" Margin="0,0,0,4" FontSize="13"/>
+                    <DockPanel Style="{StaticResource SliderRow}" Margin="0">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetMaxTotalGpuMemoryMBCommand}" FontSize="14"/>
+                        <TextBlock DockPanel.Dock="Right" Text="MB" Style="{StaticResource UnitLabel}"/>
+                        <TextBox DockPanel.Dock="Right" Width="80" Margin="12,0,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding MaxTotalGpuMemoryMB, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinGpuMemoryMB}" Maximum="{Binding MaxGpuMemoryMBLimit}" Value="{Binding MaxTotalGpuMemoryMB}" IsSnapToTickEnabled="False" VerticalAlignment="Center" PreviewMouseWheel="OnPreviewMouseWheel"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE777;" ToolTip="{x:Static l:Texts.ResetComplexityLimits}" Command="{Binding ResetComplexityLimitsCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.ComplexityLimits}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <TextBlock Text="{x:Static l:Texts.MaxVertices}" Margin="0,0,0,4" FontSize="13"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetMaxVerticesCommand}" FontSize="14"/>
+                        <TextBox DockPanel.Dock="Right" Width="100" Margin="12,0,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding MaxVertices, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinVertices}" Maximum="{Binding MaxVerticesLimit}" Value="{Binding MaxVertices}" IsSnapToTickEnabled="False" VerticalAlignment="Center" PreviewMouseWheel="OnPreviewMouseWheel"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,8,0,16" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.2"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxIndices}" Margin="0,0,0,4" FontSize="13"/>
+                    <DockPanel Style="{StaticResource SliderRow}">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetMaxIndicesCommand}" FontSize="14"/>
+                        <TextBox DockPanel.Dock="Right" Width="100" Margin="12,0,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding MaxIndices, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinIndices}" Maximum="{Binding MaxIndicesLimit}" Value="{Binding MaxIndices}" IsSnapToTickEnabled="False" VerticalAlignment="Center" PreviewMouseWheel="OnPreviewMouseWheel"/>
+                    </DockPanel>
+
+                    <Separator Margin="0,8,0,16" Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" Opacity="0.2"/>
+
+                    <TextBlock Text="{x:Static l:Texts.MaxParts}" Margin="0,0,0,4" FontSize="13"/>
+                    <DockPanel Style="{StaticResource SliderRow}" Margin="0">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetMaxPartsCommand}" FontSize="14"/>
+                        <TextBox DockPanel.Dock="Right" Width="100" Margin="12,0,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding MaxParts, UpdateSourceTrigger=LostFocus}"/>
+                        <Slider Minimum="{Binding MinParts}" Maximum="{Binding MaxPartsLimit}" Value="{Binding MaxParts}" IsSnapToTickEnabled="False" VerticalAlignment="Center" PreviewMouseWheel="OnPreviewMouseWheel"/>
+                    </DockPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <TextBlock Text="{x:Static l:Texts.SandboxSettings}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,16">
+                        <TextBlock Text="{x:Static l:Texts.EnableSandbox}" VerticalAlignment="Center" FontSize="14"/>
+                        <c:ToggleSlider Value="{Binding IsSandboxEnforced}" HorizontalAlignment="Right"/>
+                    </DockPanel>
+
+                    <TextBlock Text="{x:Static l:Texts.AllowedDirectories}" Margin="0,0,0,8" FontSize="13"/>
+                    <Grid Height="180">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ListBox Grid.Column="0" ItemsSource="{Binding AllowedRoots}" SelectedItem="{Binding SelectedRoot, Mode=TwoWay}"
+                                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                                 Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                 BorderThickness="1"
+                                 PreviewMouseWheel="OnPreviewMouseWheel">
+                            <ListBox.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="0"/>
+                                </Style>
+                            </ListBox.Resources>
+                        </ListBox>
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Top">
+                            <Button Content="&#xE710;" ToolTip="{x:Static l:Texts.AddDirectory}" Command="{Binding AddDirectoryCommand}" Style="{StaticResource IconButtonStyle}" FontSize="20" Margin="0,0,0,8"/>
+                            <Button Content="&#xE738;" ToolTip="{x:Static l:Texts.RemoveDirectory}" Command="{Binding RemoveDirectoryCommand}" Style="{StaticResource IconButtonStyle}" FontSize="20" Margin="0,0,0,8"/>
+                            <Button Content="&#xE74D;" ToolTip="{x:Static l:Texts.ClearDirectories}" Command="{Binding ClearDirectoriesCommand}" Style="{StaticResource IconButtonStyle}" FontSize="20" Margin="0"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE777;" ToolTip="{x:Static l:Texts.ResetAuditSettings}" Command="{Binding ResetAuditSettingsCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.ResourceManagement}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,20">
+                        <TextBlock Text="{x:Static l:Texts.EnableAutoAudit}" VerticalAlignment="Center" FontSize="14"/>
+                        <c:ToggleSlider Value="{Binding EnableAutoAudit}" HorizontalAlignment="Right"/>
+                    </DockPanel>
+
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static l:Texts.AuditInterval}" VerticalAlignment="Center" Margin="0,0,16,12" FontSize="13"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Margin="0,0,0,12" Style="{StaticResource GhostTextBox}" Text="{Binding AuditIntervalMinutes, UpdateSourceTrigger=LostFocus}"/>
+                        <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetAuditIntervalMinutesCommand}" FontSize="14" Margin="6,0,0,12"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="{x:Static l:Texts.LeakThreshold}" VerticalAlignment="Center" Margin="0,0,16,0" FontSize="13"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Style="{StaticResource GhostTextBox}" Text="{Binding LeakThresholdMinutes, UpdateSourceTrigger=LostFocus}"/>
+                        <Button Grid.Row="1" Grid.Column="2" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetLeakThresholdMinutesCommand}" FontSize="14"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{x:Static l:Texts.D3DResourceReleaseDelay}" VerticalAlignment="Center" Margin="0,12,16,0" FontSize="13"/>
+                        <TextBox Grid.Row="2" Grid.Column="1" Margin="0,12,0,0" Style="{StaticResource GhostTextBox}" Text="{Binding D3DResourceReleaseDelay, UpdateSourceTrigger=LostFocus}"/>
+                        <Button Grid.Row="2" Grid.Column="2" Margin="6,12,0,0" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.ResetValue}" Command="{Binding ResetD3DResourceReleaseDelayCommand}" FontSize="14"/>
+                    </Grid>
+
+                    <Button Content="&#xE773;" ToolTip="{x:Static l:Texts.RunAudit}" Command="{Binding RunAuditCommand}" HorizontalAlignment="Left" Style="{StaticResource IconButtonStyle}" FontSize="20" Margin="0"/>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;" ToolTip="{x:Static l:Texts.CopyToClipboard}" Command="{Binding CopyDashboardCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.Dashboard}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.ActiveResources}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.ActiveResources}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.OrphanedResources}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.OrphanedResources}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.EstimatedMemoryMB}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding EstimatedMemoryMB, StringFormat={}{0:F2}}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.TotalAllocations}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.TotalAllocations}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,16,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.TotalDisposals}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding LatestReport.TotalDisposals}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,12" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.GpuCacheEntries}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding GpuCacheEntryCount}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,16,0" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.TotalGpuMemoryMB}" Margin="0,0,8,0" FontSize="13"/>
+                            <TextBlock Text="{Binding TotalGpuCacheMemoryMB, StringFormat={}{0:F2}}" FontWeight="Bold" FontSize="13"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,0" Orientation="Horizontal">
+                            <TextBlock Text="{x:Static l:Texts.LastUpdated}" Margin="0,0,8,0" FontSize="13" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                            <TextBlock Text="{Binding LastUpdatedText}" FontSize="13" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <TextBlock Text="{x:Static l:Texts.MemoryGraph}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <Grid Height="120" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Stretch">
+                            <TextBlock Text="{Binding GraphMaxValue, StringFormat={}{0:F0}}" FontSize="10" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" VerticalAlignment="Top"/>
+                            <TextBlock Text="0" FontSize="10" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" VerticalAlignment="Bottom" Margin="0,80,0,0"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="1" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+                            <Canvas ClipToBounds="True">
+                                <Line X1="0" Y1="25" X2="9999" Y2="25" Stroke="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" StrokeThickness="0.5" StrokeDashArray="4 2"/>
+                                <Line X1="0" Y1="50" X2="9999" Y2="50" Stroke="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" StrokeThickness="0.5" StrokeDashArray="4 2"/>
+                                <Line X1="0" Y1="75" X2="9999" Y2="75" Stroke="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" StrokeThickness="0.5" StrokeDashArray="4 2"/>
+                                <Polyline Points="{Binding TrackerGraphPoints}" Stroke="#4CAF50" StrokeThickness="2" Fill="Transparent"/>
+                                <Polyline Points="{Binding GpuCacheGraphPoints}" Stroke="#2196F3" StrokeThickness="2" Fill="Transparent"/>
+                            </Canvas>
+                        </Border>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,0">
+                        <Rectangle Width="16" Height="3" Fill="#4CAF50" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Texts.TrackerMemory}" FontSize="12" Margin="0,0,24,0"/>
+                        <Rectangle Width="16" Height="3" Fill="#2196F3" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Texts.GpuCacheMemory}" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <TextBlock Text="{x:Static l:Texts.ResourceActions}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <WrapPanel>
+                    <Button Content="{x:Static l:Texts.ClearGpuCache}" Command="{Binding ClearGpuCacheCommand}" Margin="0,0,12,8" Padding="16,8" FontSize="13"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                    <Button Content="{x:Static l:Texts.ForceDisposeLeak}" Command="{Binding ForceDisposeLeakedCommand}" Margin="0,0,12,8" Padding="16,8" FontSize="13"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                    <Button Content="{x:Static l:Texts.ResetAllResources}" Command="{Binding ResetAllResourcesCommand}" Margin="0,0,0,8" Padding="16,8" FontSize="13"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="#D32F2F" BorderBrush="#D32F2F"/>
+                </WrapPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <Button DockPanel.Dock="Right" HorizontalAlignment="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE72C;" ToolTip="{x:Static l:Texts.RefreshGpuCache}" Command="{Binding RefreshGpuCacheCommand}" FontSize="16" Margin="0"/>
+                <TextBlock Text="{x:Static l:Texts.GpuCacheManagement}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}">
+                <StackPanel>
+                    <DataGrid ItemsSource="{Binding GpuCacheItems}" SelectedItem="{Binding SelectedCacheItem, Mode=TwoWay}" AutoGenerateColumns="False" Height="200" Margin="0,0,0,12"
+                              Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                              Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                              BorderThickness="1"
+                              HeadersVisibility="Column" IsReadOnly="True" CanUserAddRows="False"
+                              PreviewMouseWheel="OnPreviewMouseWheel"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <DataGrid.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="0"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static l:Texts.GpuCacheFileHeader}" Binding="{Binding Key}" Width="*"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.GpuCacheMemoryHeader}" Binding="{Binding EstimatedGpuMB, StringFormat={}{0:F2}}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.GpuCachePartsHeader}" Binding="{Binding PartCount}" Width="Auto"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{x:Static l:Texts.RemoveSelected}" Command="{Binding RemoveSelectedCacheCommand}" Margin="0,0,12,0" Padding="16,8" FontSize="13"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+                        <Button Content="{x:Static l:Texts.ClearAll}" Command="{Binding ClearAllCacheCommand}" Padding="16,8" FontSize="13"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Foreground="#D32F2F" BorderBrush="#D32F2F"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,0,0,12">
+                <TextBlock Text="{x:Static l:Texts.AuditResults}" Style="{StaticResource SectionHeader}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Border Style="{StaticResource SectionBorder}" Margin="0">
+                <StackPanel>
+                    <DockPanel Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;" ToolTip="{x:Static l:Texts.CopyToClipboard}" Command="{Binding CopyLeakedResourcesCommand}" FontSize="14"/>
+                        <TextBlock Text="{x:Static l:Texts.LeakedResourcesList}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DataGrid ItemsSource="{Binding LatestReport.LeakedResources}" AutoGenerateColumns="False" Height="200" Margin="0,0,0,24"
+                              Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                              Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                              BorderThickness="1"
+                              HeadersVisibility="Column" IsReadOnly="True" CanUserAddRows="False"
+                              PreviewMouseWheel="OnPreviewMouseWheel"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <DataGrid.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="0"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static l:Texts.KeyHeader}" Binding="{Binding Key}" Width="*"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.TypeHeader}" Binding="{Binding ResourceType}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.AgeHeader}" Binding="{Binding Age, StringFormat={}{0:hh\\:mm\\:ss}}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.CreatedAtHeader}" Binding="{Binding CreatedAt, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.SizeHeader}" Binding="{Binding EstimatedSizeBytes}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.StackTraceHeader}" Binding="{Binding StackTrace}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <DockPanel Margin="0,0,0,8">
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButtonStyle}" Content="&#xE8C8;" ToolTip="{x:Static l:Texts.CopyToClipboard}" Command="{Binding CopyOrphanedResourcesCommand}" FontSize="14"/>
+                        <TextBlock Text="{x:Static l:Texts.OrphanedResourcesList}" FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <DataGrid ItemsSource="{Binding LatestReport.OrphanedResourceList}" AutoGenerateColumns="False" Height="200"
+                              Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}"
+                              Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                              BorderThickness="1"
+                              HeadersVisibility="Column" IsReadOnly="True" CanUserAddRows="False"
+                              PreviewMouseWheel="OnPreviewMouseWheel"
+                              GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <DataGrid.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="0"/>
+                            </Style>
+                        </DataGrid.Resources>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="{x:Static l:Texts.KeyHeader}" Binding="{Binding Key}" Width="*"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.TypeHeader}" Binding="{Binding ResourceType}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.AgeHeader}" Binding="{Binding Age, StringFormat={}{0:hh\\:mm\\:ss}}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.CreatedAtHeader}" Binding="{Binding CreatedAt, StringFormat=yyyy-MM-dd HH:mm:ss}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.SizeHeader}" Binding="{Binding EstimatedSizeBytes}" Width="Auto"/>
+                            <DataGridTextColumn Header="{x:Static l:Texts.StackTraceHeader}" Binding="{Binding StackTrace}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

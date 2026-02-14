@@ -2,7 +2,7 @@
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.Utilities;
 using ObjLoader.Settings;
-using ObjLoader.Views;
+using ObjLoader.Views.Windows;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;

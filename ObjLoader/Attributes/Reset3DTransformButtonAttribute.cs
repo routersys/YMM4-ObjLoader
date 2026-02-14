@@ -1,4 +1,4 @@
-﻿using ObjLoader.Views;
+﻿using ObjLoader.Views.Controls;
 using ObjLoader.ViewModels.Settings;
 using System.Windows;
 using YukkuriMovieMaker.Commons;

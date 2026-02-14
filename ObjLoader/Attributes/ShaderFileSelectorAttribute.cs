@@ -2,7 +2,7 @@
 using System.Windows;
 using ObjLoader.Localization;
 using ObjLoader.ViewModels.Assets;
-using ObjLoader.Views;
+using ObjLoader.Views.Controls;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.Attributes

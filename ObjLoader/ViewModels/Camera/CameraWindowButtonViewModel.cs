@@ -1,5 +1,5 @@
 ﻿using ObjLoader.Plugin;
-using ObjLoader.Views;
+using ObjLoader.Views.Windows;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels.Camera
