@@ -5,6 +5,7 @@ using System.Windows.Media;
 namespace ObjLoader.ViewModels.Settings
 {
     [MaterialGroup("Standard", nameof(Texts.Material_Group_Standard), 0)]
+    [MaterialGroup("Texture", nameof(Texts.Group_Texture), 1)]
     public class PartMaterialProperties
     {
         private readonly Action<Action<Core.PartMaterialData>> _updateAction;
@@ -16,6 +17,7 @@ namespace ObjLoader.ViewModels.Settings
             _roughness = currentData.Roughness;
             _metallic = currentData.Metallic;
             _baseColor = currentData.BaseColor;
+            _texturePath = currentData.TexturePath;
         }
 
         private double _roughness;
@@ -51,6 +53,19 @@ namespace ObjLoader.ViewModels.Settings
             {
                 _baseColor = value;
                 _updateAction(m => m.BaseColor = value);
+            }
+        }
+
+        private string? _texturePath;
+        [MaterialTexture("Texture", nameof(Texts.Material_Texture), 0)]
+        public string? TexturePath
+
+        {
+            get => _texturePath;
+            set
+            {
+                _texturePath = value;
+                _updateAction(m => m.TexturePath = value);
             }
         }
     }

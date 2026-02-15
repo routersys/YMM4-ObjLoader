@@ -29,5 +29,12 @@ namespace ObjLoader.Core
             get => _baseColor;
             set { if (_baseColor != value) { _baseColor = value; OnPropertyChanged(); } }
         }
+
+        private string? _texturePath;
+        public string? TexturePath
+        {
+            get => _texturePath;
+            set { if (_texturePath != value) { _texturePath = value; OnPropertyChanged(); } }
+        }
     }
 }

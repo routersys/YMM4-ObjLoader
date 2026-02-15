@@ -10,6 +10,8 @@ namespace ObjLoader.Services.Textures.Loaders
     {
         public int Priority => 90;
 
+        public IEnumerable<string> SupportedExtensions => new[] { ".dds" };
+
         public bool CanLoad(string path)
         {
             return path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase);

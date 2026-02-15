@@ -509,4 +509,7 @@
 <data name="RefreshGpuCache" xml:space="preserve"><value>Actualizar lista de caché GPU</value></data>
 <data name="D3DResourceReleaseDelay" xml:space="preserve"><value>Retardo de liberación de recursos (seg)</value></data>
 <data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>Establece el tiempo de retardo antes de liberar los recursos de GPU no utilizados.</value></data>
+<data name="Material_Texture" xml:space="preserve"><value>Textura</value></data>
+<data name="Group_Texture" xml:space="preserve"><value>Textura</value></data>
+<data name="Image_File" xml:space="preserve"><value>Image File</value></data>
 </root>

@@ -57,7 +57,8 @@ namespace ObjLoader.Rendering.Renderers
             double camX, double camY, double camZ,
             double targetX, double targetY, double targetZ,
             Matrix4x4[] lightViewProjs, float[] cascadeSplits,
-            bool shadowValid, int activeWorldId, bool updateEnvironmentMap)
+            bool shadowValid, int activeWorldId, bool updateEnvironmentMap,
+            IReadOnlyDictionary<string, ID3D11ShaderResourceView>? dynamicTextureCache = null)
         {
             if (_resources.ConstantBuffer == null || _renderTargets.RenderTargetView == null) return;
 
@@ -164,9 +165,8 @@ namespace ObjLoader.Rendering.Renderers
 
                     var proj = Matrix4x4.CreatePerspectiveFieldOfView((float)(Math.PI / 2.0), 1.0f, RenderingConstants.DefaultNearPlane, RenderingConstants.DefaultFarPlane);
 
-                    RenderScene(context, layers, layerStates, parameter, view, proj, captureCenter.X, captureCenter.Y, captureCenter.Z, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, RenderingConstants.EnvironmentMapSize, RenderingConstants.EnvironmentMapSize, false, _resources.CullNoneRasterizerState, _resources.DepthStencilState);
+                    RenderScene(context, layers, layerStates, parameter, view, proj, captureCenter.X, captureCenter.Y, captureCenter.Z, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, RenderingConstants.EnvironmentMapSize, RenderingConstants.EnvironmentMapSize, false, _resources.CullNoneRasterizerState, _resources.DepthStencilState, dynamicTextureCache);
                 }
-
                 context.OMSetRenderTargets(0, Array.Empty<ID3D11RenderTargetView>(), null);
                 context.GenerateMips(_resources.EnvironmentSRV);
             }
@@ -177,7 +177,7 @@ namespace ObjLoader.Rendering.Renderers
             {
                 _singleLayerBuffer.Clear();
                 _singleLayerBuffer.Add(layers[i]);
-                RenderScene(context, _singleLayerBuffer, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null);
+                RenderScene(context, _singleLayerBuffer, layerStates, parameter, mainView, mainProj, camX, camY, camZ, lightViewProjs, cascadeSplits, shadowValid, activeWorldId, width, height, true, null, null, dynamicTextureCache);
             }
 
             context.PSSetShaderResources(RenderingConstants.SlotEnvironmentMap, 1, _nullSrv1);
@@ -210,7 +210,8 @@ namespace ObjLoader.Rendering.Renderers
             int width, int height,
             bool bindEnvironment,
             ID3D11RasterizerState? rasterizerState = null,
-            ID3D11DepthStencilState? depthStencilState = null)
+            ID3D11DepthStencilState? depthStencilState = null,
+            IReadOnlyDictionary<string, ID3D11ShaderResourceView>? dynamicTextureCache = null)
         {
             context.RSSetState(rasterizerState ?? _resources.RasterizerState);
             context.OMSetDepthStencilState(depthStencilState ?? _resources.DepthStencilState);
@@ -310,16 +311,23 @@ namespace ObjLoader.Rendering.Renderers
 
                     var part = resource.Parts[i];
                     var texView = resource.PartTextures[i];
-                    bool hasTexture = texView != null;
-
-                    _srvSlot0[0] = hasTexture ? texView! : _resources.WhiteTextureView!;
-                    context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, 1, _srvSlot0);
 
                     PartMaterialData? material = null;
                     if (item.Data.PartMaterials != null)
                     {
                         item.Data.PartMaterials.TryGetValue(i, out material);
                     }
+
+                    ID3D11ShaderResourceView? activeTexView = texView;
+                    if (material != null && !string.IsNullOrEmpty(material.TexturePath) && dynamicTextureCache != null && dynamicTextureCache.TryGetValue(material.TexturePath, out var dynTex))
+                    {
+                        activeTexView = dynTex;
+                    }
+
+                    bool hasTexture = activeTexView != null;
+
+                    _srvSlot0[0] = hasTexture ? activeTexView! : _resources.WhiteTextureView!;
+                    context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, 1, _srvSlot0);
 
                     float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
                     float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));

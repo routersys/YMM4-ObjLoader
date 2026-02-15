@@ -51,6 +51,7 @@ namespace ObjLoader.SourceGenerator
             sb.AppendLine("using ObjLoader.ViewModels;");
             sb.AppendLine("using ObjLoader.Localization;");
             sb.AppendLine("using System.Windows.Media;");
+            sb.AppendLine("using ObjLoader.Services.Textures;");
 
             sb.AppendLine($"namespace {namespaceName}");
             sb.AppendLine("{");
@@ -81,7 +82,9 @@ namespace ObjLoader.SourceGenerator
                     foreach (var attr in prop.GetAttributes())
                     {
                         if (attr.AttributeClass != null &&
-                           (attr.AttributeClass.Name == "MaterialRangeAttribute" || attr.AttributeClass.Name == "MaterialColorAttribute"))
+                           (attr.AttributeClass.Name == "MaterialRangeAttribute" || 
+                            attr.AttributeClass.Name == "MaterialColorAttribute" ||
+                            attr.AttributeClass.Name == "MaterialTextureAttribute"))
                         {
                             var groupId = (string)attr.ConstructorArguments[0].Value;
                             int order = 0;
@@ -91,6 +94,10 @@ namespace ObjLoader.SourceGenerator
                                 order = (int)attr.ConstructorArguments[5].Value;
                             }
                             else if (attr.AttributeClass.Name == "MaterialColorAttribute")
+                            {
+                                order = (int)attr.ConstructorArguments[2].Value;
+                            }
+                            else if (attr.AttributeClass.Name == "MaterialTextureAttribute")
                             {
                                 order = (int)attr.ConstructorArguments[2].Value;
                             }
@@ -133,6 +140,15 @@ namespace ObjLoader.SourceGenerator
                         sb.AppendLine($"                () => target.{propName},");
                         sb.AppendLine($"                v => target.{propName} = v,");
                         sb.AppendLine($"                onUpdate));");
+                    }
+                    else if (attr.AttributeClass.Name == "MaterialTextureAttribute")
+                    {
+                        sb.AppendLine($"            group_{group.Id}.Items.Add(new MaterialTextureItemViewModel(");
+                        sb.AppendLine($"                \"{labelKey}\",");
+                        sb.AppendLine($"                () => target.{propName},");
+                        sb.AppendLine($"                v => target.{propName} = v,");
+                        sb.AppendLine($"                onUpdate,");
+                        sb.AppendLine($"                TextureService.GetDefaultSupportedExtensions()));");
                     }
                 }
 

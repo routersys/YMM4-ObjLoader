@@ -3,6 +3,9 @@ using ObjLoader.Core;
 using ObjLoader.Infrastructure;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
+using ObjLoader.Services.Textures;
+using ObjLoader.Rendering.Managers;
+using ObjLoader.Rendering.Managers.Interfaces;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -56,7 +59,16 @@ namespace ObjLoader.Services.Rendering
         private Matrix4x4[]? _cachedLayerWvps;
         private int _cachedLayerCapacity;
 
+        private readonly ITextureService _textureService;
+        private readonly IDynamicTextureManager _dynamicTextureManager;
+
         private bool _isDisposed = false;
+
+        public RenderService()
+        {
+            _textureService = new TextureService();
+            _dynamicTextureManager = new DynamicTextureManager(_textureService);
+        }
 
         private class TransparentPart
         {
@@ -304,6 +316,25 @@ namespace ObjLoader.Services.Rendering
 
             _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
 
+            var usedPaths = new HashSet<string>();
+            foreach (var layer in layers)
+            {
+                if (layer.Data?.PartMaterials != null)
+                {
+                    foreach (var pm in layer.Data.PartMaterials.Values)
+                    {
+                        if (!string.IsNullOrEmpty(pm.TexturePath))
+                        {
+                            usedPaths.Add(pm.TexturePath!);
+                        }
+                    }
+                }
+            }
+            if (_device != null)
+            {
+                _dynamicTextureManager.Prepare(usedPaths, _device);
+            }
+
             ComputeLayerTransforms(layers, view, proj);
 
             var (renderShadowMap, lightViewProj) = RenderShadowPass(layers, enableShadow);
@@ -312,9 +343,11 @@ namespace ObjLoader.Services.Rendering
 
             ClassifyPartsByOpacity(layers, camPos);
 
-            RenderOpaqueParts(layers, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, renderShadowMap);
+            var dynamicTextures = _dynamicTextureManager.Textures;
 
-            RenderTransparentParts(layers, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, isWireframe);
+            RenderOpaqueParts(layers, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, renderShadowMap, dynamicTextures);
+
+            RenderTransparentParts(layers, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, isWireframe, dynamicTextures);
 
             RenderGridIfVisible(isGridVisible, isInfiniteGrid, gridScale, view, proj, camPos, gridColor, axisColor);
 
@@ -581,7 +614,8 @@ namespace ObjLoader.Services.Rendering
             bool isInteracting,
             Matrix4x4 lightViewProj,
             bool enableShadow,
-            bool renderShadowMap)
+            bool renderShadowMap,
+            IReadOnlyDictionary<string, ID3D11ShaderResourceView> dynamicTextures)
         {
             _context!.VSSetShader(_d3dResources!.VertexShader);
             _context.PSSetShader(_d3dResources.PixelShader);
@@ -614,8 +648,7 @@ namespace ObjLoader.Services.Rendering
                     _context.IASetIndexBuffer(modelResource.IndexBuffer, Format.R32_UInt, 0);
                     lastLayerIndex = layerIndex;
                 }
-
-                DrawPart(layer, modelResource, partIndex, _cachedLayerWorlds![layerIndex], _cachedLayerWvps![layerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow);
+                DrawPart(layer, modelResource, partIndex, _cachedLayerWorlds![layerIndex], _cachedLayerWvps![layerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, dynamicTextures);
             }
         }
 
@@ -626,7 +659,8 @@ namespace ObjLoader.Services.Rendering
             bool isInteracting,
             Matrix4x4 lightViewProj,
             bool enableShadow,
-            bool isWireframe)
+            bool isWireframe,
+            IReadOnlyDictionary<string, ID3D11ShaderResourceView> dynamicTextures)
         {
             if (_transparentParts.Count == 0) return;
 
@@ -655,10 +689,8 @@ namespace ObjLoader.Services.Rendering
                     _context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);
                     lastLayerIndex = tp.LayerIndex;
                 }
-
-                DrawPart(layer, resource, tp.PartIndex, _cachedLayerWorlds![tp.LayerIndex], _cachedLayerWvps![tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow);
+                DrawPart(layer, resource, tp.PartIndex, _cachedLayerWorlds![tp.LayerIndex], _cachedLayerWvps![tp.LayerIndex], layer.WorldId, gridColor, axisColor, isInteracting, lightViewProj, enableShadow, dynamicTextures);
             }
-
             _context.OMSetDepthStencilState(_d3dResources.DepthStencilState);
             if (!isWireframe)
             {
@@ -749,7 +781,7 @@ namespace ObjLoader.Services.Rendering
             _context.VSSetShaderResources(0, _nullSrv4);
         }
 
-        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, Matrix4x4 world, Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting, Matrix4x4 lightViewProj, bool enableShadow)
+        private void DrawPart(LayerRenderData layer, GpuResourceCacheItem resource, int partIndex, Matrix4x4 world, Matrix4x4 wvp, int wId, System.Numerics.Vector4 gridColor, System.Numerics.Vector4 axisColor, bool isInteracting, Matrix4x4 lightViewProj, bool enableShadow, IReadOnlyDictionary<string, ID3D11ShaderResourceView> dynamicTextures)
         {
             if (_context == null || _d3dResources == null) return;
 
@@ -757,23 +789,29 @@ namespace ObjLoader.Services.Rendering
             var part = resource.Parts[partIndex];
             var texView = resource.PartTextures[partIndex];
 
-            _texArray[0] = texView ?? _d3dResources.WhiteTextureView!;
-            _context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, _texArray);
-
-            System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
-
-            var rawLightPos = new System.Numerics.Vector3((float)layer.LightX, (float)layer.LightY, (float)layer.LightZ);
-            System.Numerics.Vector3 finalLightPos;
-            if (layer.LightType == 2)
-                finalLightPos = System.Numerics.Vector3.TransformNormal(rawLightPos, world);
-            else
-                finalLightPos = System.Numerics.Vector3.Transform(rawLightPos, world);
+            ID3D11ShaderResourceView? activeTexView = texView;
 
             PartMaterialData? material = null;
             if (layer.Data != null && layer.Data.PartMaterials != null)
             {
                 layer.Data.PartMaterials.TryGetValue(partIndex, out material);
             }
+
+            if (material != null && !string.IsNullOrEmpty(material.TexturePath) && dynamicTextures.TryGetValue(material.TexturePath!, out var dynTex))
+            {
+                activeTexView = dynTex;
+            }
+
+            _texArray[0] = activeTexView ?? _d3dResources.WhiteTextureView!;
+            _context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, _texArray);
+
+            System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
+            var rawLightPos = new System.Numerics.Vector3((float)layer.LightX, (float)layer.LightY, (float)layer.LightZ);
+            System.Numerics.Vector3 finalLightPos;
+            if (layer.LightType == 2)
+                finalLightPos = System.Numerics.Vector3.TransformNormal(rawLightPos, world);
+            else
+                finalLightPos = System.Numerics.Vector3.Transform(rawLightPos, world);
 
             float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
             float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
@@ -839,6 +877,8 @@ namespace ObjLoader.Services.Rendering
             {
                 if (_isDisposed) return;
                 _isDisposed = true;
+
+                _dynamicTextureManager.Dispose();
 
                 UnregisterResizeResources();
                 ResourceTracker.Instance.Unregister(TrackingKey("GridVertexBuffer"));

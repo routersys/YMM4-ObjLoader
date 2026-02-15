@@ -4,6 +4,7 @@ using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering.Managers;
+using ObjLoader.Rendering.Managers.Interfaces;
 using ObjLoader.Rendering.Renderers;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Services.Textures;
@@ -38,6 +39,7 @@ namespace ObjLoader.Rendering.Core
         private readonly ShadowRenderer _shadowRenderer;
         private readonly SceneRenderer _sceneRenderer;
         private readonly ITextureService _textureService;
+        private readonly IDynamicTextureManager _dynamicTextureManager;
 
         private D2D.ID2D1CommandList? _commandList;
 
@@ -113,6 +115,7 @@ namespace ObjLoader.Rendering.Core
             _parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
             _loader = new ObjModelLoader();
             _textureService = new TextureService();
+            _dynamicTextureManager = new DynamicTextureManager(_textureService);
 
             _resources = D3DResourcesPool.Acquire(devices.D3D.Device);
 
@@ -262,6 +265,34 @@ namespace ObjLoader.Rendering.Core
             _resources.UpdateRasterizerState(settings.CullMode);
             _resources.EnsureShadowMapSize(settings.ShadowResolution, true);
             _resources.EnsureEnvironmentMap();
+
+            var device = _devices.D3D.Device;
+            if (device == null) return;
+
+            var usedPaths = new HashSet<string>();
+        }
+
+        private void PrepareDynamicTextures(IEnumerable<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers)
+        {
+            var device = _devices.D3D.Device;
+            if (device == null) return;
+
+            var usedPaths = new HashSet<string>();
+
+            foreach (var layer in layers)
+            {
+                if (layer.State.PartMaterials != null)
+                {
+                    foreach (var pm in layer.State.PartMaterials.Values)
+                    {
+                        if (!string.IsNullOrEmpty(pm.TexturePath))
+                        {
+                            usedPaths.Add(pm.TexturePath!);
+                        }
+                    }
+                }
+            }
+            _dynamicTextureManager.Prepare(usedPaths, device);
         }
 
         private (int activeWorldId, ImmutableDictionary<string, LayerState> newLayerStates, bool layersChanged) BuildLayerStates(long frame, long length, int fps, PluginSettings settings)
@@ -325,7 +356,18 @@ namespace ObjLoader.Rendering.Core
                     Shininess = settings.GetShininess(worldId),
                     IsVisible = layer.IsVisible,
                     VisibleParts = copiedVisibleParts,
-                    ParentGuid = layer.ParentGuid
+                    ParentGuid = layer.ParentGuid,
+                    PartMaterials = layer.PartMaterials?.Count > 0 
+                        ? layer.PartMaterials.ToImmutableDictionary(
+                            k => k.Key, 
+                            v => new PartMaterialState 
+                            { 
+                                Roughness = v.Value.Roughness, 
+                                Metallic = v.Value.Metallic, 
+                                BaseColor = v.Value.BaseColor, 
+                                TexturePath = v.Value.TexturePath 
+                            }) 
+                        : null
                 };
 
                 _preCalcStates.Add((layer.Guid, layerState, layer));
@@ -424,6 +466,7 @@ namespace ObjLoader.Rendering.Core
                     }
                 }
             }
+            PrepareDynamicTextures(_layersToRender);
         }
 
         private bool RenderShadowsIfApplicable(
@@ -552,7 +595,7 @@ namespace ObjLoader.Rendering.Core
             PopulateDictionary(_mutableStatesForScene, Volatile.Read(ref _layerStates));
             _sceneRenderer.Render(_layersToRender, _mutableStatesForScene, _parameter, sw, sh,
                 camX, camY, camZ, targetX, targetY, targetZ,
-                _lightViewProjs, _cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw);
+                _lightViewProjs, _cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw, _dynamicTextureManager.Textures);
         }
 
         private void FinalizeCommandList(
@@ -602,6 +645,11 @@ namespace ObjLoader.Rendering.Core
             }
         }
 
+        private void ClearDynamicTextureCache()
+        {
+            _dynamicTextureManager.Clear();
+        }
+
         private void CreateEmptyCommandList()
         {
             try
@@ -636,7 +684,29 @@ namespace ObjLoader.Rendering.Core
                    a.Ambient == b.Ambient && a.Light == b.Light && Math.Abs(a.Diffuse - b.Diffuse) < RenderingConstants.StateComparisonEpsilon &&
                    Math.Abs(a.Specular - b.Specular) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Shininess - b.Shininess) < RenderingConstants.StateComparisonEpsilon && a.WorldId == b.WorldId &&
                    AreSetsEqual(a.VisibleParts, b.VisibleParts) && string.Equals(a.ParentGuid, b.ParentGuid, StringComparison.Ordinal) &&
-                   a.IsVisible == b.IsVisible;
+                   a.IsVisible == b.IsVisible && ArePartMaterialsEqual(a.PartMaterials, b.PartMaterials);
+        }
+
+        private static bool ArePartMaterialsEqual(ImmutableDictionary<int, PartMaterialState>? a, ImmutableDictionary<int, PartMaterialState>? b)
+        {
+            if (a == null && b == null) return true;
+            if (a == null || b == null) return false;
+            if (ReferenceEquals(a, b)) return true;
+            if (a.Count != b.Count) return false;
+
+            foreach (var kvp in a)
+            {
+                if (!b.TryGetValue(kvp.Key, out var valB)) return false;
+                var valA = kvp.Value;
+                if (Math.Abs(valA.Roughness - valB.Roughness) > RenderingConstants.StateComparisonEpsilon ||
+                    Math.Abs(valA.Metallic - valB.Metallic) > RenderingConstants.StateComparisonEpsilon ||
+                    valA.BaseColor != valB.BaseColor ||
+                    !string.Equals(valA.TexturePath, valB.TexturePath, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         private static bool AreSetsEqual(HashSet<int>? a, HashSet<int>? b)
@@ -788,6 +858,7 @@ namespace ObjLoader.Rendering.Core
             _mutableStatesForScene.Clear();
 
             _disposer.DisposeAndClear();
+            ClearDynamicTextureCache();
 
             D3DResourcesPool.Release(_devices.D3D.Device);
         }

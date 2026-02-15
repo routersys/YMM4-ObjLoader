@@ -509,4 +509,7 @@
 <data name="RefreshGpuCache" xml:space="preserve"><value>GPUキャッシュ一覧を更新</value></data>
 <data name="D3DResourceReleaseDelay" xml:space="preserve"><value>リソース解放遅延 (秒)</value></data>
 <data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>使用されなくなったGPUリソースを解放するまでの待機時間を設定します。</value></data>
+<data name="Material_Texture" xml:space="preserve"><value>テクスチャ</value></data>
+<data name="Group_Texture" xml:space="preserve"><value>テクスチャ</value></data>
+<data name="Image_File" xml:space="preserve"><value>画像ファイル</value></data>
 </root>

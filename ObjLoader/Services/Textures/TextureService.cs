@@ -28,6 +28,24 @@ namespace ObjLoader.Services.Textures
             RegisterLoader(new StandardTextureLoader());
         }
 
+        public IEnumerable<string> SupportedExtensions
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    if (_disposed) throw new ObjectDisposedException(nameof(TextureService));
+                    return _loaders.SelectMany(l => l.SupportedExtensions).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                }
+            }
+        }
+
+        public static IEnumerable<string> GetDefaultSupportedExtensions()
+        {
+            using var service = new TextureService();
+            return service.SupportedExtensions;
+        }
+
         public void RegisterLoader(ITextureLoader loader)
         {
             if (loader == null) throw new ArgumentNullException(nameof(loader));
@@ -42,6 +60,7 @@ namespace ObjLoader.Services.Textures
         public BitmapSource Load(string path)
         {
             if (string.IsNullOrEmpty(path)) throw new ArgumentNullException(nameof(path));
+            path = System.IO.Path.GetFullPath(path).ToLowerInvariant();
 
             lock (_lock)
             {
@@ -80,6 +99,7 @@ namespace ObjLoader.Services.Textures
             var devicePtr = device.NativePointer;
             TrackDevice(devicePtr);
 
+            path = System.IO.Path.GetFullPath(path).ToLowerInvariant();
             var key = (devicePtr, path);
 
             if (s_gpuTextureCache.TryGetValue(key, out var cachedTex))
@@ -285,6 +305,7 @@ namespace ObjLoader.Services.Textures
         public static void EvictPath(string path)
         {
             if (string.IsNullOrEmpty(path)) return;
+            path = System.IO.Path.GetFullPath(path).ToLowerInvariant();
 
             var keysToRemove = s_gpuTextureCache.Keys
                 .Where(k => k.Path == path)

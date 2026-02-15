@@ -11,6 +11,8 @@ namespace ObjLoader.Services.Textures.Loaders
     {
         public int Priority => 80;
 
+        public IEnumerable<string> SupportedExtensions => new[] { ".psd" };
+
         public bool CanLoad(string path)
         {
             return path.EndsWith(".psd", StringComparison.OrdinalIgnoreCase);

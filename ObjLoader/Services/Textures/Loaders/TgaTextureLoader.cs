@@ -9,6 +9,8 @@ namespace ObjLoader.Services.Textures.Loaders
     {
         public int Priority => 100;
 
+        public IEnumerable<string> SupportedExtensions => new[] { ".tga" };
+
         public bool CanLoad(string path)
         {
             return path.EndsWith(".tga", StringComparison.OrdinalIgnoreCase);

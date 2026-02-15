@@ -7,6 +7,8 @@ namespace ObjLoader.Services.Textures
     {
         public int Priority => 0;
 
+        public IEnumerable<string> SupportedExtensions => new[] { ".png", ".jpg", ".jpeg", ".bmp" };
+
         public bool CanLoad(string path)
         {
             return true;

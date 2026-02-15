@@ -52,4 +52,12 @@
         {
         }
     }
+
+    public class MaterialTextureAttribute : MaterialPropertyAttribute
+    {
+        public MaterialTextureAttribute(string groupId, string labelKey, int order = 0)
+            : base(groupId, labelKey, order)
+        {
+        }
+    }
 }

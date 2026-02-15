@@ -5,6 +5,7 @@ namespace ObjLoader.Services.Textures
 {
     public interface ITextureService : IDisposable
     {
+        IEnumerable<string> SupportedExtensions { get; }
         BitmapSource Load(string path);
         void RegisterLoader(ITextureLoader loader);
         (ID3D11ShaderResourceView? Srv, long GpuBytes) CreateShaderResourceView(string path, ID3D11Device device);

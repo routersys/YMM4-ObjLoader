@@ -509,4 +509,7 @@
 <data name="RefreshGpuCache" xml:space="preserve"><value>刷新GPU缓存列表</value></data>
 <data name="D3DResourceReleaseDelay" xml:space="preserve"><value>资源释放延迟 (秒)</value></data>
 <data name="D3DResourceReleaseDelay_Desc" xml:space="preserve"><value>设置释放未使用的GPU资源之前的延迟时间。</value></data>
+<data name="Material_Texture" xml:space="preserve"><value>纹理</value></data>
+<data name="Group_Texture" xml:space="preserve"><value>纹理</value></data>
+<data name="Image_File" xml:space="preserve"><value>Image File</value></data>
 </root>

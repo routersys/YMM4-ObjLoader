@@ -152,11 +152,11 @@ namespace ObjLoader.Core
                     {
                         Roughness = kvp.Value.Roughness,
                         Metallic = kvp.Value.Metallic,
-                        BaseColor = kvp.Value.BaseColor
+                        BaseColor = kvp.Value.BaseColor,
+                        TexturePath = kvp.Value.TexturePath
                     });
                 }
             }
-
             return clone;
         }
     }
