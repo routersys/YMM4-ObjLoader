@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 
-namespace ObjLoader.Core
+namespace ObjLoader.Core.Models
 {
     public class PartMaterialData : INotifyPropertyChanged
     {

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace ObjLoader.Core
+namespace ObjLoader.Core.Models
 {
     public struct ModelPart
     {

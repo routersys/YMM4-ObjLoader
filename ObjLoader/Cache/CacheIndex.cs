@@ -6,7 +6,7 @@ namespace ObjLoader.Cache
 {
     public class CacheIndex
     {
-        public int Version { get; set; } = 1;
+        public int Version { get; set; } = 2;
         public Dictionary<string, CacheEntry> Entries { get; set; } = new Dictionary<string, CacheEntry>(StringComparer.OrdinalIgnoreCase);
 
         public class CacheEntry
@@ -14,11 +14,13 @@ namespace ObjLoader.Cache
             public string ModelHash { get; set; } = string.Empty;
             public string OriginalPath { get; set; } = string.Empty;
             public string CacheRootPath { get; set; } = string.Empty;
-            
+
             public long TotalSize { get; set; }
             public DateTime LastAccessTime { get; set; }
             public bool IsSplit { get; set; }
             public int PartsCount { get; set; }
+            public string ExtensionProviderId { get; set; } = string.Empty;
+            public bool HasExtensionCache { get; set; }
         }
 
         public byte[] ToBinary()
@@ -39,6 +41,8 @@ namespace ObjLoader.Cache
                     bw.Write(entry.LastAccessTime.ToBinary());
                     bw.Write(entry.IsSplit);
                     bw.Write(entry.PartsCount);
+                    bw.Write(entry.ExtensionProviderId);
+                    bw.Write(entry.HasExtensionCache);
                 }
                 return ms.ToArray();
             }
@@ -67,6 +71,12 @@ namespace ObjLoader.Cache
                         entry.LastAccessTime = DateTime.FromBinary(br.ReadInt64());
                         entry.IsSplit = br.ReadBoolean();
                         entry.PartsCount = br.ReadInt32();
+
+                        if (index.Version >= 2)
+                        {
+                            entry.ExtensionProviderId = br.ReadString();
+                            entry.HasExtensionCache = br.ReadBoolean();
+                        }
 
                         index.Entries[key] = entry;
                     }

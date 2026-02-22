@@ -546,4 +546,9 @@
 <data name="CacheEntryLimitReached" xml:space="preserve"><value>キャッシュエントリが上限 ({0}) に達したため、古いエントリを削除しました。</value></data>
 <data name="DiskTypeDetectionFailed" xml:space="preserve"><value>ディスクタイプの検出に失敗しました: {0}</value></data>
 <data name="InitializationFailed" xml:space="preserve"><value>初期化に失敗しました: {0}</value></data>
+<data name="Menu_LoadVmd" xml:space="preserve"><value>VMDモーション読み込み</value></data>
+<data name="Msg_VmdFileFilter" xml:space="preserve"><value>VMDモーションファイル</value></data>
+<data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>VMDモーション読み込み完了: {0}フレーム</value></data>
+<data name="Msg_VmdLoadFailed" xml:space="preserve"><value>VMDモーションの読み込みに失敗しました: {0}</value></data>
+<data name="Msg_VmdPmxOnly" xml:space="preserve"><value>VMDモーションはPMXモデルのみ対応です</value></data>
 </root>

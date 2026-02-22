@@ -546,4 +546,9 @@
 <data name="CacheEntryLimitReached" xml:space="preserve"><value>Límite de entradas de caché ({0}) alcanzado. Se eliminaron las entradas antiguas.</value></data>
 <data name="DiskTypeDetectionFailed" xml:space="preserve"><value>Error al detectar el tipo de disco: {0}</value></data>
 <data name="InitializationFailed" xml:space="preserve"><value>Error de inicialización: {0}</value></data>
+<data name="Menu_LoadVmd" xml:space="preserve"><value>Cargar Movimiento VMD</value></data>
+<data name="Msg_VmdFileFilter" xml:space="preserve"><value>Archivos de Movimiento VMD</value></data>
+<data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>Movimiento VMD cargado: {0} fotogramas</value></data>
+<data name="Msg_VmdLoadFailed" xml:space="preserve"><value>Error al cargar el movimiento VMD: {0}</value></data>
+<data name="Msg_VmdPmxOnly" xml:space="preserve"><value>El movimiento VMD solo está disponible para modelos PMX</value></data>
 </root>

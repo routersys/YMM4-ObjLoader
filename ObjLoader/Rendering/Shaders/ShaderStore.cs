@@ -14,6 +14,7 @@ namespace ObjLoader.Rendering.Shaders
         private static byte[]? _cachedPixelShaderByteCode;
         private static byte[]? _cachedGridPixelShaderByteCode;
         private static byte[]? _cachedGridVertexShaderByteCode;
+        private static byte[]? _cachedGpuSkinningByteCode;
         private static readonly object _lock = new object();
 
         private static readonly ConcurrentDictionary<string, (byte[]? ByteCode, string? Error)> _compilationCache = new();
@@ -79,6 +80,18 @@ namespace ObjLoader.Rendering.Shaders
                 }
 
                 return (_cachedVertexShaderByteCode!, _cachedPixelShaderByteCode!, _cachedGridVertexShaderByteCode!, _cachedGridPixelShaderByteCode!);
+            }
+        }
+
+        public static byte[] GetGpuSkinningByteCode()
+        {
+            lock (_lock)
+            {
+                if (_cachedGpuSkinningByteCode == null)
+                {
+                    _cachedGpuSkinningByteCode = LoadShaderResource("GpuSkinningCS.cso");
+                }
+                return _cachedGpuSkinningByteCode;
             }
         }
 

@@ -2,10 +2,15 @@
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
+using Newtonsoft.Json;
 using ObjLoader.Plugin;
 using ObjLoader.Utilities;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Enums;
+using ObjLoader.Services.Mmd.Animation;
+using ObjLoader.Services.Mmd.Parsers;
 
-namespace ObjLoader.Core
+namespace ObjLoader.Core.Timeline
 {
     public class LayerData : INotifyPropertyChanged
     {
@@ -38,7 +43,11 @@ namespace ObjLoader.Core
             set
             {
                 var sanitized = SanitizeFilePath(value);
-                Set(ref _filePath, sanitized);
+                if (Set(ref _filePath, sanitized))
+                {
+                    VmdMotionData = null;
+                    BoneAnimatorInstance = null;
+                }
             }
         }
 
@@ -85,6 +94,15 @@ namespace ObjLoader.Core
 
         private Dictionary<int, PartMaterialData> _partMaterials = new Dictionary<int, PartMaterialData>();
         public Dictionary<int, PartMaterialData> PartMaterials { get => _partMaterials; set => Set(ref _partMaterials, value); }
+
+        [JsonIgnore]
+        public VmdData? VmdMotionData { get; set; }
+
+        [JsonIgnore]
+        public BoneAnimator? BoneAnimatorInstance { get; set; }
+
+        public bool ShouldSerializeVmdMotionData() => false;
+        public bool ShouldSerializeBoneAnimatorInstance() => false;
 
         private static string SanitizeFilePath(string? value)
         {

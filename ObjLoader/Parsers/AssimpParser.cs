@@ -1,6 +1,7 @@
 ﻿using Assimp;
 using ObjLoader.Attributes;
-using ObjLoader.Core;
+using ObjLoader.Core.Interfaces;
+using ObjLoader.Core.Models;
 using System.IO;
 using System.Numerics;
 using Matrix4x4 = System.Numerics.Matrix4x4;

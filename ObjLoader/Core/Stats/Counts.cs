@@ -1,4 +1,4 @@
-﻿namespace ObjLoader.Core
+﻿namespace ObjLoader.Core.Stats
 {
     internal struct Counts
     {

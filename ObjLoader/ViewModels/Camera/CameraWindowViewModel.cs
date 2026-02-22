@@ -19,6 +19,8 @@ using System.Xml.Serialization;
 using YukkuriMovieMaker.Commons;
 using Microsoft.Win32;
 using ObjLoader.ViewModels.Common;
+using ObjLoader.Services.Mmd.Animation;
+using ObjLoader.Services.Mmd.Parsers;
 
 namespace ObjLoader.ViewModels.Camera
 {
@@ -102,7 +104,10 @@ namespace ObjLoader.ViewModels.Camera
         [Menu(Group = "File", NameKey = nameof(Texts.Menu_SaveAs), ResourceType = typeof(Texts), Order = 2, IsSeparatorAfter = true, AcceleratorKey = "A")]
         public ActionCommand SaveProjectAsCommand { get; }
 
-        [Menu(Group = "File", NameKey = nameof(Texts.Menu_Exit), ResourceType = typeof(Texts), Order = 3, AcceleratorKey = "X")]
+        [Menu(Group = "File", NameKey = nameof(Texts.Menu_LoadVmd), ResourceType = typeof(Texts), Order = 3, IsSeparatorAfter = true, AcceleratorKey = "V")]
+        public ActionCommand LoadVmdMotionCommand { get; }
+
+        [Menu(Group = "File", NameKey = nameof(Texts.Menu_Exit), ResourceType = typeof(Texts), Order = 4, AcceleratorKey = "X")]
         public ActionCommand ExitCommand { get; }
 
         [Menu(Group = "Edit", GroupNameKey = nameof(Texts.Menu_Edit), GroupAcceleratorKey = "E", NameKey = nameof(Texts.Menu_Undo), ResourceType = typeof(Texts), Order = 0, AcceleratorKey = "U")]
@@ -284,6 +289,7 @@ namespace ObjLoader.ViewModels.Camera
             OpenProjectCommand = new ActionCommand(_ => true, _ => OpenProject());
             SaveProjectCommand = new ActionCommand(_ => !string.IsNullOrEmpty(_currentFilePath), _ => SaveProject());
             SaveProjectAsCommand = new ActionCommand(_ => true, _ => SaveProjectAs());
+            LoadVmdMotionCommand = new ActionCommand(_ => IsSelectedLayerPmx(), _ => LoadVmdMotion());
             ExitCommand = new ActionCommand(_ => true, _ => Application.Current.Windows.OfType<CameraWindow>().FirstOrDefault()?.Close());
 
             InitializeMenuItems();
@@ -311,6 +317,70 @@ namespace ObjLoader.ViewModels.Camera
             if (e.PropertyName == nameof(ObjLoaderParameter.Duration))
             {
                 MaxDuration = _parameter.Duration;
+            }
+            if (e.PropertyName == nameof(ObjLoaderParameter.SelectedLayerIndex) || e.PropertyName == nameof(ObjLoaderParameter.FilePath))
+            {
+                LoadVmdMotionCommand.RaiseCanExecuteChanged();
+            }
+        }
+
+        private bool IsSelectedLayerPmx()
+        {
+            if (_parameter.SelectedLayerIndex < 0 || _parameter.SelectedLayerIndex >= _parameter.Layers.Count)
+                return false;
+            var layer = _parameter.Layers[_parameter.SelectedLayerIndex];
+            if (string.IsNullOrEmpty(layer.FilePath))
+                return false;
+            return Path.GetExtension(layer.FilePath).Equals(".pmx", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void LoadVmdMotion()
+        {
+            var dialog = new OpenFileDialog
+            {
+                Filter = $"{Texts.Msg_VmdFileFilter}|*.vmd",
+                Multiselect = false
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                var vmdData = VmdParser.Parse(dialog.FileName);
+                var layer = _parameter.Layers[_parameter.SelectedLayerIndex];
+
+                layer.VmdMotionData = vmdData;
+
+                if (vmdData.BoneFrames.Count > 0)
+                {
+                    var model = new ObjLoader.Parsers.PmxParser().Parse(layer.FilePath);
+                    if (model.Bones.Count > 0)
+                    {
+                        layer.BoneAnimatorInstance = new BoneAnimator(
+                            model.Bones, vmdData.BoneFrames,
+                            model.RigidBodies, model.Joints);
+                    }
+                }
+
+                if (vmdData.CameraFrames.Count > 0)
+                {
+                    var newKeyframes = VmdMotionApplier.ConvertCameraFrames(vmdData);
+                    Keyframes.Clear();
+                    foreach (var kf in newKeyframes) Keyframes.Add(kf);
+                    _parameter.Keyframes = new List<CameraKeyframe>(Keyframes);
+
+                    double duration = VmdMotionApplier.GetDuration(vmdData);
+                    if (duration > 0) MaxDuration = duration;
+
+                    CurrentTime = 0;
+                    UpdateAnimation();
+                }
+
+                int totalFrames = vmdData.CameraFrames.Count + vmdData.BoneFrames.Count;
+                MessageBox.Show(string.Format(Texts.Msg_VmdLoadSuccess, totalFrames));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format(Texts.Msg_VmdLoadFailed, ex.Message));
             }
         }
 

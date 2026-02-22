@@ -1,5 +1,5 @@
 ﻿using System.Windows.Media;
-using ObjLoader.Core;
+using ObjLoader.Core.Enums;
 using ObjLoader.Plugin;
 using ObjLoader.Settings;
 

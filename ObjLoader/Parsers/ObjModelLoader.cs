@@ -1,7 +1,8 @@
 ﻿using System.IO;
 using System.Reflection;
 using ObjLoader.Cache;
-using ObjLoader.Core;
+using ObjLoader.Core.Interfaces;
+using ObjLoader.Core.Models;
 using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;

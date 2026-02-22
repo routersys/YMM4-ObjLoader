@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Cache;
-using ObjLoader.Core;
-using ObjLoader.Plugin;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Rendering.Utilities;
 using System.Numerics;
@@ -32,7 +32,7 @@ namespace ObjLoader.Rendering.Renderers
         }
 
         public void Render(
-            List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers,
+            List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> layers,
             Matrix4x4[] lightViewProjs,
             int activeWorldId,
             Dictionary<string, LayerState> layerStates)
@@ -95,7 +95,7 @@ namespace ObjLoader.Rendering.Renderers
                     var wvp = world * lightViewProj;
 
                     int stride = Unsafe.SizeOf<ObjVertex>();
-                    _vbArray[0] = resource.VertexBuffer;
+                    _vbArray[0] = item.OverrideVB ?? resource.VertexBuffer;
                     _strideArray[0] = stride;
                     context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
                     context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);

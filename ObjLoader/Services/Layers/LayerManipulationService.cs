@@ -1,5 +1,6 @@
 ﻿using ObjLoader.Cache;
-using ObjLoader.Core;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
 using ObjLoader.Utilities;
 using ObjLoader.ViewModels.Splitter;

@@ -1,5 +1,7 @@
 ﻿using ObjLoader.Attributes;
-using ObjLoader.Core;
+using ObjLoader.Core.Interfaces;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Stats;
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Numerics;

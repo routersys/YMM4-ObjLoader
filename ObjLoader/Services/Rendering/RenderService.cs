@@ -1,5 +1,4 @@
 ﻿using ObjLoader.Cache;
-using ObjLoader.Core;
 using ObjLoader.Infrastructure;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
@@ -15,6 +14,7 @@ using Vortice.DXGI;
 using Vortice.Mathematics;
 using D3D11MapFlags = Vortice.Direct3D11.MapFlags;
 using Matrix4x4 = System.Numerics.Matrix4x4;
+using ObjLoader.Core.Models;
 
 namespace ObjLoader.Services.Rendering
 {

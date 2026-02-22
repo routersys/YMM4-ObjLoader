@@ -1,5 +1,6 @@
 ﻿using ObjLoader.Cache;
-using ObjLoader.Core;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
@@ -40,6 +41,7 @@ namespace ObjLoader.Rendering.Core
         private readonly SceneRenderer _sceneRenderer;
         private readonly ITextureService _textureService;
         private readonly IDynamicTextureManager _dynamicTextureManager;
+        private readonly ISkinningManager _skinningManager;
 
         private D2D.ID2D1CommandList? _commandList;
 
@@ -64,13 +66,15 @@ namespace ObjLoader.Rendering.Core
 
         private readonly List<(string Guid, LayerState State, LayerData Data)> _preCalcStates = new();
         private readonly Dictionary<int, LayerState> _worldMasterLights = new();
-        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> _layersToRender = new();
+        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> _layersToRender = new();
         private readonly Dictionary<string, LayerState> _newLayerStatesTemp = new();
         private readonly Dictionary<string, LayerState> _mutableStatesForShadow = new();
         private readonly Dictionary<string, LayerState> _mutableStatesForScene = new();
         private readonly Matrix4x4[] _lightViewProjs = new Matrix4x4[D3DResources.CascadeCount];
         private readonly float[] _cascadeSplits = new float[4];
         private readonly Vector3[] _frustumCorners = new Vector3[8];
+        private double _currentTime;
+        private bool _hasBoneAnimation;
 
         private static readonly Vector3[] _ndcCorners =
         {
@@ -116,6 +120,7 @@ namespace ObjLoader.Rendering.Core
             _loader = new ObjModelLoader();
             _textureService = new TextureService();
             _dynamicTextureManager = new DynamicTextureManager(_textureService);
+            _skinningManager = new SkinningManager(_devices);
 
             _resources = D3DResourcesPool.Acquire(devices.D3D.Device);
 
@@ -136,9 +141,8 @@ namespace ObjLoader.Rendering.Core
                 var reason = device.DeviceRemovedReason;
                 return reason.Failure;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to check device status: {ex.Message}");
                 return true;
             }
         }
@@ -170,13 +174,11 @@ namespace ObjLoader.Rendering.Core
                     ex.HResult == unchecked((int)0x887A0006) ||
                     ex.HResult == unchecked((int)0x887A0007))
                 {
-                    System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Device lost: 0x{ex.HResult:X8}");
                     GpuResourceCache.Instance.CleanupInvalidResources();
                     CreateEmptyCommandList();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Render error: {ex.Message}");
                     CreateEmptyCommandList();
                 }
             }
@@ -194,6 +196,7 @@ namespace ObjLoader.Rendering.Core
             var frame = desc.ItemPosition.Frame;
             var length = desc.ItemDuration.Frame;
             var fps = desc.FPS;
+            _currentTime = (double)frame / fps;
 
             int sw = Math.Max(1, (int)_parameter.ScreenWidth.GetValue(frame, length, fps));
             int sh = Math.Max(1, (int)_parameter.ScreenHeight.GetValue(frame, length, fps));
@@ -215,7 +218,7 @@ namespace ObjLoader.Rendering.Core
 
             bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
             bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
-            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null;
+            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null || _hasBoneAnimation;
 
             if (!needsSceneRedraw)
             {
@@ -270,7 +273,7 @@ namespace ObjLoader.Rendering.Core
             if (device == null) return;
         }
 
-        private void PrepareDynamicTextures(IEnumerable<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers)
+        private void PrepareDynamicTextures(IEnumerable<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> layers)
         {
             var device = _devices.D3D.Device;
             if (device == null) return;
@@ -297,6 +300,7 @@ namespace ObjLoader.Rendering.Core
         {
             _preCalcStates.Clear();
             _worldMasterLights.Clear();
+            _hasBoneAnimation = false;
 
             var activeGuid = _parameter.ActiveLayerGuid;
             int activeWorldId = 0;
@@ -364,6 +368,11 @@ namespace ObjLoader.Rendering.Core
 
                 _preCalcStates.Add((layer.Guid, layerState, layer));
 
+                if (layer.BoneAnimatorInstance != null)
+                {
+                    _hasBoneAnimation = true;
+                }
+
                 if (!_worldMasterLights.ContainsKey(worldId))
                 {
                     _worldMasterLights[worldId] = layerState;
@@ -377,7 +386,7 @@ namespace ObjLoader.Rendering.Core
 
             _newLayerStatesTemp.Clear();
             bool layersChanged = false;
-            
+
             foreach (var item in _preCalcStates)
             {
                 var layerState = item.State;
@@ -487,12 +496,21 @@ namespace ObjLoader.Rendering.Core
                         if (model.Vertices.Length > 0)
                         {
                             resource = CreateGpuResource(model, layerState.FilePath);
+
+                            if (model.BoneWeights != null && model.Bones.Count > 0)
+                            {
+                                _skinningManager.RegisterSkinningState(item.Guid, layerState.FilePath, model.Vertices.ToArray(), model.BoneWeights);
+                            }
                         }
                     }
 
                     if (resource != null)
                     {
-                        _layersToRender.Add((item.Data, resource, layerState));
+                        _skinningManager.ProcessSkinning(item.Guid, layerState.FilePath, item.Data.BoneAnimatorInstance, _currentTime);
+
+                        ID3D11Buffer? overrideVB = _skinningManager.GetOverrideVertexBuffer(item.Guid);
+
+                        _layersToRender.Add((item.Data, resource, layerState, overrideVB));
                     }
                 }
             }
@@ -669,9 +687,8 @@ namespace ObjLoader.Rendering.Core
                 context.PSSetConstantBuffers(0, 1, _emptyBufferArray1);
                 context.Flush();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to clear resource bindings: {ex.Message}");
             }
         }
 
@@ -696,9 +713,8 @@ namespace ObjLoader.Rendering.Core
                 dc.Target = null;
                 _commandList.Close();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to create empty command list: {ex.Message}");
             }
         }
 
@@ -800,9 +816,8 @@ namespace ObjLoader.Rendering.Core
                         partTextures[i] = srv;
                         gpuBytes += texGpuBytes;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Failed to load texture {tPath}: {ex.Message}");
                     }
                 }
 
@@ -874,6 +889,7 @@ namespace ObjLoader.Rendering.Core
 
             _shaderManager.Dispose();
             _renderTargets.Dispose();
+            _skinningManager.Dispose();
 
             if (_textureService is IDisposable disposableTextureService)
             {
@@ -900,9 +916,8 @@ namespace ObjLoader.Rendering.Core
             {
                 disposable.Dispose();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"ObjLoaderSource: Dispose failed: {ex.Message}");
             }
         }
     }

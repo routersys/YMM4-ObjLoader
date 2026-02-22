@@ -1,5 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using ObjLoader.Core;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
 
 namespace ObjLoader.Services.Layers

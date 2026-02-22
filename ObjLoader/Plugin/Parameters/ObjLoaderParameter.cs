@@ -1,5 +1,4 @@
-﻿using ObjLoader.Core;
-using ObjLoader.Rendering;
+﻿using ObjLoader.Rendering;
 using ObjLoader.Attributes;
 using ObjLoader.Localization;
 using ObjLoader.Utilities;
@@ -23,6 +22,8 @@ using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Plugin.CameraAnimation;
 using ObjLoader.Rendering.Core;
+using ObjLoader.Core.Enums;
+using ObjLoader.Core.Timeline;
 
 namespace ObjLoader.Plugin
 {

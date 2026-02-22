@@ -1,4 +1,4 @@
-﻿namespace ObjLoader.Core
+﻿namespace ObjLoader.Core.Models
 {
     internal struct SortableVertex : IComparable<SortableVertex>
     {

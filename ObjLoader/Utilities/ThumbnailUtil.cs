@@ -1,4 +1,4 @@
-﻿using ObjLoader.Core;
+﻿using ObjLoader.Core.Models;
 using ObjLoader.Services.Textures;
 using System.IO;
 using System.Windows;

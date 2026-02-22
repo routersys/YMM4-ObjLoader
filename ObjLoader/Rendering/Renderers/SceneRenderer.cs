@@ -1,5 +1,7 @@
 ﻿using ObjLoader.Cache;
-using ObjLoader.Core;
+using ObjLoader.Core.Enums;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Rendering.Managers;
@@ -39,7 +41,7 @@ namespace ObjLoader.Rendering.Renderers
         private readonly ID3D11ShaderResourceView[] _srvSlot1 = new ID3D11ShaderResourceView[1];
         private readonly ID3D11ShaderResourceView[] _srvSlot2 = new ID3D11ShaderResourceView[1];
 
-        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> _singleLayerBuffer = new(1);
+        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> _singleLayerBuffer = new(1);
 
         public SceneRenderer(IGraphicsDevicesAndContext devices, D3DResources resources, RenderTargetManager renderTargets, CustomShaderManager shaderManager)
         {
@@ -50,7 +52,7 @@ namespace ObjLoader.Rendering.Renderers
         }
 
         public void Render(
-            List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers,
+            List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> layers,
             Dictionary<string, LayerState> layerStates,
             ObjLoaderParameter parameter,
             int width, int height,
@@ -197,7 +199,7 @@ namespace ObjLoader.Rendering.Renderers
 
         private void RenderScene(
             ID3D11DeviceContext context,
-            IEnumerable<(LayerData Data, GpuResourceCacheItem Resource, LayerState State)> layers,
+            IEnumerable<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> layers,
             Dictionary<string, LayerState> layerStates,
             ObjLoaderParameter parameter,
             Matrix4x4 view,
@@ -298,7 +300,7 @@ namespace ObjLoader.Rendering.Renderers
                 Matrix4x4.Invert(viewProj, out var inverseViewProj);
 
                 int stride = Unsafe.SizeOf<ObjVertex>();
-                _vbArray[0] = resource.VertexBuffer;
+                _vbArray[0] = item.OverrideVB ?? resource.VertexBuffer;
                 _strideArray[0] = stride;
                 context.IASetVertexBuffers(0, 1, _vbArray, _strideArray, _offsetArray);
                 context.IASetIndexBuffer(resource.IndexBuffer, Format.R32_UInt, 0);

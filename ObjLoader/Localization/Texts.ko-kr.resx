@@ -546,4 +546,9 @@
 <data name="CacheEntryLimitReached" xml:space="preserve"><value>캐시 항목이 제한 ({0})에 도달하여 오래된 항목을 삭제했습니다.</value></data>
 <data name="DiskTypeDetectionFailed" xml:space="preserve"><value>디스크 유형 감지 실패: {0}</value></data>
 <data name="InitializationFailed" xml:space="preserve"><value>초기화 실패: {0}</value></data>
+<data name="Menu_LoadVmd" xml:space="preserve"><value>VMD 모션 로드</value></data>
+<data name="Msg_VmdFileFilter" xml:space="preserve"><value>VMD 모션 파일</value></data>
+<data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>VMD 모션 로드 완료: {0}프레임</value></data>
+<data name="Msg_VmdLoadFailed" xml:space="preserve"><value>VMD 모션 로드 실패: {0}</value></data>
+<data name="Msg_VmdPmxOnly" xml:space="preserve"><value>VMD 모션은 PMX 모델에서만 사용 가능합니다</value></data>
 </root>

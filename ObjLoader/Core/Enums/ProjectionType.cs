@@ -1,7 +1,7 @@
 ﻿using ObjLoader.Localization;
 using System.ComponentModel.DataAnnotations;
 
-namespace ObjLoader.Core
+namespace ObjLoader.Core.Enums
 {
     public enum ProjectionType
     {

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using Vortice.Direct3D11;
-using ObjLoader.Core;
+using ObjLoader.Core.Models;
 
 namespace ObjLoader.Cache
 {

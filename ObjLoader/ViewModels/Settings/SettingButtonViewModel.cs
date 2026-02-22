@@ -1,5 +1,4 @@
-﻿using ObjLoader.Core;
-using ObjLoader.Plugin;
+﻿using ObjLoader.Plugin;
 using ObjLoader.Plugin.Utilities;
 using ObjLoader.Settings;
 using ObjLoader.Views.Windows;
@@ -10,6 +9,7 @@ using YukkuriMovieMaker.Commons;
 using ObjLoader.ViewModels.Layers;
 using ObjLoader.ViewModels.Splitter;
 using ObjLoader.ViewModels.Camera;
+using ObjLoader.Core.Timeline;
 
 namespace ObjLoader.ViewModels.Settings
 {

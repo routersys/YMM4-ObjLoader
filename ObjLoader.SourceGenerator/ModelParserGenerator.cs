@@ -91,7 +91,7 @@ namespace ObjLoader.SourceGenerator
             var sb = new StringBuilder();
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine("using ObjLoader.Core;");
+            sb.AppendLine("using ObjLoader.Core.Interfaces;");
             sb.AppendLine();
             sb.AppendLine("namespace ObjLoader.Parsers");
             sb.AppendLine("{");

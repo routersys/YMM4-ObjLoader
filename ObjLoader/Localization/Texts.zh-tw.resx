@@ -546,4 +546,9 @@
 <data name="CacheEntryLimitReached" xml:space="preserve"><value>快取條目達到上限 ({0})，已刪除舊條目。</value></data>
 <data name="DiskTypeDetectionFailed" xml:space="preserve"><value>磁碟類型檢測失敗: {0}</value></data>
 <data name="InitializationFailed" xml:space="preserve"><value>初始化失敗: {0}</value></data>
+<data name="Menu_LoadVmd" xml:space="preserve"><value>載入VMD動作</value></data>
+<data name="Msg_VmdFileFilter" xml:space="preserve"><value>VMD動作檔案</value></data>
+<data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>VMD動作載入完成: {0}幀</value></data>
+<data name="Msg_VmdLoadFailed" xml:space="preserve"><value>載入VMD動作失敗: {0}</value></data>
+<data name="Msg_VmdPmxOnly" xml:space="preserve"><value>VMD動作僅支援PMX模型</value></data>
 </root>

@@ -546,4 +546,9 @@
 <data name="CacheEntryLimitReached" xml:space="preserve"><value>وصلت إدخالات ذاكرة التخزين المؤقت إلى الحد الأقصى ({0}). تم حذف الإدخالات القديمة.</value></data>
 <data name="DiskTypeDetectionFailed" xml:space="preserve"><value>فشل اكتشاف نوع القرص: {0}</value></data>
 <data name="InitializationFailed" xml:space="preserve"><value>فشل التهيئة: {0}</value></data>
+<data name="Menu_LoadVmd" xml:space="preserve"><value>تحميل حركة VMD</value></data>
+<data name="Msg_VmdFileFilter" xml:space="preserve"><value>ملفات حركة VMD</value></data>
+<data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>تم تحميل حركة VMD: {0} إطارات</value></data>
+<data name="Msg_VmdLoadFailed" xml:space="preserve"><value>فشل تحميل حركة VMD: {0}</value></data>
+<data name="Msg_VmdPmxOnly" xml:space="preserve"><value>حركة VMD متاحة فقط لنماذج PMX</value></data>
 </root>

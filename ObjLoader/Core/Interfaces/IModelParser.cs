@@ -1,4 +1,6 @@
-﻿namespace ObjLoader.Core
+﻿using ObjLoader.Core.Models;
+
+namespace ObjLoader.Core.Interfaces
 {
     public interface IModelParser
     {

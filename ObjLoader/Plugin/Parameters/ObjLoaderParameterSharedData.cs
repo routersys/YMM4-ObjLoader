@@ -1,6 +1,7 @@
 ﻿using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
-using ObjLoader.Core;
+using ObjLoader.Core.Enums;
+using ObjLoader.Core.Timeline;
 
 namespace ObjLoader.Plugin
 {

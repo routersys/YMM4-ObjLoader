@@ -2,7 +2,8 @@
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-using ObjLoader.Core;
+using System.Threading.Tasks;
+using ObjLoader.Core.Models;
 using ObjLoader.Settings;
 
 namespace ObjLoader.Cache
@@ -13,6 +14,13 @@ namespace ObjLoader.Cache
         private const int MaxTexturePathLength = 32_767;
         private const string CacheDirName = ".cache";
 
+        private readonly List<IExtensionCacheProvider> _extensionProviders;
+
+        public ModelCache()
+        {
+            _extensionProviders = Generated.ExtensionCacheProviderRegistry.GetProviders();
+        }
+
         public bool TryLoad(string path, DateTime originalTimestamp, string parserId, int parserVersion, string pluginVersion, out ObjModel model)
         {
             model = new ObjModel();
@@ -22,7 +30,7 @@ namespace ObjLoader.Cache
             try
             {
                 var index = ModelSettings.Instance.GetCacheIndex();
-                CacheIndex.CacheEntry? entry = null; 
+                CacheIndex.CacheEntry? entry = null;
                 string cachePath = string.Empty;
                 bool isSplit = false;
 
@@ -52,13 +60,13 @@ namespace ObjLoader.Cache
                         string hash = ComputePathHash(path);
                         string root = Path.GetDirectoryName(path) ?? string.Empty;
                         string possibleDir = Path.Combine(root, CacheDirName, hash);
-                        
+
                         if (Directory.Exists(possibleDir))
                         {
                             cachePath = possibleDir;
                             if (File.Exists(Path.Combine(cachePath, "header.bin")))
                             {
-                                isSplit = true; 
+                                isSplit = true;
                             }
                             else if (File.Exists(Path.Combine(cachePath, "model.bin")))
                             {
@@ -97,13 +105,39 @@ namespace ObjLoader.Cache
 
                     model = ReadBody(br, stream, out loadedThumbnail);
 
+                    if (entry != null && entry.HasExtensionCache && !string.IsNullOrEmpty(entry.ExtensionProviderId))
+                    {
+                        var provider = _extensionProviders.FirstOrDefault(p => p.ProviderId == entry.ExtensionProviderId);
+                        if (provider != null)
+                        {
+                            string extDir = Directory.Exists(cachePath) ? cachePath : (Path.GetDirectoryName(cachePath) ?? string.Empty);
+                            string extFile = Path.Combine(extDir, "ext.bin");
+                            if (File.Exists(extFile))
+                            {
+                                var modelToLoad = model;
+                                model.ExtensionLoadTask = Task.Run(() =>
+                                {
+                                    try
+                                    {
+                                        using var fsExt = new FileStream(extFile, FileMode.Open, FileAccess.Read, FileShare.Read);
+                                        using var brExt = new BinaryReader(fsExt);
+                                        provider.ReadExtensionData(brExt, modelToLoad);
+                                    }
+                                    catch
+                                    {
+                                    }
+                                });
+                            }
+                        }
+                    }
+
                     if (model.Vertices.Length > 0 && !index.Entries.ContainsKey(path) && legacyMigrationPath == null)
                     {
                         try
                         {
                             long totalSize = 0;
                             int partsCount = 1;
-                            
+
                             if (isSplit)
                             {
                                 var files = Directory.GetFiles(cachePath, "part.*.bin");
@@ -160,6 +194,7 @@ namespace ObjLoader.Cache
             {
                 var index = ModelSettings.Instance.GetCacheIndex();
                 string cacheFile = string.Empty;
+                string extDir = string.Empty;
 
                 if (index.Entries.TryGetValue(path, out var e))
                 {
@@ -169,6 +204,7 @@ namespace ObjLoader.Cache
                     string cacheDir = Path.Combine(root, CacheDirName, e.ModelHash);
                     if (Directory.Exists(cacheDir))
                     {
+                        extDir = cacheDir;
                         if (e.IsSplit)
                         {
                             cacheFile = Path.Combine(cacheDir, "part.0.bin");
@@ -201,8 +237,27 @@ namespace ObjLoader.Cache
                     model = ReadBody(br, stream, out thumbnail);
                 }
 
+                if (e.HasExtensionCache && !string.IsNullOrEmpty(e.ExtensionProviderId))
+                {
+                    var provider = _extensionProviders.FirstOrDefault(p => p.ProviderId == e.ExtensionProviderId);
+                    if (provider != null)
+                    {
+                        if (string.IsNullOrEmpty(extDir) && !string.IsNullOrEmpty(cacheFile))
+                        {
+                            extDir = Path.GetDirectoryName(cacheFile) ?? string.Empty;
+                        }
+                        string extFile = Path.Combine(extDir, "ext.bin");
+                        if (File.Exists(extFile))
+                        {
+                            using var fsExt = new FileStream(extFile, FileMode.Open, FileAccess.Read, FileShare.Read);
+                            using var brExt = new BinaryReader(fsExt);
+                            provider.ReadExtensionData(brExt, model);
+                        }
+                    }
+                }
+
                 Save(path, model, thumbnail, DateTime.FromBinary(header.Timestamp), header.ParserId, header.ParserVersion, header.PluginVersion, toSplit);
-                
+
                 return true;
             }
             catch
@@ -298,7 +353,7 @@ namespace ObjLoader.Cache
                 }
 
                 bool isSplit = forceSplit ?? (DiskTypeDetector.GetDiskType(root) == DiskType.Hdd);
-                
+
                 string fileHash = ComputeFileHash(path);
                 var header = new CacheHeader(originalTimestamp.ToBinary(), path, parserId, parserVersion, pluginVersion, fileHash);
 
@@ -309,11 +364,11 @@ namespace ObjLoader.Cache
                 {
                     string tempPath = Path.Combine(modelCacheDir, "model.bin.tmp");
                     string finalPath = Path.Combine(modelCacheDir, "model.bin");
-                    
+
                     WriteCacheFileSingle(tempPath, header, model, thumbnail);
                     File.Move(tempPath, finalPath, true);
                     totalSize = new FileInfo(finalPath).Length;
-                    
+
                     CleanUpSplitFiles(modelCacheDir);
                 }
                 else
@@ -322,6 +377,29 @@ namespace ObjLoader.Cache
                     partsCount = WriteCacheFileSplit(modelCacheDir, header, model, thumbnail, out totalSize);
                     string singleFile = Path.Combine(modelCacheDir, "model.bin");
                     if (File.Exists(singleFile)) File.Delete(singleFile);
+                }
+
+                IExtensionCacheProvider? activeProvider = null;
+                foreach (var p in _extensionProviders)
+                {
+                    if (p.HasExtensionData(model))
+                    {
+                        activeProvider = p;
+                        break;
+                    }
+                }
+
+                string extFile = Path.Combine(modelCacheDir, "ext.bin");
+                if (activeProvider != null)
+                {
+                    using var fsExt = new FileStream(extFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                    using var bwExt = new BinaryWriter(fsExt);
+                    activeProvider.WriteExtensionData(bwExt, model);
+                    totalSize += new FileInfo(extFile).Length;
+                }
+                else if (File.Exists(extFile))
+                {
+                    File.Delete(extFile);
                 }
 
                 var index = ModelSettings.Instance.GetCacheIndex();
@@ -333,7 +411,9 @@ namespace ObjLoader.Cache
                     TotalSize = totalSize,
                     LastAccessTime = DateTime.Now,
                     IsSplit = isSplit,
-                    PartsCount = partsCount
+                    PartsCount = partsCount,
+                    ExtensionProviderId = activeProvider?.ProviderId ?? string.Empty,
+                    HasExtensionCache = activeProvider != null
                 };
                 ModelSettings.Instance.SaveCacheIndex(index);
 
@@ -365,7 +445,7 @@ namespace ObjLoader.Cache
                 {
                     sb.Append(hashBytes[i].ToString("x2"));
                 }
-                return sb.ToString(); 
+                return sb.ToString();
             }
         }
 
@@ -410,7 +490,7 @@ namespace ObjLoader.Cache
             int thumbLen = br.ReadInt32();
             if (thumbLen < 0 || thumbLen > MaxThumbnailSize)
                 throw new InvalidDataException($"Invalid thumbnail length: {thumbLen}");
-            
+
             if (thumbLen > 0)
             {
                 thumbnail = br.ReadBytes(thumbLen);
@@ -501,7 +581,7 @@ namespace ObjLoader.Cache
             totalSize = 0;
             int partIndex = 0;
             const int ChunkSize = 256 * 1024;
-            
+
             using (var splitter = new SplitStream(dir, ChunkSize))
             using (var bw = new BinaryWriter(splitter))
             {
@@ -570,7 +650,7 @@ namespace ObjLoader.Cache
             private int _currentIndex = 0;
             private FileStream? _currentStream;
             private long _position = 0;
-            
+
             public MultiFileStream(string baseDir)
             {
                 _baseDir = baseDir;
@@ -637,34 +717,34 @@ namespace ObjLoader.Cache
 
                 if (origin == SeekOrigin.Current && offset >= 0)
                 {
-                     long toSkip = offset;
-                     while (toSkip > 0)
-                     {
-                         if (_currentStream == null) break;
-                         long currentRem = _currentStream.Length - _currentStream.Position;
-                         if (toSkip <= currentRem)
-                         {
-                             _currentStream.Seek(toSkip, SeekOrigin.Current);
-                             _position += toSkip;
-                             toSkip = 0;
-                         }
-                         else
-                         {
-                             _currentStream.Seek(0, SeekOrigin.End);
-                             _position += currentRem;
-                             toSkip -= currentRem;
-                             _currentIndex++;
-                             OpenNextStream();
-                         }
-                     }
-                     return _position;
+                    long toSkip = offset;
+                    while (toSkip > 0)
+                    {
+                        if (_currentStream == null) break;
+                        long currentRem = _currentStream.Length - _currentStream.Position;
+                        if (toSkip <= currentRem)
+                        {
+                            _currentStream.Seek(toSkip, SeekOrigin.Current);
+                            _position += toSkip;
+                            toSkip = 0;
+                        }
+                        else
+                        {
+                            _currentStream.Seek(0, SeekOrigin.End);
+                            _position += currentRem;
+                            toSkip -= currentRem;
+                            _currentIndex++;
+                            OpenNextStream();
+                        }
+                    }
+                    return _position;
                 }
                 throw new NotSupportedException();
             }
 
             public override void SetLength(long value) => throw new NotSupportedException();
             public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-            
+
             protected override void Dispose(bool disposing)
             {
                 if (disposing)
@@ -736,7 +816,7 @@ namespace ObjLoader.Cache
 
                     int remainingInChunk = (int)(_chunkSize - _currentStream!.Length);
                     int toWrite = Math.Min(remainingInChunk, buffer.Length - written);
-                    
+
                     _currentStream!.Write(buffer.Slice(written, toWrite));
                     written += toWrite;
                     _totalLength += toWrite;

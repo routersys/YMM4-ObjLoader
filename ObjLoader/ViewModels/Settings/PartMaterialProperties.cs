@@ -1,4 +1,5 @@
 using ObjLoader.Attributes;
+using ObjLoader.Core.Models;
 using ObjLoader.Localization;
 using System.Windows.Media;
 
@@ -8,9 +9,9 @@ namespace ObjLoader.ViewModels.Settings
     [MaterialGroup("Texture", nameof(Texts.Group_Texture), 1)]
     public class PartMaterialProperties
     {
-        private readonly Action<Action<Core.PartMaterialData>> _updateAction;
+        private readonly Action<Action<PartMaterialData>> _updateAction;
 
-        public PartMaterialProperties(Action<Action<Core.PartMaterialData>> updateAction, Core.PartMaterialData currentData, Core.PartMaterialData defaultData)
+        public PartMaterialProperties(Action<Action<PartMaterialData>> updateAction, PartMaterialData currentData, PartMaterialData defaultData)
         {
             _updateAction = updateAction;
 

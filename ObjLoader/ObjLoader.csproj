@@ -58,6 +58,10 @@
 			<ShaderType>ps_5_0</ShaderType>
 			<EntryPoint>PS</EntryPoint>
 		</HlslShader>
+		<HlslShader Update="Shaders\GpuSkinningCS.hlsl">
+			<ShaderType>cs_5_0</ShaderType>
+			<EntryPoint>CSMain</EntryPoint>
+		</HlslShader>
 	</ItemGroup>
 
 	<Target Name="CompileHLSLShaders" BeforeTargets="PrepareForBuild" Inputs="@(HlslShader)" Outputs="@(HlslShader->'%(ObjectFileOutput)')">
@@ -104,6 +108,9 @@
 		<Reference Include="NCalc.Core">
 			<HintPath>$(YMM4DirPath)NCalc.Core.dll</HintPath>
 			<Private>false</Private>
+		</Reference>
+		<Reference Include="Newtonsoft.Json">
+		  <HintPath>$(YMM4DirPath)Newtonsoft.Json.dll</HintPath>
 		</Reference>
 		<Reference Include="SharpGen.Runtime">
 			<HintPath>$(YMM4DirPath)SharpGen.Runtime.dll</HintPath>

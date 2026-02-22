@@ -1,5 +1,4 @@
 ﻿using ObjLoader.Cache;
-using ObjLoader.Core;
 using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.ViewModels.Settings;
@@ -19,6 +18,8 @@ using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Models;
 using ObjLoader.Plugin;
+using ObjLoader.Core.Models;
+using ObjLoader.Core.Timeline;
 
 namespace ObjLoader.ViewModels.Splitter
 {

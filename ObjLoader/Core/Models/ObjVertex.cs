@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace ObjLoader.Core
+namespace ObjLoader.Core.Models
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct ObjVertex
