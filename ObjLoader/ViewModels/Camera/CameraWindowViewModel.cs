@@ -345,6 +345,7 @@ namespace ObjLoader.ViewModels.Camera
             _sceneService = new SceneService(_parameter, _renderService);
             _sceneService.OnModelLoaded = () => { _isDirty = true; };
             _cameraLogic = new CameraLogic();
+            _cameraLogic.Updated += () => { _isDirty = true; };
             _undoStack = new UndoStack<(double, double, double, double, double, double)>();
             _animationManager = new CameraAnimationManager();
             _interactionManager = new CameraInteractionManager(this);

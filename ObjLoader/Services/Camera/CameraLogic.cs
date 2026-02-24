@@ -5,23 +5,37 @@ namespace ObjLoader.Services.Camera
 {
     internal class CameraLogic
     {
-        public double CamX { get; set; }
-        public double CamY { get; set; }
-        public double CamZ { get; set; }
-        public double TargetX { get; set; }
-        public double TargetY { get; set; }
-        public double TargetZ { get; set; }
+        private double _camX;
+        public double CamX { get => _camX; set { _camX = value; Updated?.Invoke(); } }
+        private double _camY;
+        public double CamY { get => _camY; set { _camY = value; Updated?.Invoke(); } }
+        private double _camZ;
+        public double CamZ { get => _camZ; set { _camZ = value; Updated?.Invoke(); } }
+        private double _targetX;
+        public double TargetX { get => _targetX; set { _targetX = value; Updated?.Invoke(); } }
+        private double _targetY;
+        public double TargetY { get => _targetY; set { _targetY = value; Updated?.Invoke(); } }
+        private double _targetZ;
+        public double TargetZ { get => _targetZ; set { _targetZ = value; Updated?.Invoke(); } }
 
-        public double ViewCenterX { get; set; }
-        public double ViewCenterY { get; set; }
-        public double ViewCenterZ { get; set; }
+        private double _viewCenterX;
+        public double ViewCenterX { get => _viewCenterX; set { _viewCenterX = value; Updated?.Invoke(); } }
+        private double _viewCenterY;
+        public double ViewCenterY { get => _viewCenterY; set { _viewCenterY = value; Updated?.Invoke(); } }
+        private double _viewCenterZ;
+        public double ViewCenterZ { get => _viewCenterZ; set { _viewCenterZ = value; Updated?.Invoke(); } }
 
-        public double ViewRadius { get; set; } = 15;
-        public double ViewTheta { get; set; } = 45 * Math.PI / 180;
-        public double ViewPhi { get; set; } = 45 * Math.PI / 180;
-        public double GizmoRadius { get; set; } = 6.0;
+        private double _viewRadius = 15;
+        public double ViewRadius { get => _viewRadius; set { _viewRadius = value; Updated?.Invoke(); } }
+        private double _viewTheta = 45 * Math.PI / 180;
+        public double ViewTheta { get => _viewTheta; set { _viewTheta = value; Updated?.Invoke(); } }
+        private double _viewPhi = 45 * Math.PI / 180;
+        public double ViewPhi { get => _viewPhi; set { _viewPhi = value; Updated?.Invoke(); } }
+        private double _gizmoRadius = 6.0;
+        public double GizmoRadius { get => _gizmoRadius; set { _gizmoRadius = value; Updated?.Invoke(); } }
 
-        public bool IsPilotView { get; set; } = false;
+        private bool _isPilotView = false;
+        public bool IsPilotView { get => _isPilotView; set { _isPilotView = value; Updated?.Invoke(); } }
 
         private DispatcherTimer? _animationTimer;
         private double _animTargetTheta, _animTargetPhi;
