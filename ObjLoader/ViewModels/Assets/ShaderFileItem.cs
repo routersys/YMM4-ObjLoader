@@ -1,4 +1,5 @@
 ﻿using System.Windows.Media;
+using System.IO;
 using ObjLoader.Localization;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Utilities;
@@ -111,47 +112,86 @@ namespace ObjLoader.ViewModels.Assets
             }
         }
 
-        public void Validate()
+        private static readonly System.Text.RegularExpressions.Regex _errorRegex = new(@"\((\d+),(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private void DispatchUI(Action action)
+        {
+            var dispatcher = System.Windows.Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.Invoke(action);
+            }
+            else
+            {
+                action();
+            }
+        }
+
+        public async Task ValidateAsync()
         {
             if (IsNone)
             {
-                StatusColor = Brushes.Gray;
-                StatusMessage = Texts.Shader_None;
-                ShortStatus = Texts.Shader_None;
-                DetailedMessage = Texts.Shader_None;
-                ErrorCategory = string.Empty;
-                HasError = false;
-                LastValidationTime = null;
-                CodeSnippet = string.Empty;
-                ErrorLine = null;
-                ErrorColumn = null;
+                DispatchUI(() =>
+                {
+                    StatusColor = Brushes.Gray;
+                    StatusMessage = Texts.Shader_None;
+                    ShortStatus = Texts.Shader_None;
+                    DetailedMessage = Texts.Shader_None;
+                    ErrorCategory = string.Empty;
+                    HasError = false;
+                    LastValidationTime = null;
+                    CodeSnippet = string.Empty;
+                    ErrorLine = null;
+                    ErrorColumn = null;
+                });
                 return;
             }
 
             if (string.IsNullOrEmpty(FullPath))
             {
-                StatusColor = Brushes.Yellow;
-                StatusMessage = Texts.Shader_Status_Unknown;
-                ShortStatus = "⚠ " + Texts.Shader_Status_Unknown;
-                DetailedMessage = Texts.Shader_Status_Unknown;
-                ErrorCategory = string.Empty;
-                HasError = false;
-                LastValidationTime = DateTime.Now;
-                CodeSnippet = string.Empty;
-                ErrorLine = null;
-                ErrorColumn = null;
+                DispatchUI(() =>
+                {
+                    StatusColor = Brushes.Yellow;
+                    StatusMessage = Texts.Shader_Status_Unknown;
+                    ShortStatus = "⚠ " + Texts.Shader_Status_Unknown;
+                    DetailedMessage = Texts.Shader_Status_Unknown;
+                    ErrorCategory = string.Empty;
+                    HasError = false;
+                    LastValidationTime = null;
+                    CodeSnippet = string.Empty;
+                    ErrorLine = null;
+                    ErrorColumn = null;
+                });
+                return;
+            }
+
+            if (!File.Exists(FullPath))
+            {
+                DispatchUI(() =>
+                {
+                    StatusColor = Brushes.Gray;
+                    StatusMessage = Texts.Shader_Status_Unknown;
+                    ShortStatus = "- " + Texts.Shader_Status_Unknown;
+                    DetailedMessage = Texts.Shader_Status_Unknown;
+                    ErrorCategory = string.Empty;
+                    HasError = false;
+                    LastValidationTime = DateTime.Now;
+                    CodeSnippet = string.Empty;
+                    ErrorLine = null;
+                    ErrorColumn = null;
+                });
                 return;
             }
 
             try
             {
-                var source = EncodingUtil.ReadAllText(FullPath);
+                var source = await Task.Run(() => EncodingUtil.ReadAllText(FullPath)).ConfigureAwait(false);
                 var converter = new HlslShaderConverter();
                 string convertedSource;
 
                 try
                 {
-                    convertedSource = converter.Convert(source);
+                    convertedSource = await Task.Run(() => converter.Convert(source)).ConfigureAwait(false);
                 }
                 catch (ShaderConversionException ex)
                 {
@@ -159,30 +199,33 @@ namespace ObjLoader.ViewModels.Assets
                     return;
                 }
 
-                var vsResult = ShaderStore.Compile(convertedSource, "VS", "vs_5_0");
+                var vsResult = await Task.Run(() => ShaderStore.Compile(convertedSource, "VS", "vs_5_0")).ConfigureAwait(false);
                 if (vsResult.ByteCode == null)
                 {
                     HandleCompilationError("VS", vsResult.Error!, convertedSource);
                     return;
                 }
 
-                var psResult = ShaderStore.Compile(convertedSource, "PS", "ps_5_0");
+                var psResult = await Task.Run(() => ShaderStore.Compile(convertedSource, "PS", "ps_5_0")).ConfigureAwait(false);
                 if (psResult.ByteCode == null)
                 {
                     HandleCompilationError("PS", psResult.Error!, convertedSource);
                     return;
                 }
 
-                StatusColor = Brushes.LightGreen;
-                StatusMessage = Texts.Shader_Status_Success;
-                ShortStatus = "✓ " + Texts.Shader_Status_Success;
-                DetailedMessage = Texts.Shader_Status_Success;
-                ErrorCategory = string.Empty;
-                HasError = false;
-                LastValidationTime = DateTime.Now;
-                CodeSnippet = string.Empty;
-                ErrorLine = null;
-                ErrorColumn = null;
+                DispatchUI(() =>
+                {
+                    StatusColor = Brushes.LightGreen;
+                    StatusMessage = Texts.Shader_Status_Success;
+                    ShortStatus = "✓ " + Texts.Shader_Status_Success;
+                    DetailedMessage = Texts.Shader_Status_Success;
+                    ErrorCategory = string.Empty;
+                    HasError = false;
+                    LastValidationTime = DateTime.Now;
+                    CodeSnippet = string.Empty;
+                    ErrorLine = null;
+                    ErrorColumn = null;
+                });
             }
             catch (Exception ex)
             {
@@ -192,29 +235,100 @@ namespace ObjLoader.ViewModels.Assets
 
         private void HandleConversionError(ShaderConversionException ex, string source)
         {
-            StatusColor = Brushes.Red;
-            HasError = true;
-            LastValidationTime = DateTime.Now;
-
-            if (ex.InnerException is HlslParseException parseEx)
+            DispatchUI(() =>
             {
-                ErrorCategory = Texts.ShaderError_Category_Syntax;
-                ErrorLine = parseEx.Line;
-                ErrorColumn = parseEx.Column;
+                StatusColor = Brushes.Red;
+                HasError = true;
+                LastValidationTime = DateTime.Now;
 
-                var errorMsg = ex.Message;
-                StatusMessage = string.Format(Texts.Shader_Status_Error, errorMsg);
-                ShortStatus = "× " + Texts.ShaderError_Category_Syntax;
+                if (ex.InnerException is HlslParseException parseEx)
+                {
+                    ErrorCategory = Texts.ShaderError_Category_Syntax;
+                    ErrorLine = parseEx.Line;
+                    ErrorColumn = parseEx.Column;
+
+                    var errorMsg = ex.Message;
+                    StatusMessage = string.Format(Texts.Shader_Status_Error, errorMsg);
+                    ShortStatus = "× " + Texts.ShaderError_Category_Syntax;
+
+                    var detailBuilder = new System.Text.StringBuilder();
+                    detailBuilder.AppendLine($"{Texts.ShaderError_Category_Syntax}");
+                    detailBuilder.AppendLine();
+                    detailBuilder.AppendLine($"{Texts.ShaderError_Location}: {Texts.ShaderError_Line} {parseEx.Line}, {Texts.ShaderError_Column} {parseEx.Column}");
+                    detailBuilder.AppendLine();
+                    detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
+                    detailBuilder.AppendLine(errorMsg);
+
+                    CodeSnippet = ExtractCodeSnippet(source, parseEx.Line);
+                    if (!string.IsNullOrEmpty(CodeSnippet))
+                    {
+                        detailBuilder.AppendLine();
+                        detailBuilder.AppendLine($"{Texts.ShaderError_CodeContext}:");
+                        detailBuilder.AppendLine(CodeSnippet);
+                    }
+
+                    DetailedMessage = detailBuilder.ToString();
+                }
+                else
+                {
+                    ErrorCategory = Texts.ShaderError_Category_Conversion;
+                    ErrorLine = null;
+                    ErrorColumn = null;
+
+                    StatusMessage = string.Format(Texts.Shader_Status_Error, ex.Message);
+                    ShortStatus = "× " + Texts.ShaderError_Category_Conversion;
+
+                    var detailBuilder = new System.Text.StringBuilder();
+                    detailBuilder.AppendLine($"{Texts.ShaderError_Category_Conversion}");
+                    detailBuilder.AppendLine();
+                    detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
+                    detailBuilder.AppendLine(ex.Message);
+
+                    DetailedMessage = detailBuilder.ToString();
+                    CodeSnippet = string.Empty;
+                }
+            });
+        }
+
+        private void HandleCompilationError(string shaderType, string error, string source)
+        {
+            DispatchUI(() =>
+            {
+                StatusColor = Brushes.Red;
+                HasError = true;
+                LastValidationTime = DateTime.Now;
+                ErrorCategory = string.Format(Texts.ShaderError_Category_Compilation, shaderType);
+
+                var lineMatch = _errorRegex.Match(error);
+                if (lineMatch.Success && int.TryParse(lineMatch.Groups[1].Value, out int line))
+                {
+                    ErrorLine = line;
+                    ErrorColumn = int.TryParse(lineMatch.Groups[2].Value, out int col) ? col : null;
+                    CodeSnippet = ExtractCodeSnippet(source, line);
+                }
+                else
+                {
+                    ErrorLine = null;
+                    ErrorColumn = null;
+                    CodeSnippet = string.Empty;
+                }
+
+                StatusMessage = string.Format(Texts.Shader_Status_Error, error);
+                ShortStatus = "× " + ErrorCategory;
 
                 var detailBuilder = new System.Text.StringBuilder();
-                detailBuilder.AppendLine($"{Texts.ShaderError_Category_Syntax}");
+                detailBuilder.AppendLine($"{ErrorCategory}");
                 detailBuilder.AppendLine();
-                detailBuilder.AppendLine($"{Texts.ShaderError_Location}: {Texts.ShaderError_Line} {parseEx.Line}, {Texts.ShaderError_Column} {parseEx.Column}");
-                detailBuilder.AppendLine();
-                detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
-                detailBuilder.AppendLine(errorMsg);
 
-                CodeSnippet = ExtractCodeSnippet(source, parseEx.Line);
+                if (ErrorLine.HasValue)
+                {
+                    detailBuilder.AppendLine($"{Texts.ShaderError_Location}: {Texts.ShaderError_Line} {ErrorLine}, {Texts.ShaderError_Column} {ErrorColumn?.ToString() ?? "?"}");
+                    detailBuilder.AppendLine();
+                }
+
+                detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
+                detailBuilder.AppendLine(error);
+
                 if (!string.IsNullOrEmpty(CodeSnippet))
                 {
                     detailBuilder.AppendLine();
@@ -223,95 +337,31 @@ namespace ObjLoader.ViewModels.Assets
                 }
 
                 DetailedMessage = detailBuilder.ToString();
-            }
-            else
-            {
-                ErrorCategory = Texts.ShaderError_Category_Conversion;
-                ErrorLine = null;
-                ErrorColumn = null;
-
-                StatusMessage = string.Format(Texts.Shader_Status_Error, ex.Message);
-                ShortStatus = "× " + Texts.ShaderError_Category_Conversion;
-
-                var detailBuilder = new System.Text.StringBuilder();
-                detailBuilder.AppendLine($"{Texts.ShaderError_Category_Conversion}");
-                detailBuilder.AppendLine();
-                detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
-                detailBuilder.AppendLine(ex.Message);
-
-                DetailedMessage = detailBuilder.ToString();
-                CodeSnippet = string.Empty;
-            }
-        }
-
-        private void HandleCompilationError(string shaderType, string error, string source)
-        {
-            StatusColor = Brushes.Red;
-            HasError = true;
-            LastValidationTime = DateTime.Now;
-            ErrorCategory = Texts.ShaderError_Category_Compilation;
-
-            var errorMsg = $"{shaderType}: {error}";
-            StatusMessage = string.Format(Texts.Shader_Status_Error, errorMsg);
-            ShortStatus = "× " + Texts.ShaderError_Category_Compilation;
-
-            var lineMatch = System.Text.RegularExpressions.Regex.Match(error, @"\((\d+),(\d+)");
-            if (lineMatch.Success)
-            {
-                ErrorLine = int.Parse(lineMatch.Groups[1].Value);
-                ErrorColumn = int.Parse(lineMatch.Groups[2].Value);
-                CodeSnippet = ExtractCodeSnippet(source, ErrorLine.Value);
-            }
-            else
-            {
-                ErrorLine = null;
-                ErrorColumn = null;
-                CodeSnippet = string.Empty;
-            }
-
-            var detailBuilder = new System.Text.StringBuilder();
-            detailBuilder.AppendLine($"{Texts.ShaderError_Category_Compilation} ({shaderType})");
-            detailBuilder.AppendLine();
-
-            if (ErrorLine.HasValue && ErrorColumn.HasValue)
-            {
-                detailBuilder.AppendLine($"{Texts.ShaderError_Location}: {Texts.ShaderError_Line} {ErrorLine}, {Texts.ShaderError_Column} {ErrorColumn}");
-                detailBuilder.AppendLine();
-            }
-
-            detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
-            detailBuilder.AppendLine(error);
-
-            if (!string.IsNullOrEmpty(CodeSnippet))
-            {
-                detailBuilder.AppendLine();
-                detailBuilder.AppendLine($"{Texts.ShaderError_CodeContext}:");
-                detailBuilder.AppendLine(CodeSnippet);
-            }
-
-            DetailedMessage = detailBuilder.ToString();
+            });
         }
 
         private void HandleGeneralError(Exception ex)
         {
-            StatusColor = Brushes.Red;
-            HasError = true;
-            LastValidationTime = DateTime.Now;
-            ErrorCategory = Texts.ShaderError_Category_General;
-            ErrorLine = null;
-            ErrorColumn = null;
-            CodeSnippet = string.Empty;
+            DispatchUI(() =>
+            {
+                StatusColor = Brushes.Red;
+                StatusMessage = string.Format(Texts.Shader_Status_Error, ex.Message);
+                ShortStatus = "× " + Texts.ShaderError_Category_General;
+                ErrorCategory = Texts.ShaderError_Category_General;
+                HasError = true;
+                LastValidationTime = DateTime.Now;
+                CodeSnippet = string.Empty;
+                ErrorLine = null;
+                ErrorColumn = null;
 
-            StatusMessage = string.Format(Texts.Shader_Status_Error, ex.Message);
-            ShortStatus = "× " + Texts.ShaderError_Category_General;
+                var detailBuilder = new System.Text.StringBuilder();
+                detailBuilder.AppendLine($"{Texts.ShaderError_Category_General}");
+                detailBuilder.AppendLine();
+                detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
+                detailBuilder.AppendLine(ex.ToString());
 
-            var detailBuilder = new System.Text.StringBuilder();
-            detailBuilder.AppendLine($"{Texts.ShaderError_Category_General}");
-            detailBuilder.AppendLine();
-            detailBuilder.AppendLine($"{Texts.ShaderError_Message}:");
-            detailBuilder.AppendLine(ex.Message);
-
-            DetailedMessage = detailBuilder.ToString();
+                DetailedMessage = detailBuilder.ToString();
+            });
         }
 
         private static string ExtractCodeSnippet(string source, int lineNumber)

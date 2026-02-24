@@ -14,7 +14,7 @@ namespace ObjLoader.ViewModels.Assets
         private readonly string _filter;
         private readonly string[] _extensions;
         private bool _isSelecting;
-        private int _notificationTrigger;
+        private int _viewUpdateCounter;
 
         public bool IsResetting { get; set; }
 
@@ -55,7 +55,7 @@ namespace ObjLoader.ViewModels.Assets
                 }
                 else
                 {
-                    value.Validate();
+                    FireAndForgetValidation(value);
                     FilePath = value.FullPath;
                 }
             }
@@ -69,11 +69,11 @@ namespace ObjLoader.ViewModels.Assets
                 if (FilePath == value) return;
                 _property.SetValue(value);
 
-                Set(ref _notificationTrigger, _notificationTrigger + 1, nameof(FilePath));
+                Set(ref _viewUpdateCounter, _viewUpdateCounter + 1, nameof(FilePath));
 
                 UpdateFileList();
 
-                Set(ref _notificationTrigger, _notificationTrigger + 1, nameof(SelectedFile));
+                Set(ref _viewUpdateCounter, _viewUpdateCounter + 1, nameof(SelectedFile));
             }
         }
 
@@ -193,10 +193,10 @@ namespace ObjLoader.ViewModels.Assets
                             }
                         }
                     }
-                    existingItem?.Validate();
+                    FireAndForgetValidation(existingItem);
                 }
 
-                Set(ref _notificationTrigger, _notificationTrigger + 1, nameof(SelectedFile));
+                Set(ref _viewUpdateCounter, _viewUpdateCounter + 1, nameof(SelectedFile));
             }
             finally
             {
@@ -208,6 +208,19 @@ namespace ObjLoader.ViewModels.Assets
         {
             if (!File.Exists(path)) return null;
             return new ShaderFileItem(Path.GetFileName(path), path);
+        }
+
+        private async void FireAndForgetValidation(ShaderFileItem? item)
+        {
+            if (item == null) return;
+            try
+            {
+                await item.ValidateAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Validation auto-trigger failed: {ex}");
+            }
         }
     }
 }

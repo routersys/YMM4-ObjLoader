@@ -38,6 +38,11 @@ namespace ObjLoader.Services.Rendering
         private readonly Dictionary<string, string> _registeredSkinningGuids = new();
         private readonly Dictionary<string, (BoneAnimator Animator, string VmdPath)> _animators = new();
 
+        private bool _isLoadingModel;
+        private bool _isModelLoaded;
+        private readonly object _loadLock = new object();
+        public Action? OnModelLoaded { get; set; }
+
         public double ModelScale { get; private set; } = 1.0;
         public double ModelHeight { get; private set; } = 1.0;
 
@@ -51,7 +56,97 @@ namespace ObjLoader.Services.Rendering
 
         private static string ToCacheKey(string path) => $"{CacheKeyPrefix}{path}";
 
-        public unsafe void LoadModel()
+        public void LoadModel()
+        {
+            lock (_loadLock)
+            {
+                if (_isLoadingModel) return;
+                _isLoadingModel = true;
+            }
+
+            try
+            {
+                LoadModelInternal();
+            }
+            finally
+            {
+                lock (_loadLock)
+                {
+                    _isLoadingModel = false;
+                }
+            }
+        }
+
+        public async Task LoadModelAsync()
+        {
+            lock (_loadLock)
+            {
+                if (_isLoadingModel || _isModelLoaded) return;
+                _isLoadingModel = true;
+            }
+
+            try
+            {
+                await Task.Run(() => LoadModelInternal()).ConfigureAwait(false);
+                _isModelLoaded = true;
+            }
+            finally
+            {
+                lock (_loadLock)
+                {
+                    _isLoadingModel = false;
+                }
+                OnModelLoaded?.Invoke();
+            }
+        }
+
+        public void ComputeModelScale()
+        {
+            var validPaths = new HashSet<string>();
+            if (!string.IsNullOrWhiteSpace(_parameter.FilePath))
+                validPaths.Add(_parameter.FilePath.Trim('"'));
+            foreach (var layer in _parameter.Layers)
+            {
+                if (!string.IsNullOrWhiteSpace(layer.FilePath))
+                    validPaths.Add(layer.FilePath);
+            }
+
+            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
+            bool hasData = false;
+
+            foreach (var path in validPaths)
+            {
+                if (!File.Exists(path)) continue;
+
+                try
+                {
+                    var model = _loader.Load(path);
+                    if (model.Vertices.Length == 0) continue;
+
+                    foreach (var v in model.Vertices)
+                    {
+                        double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
+                        double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
+                        double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
+                        if (x < minX) minX = x; if (x > maxX) maxX = x;
+                        if (y < minY) minY = y; if (y > maxY) maxY = y;
+                        if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+                    }
+                    hasData = true;
+                }
+                catch { }
+            }
+
+            if (hasData)
+            {
+                ModelScale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
+                ModelHeight = maxY - minY;
+                if (ModelScale < 0.1) ModelScale = 1.0;
+            }
+        }
+
+        private unsafe void LoadModelInternal()
         {
             var validPaths = new HashSet<string>();
             if (!string.IsNullOrWhiteSpace(_parameter.FilePath))
@@ -225,7 +320,10 @@ namespace ObjLoader.Services.Rendering
 
         public void Render(PerspectiveCamera camera, double currentTime, int width, int height, bool isPilotView, Color themeColor, bool isWireframe, bool isGrid, bool isInfinite, bool isInteracting, bool enableShadow = true)
         {
-            LoadModel();
+            if (!_isModelLoaded)
+            {
+                _ = LoadModelAsync();
+            }
 
             if (_renderService.SceneImage == null) return;
             var camDir = camera.LookDirection; camDir.Normalize();
@@ -339,8 +437,6 @@ namespace ObjLoader.Services.Rendering
                         h = bounds.Size.Y;
 
                     globalLiftY = (h * scale / 100.0) / 2.0;
-                    ModelHeight = h * scale / 100.0;
-                    ModelScale *= scale / 100.0;
                     liftComputed = true;
                 }
 

@@ -17,6 +17,8 @@ namespace ObjLoader.ViewModels.Layers
         private readonly Action _forceUpdateAction;
         private readonly Dictionary<string, string> _layerNameCache = new Dictionary<string, string>();
         private string _previousFilePath;
+        private CancellationTokenSource? _thumbnailCts;
+        private CancellationTokenSource? _partThumbnailCts;
 
         public LayerData Data { get; }
 
@@ -205,65 +207,135 @@ namespace ObjLoader.ViewModels.Layers
             OnPropertyChanged(nameof(Name));
         }
 
-        public void UpdateThumbnail()
+        private void DispatchUI(Action action)
         {
-            byte[]? bytes = Data.Thumbnail;
-
-            if ((bytes == null || bytes.Length == 0) && !string.IsNullOrEmpty(Data.FilePath) && File.Exists(Data.FilePath))
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
             {
-                bytes = _loader.GetThumbnail(Data.FilePath);
-            }
-
-            if (bytes != null && bytes.Length > 0)
-            {
-                try
-                {
-                    using (var ms = new MemoryStream(bytes))
-                    {
-                        var bitmap = new BitmapImage();
-                        bitmap.BeginInit();
-                        bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                        bitmap.StreamSource = ms;
-                        bitmap.EndInit();
-                        bitmap.Freeze();
-                        ThumbnailSource = bitmap;
-                    }
-                }
-                catch
-                {
-                    ThumbnailSource = null;
-                }
+                dispatcher.Invoke(action);
             }
             else
             {
-                ThumbnailSource = null;
+                action();
             }
-            OnPropertyChanged(nameof(Name));
+        }
+
+        public void UpdateThumbnail()
+        {
+            _thumbnailCts?.Cancel();
+            _thumbnailCts?.Dispose();
+            _thumbnailCts = new CancellationTokenSource();
+            var token = _thumbnailCts.Token;
+
+            _ = UpdateThumbnailAsync(token);
+        }
+
+        private async Task UpdateThumbnailAsync(CancellationToken token)
+        {
+            try
+            {
+                byte[]? bytes = Data.Thumbnail;
+
+                if ((bytes == null || bytes.Length == 0) && !string.IsNullOrEmpty(Data.FilePath) && File.Exists(Data.FilePath))
+                {
+                    bytes = await Task.Run(() => _loader.GetThumbnail(Data.FilePath), token).ConfigureAwait(false);
+                }
+
+                if (token.IsCancellationRequested) return;
+
+                if (bytes != null && bytes.Length > 0)
+                {
+                    var bitmap = await Task.Run(() => 
+                    {
+                        using (var ms = new MemoryStream(bytes))
+                        {
+                            var img = new BitmapImage();
+                            img.BeginInit();
+                            img.CacheOption = BitmapCacheOption.OnLoad;
+                            img.StreamSource = ms;
+                            img.EndInit();
+                            img.Freeze();
+                            return img;
+                        }
+                    }, token).ConfigureAwait(false);
+
+                    if (token.IsCancellationRequested) return;
+                    
+                    DispatchUI(() => ThumbnailSource = bitmap);
+                }
+                else
+                {
+                    DispatchUI(() => ThumbnailSource = null);
+                }
+                
+                DispatchUI(() => OnPropertyChanged(nameof(Name)));
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception)
+            {
+                if (!token.IsCancellationRequested)
+                {
+                    DispatchUI(() => ThumbnailSource = null);
+                    DispatchUI(() => OnPropertyChanged(nameof(Name)));
+                }
+            }
         }
 
         private void LoadPartThumbnails()
         {
-            PartThumbnails.Clear();
+            _partThumbnailCts?.Cancel();
+            _partThumbnailCts?.Dispose();
+            _partThumbnailCts = new CancellationTokenSource();
+            var token = _partThumbnailCts.Token;
+
+            _ = LoadPartThumbnailsAsync(token);
+        }
+
+        private async Task LoadPartThumbnailsAsync(CancellationToken token)
+        {
+            DispatchUI(() => PartThumbnails.Clear());
+
             if (IsChild && Data.VisibleParts != null && Data.VisibleParts.Count > 0 && !string.IsNullOrEmpty(Data.FilePath) && File.Exists(Data.FilePath))
             {
                 try
                 {
-                    var thumbs = _loader.GetPartThumbnails(Data.FilePath, Data.VisibleParts);
-                    foreach (var bytes in thumbs)
+                    var thumbnails = await Task.Run(() => 
                     {
-                        using (var ms = new MemoryStream(bytes))
+                        var thumbs = _loader.GetPartThumbnails(Data.FilePath, Data.VisibleParts);
+                        var bitmaps = new List<BitmapImage>();
+                        foreach (var bytes in thumbs)
                         {
-                            var bitmap = new BitmapImage();
-                            bitmap.BeginInit();
-                            bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                            bitmap.StreamSource = ms;
-                            bitmap.EndInit();
-                            bitmap.Freeze();
-                            PartThumbnails.Add(bitmap);
+                            token.ThrowIfCancellationRequested();
+                            using (var ms = new MemoryStream(bytes))
+                            {
+                                var img = new BitmapImage();
+                                img.BeginInit();
+                                img.CacheOption = BitmapCacheOption.OnLoad;
+                                img.StreamSource = ms;
+                                img.EndInit();
+                                img.Freeze();
+                                bitmaps.Add(img);
+                            }
                         }
-                    }
+                        return bitmaps;
+                    }, token).ConfigureAwait(false);
+                    
+                    if (token.IsCancellationRequested) return;
+
+                    DispatchUI(() => 
+                    {
+                        foreach (var bmp in thumbnails)
+                        {
+                            PartThumbnails.Add(bmp);
+                        }
+                    });
                 }
-                catch
+                catch (OperationCanceledException)
+                {
+                }
+                catch (Exception)
                 {
                 }
             }
@@ -271,6 +343,10 @@ namespace ObjLoader.ViewModels.Layers
 
         public void Dispose()
         {
+            _thumbnailCts?.Cancel();
+            _thumbnailCts?.Dispose();
+            _partThumbnailCts?.Cancel();
+            _partThumbnailCts?.Dispose();
             Data.PropertyChanged -= Data_PropertyChanged;
         }
     }

@@ -14,7 +14,7 @@ namespace ObjLoader.ViewModels.Layers
     {
         private readonly ObjLoaderParameter _parameter;
         private readonly ObjModelLoader _loader = new ObjModelLoader();
-        private bool _suppressCollectionChanged = false;
+        private int _suppressCount = 0;
 
         public ObservableCollection<LayerItemViewModel> Layers { get; } = new ObservableCollection<LayerItemViewModel>();
 
@@ -189,7 +189,7 @@ namespace ObjLoader.ViewModels.Layers
 
         private void OnLayersCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
-            if (_suppressCollectionChanged) return;
+            if (_suppressCount > 0) return;
 
             if (Application.Current != null)
             {
@@ -284,7 +284,7 @@ namespace ObjLoader.ViewModels.Layers
             _parameter.SelectedLayerIndex = -1;
 
             _parameter.BeginUpdate();
-            _suppressCollectionChanged = true;
+            _suppressCount++;
             try
             {
                 foreach (var data in itemsToRemove)
@@ -315,7 +315,7 @@ namespace ObjLoader.ViewModels.Layers
             finally
             {
                 _parameter.EndUpdate();
-                _suppressCollectionChanged = false;
+                _suppressCount--;
             }
 
             SyncLayers();
@@ -367,16 +367,31 @@ namespace ObjLoader.ViewModels.Layers
             return (index, count);
         }
 
+        private int GetPreviousSiblingIndex(int currentIndex, int currentDepth)
+        {
+            for (int i = currentIndex - 1; i >= 0; i--)
+            {
+                if (Layers[i].Depth == currentDepth) return i;
+                if (Layers[i].Depth < currentDepth) break;
+            }
+            return -1;
+        }
+
+        private int GetNextSiblingIndex(int currentIndex, int currentDepth)
+        {
+            var (_, currentCount) = GetLayerRange(currentIndex);
+            int nextIdx = currentIndex + currentCount;
+            if (nextIdx < Layers.Count && Layers[nextIdx].Depth == currentDepth) return nextIdx;
+            return -1;
+        }
+
         private bool CanMoveUp()
         {
             if (SelectedLayer == null) return false;
             int idx = Layers.IndexOf(SelectedLayer);
             if (idx <= 0) return false;
 
-            var prevItem = Layers[idx - 1];
-            if (prevItem.Depth < SelectedLayer.Depth) return false;
-
-            return true;
+            return GetPreviousSiblingIndex(idx, SelectedLayer.Depth) != -1;
         }
 
         private void MoveUp()
@@ -385,25 +400,13 @@ namespace ObjLoader.ViewModels.Layers
             var idx = Layers.IndexOf(SelectedLayer);
             if (idx <= 0) return;
 
-            var (currentStart, currentCount) = GetLayerRange(idx);
-
-            int prevSiblingIdx = -1;
-            for (int i = idx - 1; i >= 0; i--)
-            {
-                if (Layers[i].Depth == SelectedLayer.Depth)
-                {
-                    prevSiblingIdx = i;
-                    break;
-                }
-                if (Layers[i].Depth < SelectedLayer.Depth) break;
-            }
-
+            int prevSiblingIdx = GetPreviousSiblingIndex(idx, SelectedLayer.Depth);
             if (prevSiblingIdx == -1) return;
 
-            var (_, prevCount) = GetLayerRange(prevSiblingIdx);
+            var (currentStart, currentCount) = GetLayerRange(idx);
 
             _parameter.BeginUpdate();
-            _suppressCollectionChanged = true;
+            _suppressCount++;
             try
             {
                 for (int i = 0; i < currentCount; i++)
@@ -414,7 +417,7 @@ namespace ObjLoader.ViewModels.Layers
             finally
             {
                 _parameter.EndUpdate();
-                _suppressCollectionChanged = false;
+                _suppressCount--;
             }
 
             SyncLayers();
@@ -428,14 +431,7 @@ namespace ObjLoader.ViewModels.Layers
             int idx = Layers.IndexOf(SelectedLayer);
             if (idx < 0) return false;
 
-            var (currentStart, currentCount) = GetLayerRange(idx);
-            int nextIdx = currentStart + currentCount;
-
-            if (nextIdx >= Layers.Count) return false;
-
-            if (Layers[nextIdx].Depth < SelectedLayer.Depth) return false;
-
-            return true;
+            return GetNextSiblingIndex(idx, SelectedLayer.Depth) != -1;
         }
 
         private void MoveDown()
@@ -443,17 +439,14 @@ namespace ObjLoader.ViewModels.Layers
             if (SelectedLayer == null) return;
             int idx = Layers.IndexOf(SelectedLayer);
 
+            int nextIdx = GetNextSiblingIndex(idx, SelectedLayer.Depth);
+            if (nextIdx == -1) return;
+
             var (currentStart, currentCount) = GetLayerRange(idx);
-
-            int nextIdx = currentStart + currentCount;
-            if (nextIdx >= Layers.Count) return;
-
-            if (Layers[nextIdx].Depth != SelectedLayer.Depth) return;
-
             var (_, nextCount) = GetLayerRange(nextIdx);
 
             _parameter.BeginUpdate();
-            _suppressCollectionChanged = true;
+            _suppressCount++;
             try
             {
                 for (int i = 0; i < nextCount; i++)
@@ -464,7 +457,7 @@ namespace ObjLoader.ViewModels.Layers
             finally
             {
                 _parameter.EndUpdate();
-                _suppressCollectionChanged = false;
+                _suppressCount--;
             }
 
             SyncLayers();

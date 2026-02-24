@@ -19,10 +19,10 @@ namespace ObjLoader.ViewModels.Settings
     internal class ModelSettingsViewModel : Bindable, IDisposable
     {
         private readonly ModelSettings _settings;
-        private readonly Action<AuditReport> _auditHandler;
+        private Action<AuditReport> _auditHandler = null!;
         private bool _disposed;
 
-        private readonly DispatcherTimer _dashboardTimer;
+        private DispatcherTimer _dashboardTimer = null!;
         private readonly CircularBuffer<double> _trackerMemoryHistory = new(60);
         private readonly CircularBuffer<double> _gpuCacheMemoryHistory = new(60);
 
@@ -56,9 +56,9 @@ namespace ObjLoader.ViewModels.Settings
             set => Set(ref _selectedRoot, value);
         }
 
-        public ICommand AddDirectoryCommand { get; }
-        public ICommand RemoveDirectoryCommand { get; }
-        public ICommand ClearDirectoriesCommand { get; }
+        public ICommand AddDirectoryCommand { get; private set; } = null!;
+        public ICommand RemoveDirectoryCommand { get; private set; } = null!;
+        public ICommand ClearDirectoriesCommand { get; private set; } = null!;
 
         public bool EnableAutoAudit
         {
@@ -199,32 +199,32 @@ namespace ObjLoader.ViewModels.Settings
         public int MinParts => ModelSettings.MinParts;
         public int MaxPartsLimit => ModelSettings.MaxPartsLimit;
 
-        public ICommand RunAuditCommand { get; }
-        public ICommand ResetMaxFileSizeMBCommand { get; }
-        public ICommand ResetMaxGpuMemoryPerModelMBCommand { get; }
-        public ICommand ResetMaxTotalGpuMemoryMBCommand { get; }
-        public ICommand ResetMaxVerticesCommand { get; }
-        public ICommand ResetMaxIndicesCommand { get; }
-        public ICommand ResetMaxPartsCommand { get; }
-        public ICommand ResetAuditIntervalMinutesCommand { get; }
-        public ICommand ResetLeakThresholdMinutesCommand { get; }
-        public ICommand ResetD3DResourceReleaseDelayCommand { get; }
-        public ICommand ResetResourceLimitsCommand { get; }
-        public ICommand ResetComplexityLimitsCommand { get; }
-        public ICommand ResetAuditSettingsCommand { get; }
-        public ICommand ClearGpuCacheCommand { get; }
-        public ICommand ForceDisposeLeakedCommand { get; }
-        public ICommand ResetAllResourcesCommand { get; }
-        public ICommand CopyDashboardCommand { get; }
-        public ICommand CopyLeakedResourcesCommand { get; }
-        public ICommand CopyOrphanedResourcesCommand { get; }
-        public ICommand RefreshGpuCacheCommand { get; }
-        public ActionCommand RemoveSelectedCacheCommand { get; }
-        public ICommand ClearAllCacheCommand { get; }
+        public ICommand RunAuditCommand { get; private set; } = null!;
+        public ICommand ResetMaxFileSizeMBCommand { get; private set; } = null!;
+        public ICommand ResetMaxGpuMemoryPerModelMBCommand { get; private set; } = null!;
+        public ICommand ResetMaxTotalGpuMemoryMBCommand { get; private set; } = null!;
+        public ICommand ResetMaxVerticesCommand { get; private set; } = null!;
+        public ICommand ResetMaxIndicesCommand { get; private set; } = null!;
+        public ICommand ResetMaxPartsCommand { get; private set; } = null!;
+        public ICommand ResetAuditIntervalMinutesCommand { get; private set; } = null!;
+        public ICommand ResetLeakThresholdMinutesCommand { get; private set; } = null!;
+        public ICommand ResetD3DResourceReleaseDelayCommand { get; private set; } = null!;
+        public ICommand ResetResourceLimitsCommand { get; private set; } = null!;
+        public ICommand ResetComplexityLimitsCommand { get; private set; } = null!;
+        public ICommand ResetAuditSettingsCommand { get; private set; } = null!;
+        public ICommand ClearGpuCacheCommand { get; private set; } = null!;
+        public ICommand ForceDisposeLeakedCommand { get; private set; } = null!;
+        public ICommand ResetAllResourcesCommand { get; private set; } = null!;
+        public ICommand CopyDashboardCommand { get; private set; } = null!;
+        public ICommand CopyLeakedResourcesCommand { get; private set; } = null!;
+        public ICommand CopyOrphanedResourcesCommand { get; private set; } = null!;
+        public ICommand RefreshGpuCacheCommand { get; private set; } = null!;
+        public ActionCommand RemoveSelectedCacheCommand { get; private set; } = null!;
+        public ICommand ClearAllCacheCommand { get; private set; } = null!;
         
-        public ActionCommand RemoveSelectedDiskCacheCommand { get; }
-        public ICommand CleanUpDiskCacheCommand { get; }
-        public ICommand RefreshDiskCacheCommand { get; }
+        public ActionCommand RemoveSelectedDiskCacheCommand { get; private set; } = null!;
+        public ICommand CleanUpDiskCacheCommand { get; private set; } = null!;
+        public ICommand RefreshDiskCacheCommand { get; private set; } = null!;
 
         private AuditReport _latestReport = AuditReport.Empty;
         public AuditReport LatestReport
@@ -329,15 +329,29 @@ namespace ObjLoader.ViewModels.Settings
             set => Set(ref _moveCacheNewPath, value);
         }
 
-        public ICommand MoveCacheLocationCommand { get; }
-        public ICommand SelectMoveCacheOldPathCommand { get; }
-        public ICommand SelectMoveCacheNewPathCommand { get; }
+        public ICommand MoveCacheLocationCommand { get; private set; } = null!;
+        public ICommand SelectMoveCacheOldPathCommand { get; private set; } = null!;
+        public ICommand SelectMoveCacheNewPathCommand { get; private set; } = null!;
 
         public ModelSettingsViewModel(ModelSettings settings)
         {
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             AllowedRoots = new ObservableCollection<string>(_settings.AllowedRoots ?? new System.Collections.Generic.List<string>());
 
+            InitializeEnvironment();
+            InitializeDirectoryCommands();
+            InitializeAuditCommands();
+            InitializeLimitCommands();
+            InitializeCacheCommands();
+            InitializeEventsAndTimers();
+
+            RefreshDashboard();
+            RefreshGpuCacheList();
+            RefreshDiskCacheList();
+        }
+
+        private void InitializeEnvironment()
+        {
             try
             {
                 if (_settings.IsSandboxEnforced)
@@ -354,10 +368,11 @@ namespace ObjLoader.ViewModels.Settings
                 ResourceAuditor.Instance.SetLeakThreshold(TimeSpan.FromMinutes(Math.Max(1.0, _settings.LeakThresholdMinutes)));
                 UpdateAuditorState();
             }
-            catch
-            {
-            }
+            catch { }
+        }
 
+        private void InitializeDirectoryCommands()
+        {
             AddDirectoryCommand = new ActionCommand(
                 _ => true,
                 _ =>
@@ -376,9 +391,7 @@ namespace ObjLoader.ViewModels.Settings
                             }
                         }
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 });
 
             RemoveDirectoryCommand = new ActionCommand(
@@ -396,9 +409,7 @@ namespace ObjLoader.ViewModels.Settings
                             SelectedRoot = string.Empty;
                         }
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 });
 
             ClearDirectoriesCommand = new ActionCommand(
@@ -412,11 +423,12 @@ namespace ObjLoader.ViewModels.Settings
                         SaveRoots();
                         SelectedRoot = string.Empty;
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 });
+        }
 
+        private void InitializeAuditCommands()
+        {
             RunAuditCommand = new ActionCommand(
                 _ => true,
                 _ =>
@@ -430,7 +442,41 @@ namespace ObjLoader.ViewModels.Settings
                         LatestReport = AuditReport.Empty;
                     }
                 });
+            
+            CopyDashboardCommand = new ActionCommand(_ => true, _ =>
+            {
+                try
+                {
+                    var sb = new StringBuilder();
+                    sb.AppendLine($"== {Texts.Dashboard} ==");
+                    sb.AppendLine($"{Texts.ActiveResources} {LatestReport.ActiveResources}");
+                    sb.AppendLine($"{Texts.OrphanedResources} {LatestReport.OrphanedResources}");
+                    sb.AppendLine($"{Texts.TotalAllocations} {LatestReport.TotalAllocations}");
+                    sb.AppendLine($"{Texts.TotalDisposals} {LatestReport.TotalDisposals}");
+                    sb.AppendLine($"{Texts.EstimatedMemoryMB} {EstimatedMemoryMB:F2}");
+                    sb.AppendLine($"{Texts.GpuCacheEntries} {GpuCacheEntryCount}");
+                    sb.AppendLine($"{Texts.TotalGpuMemoryMB} {TotalGpuCacheMemoryMB:F2}");
 
+                    Clipboard.SetText(sb.ToString());
+                }
+                catch { }
+            });
+
+            CopyLeakedResourcesCommand = new ActionCommand(_ => true, _ =>
+            {
+                try { CopyResourceListToClipboard(LatestReport.LeakedResources, Texts.LeakedResourcesList); }
+                catch { }
+            });
+
+            CopyOrphanedResourcesCommand = new ActionCommand(_ => true, _ =>
+            {
+                try { CopyResourceListToClipboard(LatestReport.OrphanedResourceList, Texts.OrphanedResourcesList); }
+                catch { }
+            });
+        }
+
+        private void InitializeLimitCommands()
+        {
             ResetMaxFileSizeMBCommand = new ActionCommand(_ => true, _ => MaxFileSizeMB = ModelSettings.DefaultMaxFileSizeMB);
             ResetMaxGpuMemoryPerModelMBCommand = new ActionCommand(_ => true, _ => MaxGpuMemoryPerModelMB = ModelSettings.DefaultMaxGpuMemoryPerModelMB);
             ResetMaxTotalGpuMemoryMBCommand = new ActionCommand(_ => true, _ => MaxTotalGpuMemoryMB = ModelSettings.DefaultMaxTotalGpuMemoryMB);
@@ -461,16 +507,15 @@ namespace ObjLoader.ViewModels.Settings
                 LeakThresholdMinutes = 30.0;
                 D3DResourceReleaseDelay = ModelSettings.DefaultD3DResourceReleaseDelay;
             });
-
+        }
+        
+        private void InitializeCacheCommands()
+        {
             ClearGpuCacheCommand = new ActionCommand(_ => true, _ =>
             {
                 try
                 {
-                    var result = MessageBox.Show(
-                        Texts.ConfirmClearGpuCache,
-                        Texts.ConfirmTitle,
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Question);
+                    var result = MessageBox.Show(Texts.ConfirmClearGpuCache, Texts.ConfirmTitle, MessageBoxButton.YesNo, MessageBoxImage.Question);
                     if (result != MessageBoxResult.Yes) return;
 
                     lock (ObjLoaderSource.SharedRenderLock)
@@ -480,9 +525,7 @@ namespace ObjLoader.ViewModels.Settings
                     RefreshDashboard();
                     RefreshGpuCacheList();
                 }
-                catch
-                {
-                }
+                catch { }
             });
 
             ForceDisposeLeakedCommand = new ActionCommand(_ => true, _ =>
@@ -492,31 +535,20 @@ namespace ObjLoader.ViewModels.Settings
                     int disposed;
                     lock (ObjLoaderSource.SharedRenderLock)
                     {
-                        disposed = ResourceTracker.Instance.ForceDisposeLeaked(
-                            TimeSpan.FromMinutes(Math.Max(1.0, _settings.LeakThresholdMinutes)));
+                        disposed = ResourceTracker.Instance.ForceDisposeLeaked(TimeSpan.FromMinutes(Math.Max(1.0, _settings.LeakThresholdMinutes)));
                     }
                     LatestReport = ResourceAuditor.Instance.RunAudit();
                     RefreshDashboard();
-                    MessageBox.Show(
-                        string.Format(Texts.DisposedCount, disposed),
-                        Texts.ConfirmTitle,
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    MessageBox.Show(string.Format(Texts.DisposedCount, disposed), Texts.ConfirmTitle, MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-                catch
-                {
-                }
+                catch { }
             });
 
             ResetAllResourcesCommand = new ActionCommand(_ => true, _ =>
             {
                 try
                 {
-                    var result = MessageBox.Show(
-                        Texts.ConfirmResetAll,
-                        Texts.ConfirmTitle,
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Warning);
+                    var result = MessageBox.Show(Texts.ConfirmResetAll, Texts.ConfirmTitle, MessageBoxButton.YesNo, MessageBoxImage.Warning);
                     if (result != MessageBoxResult.Yes) return;
 
                     lock (ObjLoaderSource.SharedRenderLock)
@@ -529,52 +561,7 @@ namespace ObjLoader.ViewModels.Settings
                     RefreshDashboard();
                     RefreshGpuCacheList();
                 }
-                catch
-                {
-                }
-            });
-
-            CopyDashboardCommand = new ActionCommand(_ => true, _ =>
-            {
-                try
-                {
-                    var sb = new StringBuilder();
-                    sb.AppendLine($"== {Texts.Dashboard} ==");
-                    sb.AppendLine($"{Texts.ActiveResources} {LatestReport.ActiveResources}");
-                    sb.AppendLine($"{Texts.OrphanedResources} {LatestReport.OrphanedResources}");
-                    sb.AppendLine($"{Texts.TotalAllocations} {LatestReport.TotalAllocations}");
-                    sb.AppendLine($"{Texts.TotalDisposals} {LatestReport.TotalDisposals}");
-                    sb.AppendLine($"{Texts.EstimatedMemoryMB} {EstimatedMemoryMB:F2}");
-                    sb.AppendLine($"{Texts.GpuCacheEntries} {GpuCacheEntryCount}");
-                    sb.AppendLine($"{Texts.TotalGpuMemoryMB} {TotalGpuCacheMemoryMB:F2}");
-
-                    Clipboard.SetText(sb.ToString());
-                }
-                catch
-                {
-                }
-            });
-
-            CopyLeakedResourcesCommand = new ActionCommand(_ => true, _ =>
-            {
-                try
-                {
-                    CopyResourceListToClipboard(LatestReport.LeakedResources, Texts.LeakedResourcesList);
-                }
-                catch
-                {
-                }
-            });
-
-            CopyOrphanedResourcesCommand = new ActionCommand(_ => true, _ =>
-            {
-                try
-                {
-                    CopyResourceListToClipboard(LatestReport.OrphanedResourceList, Texts.OrphanedResourcesList);
-                }
-                catch
-                {
-                }
+                catch { }
             });
 
             RefreshGpuCacheCommand = new ActionCommand(_ => true, _ => RefreshGpuCacheList());
@@ -594,9 +581,7 @@ namespace ObjLoader.ViewModels.Settings
                         RefreshGpuCacheList();
                         RefreshDashboard();
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 });
 
             ClearAllCacheCommand = new ActionCommand(_ => true, _ =>
@@ -610,9 +595,7 @@ namespace ObjLoader.ViewModels.Settings
                     RefreshGpuCacheList();
                     RefreshDashboard();
                 }
-                catch
-                {
-                }
+                catch { }
             });
 
             RemoveSelectedDiskCacheCommand = new ActionCommand(
@@ -628,9 +611,7 @@ namespace ObjLoader.ViewModels.Settings
                         CacheManager.DeleteCache(SelectedDiskCacheItem.OriginalPath);
                         RefreshDiskCacheList();
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 });
 
             CleanUpDiskCacheCommand = new ActionCommand(_ => true, _ =>
@@ -643,9 +624,7 @@ namespace ObjLoader.ViewModels.Settings
                     CacheManager.CleanUpCache();
                     RefreshDiskCacheList();
                 }
-                catch
-                {
-                }
+                catch { }
             });
 
             RefreshDiskCacheCommand = new ActionCommand(_ => true, _ => RefreshDiskCacheList());
@@ -661,14 +640,8 @@ namespace ObjLoader.ViewModels.Settings
 
                         if (Directory.Exists(MoveCacheOldPath) && !Directory.Exists(MoveCacheNewPath))
                         {
-                            try
-                            {
-                                Directory.Move(MoveCacheOldPath, MoveCacheNewPath);
-                            }
-                            catch
-                            {
-                                MessageBox.Show(Texts.MovePhysicalFailed, Texts.ErrorTitle, MessageBoxButton.OK, MessageBoxImage.Warning);
-                            }
+                            try { Directory.Move(MoveCacheOldPath, MoveCacheNewPath); }
+                            catch { MessageBox.Show(Texts.MovePhysicalFailed, Texts.ErrorTitle, MessageBoxButton.OK, MessageBoxImage.Warning); }
                         }
 
                         CacheManager.MoveCache(MoveCacheOldPath, MoveCacheNewPath);
@@ -679,32 +652,26 @@ namespace ObjLoader.ViewModels.Settings
                         
                         MessageBox.Show(Texts.MoveCacheComplete, Texts.ConfirmTitle, MessageBoxButton.OK, MessageBoxImage.Information);
                     }
-                    catch
-                    {
-                    }
+                    catch { }
                 });
 
             SelectMoveCacheOldPathCommand = new ActionCommand(_ => true, _ =>
             {
                 var dialog = new Microsoft.Win32.OpenFolderDialog();
-                if (dialog.ShowDialog() == true)
-                {
-                    MoveCacheOldPath = dialog.FolderName;
-                }
+                if (dialog.ShowDialog() == true) MoveCacheOldPath = dialog.FolderName;
             });
 
             SelectMoveCacheNewPathCommand = new ActionCommand(_ => true, _ =>
             {
                 var dialog = new Microsoft.Win32.OpenFolderDialog();
-                if (dialog.ShowDialog() == true)
-                {
-                    MoveCacheNewPath = dialog.FolderName;
-                }
+                if (dialog.ShowDialog() == true) MoveCacheNewPath = dialog.FolderName;
             });
+        }
 
+        private void InitializeEventsAndTimers()
+        {
             _auditHandler = OnAuditCompleted;
             ResourceAuditor.Instance.AuditCompleted += _auditHandler;
-
 
             _dashboardTimer = new DispatcherTimer
             {
@@ -712,11 +679,6 @@ namespace ObjLoader.ViewModels.Settings
             };
             _dashboardTimer.Tick += OnDashboardTimerTick;
             _dashboardTimer.Start();
-
-
-            RefreshDashboard();
-            RefreshGpuCacheList();
-            RefreshDiskCacheList();
         }
 
         private void OnDashboardTimerTick(object? sender, EventArgs e)

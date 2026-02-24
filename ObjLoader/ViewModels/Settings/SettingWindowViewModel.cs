@@ -194,17 +194,9 @@ namespace ObjLoader.ViewModels.Settings
                 };
             }
 
-            var typeName = "ObjLoader.Generated.SettingsInitializer";
-            var assembly = Assembly.GetExecutingAssembly();
-            var type = assembly.GetType(typeName);
-            if (type != null)
+            if (ObjLoader.Settings.SettingsInitializerRegistry.TryInitialize(_target, this))
             {
-                var method = type.GetMethod("TryInitialize", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-                if (method != null)
-                {
-                    method.Invoke(null, new object[] { _target, this });
-                    return;
-                }
+                return;
             }
 
             FallbackInitialize();

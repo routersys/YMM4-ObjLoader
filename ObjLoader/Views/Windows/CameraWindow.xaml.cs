@@ -1,4 +1,5 @@
-﻿using ObjLoader.Services.UI;
+using ObjLoader.Localization;
+using ObjLoader.Services.UI;
 using ObjLoader.ViewModels.Camera;
 using System.ComponentModel;
 using System.Windows;
@@ -51,6 +52,10 @@ namespace ObjLoader.Views.Windows
             if (e.OldValue is INotifyPropertyChanged oldVm)
             {
                 oldVm.PropertyChanged -= OnViewModelPropertyChanged;
+                if (oldVm is CameraWindowViewModel oldCamVm)
+                {
+                    oldCamVm.OnNotification -= OnViewModelNotification;
+                }
             }
             if (e.NewValue is INotifyPropertyChanged newVm)
             {
@@ -58,6 +63,7 @@ namespace ObjLoader.Views.Windows
             }
             if (e.NewValue is CameraWindowViewModel vm)
             {
+                vm.OnNotification += OnViewModelNotification;
                 if (ThemeBrush is SolidColorBrush brush)
                 {
                     vm.UpdateThemeColor(brush.Color);
@@ -71,8 +77,14 @@ namespace ObjLoader.Views.Windows
             if (DataContext is CameraWindowViewModel vm)
             {
                 vm.PropertyChanged -= OnViewModelPropertyChanged;
+                vm.OnNotification -= OnViewModelNotification;
                 vm.Dispose();
             }
+        }
+
+        private void OnViewModelNotification(object? sender, string message)
+        {
+            MessageBox.Show(this, message, Texts.CameraSettings, MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

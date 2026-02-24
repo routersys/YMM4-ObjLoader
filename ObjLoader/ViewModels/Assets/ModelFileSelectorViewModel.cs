@@ -22,7 +22,7 @@ namespace ObjLoader.ViewModels.Assets
         private readonly string[] _extensions;
         private readonly ObjModelLoader _loader;
         private bool _isSelecting;
-        private int _notificationTrigger;
+        private int _viewUpdateCounter;
 
         public bool IsResetting { get; set; }
 
@@ -147,9 +147,9 @@ namespace ObjLoader.ViewModels.Assets
 
         private void UpdateView()
         {
-            Set(ref _notificationTrigger, _notificationTrigger + 1, nameof(FilePath));
+            Set(ref _viewUpdateCounter, _viewUpdateCounter + 1, nameof(FilePath));
             UpdateFileList();
-            Set(ref _notificationTrigger, _notificationTrigger + 1, nameof(SelectedFile));
+            Set(ref _viewUpdateCounter, _viewUpdateCounter + 1, nameof(SelectedFile));
         }
 
         private void SelectFile()
@@ -167,6 +167,20 @@ namespace ObjLoader.ViewModels.Assets
             }
         }
 
+        private IEnumerable<string> GetFilesFromDirectory(string dir)
+        {
+            try
+            {
+                return Directory.GetFiles(dir)
+                    .Where(f => _extensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                    .OrderBy(f => f);
+            }
+            catch
+            {
+                return Enumerable.Empty<string>();
+            }
+        }
+
         private void UpdateFileList()
         {
             _isSelecting = true;
@@ -178,7 +192,8 @@ namespace ObjLoader.ViewModels.Assets
                     Files.Clear();
                     if (!string.IsNullOrEmpty(FilePath))
                     {
-                        var item = CreateItem(FilePath, true);
+                        var fallbackCacheEntries = ModelSettings.Instance.GetCacheIndex().Entries;
+                        var item = CreateItem(FilePath, true, fallbackCacheEntries);
                         if (item != null) Files.Add(item);
                     }
                     return;
@@ -187,9 +202,7 @@ namespace ObjLoader.ViewModels.Assets
                 var currentFiles = Files.ToDictionary(x => x.FullPath);
                 Files.Clear();
 
-                var files = Directory.GetFiles(dir)
-                    .Where(f => _extensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                    .OrderBy(f => f);
+                var files = GetFilesFromDirectory(dir);
 
                 var index = ModelSettings.Instance.GetCacheIndex();
                 IDictionary<string, CacheIndex.CacheEntry> cacheEntries = index.Entries;
@@ -233,21 +246,11 @@ namespace ObjLoader.ViewModels.Assets
             }
         }
 
-        private ModelFileItem? CreateItem(string path, bool isSelected, IDictionary<string, CacheIndex.CacheEntry>? cacheEntries = null)
+        private ModelFileItem? CreateItem(string path, bool isSelected, IDictionary<string, CacheIndex.CacheEntry> cacheEntries)
         {
             if (!File.Exists(path)) return null;
             
-            bool hasCache = File.Exists(path + ".bin");
-            if (!hasCache && cacheEntries == null)
-            {
-                 var index = ModelSettings.Instance.GetCacheIndex();
-                 cacheEntries = index.Entries;
-            }
-
-            if (!hasCache && cacheEntries != null)
-            {
-                hasCache = cacheEntries.ContainsKey(path);
-            }
+            bool hasCache = File.Exists(path + ".bin") || cacheEntries.ContainsKey(path);
 
             var isThumbnailEnabled = isSelected || hasCache;
             return new ModelFileItem(Path.GetFileName(path), path, isThumbnailEnabled ? _loader.GetThumbnail : _ => Array.Empty<byte>(), isThumbnailEnabled);

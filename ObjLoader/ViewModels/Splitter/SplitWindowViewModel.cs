@@ -100,18 +100,20 @@ namespace ObjLoader.ViewModels.Splitter
             LoadPresetCommand = new ActionCommand(_ => IsPartSelected, LoadPreset);
             ResetMaterialCommand = new ActionCommand(_ => IsPartSelected, ResetMaterial);
 
-            _cameraService.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(PreviewCameraService.IsInteracting))
-                {
-                    OnPropertyChanged(nameof(IsInteracting));
-                }
-            };
+            _cameraService.PropertyChanged += OnCameraServicePropertyChanged;
 
             _renderService.Initialize();
             LoadModel();
 
             _parameter.PropertyChanged += OnParameterPropertyChanged;
+        }
+
+        private void OnCameraServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(PreviewCameraService.IsInteracting))
+            {
+                OnPropertyChanged(nameof(IsInteracting));
+            }
         }
 
         private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -442,8 +444,11 @@ namespace ObjLoader.ViewModels.Splitter
         public void Dispose()
         {
             _parameter.PropertyChanged -= OnParameterPropertyChanged;
+            _cameraService.PropertyChanged -= OnCameraServicePropertyChanged;
             _modelService.UnregisterTracking();
             _modelResource?.Dispose();
+            _modelResource = null;
+            _currentModel = null;
             _renderService.Dispose();
         }
     }

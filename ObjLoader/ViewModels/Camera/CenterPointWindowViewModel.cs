@@ -246,10 +246,21 @@ namespace ObjLoader.ViewModels.Camera
             UpdateCamera();
         }
 
+        private Point3D ModelToWorld(Point3D modelPoint)
+        {
+            return new Point3D(modelPoint.X + _modelCenter.X, modelPoint.Y + _modelCenter.Y, modelPoint.Z + _modelCenter.Z);
+        }
+
+        private Point3D WorldToModel(Point3D worldPoint)
+        {
+            return new Point3D(worldPoint.X - _modelCenter.X, worldPoint.Y - _modelCenter.Y, worldPoint.Z - _modelCenter.Z);
+        }
+
         private void UpdateCenterPointVisual()
         {
             var mesh = new MeshGeometry3D();
-            AddSphere(mesh, new Point3D(CenterX + _modelCenter.X, CenterY + _modelCenter.Y, CenterZ + _modelCenter.Z), 0.05);
+            var worldPoint = ModelToWorld(new Point3D(CenterX, CenterY, CenterZ));
+            AddSphere(mesh, worldPoint, 0.05);
             CenterPointGeometry = mesh;
         }
 
@@ -362,9 +373,46 @@ namespace ObjLoader.ViewModels.Camera
 
         private void AddLine(MeshGeometry3D mesh, Point3D p1, Point3D p2, double thickness)
         {
-            AddSphere(mesh, p1, thickness);
-            AddSphere(mesh, p2, thickness);
-            AddSphere(mesh, (Point3D)(((Vector3D)p1 + (Vector3D)p2) * 0.5), thickness);
+            Vector3D dir = p2 - p1;
+            double length = dir.Length;
+            if (length < 1e-5) return;
+            dir.Normalize();
+
+            Vector3D v1;
+            if (Math.Abs(dir.X) > 0.5)
+                v1 = new Vector3D(dir.Y, -dir.X, 0);
+            else
+                v1 = new Vector3D(0, dir.Z, -dir.Y);
+            v1.Normalize();
+            Vector3D v2 = Vector3D.CrossProduct(dir, v1);
+
+            v1 *= thickness;
+            v2 *= thickness;
+
+            Point3D[] pts = new Point3D[8];
+            pts[0] = p1 + v1 + v2;
+            pts[1] = p1 - v1 + v2;
+            pts[2] = p1 - v1 - v2;
+            pts[3] = p1 + v1 - v2;
+            pts[4] = p2 + v1 + v2;
+            pts[5] = p2 - v1 + v2;
+            pts[6] = p2 - v1 - v2;
+            pts[7] = p2 + v1 - v2;
+
+            int baseIdx = mesh.Positions.Count;
+            foreach (var p in pts) mesh.Positions.Add(p);
+
+            for (int i = 0; i < 4; i++)
+            {
+                int n = (i + 1) % 4;
+                mesh.TriangleIndices.Add(baseIdx + i);
+                mesh.TriangleIndices.Add(baseIdx + n);
+                mesh.TriangleIndices.Add(baseIdx + i + 4);
+
+                mesh.TriangleIndices.Add(baseIdx + n);
+                mesh.TriangleIndices.Add(baseIdx + n + 4);
+                mesh.TriangleIndices.Add(baseIdx + i + 4);
+            }
         }
 
         private void AddTriangle(MeshGeometry3D mesh, Point3D p1, Point3D p2, Point3D p3)
@@ -397,6 +445,7 @@ namespace ObjLoader.ViewModels.Camera
                 var newLayer = _parameter.Layers[_parameter.SelectedLayerIndex];
                 if (_targetLayer != newLayer)
                 {
+                    if (_targetLayer != null) PropertyChangedEventManager.RemoveHandler(_targetLayer, OnLayerPropertyChanged, string.Empty);
                     _targetLayer = newLayer;
                     if (_targetLayer != null)
                     {
@@ -407,6 +456,7 @@ namespace ObjLoader.ViewModels.Camera
             }
             else
             {
+                if (_targetLayer != null) PropertyChangedEventManager.RemoveHandler(_targetLayer, OnLayerPropertyChanged, string.Empty);
                 _targetLayer = null;
                 ModelMesh = null;
             }
@@ -439,9 +489,10 @@ namespace ObjLoader.ViewModels.Camera
         {
             if (_detectedPoint.HasValue && _targetLayer != null)
             {
-                _targetLayer.RotationCenterX = _detectedPoint.Value.X - _modelCenter.X;
-                _targetLayer.RotationCenterY = _detectedPoint.Value.Y - _modelCenter.Y;
-                _targetLayer.RotationCenterZ = _detectedPoint.Value.Z - _modelCenter.Z;
+                var modelPoint = WorldToModel(_detectedPoint.Value);
+                _targetLayer.RotationCenterX = modelPoint.X;
+                _targetLayer.RotationCenterY = modelPoint.Y;
+                _targetLayer.RotationCenterZ = modelPoint.Z;
 
                 OnPropertyChanged(nameof(CenterX));
                 OnPropertyChanged(nameof(CenterY));
