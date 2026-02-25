@@ -51,6 +51,7 @@ namespace ObjLoader.Systems.Physics
         private readonly List<List<int>> _islandManifoldIndices;
         private readonly List<List<int>> _islandJointIndices;
         private readonly Dictionary<int, int> _rootToIsland;
+        private int _activeIslandCount;
 
         private struct NarrowPhasePair
         {
@@ -92,9 +93,15 @@ namespace ObjLoader.Systems.Physics
 
             _islandParent = new int[rbCount];
             _islandRank = new int[rbCount];
-            _islandBodies = new List<List<int>>();
-            _islandManifoldIndices = new List<List<int>>();
-            _islandJointIndices = new List<List<int>>();
+            _islandBodies = new List<List<int>>(128);
+            _islandManifoldIndices = new List<List<int>>(128);
+            _islandJointIndices = new List<List<int>>(128);
+            for (int i = 0; i < 64; i++)
+            {
+                _islandBodies.Add(new List<int>(128));
+                _islandManifoldIndices.Add(new List<int>(128));
+                _islandJointIndices.Add(new List<int>(128));
+            }
             _rootToIsland = new Dictionary<int, int>(rbCount);
 
             int maxManifolds = Math.Min(MaxManifolds, rbCount * rbCount / 2 + 16);
@@ -103,7 +110,7 @@ namespace ObjLoader.Systems.Physics
             _manifoldActive = new bool[maxManifolds];
             _manifoldCount = 0;
 
-            _narrowPairs = new NarrowPhasePair[Math.Min(maxManifolds, rbCount * 4 + 16)];
+            _narrowPairs = new NarrowPhasePair[maxManifolds];
             _narrowPairCount = 0;
 
             for (int i = 0; i < maxManifolds; i++)
@@ -209,6 +216,7 @@ namespace ObjLoader.Systems.Physics
             _accumulator = 0f;
             _simulationTime = 0f;
             _manifoldCount = 0;
+            _activeIslandCount = 0;
 
             for (int i = 0; i < _rbCount; i++)
             {
@@ -388,16 +396,16 @@ namespace ObjLoader.Systems.Physics
             float contactErp = _simulationTime < 1.0f ? 0.1f : 1.0f;
             float jointErp = 1.0f;
 
-            if (_islandBodies.Count > 4)
+            if (_activeIslandCount > 4)
             {
-                Parallel.For(0, _islandBodies.Count, islandIdx =>
+                Parallel.For(0, _activeIslandCount, islandIdx =>
                 {
                     SolveIsland(islandIdx, dt, contactErp, jointErp);
                 });
             }
             else
             {
-                for (int islandIdx = 0; islandIdx < _islandBodies.Count; islandIdx++)
+                for (int islandIdx = 0; islandIdx < _activeIslandCount; islandIdx++)
                 {
                     SolveIsland(islandIdx, dt, contactErp, jointErp);
                 }
@@ -475,9 +483,12 @@ namespace ObjLoader.Systems.Physics
                 }
             }
 
-            foreach (var list in _islandBodies) list.Clear();
-            foreach (var list in _islandManifoldIndices) list.Clear();
-            foreach (var list in _islandJointIndices) list.Clear();
+            for (int i = 0; i < _activeIslandCount; i++)
+            {
+                _islandBodies[i].Clear();
+                _islandManifoldIndices[i].Clear();
+                _islandJointIndices[i].Clear();
+            }
 
             _rootToIsland.Clear();
             int islandCount = 0;
@@ -494,9 +505,9 @@ namespace ObjLoader.Systems.Physics
 
                     while (_islandBodies.Count <= islandIdx)
                     {
-                        _islandBodies.Add(new List<int>());
-                        _islandManifoldIndices.Add(new List<int>());
-                        _islandJointIndices.Add(new List<int>());
+                        _islandBodies.Add(new List<int>(128));
+                        _islandManifoldIndices.Add(new List<int>(128));
+                        _islandJointIndices.Add(new List<int>(128));
                     }
                 }
                 _states[i].IslandId = islandIdx;
@@ -524,13 +535,7 @@ namespace ObjLoader.Systems.Physics
                     _islandJointIndices[islandIdx].Add(i);
             }
 
-            while (_islandBodies.Count > islandCount)
-            {
-                int last = _islandBodies.Count - 1;
-                _islandBodies.RemoveAt(last);
-                _islandManifoldIndices.RemoveAt(last);
-                _islandJointIndices.RemoveAt(last);
-            }
+            _activeIslandCount = islandCount;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -534,6 +534,10 @@ namespace ObjLoader.Rendering.Core
                                 if (vmdData.BoneFrames.Count > 0 && Path.GetExtension(layerState.FilePath).Equals(".pmx", StringComparison.OrdinalIgnoreCase))
                                 {
                                     var pmxModel = new PmxParser().Parse(layerState.FilePath);
+                                    if (pmxModel.Vertices != null && pmxModel.BoneWeights != null)
+                                    {
+                                        _skinningManager.RegisterSkinningState(item.Guid, layerState.FilePath, [.. pmxModel.Vertices], pmxModel.BoneWeights);
+                                    }
                                     if (pmxModel.Bones.Count > 0)
                                     {
                                         item.Data.BoneAnimatorInstance = new BoneAnimator(pmxModel.Bones, vmdData.BoneFrames, pmxModel.RigidBodies, pmxModel.Joints);
