@@ -551,4 +551,27 @@
 <data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>VMD動作載入完成: {0}幀</value></data>
 <data name="Msg_VmdLoadFailed" xml:space="preserve"><value>載入VMD動作失敗: {0}</value></data>
 <data name="Msg_VmdPmxOnly" xml:space="preserve"><value>VMD動作僅支援PMX模型</value></data>
+<data name="Group_Physics" xml:space="preserve"><value>物理模擬</value></data>
+<data name="PhysicsGravity" xml:space="preserve"><value>重力</value></data>
+<data name="PhysicsGravity_Desc" xml:space="preserve"><value>設定物理模擬的重力加速度。</value></data>
+<data name="PhysicsMaxSubSteps" xml:space="preserve"><value>最大子步數</value></data>
+<data name="PhysicsMaxSubSteps_Desc" xml:space="preserve"><value>設定每幀的最大物理計算次數。</value></data>
+<data name="PhysicsSolverIterations" xml:space="preserve"><value>求解器迭代次數</value></data>
+<data name="PhysicsSolverIterations_Desc" xml:space="preserve"><value>設定物理計算的精度。</value></data>
+<data name="PhysicsGroundCollision" xml:space="preserve"><value>地面碰撞判定</value></data>
+<data name="PhysicsGroundCollision_Desc" xml:space="preserve"><value>啟用與地面的碰撞檢測。</value></data>
+<data name="PhysicsGroundY" xml:space="preserve"><value>地面高度</value></data>
+<data name="PhysicsGroundY_Desc" xml:space="preserve"><value>設定地面的Y座標。</value></data>
+<data name="PhysicsSleepLinearThreshold" xml:space="preserve"><value>線性休眠閾值</value></data>
+<data name="PhysicsSleepLinearThreshold_Desc" xml:space="preserve"><value>設定剛體進入休眠狀態的線速度閾值。</value></data>
+<data name="PhysicsSleepAngularThreshold" xml:space="preserve"><value>角度休眠閾值</value></data>
+<data name="PhysicsSleepAngularThreshold_Desc" xml:space="preserve"><value>設定剛體進入休眠狀態的角速度閾值。</value></data>
+<data name="PhysicsSleepTimeRequired" xml:space="preserve"><value>休眠所需時間</value></data>
+<data name="PhysicsSleepTimeRequired_Desc" xml:space="preserve"><value>設定剛體進入休眠狀態所需的時間。</value></data>
+<data name="PhysicsMaxManifolds" xml:space="preserve"><value>最大流形數</value></data>
+<data name="PhysicsMaxManifolds_Desc" xml:space="preserve"><value>設定記錄碰撞的最大數量。</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold" xml:space="preserve"><value>並行處理閾值</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>設定開始並行計算碰撞的閾值。</value></data>
+<data name="PhysicsWarmStartScale" xml:space="preserve"><value>熱啟動係數</value></data>
+<data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>設定利用上一幀碰撞結果進行穩定處理的係數。</value></data>
 </root>

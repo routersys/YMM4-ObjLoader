@@ -551,4 +551,27 @@
 <data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>تم تحميل حركة VMD: {0} إطارات</value></data>
 <data name="Msg_VmdLoadFailed" xml:space="preserve"><value>فشل تحميل حركة VMD: {0}</value></data>
 <data name="Msg_VmdPmxOnly" xml:space="preserve"><value>حركة VMD متاحة فقط لنماذج PMX</value></data>
+<data name="Group_Physics" xml:space="preserve"><value>الفيزياء</value></data>
+<data name="PhysicsGravity" xml:space="preserve"><value>الجاذبية</value></data>
+<data name="PhysicsGravity_Desc" xml:space="preserve"><value>يحدد تسارع الجاذبية للفيزياء.</value></data>
+<data name="PhysicsMaxSubSteps" xml:space="preserve"><value>أقصى خطوات فرعية</value></data>
+<data name="PhysicsMaxSubSteps_Desc" xml:space="preserve"><value>يحدد الحد الأقصى لعدد خطوات الفيزياء لكل إطار.</value></data>
+<data name="PhysicsSolverIterations" xml:space="preserve"><value>تكرارات المحلل</value></data>
+<data name="PhysicsSolverIterations_Desc" xml:space="preserve"><value>يحدد دقة حسابات الفيزياء.</value></data>
+<data name="PhysicsGroundCollision" xml:space="preserve"><value>التصادم مع الأرض</value></data>
+<data name="PhysicsGroundCollision_Desc" xml:space="preserve"><value>يفعل اكتشاف التصادم مع الأرض.</value></data>
+<data name="PhysicsGroundY" xml:space="preserve"><value>نقطة الأرض Y</value></data>
+<data name="PhysicsGroundY_Desc" xml:space="preserve"><value>يحدد إحداثي Y للأرض.</value></data>
+<data name="PhysicsSleepLinearThreshold" xml:space="preserve"><value>عتبة السكون الخطي</value></data>
+<data name="PhysicsSleepLinearThreshold_Desc" xml:space="preserve"><value>يحدد عتبة السرعة الخطية للسكون.</value></data>
+<data name="PhysicsSleepAngularThreshold" xml:space="preserve"><value>عتبة السكون الزاوي</value></data>
+<data name="PhysicsSleepAngularThreshold_Desc" xml:space="preserve"><value>يحدد عتبة السرعة الزاوية للسكون.</value></data>
+<data name="PhysicsSleepTimeRequired" xml:space="preserve"><value>وقت السكون المطلوب</value></data>
+<data name="PhysicsSleepTimeRequired_Desc" xml:space="preserve"><value>يحدد الوقت المطلوب لكي يسكن الجسم الصلب.</value></data>
+<data name="PhysicsMaxManifolds" xml:space="preserve"><value>الحد الأقصى للمشعبات</value></data>
+<data name="PhysicsMaxManifolds_Desc" xml:space="preserve"><value>يحدد الحد الأقصى لعدد مشعبات التصادم.</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold" xml:space="preserve"><value>عتبة التوازي</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>يحدد عتبة اكتشاف تصادم المرحلة الضيقة المتوازية.</value></data>
+<data name="PhysicsWarmStartScale" xml:space="preserve"><value>مقياس البدء الدافئ</value></data>
+<data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>يحدد مقياس البدء الدافئ لقيود الفيزياء.</value></data>
 </root>

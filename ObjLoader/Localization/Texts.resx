@@ -551,4 +551,27 @@
 <data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>VMDモーション読み込み完了: {0}フレーム</value></data>
 <data name="Msg_VmdLoadFailed" xml:space="preserve"><value>VMDモーションの読み込みに失敗しました: {0}</value></data>
 <data name="Msg_VmdPmxOnly" xml:space="preserve"><value>VMDモーションはPMXモデルのみ対応です</value></data>
+<data name="Group_Physics" xml:space="preserve"><value>物理演算</value></data>
+<data name="PhysicsGravity" xml:space="preserve"><value>重力</value></data>
+<data name="PhysicsGravity_Desc" xml:space="preserve"><value>物理演算の重力加速度を設定します。</value></data>
+<data name="PhysicsMaxSubSteps" xml:space="preserve"><value>最大サブステップ数</value></data>
+<data name="PhysicsMaxSubSteps_Desc" xml:space="preserve"><value>1フレームの最大物理計算回数を設定します。</value></data>
+<data name="PhysicsSolverIterations" xml:space="preserve"><value>ソルバー反復回数</value></data>
+<data name="PhysicsSolverIterations_Desc" xml:space="preserve"><value>物理計算の精度を設定します。</value></data>
+<data name="PhysicsGroundCollision" xml:space="preserve"><value>地面衝突判定</value></data>
+<data name="PhysicsGroundCollision_Desc" xml:space="preserve"><value>地面との衝突判定を有効にします。</value></data>
+<data name="PhysicsGroundY" xml:space="preserve"><value>地面の高さ</value></data>
+<data name="PhysicsGroundY_Desc" xml:space="preserve"><value>地面のY座標を設定します。</value></data>
+<data name="PhysicsSleepLinearThreshold" xml:space="preserve"><value>リニアスリープ閾値</value></data>
+<data name="PhysicsSleepLinearThreshold_Desc" xml:space="preserve"><value>剛体がスリープ状態に入る並進速度の閾値を設定します。</value></data>
+<data name="PhysicsSleepAngularThreshold" xml:space="preserve"><value>アンギュラスリープ閾値</value></data>
+<data name="PhysicsSleepAngularThreshold_Desc" xml:space="preserve"><value>剛体がスリープ状態に入る回転速度の閾値を設定します。</value></data>
+<data name="PhysicsSleepTimeRequired" xml:space="preserve"><value>スリープ必要時間</value></data>
+<data name="PhysicsSleepTimeRequired_Desc" xml:space="preserve"><value>剛体がスリープ状態になるまでの時間を設定します。</value></data>
+<data name="PhysicsMaxManifolds" xml:space="preserve"><value>最大マニフォールド数</value></data>
+<data name="PhysicsMaxManifolds_Desc" xml:space="preserve"><value>衝突を記録する最大数を設定します。</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold" xml:space="preserve"><value>並列処理閾値</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>衝突の並列計算を開始する閾値を設定します。</value></data>
+<data name="PhysicsWarmStartScale" xml:space="preserve"><value>ウォームスタート係数</value></data>
+<data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>前回のフレームの衝突結果を利用して安定させる係数を設定します。</value></data>
 </root>

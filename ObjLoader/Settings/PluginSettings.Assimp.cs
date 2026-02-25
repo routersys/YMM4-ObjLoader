@@ -12,7 +12,7 @@ namespace ObjLoader.Settings
         private bool _assimp3mf = false;
         private bool _assimpPmx = false;
 
-        [SettingGroup("Assimp", nameof(Texts.Group_Assimp), Order = 15, Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
+        [SettingGroup("Assimp", nameof(Texts.Group_Assimp), Order = 5, Icon = "M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z", ResourceType = typeof(Texts))]
         [BoolSetting("Assimp", nameof(Texts.Assimp_Obj), Description = nameof(Texts.Assimp_Obj_Desc), ResourceType = typeof(Texts))]
         public bool AssimpObj { get => _assimpObj; set => SetProperty(ref _assimpObj, value); }
 

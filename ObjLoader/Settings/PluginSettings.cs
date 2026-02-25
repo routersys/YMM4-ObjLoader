@@ -73,6 +73,17 @@ namespace ObjLoader.Settings
                 Assimp3mf = _assimp3mf,
                 AssimpPmx = _assimpPmx,
                 IsSpecularFixApplied = _isSpecularFixApplied,
+                PhysicsGravity = _physicsGravity,
+                PhysicsMaxSubSteps = _physicsMaxSubSteps,
+                PhysicsSolverIterations = _physicsSolverIterations,
+                PhysicsGroundCollision = _physicsGroundCollision,
+                PhysicsGroundY = _physicsGroundY,
+                PhysicsSleepLinearThreshold = _physicsSleepLinearThreshold,
+                PhysicsSleepAngularThreshold = _physicsSleepAngularThreshold,
+                PhysicsSleepTimeRequired = _physicsSleepTimeRequired,
+                PhysicsMaxManifolds = _physicsMaxManifolds,
+                PhysicsParallelNarrowPhaseThreshold = _physicsParallelNarrowPhaseThreshold,
+                PhysicsWarmStartScale = _physicsWarmStartScale,
                 WorldId = _worldId,
                 WorldParameters = WorldParameters.Select(w => (WorldParameter)w.Clone()).ToList()
             };
@@ -97,6 +108,19 @@ namespace ObjLoader.Settings
             _assimp3mf = m.Assimp3mf;
             _assimpPmx = m.AssimpPmx;
             _isSpecularFixApplied = m.IsSpecularFixApplied;
+
+            _physicsGravity = m.PhysicsGravity != 0 ? m.PhysicsGravity : -98.0f;
+            _physicsMaxSubSteps = m.PhysicsMaxSubSteps > 0 ? m.PhysicsMaxSubSteps : 10;
+            _physicsSolverIterations = m.PhysicsSolverIterations > 0 ? m.PhysicsSolverIterations : 12;
+            _physicsGroundCollision = m.PhysicsGravity != 0 ? m.PhysicsGroundCollision : true;
+            _physicsGroundY = m.PhysicsGroundY;
+            _physicsSleepLinearThreshold = m.PhysicsGravity != 0 ? m.PhysicsSleepLinearThreshold : 0.08f;
+            _physicsSleepAngularThreshold = m.PhysicsGravity != 0 ? m.PhysicsSleepAngularThreshold : 0.08f;
+            _physicsSleepTimeRequired = m.PhysicsGravity != 0 ? m.PhysicsSleepTimeRequired : 0.3f;
+            _physicsMaxManifolds = m.PhysicsMaxManifolds > 0 ? m.PhysicsMaxManifolds : 4096;
+            _physicsParallelNarrowPhaseThreshold = m.PhysicsParallelNarrowPhaseThreshold > 0 ? m.PhysicsParallelNarrowPhaseThreshold : 16;
+            _physicsWarmStartScale = m.PhysicsGravity != 0 ? m.PhysicsWarmStartScale : 0.85f;
+
             _worldId = m.WorldId;
 
             if (m.WorldParameters != null && m.WorldParameters.Count > 0)
@@ -267,6 +291,18 @@ namespace ObjLoader.Settings
             AssimpStl = false;
             Assimp3mf = false;
             AssimpPmx = false;
+
+            PhysicsGravity = -98.0;
+            PhysicsMaxSubSteps = 10;
+            PhysicsSolverIterations = 12;
+            PhysicsGroundCollision = true;
+            PhysicsGroundY = 0.0;
+            PhysicsSleepLinearThreshold = 0.08;
+            PhysicsSleepAngularThreshold = 0.08;
+            PhysicsSleepTimeRequired = 0.3;
+            PhysicsMaxManifolds = 4096;
+            PhysicsParallelNarrowPhaseThreshold = 16;
+            PhysicsWarmStartScale = 0.85;
 
             WorldParameters = new List<WorldParameter>();
             EnsureWorlds();

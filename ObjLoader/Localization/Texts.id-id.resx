@@ -551,4 +551,27 @@
 <data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>Gerakan VMD dimuat: {0} bingkai</value></data>
 <data name="Msg_VmdLoadFailed" xml:space="preserve"><value>Gagal memuat gerakan VMD: {0}</value></data>
 <data name="Msg_VmdPmxOnly" xml:space="preserve"><value>Gerakan VMD hanya tersedia untuk model PMX</value></data>
+<data name="Group_Physics" xml:space="preserve"><value>Fisika</value></data>
+<data name="PhysicsGravity" xml:space="preserve"><value>Gravitasi</value></data>
+<data name="PhysicsGravity_Desc" xml:space="preserve"><value>Mengatur percepatan gravitasi untuk fisika.</value></data>
+<data name="PhysicsMaxSubSteps" xml:space="preserve"><value>SubLangkah Maks</value></data>
+<data name="PhysicsMaxSubSteps_Desc" xml:space="preserve"><value>Mengatur jumlah langkah fisika maksimum per frame.</value></data>
+<data name="PhysicsSolverIterations" xml:space="preserve"><value>Iterasi Solver</value></data>
+<data name="PhysicsSolverIterations_Desc" xml:space="preserve"><value>Mengatur presisi perhitungan fisika.</value></data>
+<data name="PhysicsGroundCollision" xml:space="preserve"><value>Tabrakan Tanah</value></data>
+<data name="PhysicsGroundCollision_Desc" xml:space="preserve"><value>Mengaktifkan deteksi tabrakan dengan tanah.</value></data>
+<data name="PhysicsGroundY" xml:space="preserve"><value>Ketinggian Tanah Y</value></data>
+<data name="PhysicsGroundY_Desc" xml:space="preserve"><value>Mengatur koordinat Y tanah.</value></data>
+<data name="PhysicsSleepLinearThreshold" xml:space="preserve"><value>Ambang Tidur Linear</value></data>
+<data name="PhysicsSleepLinearThreshold_Desc" xml:space="preserve"><value>Mengatur ambang kecepatan linear untuk tidur.</value></data>
+<data name="PhysicsSleepAngularThreshold" xml:space="preserve"><value>Ambang Tidur Sudut</value></data>
+<data name="PhysicsSleepAngularThreshold_Desc" xml:space="preserve"><value>Mengatur ambang kecepatan sudut untuk tidur.</value></data>
+<data name="PhysicsSleepTimeRequired" xml:space="preserve"><value>Waktu Tidur Diperlukan</value></data>
+<data name="PhysicsSleepTimeRequired_Desc" xml:space="preserve"><value>Mengatur waktu yang diperlukan untuk tubuh kaku tertidur.</value></data>
+<data name="PhysicsMaxManifolds" xml:space="preserve"><value>Manifold Maksimum</value></data>
+<data name="PhysicsMaxManifolds_Desc" xml:space="preserve"><value>Mengatur jumlah maksimum manifold tabrakan.</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold" xml:space="preserve"><value>Ambang Paralel</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>Mengatur ambang batas untuk deteksi tabrakan fase sempit paralel.</value></data>
+<data name="PhysicsWarmStartScale" xml:space="preserve"><value>Skala Mulai Hangat</value></data>
+<data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>Mengatur skala untuk memulai hangat kendala fisika.</value></data>
 </root>

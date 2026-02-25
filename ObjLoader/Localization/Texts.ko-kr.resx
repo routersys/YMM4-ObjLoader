@@ -551,4 +551,27 @@
 <data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>VMD 모션 로드 완료: {0}프레임</value></data>
 <data name="Msg_VmdLoadFailed" xml:space="preserve"><value>VMD 모션 로드 실패: {0}</value></data>
 <data name="Msg_VmdPmxOnly" xml:space="preserve"><value>VMD 모션은 PMX 모델에서만 사용 가능합니다</value></data>
+<data name="Group_Physics" xml:space="preserve"><value>물리 연산</value></data>
+<data name="PhysicsGravity" xml:space="preserve"><value>중력</value></data>
+<data name="PhysicsGravity_Desc" xml:space="preserve"><value>물리 연산의 중력 가속도를 설정합니다.</value></data>
+<data name="PhysicsMaxSubSteps" xml:space="preserve"><value>최대 서브스텝 수</value></data>
+<data name="PhysicsMaxSubSteps_Desc" xml:space="preserve"><value>1프레임당 최대 물리 계산 횟수를 설정합니다.</value></data>
+<data name="PhysicsSolverIterations" xml:space="preserve"><value>솔버 반복 횟수</value></data>
+<data name="PhysicsSolverIterations_Desc" xml:space="preserve"><value>물리 계산의 정밀도를 설정합니다.</value></data>
+<data name="PhysicsGroundCollision" xml:space="preserve"><value>지면 충돌 판정</value></data>
+<data name="PhysicsGroundCollision_Desc" xml:space="preserve"><value>지면과의 충돌 판정을 활성화합니다.</value></data>
+<data name="PhysicsGroundY" xml:space="preserve"><value>지면 높이</value></data>
+<data name="PhysicsGroundY_Desc" xml:space="preserve"><value>지면의 Y 좌표를 설정합니다.</value></data>
+<data name="PhysicsSleepLinearThreshold" xml:space="preserve"><value>선형 슬립 임계값</value></data>
+<data name="PhysicsSleepLinearThreshold_Desc" xml:space="preserve"><value>강체가 슬립 상태로 들어가는 선속도 임계값을 설정합니다.</value></data>
+<data name="PhysicsSleepAngularThreshold" xml:space="preserve"><value>각 슬립 임계값</value></data>
+<data name="PhysicsSleepAngularThreshold_Desc" xml:space="preserve"><value>강체가 슬립 상태로 들어가는 각속도 임계값을 설정합니다.</value></data>
+<data name="PhysicsSleepTimeRequired" xml:space="preserve"><value>슬립 필요 시간</value></data>
+<data name="PhysicsSleepTimeRequired_Desc" xml:space="preserve"><value>강체가 슬립 상태가 되기까지의 시간을 설정합니다.</value></data>
+<data name="PhysicsMaxManifolds" xml:space="preserve"><value>최대 매니폴드 수</value></data>
+<data name="PhysicsMaxManifolds_Desc" xml:space="preserve"><value>충돌을 기록하는 최대 수를 설정합니다.</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold" xml:space="preserve"><value>병렬 처리 임계값</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>충돌의 병렬 계산을 시작하는 임계값을 설정합니다.</value></data>
+<data name="PhysicsWarmStartScale" xml:space="preserve"><value>웜 스타트 계수</value></data>
+<data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>이전 프레임의 충돌 결과를 이용하여 안정화시키는 계수를 설정합니다.</value></data>
 </root>

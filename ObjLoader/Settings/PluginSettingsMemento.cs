@@ -22,6 +22,18 @@ namespace ObjLoader.Settings
         public bool AssimpPmx { get; set; }
         public bool IsSpecularFixApplied { get; set; }
 
+        public float PhysicsGravity { get; set; }
+        public int PhysicsMaxSubSteps { get; set; }
+        public int PhysicsSolverIterations { get; set; }
+        public bool PhysicsGroundCollision { get; set; } = true;
+        public float PhysicsGroundY { get; set; }
+        public float PhysicsSleepLinearThreshold { get; set; }
+        public float PhysicsSleepAngularThreshold { get; set; }
+        public float PhysicsSleepTimeRequired { get; set; }
+        public int PhysicsMaxManifolds { get; set; }
+        public int PhysicsParallelNarrowPhaseThreshold { get; set; }
+        public float PhysicsWarmStartScale { get; set; }
+
         public int WorldId { get; set; }
 
         public List<Color>? AmbientColors { get; set; }

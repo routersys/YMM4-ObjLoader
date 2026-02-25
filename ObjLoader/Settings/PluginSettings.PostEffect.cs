@@ -6,7 +6,7 @@ namespace ObjLoader.Settings
 {
     public partial class PluginSettings
     {
-        [SettingGroup("PostEffect", nameof(Texts.Group_PostEffect), Order = 11, Icon = "M2,2V22H22V2H2M20,20H4V4H20V20M8,6H16V14H8V6M10,8V12H14V8H10Z", ResourceType = typeof(Texts))]
+        [SettingGroup("PostEffect", nameof(Texts.Group_PostEffect), Order = 3, Icon = "M2,2V22H22V2H2M20,20H4V4H20V20M8,6H16V14H8V6M10,8V12H14V8H10Z", ResourceType = typeof(Texts))]
         [IntSpinnerSetting("PostEffect", nameof(Texts.WorldId), 0, 19, IsGroupHeader = true, Description = nameof(Texts.WorldId_Desc), ResourceType = typeof(Texts))]
         public int PostEffectWorldId
         {

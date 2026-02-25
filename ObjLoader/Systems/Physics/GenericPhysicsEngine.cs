@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using ObjLoader.Settings;
 using System.Runtime.CompilerServices;
 using ObjLoader.Systems.Models;
 
@@ -6,17 +7,18 @@ namespace ObjLoader.Systems.Physics
 {
     public class GenericPhysicsEngine
     {
-        private const float Gravity = -9.8f * 10f;
+        private float Gravity => (float)PluginSettings.Instance.PhysicsGravity;
         private const float FixedTimeStep = 1f / 60f;
-        private const int MaxSubSteps = 10;
-        private const int SolverIterations = 12;
-        private const float GroundY = 0f;
-        private const float SleepLinearThreshold = 0.08f;
-        private const float SleepAngularThreshold = 0.08f;
-        private const float SleepTimeRequired = 0.3f;
-        private const int MaxManifolds = 4096;
-        private const int ParallelNarrowPhaseThreshold = 16;
-        private const float WarmStartScale = 0.85f;
+        private int MaxSubSteps => PluginSettings.Instance.PhysicsMaxSubSteps;
+        private int SolverIterations => PluginSettings.Instance.PhysicsSolverIterations;
+        private bool EnableGroundCollision => PluginSettings.Instance.PhysicsGroundCollision;
+        private float GroundY => (float)PluginSettings.Instance.PhysicsGroundY;
+        private float SleepLinearThreshold => (float)PluginSettings.Instance.PhysicsSleepLinearThreshold;
+        private float SleepAngularThreshold => (float)PluginSettings.Instance.PhysicsSleepAngularThreshold;
+        private float SleepTimeRequired => (float)PluginSettings.Instance.PhysicsSleepTimeRequired;
+        private int MaxManifolds => PluginSettings.Instance.PhysicsMaxManifolds;
+        private int ParallelNarrowPhaseThreshold => PluginSettings.Instance.PhysicsParallelNarrowPhaseThreshold;
+        private float WarmStartScale => (float)PluginSettings.Instance.PhysicsWarmStartScale;
 
         private readonly List<GenericBone> _bones;
         private readonly List<GenericRigidBody> _rigidBodies;
@@ -34,10 +36,10 @@ namespace ObjLoader.Systems.Physics
         private readonly Vector3[] _jointSpringLinearImpulse;
         private readonly Vector3[] _jointSpringAngularImpulse;
 
-        private readonly PersistentManifold[] _manifoldPool;
-        private readonly ulong[] _manifoldKeys;
+        private PersistentManifold[] _manifoldPool;
+        private ulong[] _manifoldKeys;
         private int _manifoldCount;
-        private readonly bool[] _manifoldActive;
+        private bool[] _manifoldActive;
         private readonly bool[] _physicsBoneFlags;
 
         private readonly int[] _sapSortedIndices;
@@ -249,9 +251,30 @@ namespace ObjLoader.Systems.Physics
             }
         }
 
+        private void ResizeManifoldCapacityIfNeeded()
+        {
+            int maxManifolds = Math.Min(MaxManifolds, _rbCount * _rbCount / 2 + 16);
+            if (_manifoldPool.Length != maxManifolds)
+            {
+                int oldLength = _manifoldPool.Length;
+                Array.Resize(ref _manifoldPool, maxManifolds);
+                Array.Resize(ref _manifoldKeys, maxManifolds);
+                Array.Resize(ref _manifoldActive, maxManifolds);
+                Array.Resize(ref _narrowPairs, maxManifolds);
+
+                for (int i = oldLength; i < maxManifolds; i++)
+                {
+                    _manifoldPool[i] = new PersistentManifold(0, 0);
+                }
+                if (_manifoldCount > maxManifolds)
+                    _manifoldCount = maxManifolds;
+            }
+        }
+
         public void Update(Matrix4x4[] globalBoneTransforms, float deltaTime)
         {
-            if (deltaTime <= 0f) return;
+            if (_rbCount == 0 || deltaTime <= 0f) return;
+            ResizeManifoldCapacityIfNeeded();
 
             UpdateKinematicBodies(globalBoneTransforms, deltaTime);
 
@@ -872,6 +895,7 @@ namespace ObjLoader.Systems.Physics
 
         private unsafe void ApplyGroundCollision()
         {
+            if (!EnableGroundCollision) return;
             int count = _states.Length;
 
             fixed (PhysicsState* pStates = _states)

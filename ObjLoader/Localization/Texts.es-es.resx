@@ -551,4 +551,27 @@
 <data name="Msg_VmdLoadSuccess" xml:space="preserve"><value>Movimiento VMD cargado: {0} fotogramas</value></data>
 <data name="Msg_VmdLoadFailed" xml:space="preserve"><value>Error al cargar el movimiento VMD: {0}</value></data>
 <data name="Msg_VmdPmxOnly" xml:space="preserve"><value>El movimiento VMD solo está disponible para modelos PMX</value></data>
+<data name="Group_Physics" xml:space="preserve"><value>Física</value></data>
+<data name="PhysicsGravity" xml:space="preserve"><value>Gravedad</value></data>
+<data name="PhysicsGravity_Desc" xml:space="preserve"><value>Establece la aceleración de la gravedad para la física.</value></data>
+<data name="PhysicsMaxSubSteps" xml:space="preserve"><value>Subpasos máximos</value></data>
+<data name="PhysicsMaxSubSteps_Desc" xml:space="preserve"><value>Establece el número máximo de pasos de física por marco.</value></data>
+<data name="PhysicsSolverIterations" xml:space="preserve"><value>Iteraciones del solucionador</value></data>
+<data name="PhysicsSolverIterations_Desc" xml:space="preserve"><value>Establece la precisión de los cálculos físicos.</value></data>
+<data name="PhysicsGroundCollision" xml:space="preserve"><value>Colisión en el suelo</value></data>
+<data name="PhysicsGroundCollision_Desc" xml:space="preserve"><value>Habilita la detección de colisiones con el suelo.</value></data>
+<data name="PhysicsGroundY" xml:space="preserve"><value>Y del suelo</value></data>
+<data name="PhysicsGroundY_Desc" xml:space="preserve"><value>Establece la coordenada Y del suelo.</value></data>
+<data name="PhysicsSleepLinearThreshold" xml:space="preserve"><value>Umbral de sueño lineal</value></data>
+<data name="PhysicsSleepLinearThreshold_Desc" xml:space="preserve"><value>Establece el umbral de velocidad lineal para dormir.</value></data>
+<data name="PhysicsSleepAngularThreshold" xml:space="preserve"><value>Umbral de sueño angular</value></data>
+<data name="PhysicsSleepAngularThreshold_Desc" xml:space="preserve"><value>Establece el umbral de velocidad angular para dormir.</value></data>
+<data name="PhysicsSleepTimeRequired" xml:space="preserve"><value>Tiempo de sueño requerido</value></data>
+<data name="PhysicsSleepTimeRequired_Desc" xml:space="preserve"><value>Establece el tiempo necesario para que un cuerpo rígido duerma.</value></data>
+<data name="PhysicsMaxManifolds" xml:space="preserve"><value>Máximos colectores</value></data>
+<data name="PhysicsMaxManifolds_Desc" xml:space="preserve"><value>Establece el número máximo de colectores de colisión.</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold" xml:space="preserve"><value>Umbral paralelo</value></data>
+<data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>Establece el umbral para la detección de colisión de fase estrecha paralela.</value></data>
+<data name="PhysicsWarmStartScale" xml:space="preserve"><value>Escala de inicio cálido</value></data>
+<data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>Establece la escala para el inicio cálido de las restricciones físicas.</value></data>
 </root>
