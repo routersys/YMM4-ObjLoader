@@ -8,7 +8,7 @@ namespace ObjLoader.Infrastructure
         private static readonly Lazy<ResourceTracker> _instance = new Lazy<ResourceTracker>(() => new ResourceTracker());
         private readonly ConcurrentDictionary<string, ResourceAllocation> _allocations = new();
         private readonly ConcurrentDictionary<string, List<ResourceAllocation>> _disposedHistory = new();
-        private readonly object _statsLock = new();
+        private readonly Lock _statsLock = new();
         private long _totalAllocations;
         private long _totalDisposals;
         private long _totalEstimatedBytes;

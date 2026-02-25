@@ -1,5 +1,4 @@
-﻿using ObjLoader.Rendering;
-using ObjLoader.Attributes;
+﻿using ObjLoader.Attributes;
 using ObjLoader.Localization;
 using ObjLoader.Utilities;
 using System.ComponentModel.DataAnnotations;
@@ -50,11 +49,11 @@ namespace ObjLoader.Plugin
             )]
         public string FilePath
         {
-            get => _filePath;
+            get;
             set
             {
                 var sanitized = SanitizeModelPath(value);
-                if (Set(ref _filePath, sanitized))
+                if (Set(ref field, sanitized))
                 {
                     SyncActiveLayer();
                     EnsureLayers();
@@ -82,31 +81,27 @@ namespace ObjLoader.Plugin
                     OnPropertyChanged(nameof(Layers));
                 }
             }
-        }
-        private string _filePath = string.Empty;
+        } = string.Empty;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Shader), Description = nameof(Texts.Shader_Desc), ResourceType = typeof(Texts))]
         [ShaderFileSelector(nameof(Texts.Filter_ShaderFiles), ".hlsl", ".fx", ".shader", ".cg", ".glsl", ".vert", ".frag", ".txt")]
         public string ShaderFilePath
         {
-            get => _shaderFilePath;
+            get;
             set
             {
                 var sanitized = SanitizeShaderPath(value);
-                Set(ref _shaderFilePath, sanitized);
+                Set(ref field, sanitized);
             }
-        }
-        private string _shaderFilePath = string.Empty;
+        } = string.Empty;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.BaseColor), ResourceType = typeof(Texts))]
         [ColorPicker]
-        public Color BaseColor { get => _baseColor; set => Set(ref _baseColor, value); }
-        private Color _baseColor = Colors.White;
+        public Color BaseColor { get; set => Set(ref field, value); } = Colors.White;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Projection), ResourceType = typeof(Texts))]
         [EnumComboBox]
-        public ProjectionType Projection { get => _projection; set => Set(ref _projection, value); }
-        private ProjectionType _projection = ProjectionType.Parallel;
+        public ProjectionType Projection { get; set => Set(ref field, value); } = ProjectionType.Parallel;
 
         [Display(GroupName = nameof(Texts.Group_Display), Name = nameof(Texts.ScreenWidth), ResourceType = typeof(Texts))]
         [AnimationSlider("F0", "px", 1, 4096)]
@@ -150,13 +145,11 @@ namespace ObjLoader.Plugin
 
         [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.ResetTrigger), ResourceType = typeof(Texts))]
         [Reset3DTransformButton]
-        public bool ResetTrigger { get => _resetTrigger; set => Set(ref _resetTrigger, value); }
-        private bool _resetTrigger;
+        public bool ResetTrigger { get; set => Set(ref field, value); }
 
         [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.OpenCameraWindow), ResourceType = typeof(Texts))]
         [CameraWindowButton]
-        public bool IsCameraWindowOpen2 { get => _isCameraWindowOpen2; set => Set(ref _isCameraWindowOpen2, value); }
-        private bool _isCameraWindowOpen2;
+        public bool IsCameraWindowOpen2 { get; set => Set(ref field, value); }
 
         public Animation CameraX { get; } = new Animation(0, -100000, 100000);
         public Animation CameraY { get; } = new Animation(0, -100000, 100000);
@@ -171,13 +164,11 @@ namespace ObjLoader.Plugin
 
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.IsLightEnabled), ResourceType = typeof(Texts))]
         [ToggleSlider]
-        public bool IsLightEnabled { get => _isLightEnabled; set => Set(ref _isLightEnabled, value); }
-        private bool _isLightEnabled = false;
+        public bool IsLightEnabled { get; set => Set(ref field, value); } = false;
 
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightType), ResourceType = typeof(Texts))]
         [EnumComboBox]
-        public LightType LightType { get => _lightType; set => Set(ref _lightType, value); }
-        private LightType _lightType = LightType.Point;
+        public LightType LightType { get; set => Set(ref field, value); } = LightType.Point;
 
         [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightX), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
@@ -194,13 +185,11 @@ namespace ObjLoader.Plugin
         [Display(AutoGenerateField = false)]
         public List<CameraKeyframe> Keyframes
         {
-            get => _keyframes;
-            set => Set(ref _keyframes, value);
-        }
-        private List<CameraKeyframe> _keyframes = new List<CameraKeyframe>();
+            get;
+            set => Set(ref field, value);
+        } = new List<CameraKeyframe>();
 
-        public double Duration { get => _duration; set => Set(ref _duration, value); }
-        private double _duration = 10.0;
+        public double Duration { get; set => Set(ref field, value); } = 10.0;
 
         [Display(AutoGenerateField = false)]
         public Animation SettingsVersion { get; } = new Animation(0, 0, 100000000);
@@ -210,19 +199,17 @@ namespace ObjLoader.Plugin
         [IgnoreDataMember]
         public double CurrentFrame
         {
-            get => _currentFrame;
-            set => Set(ref _currentFrame, value);
+            get;
+            set => Set(ref field, value);
         }
-        private double _currentFrame;
 
         [Display(AutoGenerateField = false)]
         [IgnoreDataMember]
         public int CurrentFPS
         {
-            get => _currentFps;
-            set => Set(ref _currentFps, value);
-        }
-        private int _currentFps = 60;
+            get;
+            set => Set(ref field, value);
+        } = 60;
 
         [Display(AutoGenerateField = false)]
         public ObservableCollection<LayerData> Layers => _layerManager.Layers;
@@ -244,19 +231,17 @@ namespace ObjLoader.Plugin
 
         public string LayerIds
         {
-            get => _layerIds;
+            get;
             set
             {
-                if (Set(ref _layerIds, value))
+                if (Set(ref field, value))
                 {
                     EnsureLayers();
                 }
             }
-        }
-        private string _layerIds = string.Empty;
+        } = string.Empty;
 
-        public string ActiveLayerGuid { get => _activeLayerGuid; set => Set(ref _activeLayerGuid, value); }
-        private string _activeLayerGuid = string.Empty;
+        public string ActiveLayerGuid { get; set => Set(ref field, value); } = string.Empty;
 
         public ObjLoaderParameter() : this(null) { }
         public ObjLoaderParameter(SharedDataStore? sharedData) : base(sharedData)
@@ -265,9 +250,9 @@ namespace ObjLoader.Plugin
 
             if (sharedData == null)
             {
-                _baseColor = Colors.White;
-                _projection = ProjectionType.Parallel;
-                _isLightEnabled = false;
+                BaseColor = Colors.White;
+                Projection = ProjectionType.Parallel;
+                IsLightEnabled = false;
 
                 _layerManager.Initialize(this);
                 UpdateLayerSignature();
@@ -357,9 +342,9 @@ namespace ObjLoader.Plugin
             if (Layers != null)
             {
                 var newIds = string.Join(",", Layers.Select(l => l.Guid));
-                if (_layerIds != newIds)
+                if (LayerIds != newIds)
                 {
-                    _layerIds = newIds;
+                    LayerIds = newIds;
                     OnPropertyChanged(nameof(LayerIds));
                 }
             }

@@ -11,7 +11,7 @@ namespace ObjLoader.Cache.Gpu
         private static readonly Lazy<GpuResourceCache> _instance = new Lazy<GpuResourceCache>(() => new GpuResourceCache());
 
         private readonly ConcurrentDictionary<string, GpuResourceCacheItem> _cache = new();
-        private readonly object _cleanupLock = new();
+        private readonly Lock _cleanupLock = new();
         private int _disposed;
 
         public static GpuResourceCache Instance => _instance.Value;
@@ -31,8 +31,7 @@ namespace ObjLoader.Cache.Gpu
                 long total = 0;
                 foreach (var kvp in _cache)
                 {
-                    if (kvp.Value != null)
-                        total += kvp.Value.EstimatedGpuBytes;
+                    total += kvp.Value?.EstimatedGpuBytes ?? 0;
                 }
                 return total;
             }

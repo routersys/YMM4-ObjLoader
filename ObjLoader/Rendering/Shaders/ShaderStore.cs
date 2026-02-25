@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Vortice.D3DCompiler;
-using Vortice.Direct3D;
 
 namespace ObjLoader.Rendering.Shaders
 {
@@ -15,7 +14,7 @@ namespace ObjLoader.Rendering.Shaders
         private static byte[]? _cachedGridPixelShaderByteCode;
         private static byte[]? _cachedGridVertexShaderByteCode;
         private static byte[]? _cachedGpuSkinningByteCode;
-        private static readonly object _lock = new object();
+        private static readonly Lock _lock = new();
 
         private static readonly ConcurrentDictionary<string, (byte[]? ByteCode, string? Error)> _compilationCache = new();
 

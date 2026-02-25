@@ -17,7 +17,7 @@ namespace ObjLoader.Services.Textures
 
         private readonly List<ITextureLoader> _loaders = new List<ITextureLoader>();
         private readonly HashSet<nint> _trackedDevices = new();
-        private readonly object _lock = new object();
+        private readonly Lock _lock = new();
         private bool _disposed;
 
         public TextureService()

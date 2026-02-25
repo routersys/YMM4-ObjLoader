@@ -24,17 +24,13 @@ namespace ObjLoader.Core.Timeline
             return true;
         }
 
-        private string _guid = System.Guid.NewGuid().ToString();
-        public string Guid { get => _guid; set => Set(ref _guid, value); }
+        public string Guid { get; set => Set(ref field, value); } = System.Guid.NewGuid().ToString();
 
-        private string _parentGuid = string.Empty;
-        public string ParentGuid { get => _parentGuid; set => Set(ref _parentGuid, value); }
+        public string ParentGuid { get; set => Set(ref field, value); } = string.Empty;
 
-        private string _name = "Layer";
-        public string Name { get => _name; set => Set(ref _name, value); }
+        public string Name { get; set => Set(ref field, value); } = "Layer";
 
-        private bool _isVisible = true;
-        public bool IsVisible { get => _isVisible; set => Set(ref _isVisible, value); }
+        public bool IsVisible { get; set => Set(ref field, value); } = true;
 
         private string _filePath = string.Empty;
         public string FilePath
@@ -64,14 +60,11 @@ namespace ObjLoader.Core.Timeline
         private double _vmdTimeOffset;
         public double VmdTimeOffset { get => _vmdTimeOffset; set => Set(ref _vmdTimeOffset, value); }
 
-        private Color _baseColor = Colors.White;
-        public Color BaseColor { get => _baseColor; set => Set(ref _baseColor, value); }
+        public Color BaseColor { get; set => Set(ref field, value); } = Colors.White;
 
-        private bool _isLightEnabled = false;
-        public bool IsLightEnabled { get => _isLightEnabled; set => Set(ref _isLightEnabled, value); }
+        public bool IsLightEnabled { get; set => Set(ref field, value); } = false;
 
-        private LightType _lightType = LightType.Point;
-        public LightType LightType { get => _lightType; set => Set(ref _lightType, value); }
+        public LightType LightType { get; set => Set(ref field, value); } = LightType.Point;
 
         public Animation X { get; set; } = new Animation(0, -100000, 100000);
         public Animation Y { get; set; } = new Animation(0, -100000, 100000);
@@ -81,14 +74,11 @@ namespace ObjLoader.Core.Timeline
         public Animation RotationY { get; set; } = new Animation(0, -36000, 36000);
         public Animation RotationZ { get; set; } = new Animation(0, -36000, 36000);
 
-        private double _rotationCenterX = 0;
-        public double RotationCenterX { get => _rotationCenterX; set => Set(ref _rotationCenterX, value); }
+        public double RotationCenterX { get; set => Set(ref field, value); } = 0;
 
-        private double _rotationCenterY = 0;
-        public double RotationCenterY { get => _rotationCenterY; set => Set(ref _rotationCenterY, value); }
+        public double RotationCenterY { get; set => Set(ref field, value); } = 0;
 
-        private double _rotationCenterZ = 0;
-        public double RotationCenterZ { get => _rotationCenterZ; set => Set(ref _rotationCenterZ, value); }
+        public double RotationCenterZ { get; set => Set(ref field, value); } = 0;
 
         public Animation Fov { get; set; } = new Animation(45, 1, 179);
         public Animation LightX { get; set; } = new Animation(0, -100000, 100000);
@@ -96,17 +86,13 @@ namespace ObjLoader.Core.Timeline
         public Animation LightZ { get; set; } = new Animation(-100, -100000, 100000);
         public Animation WorldId { get; set; } = new Animation(0, 0, 19);
 
-        private ProjectionType _projection = ProjectionType.Parallel;
-        public ProjectionType Projection { get => _projection; set => Set(ref _projection, value); }
+        public ProjectionType Projection { get; set => Set(ref field, value); } = ProjectionType.Parallel;
 
-        private HashSet<int>? _visibleParts;
-        public HashSet<int>? VisibleParts { get => _visibleParts; set => Set(ref _visibleParts, value); }
+        public HashSet<int>? VisibleParts { get; set => Set(ref field, value); }
 
-        private byte[]? _thumbnail;
-        public byte[]? Thumbnail { get => _thumbnail; set => Set(ref _thumbnail, value); }
+        public byte[]? Thumbnail { get; set => Set(ref field, value); }
 
-        private Dictionary<int, PartMaterialData> _partMaterials = new Dictionary<int, PartMaterialData>();
-        public Dictionary<int, PartMaterialData> PartMaterials { get => _partMaterials; set => Set(ref _partMaterials, value); }
+        public Dictionary<int, PartMaterialData> PartMaterials { get; set => Set(ref field, value); } = new Dictionary<int, PartMaterialData>();
 
         [JsonIgnore]
         public VmdData? VmdMotionData { get; set; }

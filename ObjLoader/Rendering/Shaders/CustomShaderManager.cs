@@ -2,7 +2,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using Vortice.D3DCompiler;
-using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.Direct3D11.Shader;
 using Vortice.DXGI;
@@ -229,13 +228,13 @@ namespace ObjLoader.Rendering.Shaders
 
         public void Dispose()
         {
-            if (VertexShader != null) { VertexShader.Dispose(); VertexShader = null; }
-            if (PixelShader != null) { PixelShader.Dispose(); PixelShader = null; }
-            if (GeometryShader != null) { GeometryShader.Dispose(); GeometryShader = null; }
-            if (HullShader != null) { HullShader.Dispose(); HullShader = null; }
-            if (DomainShader != null) { DomainShader.Dispose(); DomainShader = null; }
-            if (ComputeShader != null) { ComputeShader.Dispose(); ComputeShader = null; }
-            if (InputLayout != null) { InputLayout.Dispose(); InputLayout = null; }
+            VertexShader?.Dispose(); VertexShader = null;
+            PixelShader?.Dispose(); PixelShader = null;
+            GeometryShader?.Dispose(); GeometryShader = null;
+            HullShader?.Dispose(); HullShader = null;
+            DomainShader?.Dispose(); DomainShader = null;
+            ComputeShader?.Dispose(); ComputeShader = null;
+            InputLayout?.Dispose(); InputLayout = null;
         }
     }
 }

@@ -70,15 +70,15 @@ namespace ObjLoader.Parsers
         private bool ShouldForceAssimp(string ext)
         {
             var settings = PluginSettings.Instance;
-            return ext.ToLowerInvariant() switch
+            return ext.AsSpan() switch
             {
-                ".obj" => settings.AssimpObj,
-                ".glb" => settings.AssimpGlb,
-                ".gltf" => settings.AssimpGlb,
-                ".ply" => settings.AssimpPly,
-                ".stl" => settings.AssimpStl,
-                ".3mf" => settings.Assimp3mf,
-                ".pmx" => settings.AssimpPmx,
+                var s when s.Equals(".obj", StringComparison.OrdinalIgnoreCase) => settings.AssimpObj,
+                var s when s.Equals(".glb", StringComparison.OrdinalIgnoreCase) => settings.AssimpGlb,
+                var s when s.Equals(".gltf", StringComparison.OrdinalIgnoreCase) => settings.AssimpGlb,
+                var s when s.Equals(".ply", StringComparison.OrdinalIgnoreCase) => settings.AssimpPly,
+                var s when s.Equals(".stl", StringComparison.OrdinalIgnoreCase) => settings.AssimpStl,
+                var s when s.Equals(".3mf", StringComparison.OrdinalIgnoreCase) => settings.Assimp3mf,
+                var s when s.Equals(".pmx", StringComparison.OrdinalIgnoreCase) => settings.AssimpPmx,
                 _ => false
             };
         }
