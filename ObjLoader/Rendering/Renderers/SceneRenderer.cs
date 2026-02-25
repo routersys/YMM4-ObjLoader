@@ -240,15 +240,15 @@ namespace ObjLoader.Rendering.Renderers
 
             if (_cbPerFrame == null || _cbPerObject == null || _cbPerMaterial == null) return;
 
-            context.RSSetState(rasterizerState ?? _resources.RasterizerState);
-            {
-                _samplerArray[0] = _resources.SamplerState;
-            }
+            _samplerArray[0] = _resources.SamplerState;
 
             if (_resources.ShadowSampler != null)
             {
                 _shadowSamplerArray[0] = _resources.ShadowSampler;
             }
+
+            var viewProj = view * proj;
+            var camPos = new Vector4((float)camX, (float)camY, (float)camZ, 1.0f);
 
             for (int li = 0; li < layers.Count; li++)
             {
@@ -305,39 +305,16 @@ namespace ObjLoader.Rendering.Renderers
 
                 var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
                 var world = normalize * hierarchyMatrix;
-
-                var viewProj = view * proj;
                 var wvp = world * viewProj;
+
                 var lightPos = new Vector4((float)state.LightX, (float)state.LightY, (float)state.LightZ, 1.0f);
                 var amb = new Vector4(state.Ambient.ScR, state.Ambient.ScG, state.Ambient.ScB, state.Ambient.ScA);
                 var lCol = new Vector4(state.Light.ScR, state.Light.ScG, state.Light.ScB, state.Light.ScA);
-                var camPos = new Vector4((float)camX, (float)camY, (float)camZ, 1.0f);
 
-                Matrix4x4.Invert(viewProj, out var inverseViewProj);
-
-                CBPerFrame cbFrame = new CBPerFrame
-                {
-                    ViewProj = Matrix4x4.Transpose(viewProj),
-                    InverseViewProj = Matrix4x4.Transpose(inverseViewProj),
-                    CameraPos = camPos,
-                    LightPos = lightPos,
-                    AmbientColor = amb,
-                    LightColor = lCol,
-                    GridColor = new Vector4(0, 0, 0, 0),
-                    GridAxisColor = new Vector4(0, 0, 0, 0),
-                    LightViewProj0 = Matrix4x4.Transpose(lightViewProjs[0]),
-                    LightViewProj1 = Matrix4x4.Transpose(lightViewProjs[1]),
-                    LightViewProj2 = Matrix4x4.Transpose(lightViewProjs[2]),
-                    LightTypeParams = new Vector4((float)state.LightType, 0, 0, 0),
-                    ShadowParams = new Vector4(
-                        (shadowValid && state.WorldId == activeWorldId) ? 1.0f : 0.0f,
-                        (float)settings.ShadowBias,
-                        (float)settings.ShadowStrength,
-                        (float)settings.ShadowResolution),
-                    CascadeSplits = new Vector4(cascadeSplits[0], cascadeSplits[1], cascadeSplits[2], cascadeSplits[3]),
-                    EnvironmentParam = bindEnvironment ? new Vector4(1, 0, 0, 0) : new Vector4(0, 0, 0, 0),
-                    PcssParams = new Vector4((float)settings.GetPcssLightSize(state.WorldId), RenderingConstants.PcssDefaultSearchFactor, (float)settings.GetPcssQuality(state.WorldId), (float)settings.GetPcssQuality(state.WorldId))
-                };
+                CBPerFrame cbFrame = ConstantBufferFactory.CreatePerFrameForScene(
+                    viewProj, camPos, lightPos, amb, lCol,
+                    lightViewProjs, cascadeSplits,
+                    (int)state.LightType, shadowValid, activeWorldId, state.WorldId, bindEnvironment);
 
                 CBPerObject cbObject = new CBPerObject
                 {
@@ -396,35 +373,14 @@ namespace ObjLoader.Rendering.Renderers
                     var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
                     var partColor = resolvedBaseColor * uiColorVec;
 
-                    CBPerMaterial cbMaterial = new CBPerMaterial
-                    {
-                        BaseColor = partColor,
-                        LightEnabled = state.IsLightEnabled ? 1.0f : 0.0f,
-                        DiffuseIntensity = (float)state.Diffuse,
-                        SpecularIntensity = (float)settings.GetSpecularIntensity(wId),
-                        Shininess = (float)state.Shininess,
-
-                        ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(wId) ? 1 : 0, settings.GetToonSteps(wId), (float)settings.GetToonSmoothness(wId), 0),
-                        RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(wId) ? 1 : 0, (float)settings.GetRimIntensity(wId), (float)settings.GetRimPower(wId), 0),
-                        RimColor = RenderUtils.ToVec4(settings.GetRimColor(wId)),
-                        OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(wId) ? 1 : 0, (float)settings.GetOutlineWidth(wId), (float)settings.GetOutlinePower(wId), 0),
-                        OutlineColor = RenderUtils.ToVec4(settings.GetOutlineColor(wId)),
-                        FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(wId) ? 1 : 0, (float)settings.GetFogStart(wId), (float)settings.GetFogEnd(wId), (float)settings.GetFogDensity(wId)),
-                        FogColor = RenderUtils.ToVec4(settings.GetFogColor(wId)),
-                        ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(wId), (float)settings.GetContrast(wId), (float)settings.GetGamma(wId), (float)settings.GetBrightnessPost(wId)),
-                        VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(wId) ? 1 : 0, (float)settings.GetVignetteIntensity(wId), (float)settings.GetVignetteRadius(wId), (float)settings.GetVignetteSoftness(wId)),
-                        VignetteColor = RenderUtils.ToVec4(settings.GetVignetteColor(wId)),
-                        ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(wId) ? 1 : 0, (float)settings.GetScanlineIntensity(wId), (float)settings.GetScanlineFrequency(wId), settings.GetScanlinePost(wId) ? 1 : 0),
-                        ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
-                        MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
-                        MonoColor = RenderUtils.ToVec4(settings.GetMonochromeColor(wId)),
-                        PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
-
-                        PbrParams = new Vector4(metallic, roughness, 1.0f, 0),
-                        IblParams = new Vector4((float)settings.GetIBLIntensity(wId), 6.0f, 0, 0),
-                        SsrParams = new Vector4(settings.GetSSREnabled(wId) ? 1 : 0, (float)settings.GetSSRStep(wId), (float)settings.GetSSRMaxDist(wId), (float)settings.GetSSRMaxSteps(wId)),
-                        SsrParams2 = new Vector4((float)settings.GetSSRMaxSteps(wId), (float)settings.GetSSRThickness(wId), 0, 0)
-                    };
+                    CBPerMaterial cbMaterial = ConstantBufferFactory.CreatePerMaterial(
+                        wId,
+                        partColor,
+                        state.IsLightEnabled,
+                        (float)state.Diffuse,
+                        (float)state.Shininess,
+                        roughness,
+                        metallic);
 
                     _cbPerMaterial.Update(context, ref cbMaterial);
                     _cbPerMaterialArray[0] = _cbPerMaterial.Buffer;

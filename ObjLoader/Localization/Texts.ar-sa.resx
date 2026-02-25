@@ -90,7 +90,7 @@
 <data name="Group_Model" xml:space="preserve"><value>نموذج</value></data>
 <data name="Setting" xml:space="preserve"><value>إعدادات</value></data>
 <data name="File" xml:space="preserve"><value>ملف</value></data>
-<data name="File_Desc" xml:space="preserve"><value>Specifies the 3D model file to load. (obj</value></data>
+<data name="File_Desc" xml:space="preserve"><value>يحدد ملف النموذج ثلاثي الأبعاد للتحميل.</value></data>
 <data name="BaseColor" xml:space="preserve"><value>اللون الأساسي</value></data>
 <data name="Projection" xml:space="preserve"><value>إسقاط</value></data>
 <data name="Group_Display" xml:space="preserve"><value>عرض</value></data>
@@ -195,7 +195,7 @@
 <data name="Preset_Standard" xml:space="preserve"><value>قياسي</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>مخصص</value></data>
 <data name="Shader" xml:space="preserve"><value>مظلل</value></data>
-<data name="Shader_Desc" xml:space="preserve"><value>frag</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>يحدد ملف التظليل للتحميل.</value></data>
 <data name="Shader_Status_Success" xml:space="preserve"><value>نجاح التحويل البرمجي</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>خطأ في التحويل البرمجي: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>مجهول</value></data>
@@ -323,7 +323,7 @@
 <data name="Window_CenterPoint" xml:space="preserve"><value>إعدادات مركز الدوران</value></data>
 <data name="Msg_CenterPointDesc" xml:space="preserve"><value>يحدد إحداثيات مركز الدوران للطبقة المحددة.</value></data>
 <data name="Group_Selection" xml:space="preserve"><value>تحديد ثلاثي الأبعاد</value></data>
-<data name="Msg_HoverInfo" xml:space="preserve"><value>3D 뷰에서 마우스를 가져가면 정점</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>يتعرف تلقائيًا على القمم والحواف والوجوه عند تحريك مؤشر الماوس فوقها في العرض ثلاثي الأبعاد.</value></data>
 <data name="Button_ApplySelection" xml:space="preserve"><value>تطبيق الإحداثيات المكتشفة</value></data>
 <data name="State_None" xml:space="preserve"><value>لا شيء</value></data>
 <data name="Dialog_Close" xml:space="preserve"><value>إغلاق</value></data>
@@ -331,7 +331,7 @@
 <data name="State_Locked" xml:space="preserve"><value>مقفل</value></data>
 <data name="Mode_Vertex" xml:space="preserve"><value>قمة</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>حافة</value></data>
-<data name="Mode_Face" xml:space="preserve"><value>Wajah</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>وجه</value></data>
 <data name="Layer_Rename" xml:space="preserve"><value>انقر نقرًا مزدوجًا لإعادة التسمية</value></data>
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>إظهار</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>إخفاء</value></data>
@@ -531,7 +531,7 @@
 <data name="RelocateCache" xml:space="preserve"><value>نقل ذاكرة التخزين المؤقت</value></data>
 <data name="OldPath" xml:space="preserve"><value>بادئة المسار الحالي</value></data>
 <data name="NewPath" xml:space="preserve"><value>بادئة مسار جديد</value></data>
-<data name="ConfirmMoveCache" xml:space="preserve"><value>¿Está seguro de que desea reubicar las rutas de caché?\nLas rutas en el índice se actualizarán.\nSi existe la carpeta física en el origen</value></data>
+<data name="ConfirmMoveCache" xml:space="preserve"><value>هل أنت متأكد من أنك تريد نقل مسارات التخزين المؤقت؟\nسيتم تحديث المسارات الموجودة في الفهرس.\nإذا كان المجلد الفعلي موجودًا في المصدر، فسيتم نقله أيضًا.\n(الهدف: الإدخالات التي تبدأ بـ OldPath)</value></data>
 <data name="MoveCacheComplete" xml:space="preserve"><value>تم النقل بنجاح.</value></data>
 <data name="Convert" xml:space="preserve"><value>تحويل</value></data>
 <data name="ConvertCacheDesc" xml:space="preserve"><value>تحويل تنسيق ذاكرة التخزين المؤقت (HDD⇔SSD)</value></data>

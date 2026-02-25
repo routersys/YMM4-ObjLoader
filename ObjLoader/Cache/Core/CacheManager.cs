@@ -22,7 +22,7 @@ namespace ObjLoader.Cache.Core
                 {
                     string root = Path.GetDirectoryName(originalPath) ?? string.Empty;
                     string cacheDir = Path.Combine(root, CacheDirName, entry.ModelHash);
-                    
+
                     if (Directory.Exists(cacheDir))
                     {
                         Directory.Delete(cacheDir, true);
@@ -37,9 +37,14 @@ namespace ObjLoader.Cache.Core
                     }
                     fileSystemSuccess = true;
                 }
-                catch (Exception ex)
+                catch (IOException ex)
                 {
                     _logger.Error($"Failed to delete files for '{originalPath}'", ex);
+                    UserNotification.ShowWarning(string.Format(Texts.CacheDeleteFailed, originalPath), Texts.ErrorTitle);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger.Error($"Access denied deleting files for '{originalPath}'", ex);
                     UserNotification.ShowWarning(string.Format(Texts.CacheDeleteFailed, originalPath), Texts.ErrorTitle);
                 }
 
@@ -59,9 +64,13 @@ namespace ObjLoader.Cache.Core
                         File.Delete(legacyPath);
                     }
                 }
-                catch (Exception ex)
+                catch (IOException ex)
                 {
                     _logger.Warning($"Failed to delete legacy file for '{originalPath}'", ex);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _logger.Warning($"Access denied for legacy file '{originalPath}'", ex);
                 }
             }
         }
@@ -90,9 +99,13 @@ namespace ObjLoader.Cache.Core
                             }
                         }
                     }
-                    catch (Exception ex)
+                    catch (IOException ex)
                     {
                         _logger.Warning($"Failed to clean entry '{kvp.Key}'", ex);
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        _logger.Warning($"Access denied cleaning entry '{kvp.Key}'", ex);
                     }
                 }
 
@@ -100,7 +113,7 @@ namespace ObjLoader.Cache.Core
                 {
                     index.Entries.Remove(key);
                 }
-                
+
                 ModelSettings.Instance.SaveCacheIndex(index);
             }
         }
@@ -167,13 +180,25 @@ namespace ObjLoader.Cache.Core
 
                     try
                     {
-                        foreach (var (rollbackOldKey, rollbackNewKey, rollbackOldHash, rollbackNewHash, rollbackEntry) in completedMoves)
+                        for (int i = completedMoves.Count - 1; i >= 0; i--)
                         {
+                            var (rollbackOldKey, rollbackNewKey, rollbackOldHash, rollbackNewHash, rollbackEntry) = completedMoves[i];
                             index.Entries.Remove(rollbackNewKey);
                             rollbackEntry.OriginalPath = rollbackOldKey;
                             rollbackEntry.ModelHash = rollbackOldHash;
                             rollbackEntry.CacheRootPath = Path.Combine(CacheDirName, rollbackOldHash);
                             index.Entries[rollbackOldKey] = rollbackEntry;
+
+                            string rootDir = Path.GetDirectoryName(rollbackOldKey) ?? string.Empty;
+                            string cacheDir = Path.Combine(rootDir, CacheDirName);
+                            string movedDir = Path.Combine(cacheDir, rollbackNewHash);
+                            string originalDir = Path.Combine(cacheDir, rollbackOldHash);
+
+                            if (Directory.Exists(movedDir) && movedDir != originalDir)
+                            {
+                                if (Directory.Exists(originalDir)) Directory.Delete(originalDir, true);
+                                Directory.Move(movedDir, originalDir);
+                            }
                         }
                     }
                     catch (Exception rollbackEx)
@@ -198,17 +223,15 @@ namespace ObjLoader.Cache.Core
 
         private static string ComputeModelHash(string path)
         {
-            using (var md5 = System.Security.Cryptography.MD5.Create())
+            using var md5 = System.Security.Cryptography.MD5.Create();
+            byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(path.ToLowerInvariant());
+            byte[] hashBytes = md5.ComputeHash(inputBytes);
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
             {
-                byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(path.ToLowerInvariant());
-                byte[] hashBytes = md5.ComputeHash(inputBytes);
-                var sb = new System.Text.StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
-                {
-                    sb.Append(hashBytes[i].ToString("x2"));
-                }
-                return sb.ToString(); 
+                sb.Append(hashBytes[i].ToString("x2"));
             }
+            return sb.ToString();
         }
     }
 }

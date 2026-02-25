@@ -16,9 +16,8 @@ namespace ObjLoader.Rendering.Core
         private readonly EnvironmentMapManager _environmentMapManager = new EnvironmentMapManager();
         private readonly object _stateLock = new object();
 
-        private ID3D11RasterizerState? _rasterizerState;
-        private ID3D11RasterizerState? _wireframeRasterizerState;
-        private RenderCullMode _currentCullMode;
+        private readonly Dictionary<(RenderCullMode Mode, bool Wireframe), ID3D11RasterizerState> _rasterizerStateCache = new();
+        private volatile RenderCullMode _currentCullMode;
         private bool _isDisposed;
 
         public ID3D11VertexShader VertexShader { get; }
@@ -34,46 +33,22 @@ namespace ObjLoader.Rendering.Core
         public ID3D11BlendState GridBlendState { get; }
         public ID3D11ShaderResourceView WhiteTextureView { get; }
         public ID3D11Device Device => _device;
-        public ID3D11RasterizerState CullNoneRasterizerState { get; }
         public ID3D11SamplerState ShadowSampler { get; }
         public ID3D11RasterizerState ShadowRasterizerState { get; }
         public bool IsDisposed => _isDisposed;
+
+        public ID3D11RasterizerState CullNoneRasterizerState => _rasterizerStateCache[(RenderCullMode.None, false)];
 
         public ID3D11RasterizerState RasterizerState
         {
             get
             {
-                lock (_stateLock)
-                {
-                    return _rasterizerState!;
-                }
-            }
-            private set
-            {
-                lock (_stateLock)
-                {
-                    _rasterizerState = value;
-                }
+                var mode = _currentCullMode;
+                return _rasterizerStateCache[(mode, false)];
             }
         }
 
-        public ID3D11RasterizerState WireframeRasterizerState
-        {
-            get
-            {
-                lock (_stateLock)
-                {
-                    return _wireframeRasterizerState!;
-                }
-            }
-            private set
-            {
-                lock (_stateLock)
-                {
-                    _wireframeRasterizerState = value;
-                }
-            }
-        }
+        public ID3D11RasterizerState WireframeRasterizerState => _rasterizerStateCache[(RenderCullMode.Back, true)];
 
         public ID3D11Texture2D? ShadowMapTexture => _shadowMapManager.ShadowMapTexture;
         public ID3D11DepthStencilView[]? ShadowMapDSVs => _shadowMapManager.ShadowMapDSVs;
@@ -112,18 +87,9 @@ namespace ObjLoader.Rendering.Core
             GridInputLayout = CreateGridInputLayout(device, gridVsByte);
             _disposer.Collect(GridInputLayout);
 
-            CullNoneRasterizerState = CreateCullNoneRasterizerState(device);
-            _disposer.Collect(CullNoneRasterizerState);
+            InitializeRasterizerStateCache(device);
 
             _currentCullMode = RenderCullMode.None;
-            RasterizerState = CreateRasterizerState(RenderCullMode.None, false);
-            if (RasterizerState != CullNoneRasterizerState)
-            {
-                _disposer.Collect(RasterizerState);
-            }
-
-            WireframeRasterizerState = CreateRasterizerState(RenderCullMode.Back, true);
-            _disposer.Collect(WireframeRasterizerState);
 
             DepthStencilState = CreateDepthStencilState(device, true);
             _disposer.Collect(DepthStencilState);
@@ -150,6 +116,36 @@ namespace ObjLoader.Rendering.Core
             _disposer.Collect(ShadowRasterizerState);
         }
 
+        private void InitializeRasterizerStateCache(ID3D11Device device)
+        {
+            foreach (var mode in Enum.GetValues<RenderCullMode>())
+            {
+                foreach (var wireframe in new[] { false, true })
+                {
+                    var state = CreateRasterizerStateInternal(device, mode, wireframe);
+                    _rasterizerStateCache[(mode, wireframe)] = state;
+                    _disposer.Collect(state);
+                }
+            }
+        }
+
+        private static ID3D11RasterizerState CreateRasterizerStateInternal(ID3D11Device device, RenderCullMode mode, bool wireframe)
+        {
+            CullMode cull = mode switch
+            {
+                RenderCullMode.Front => CullMode.Front,
+                RenderCullMode.Back => CullMode.Back,
+                _ => CullMode.None
+            };
+
+            var rasterDesc = new RasterizerDescription(cull, wireframe ? FillMode.Wireframe : FillMode.Solid)
+            {
+                MultisampleEnable = true,
+                AntialiasedLineEnable = true
+            };
+            return device.CreateRasterizerState(rasterDesc);
+        }
+
         private static ID3D11InputLayout CreateInputLayout(ID3D11Device device, byte[] vsByteCode)
         {
             var inputElements = new[]
@@ -168,16 +164,6 @@ namespace ObjLoader.Rendering.Core
                 new InputElementDescription("POSITION", 0, Format.R32G32B32_Float, 0, 0, InputClassification.PerVertexData, 0)
             };
             return device.CreateInputLayout(gridElements, gridVsByte);
-        }
-
-        private static ID3D11RasterizerState CreateCullNoneRasterizerState(ID3D11Device device)
-        {
-            var rasterDescCullNone = new RasterizerDescription(CullMode.None, FillMode.Solid)
-            {
-                MultisampleEnable = true,
-                AntialiasedLineEnable = true
-            };
-            return device.CreateRasterizerState(rasterDescCullNone);
         }
 
         private static ID3D11DepthStencilState CreateDepthStencilState(ID3D11Device device, bool writeEnabled)
@@ -306,55 +292,25 @@ namespace ObjLoader.Rendering.Core
         public void UpdateRasterizerState(RenderCullMode mode)
         {
             if (_isDisposed) return;
-
-            lock (_stateLock)
-            {
-                if (_currentCullMode == mode) return;
-
-                if (_rasterizerState != CullNoneRasterizerState && _rasterizerState != null)
-                {
-                    _disposer.RemoveAndDispose(ref _rasterizerState);
-                }
-
-                _currentCullMode = mode;
-                RasterizerState = CreateRasterizerState(mode, false);
-
-                if (RasterizerState != CullNoneRasterizerState)
-                {
-                    _disposer.Collect(RasterizerState);
-                }
-            }
+            _currentCullMode = mode;
         }
 
-        private ID3D11RasterizerState CreateRasterizerState(RenderCullMode mode, bool wireframe)
+        public ID3D11RasterizerState GetRasterizerState(RenderCullMode mode, bool wireframe)
         {
-            if (mode == RenderCullMode.None && !wireframe && CullNoneRasterizerState != null)
-            {
-                return CullNoneRasterizerState;
-            }
-
-            CullMode cull = mode switch
-            {
-                RenderCullMode.Front => CullMode.Front,
-                RenderCullMode.Back => CullMode.Back,
-                _ => CullMode.None
-            };
-
-            var rasterDesc = new RasterizerDescription(cull, wireframe ? FillMode.Wireframe : FillMode.Solid)
-            {
-                MultisampleEnable = true,
-                AntialiasedLineEnable = true
-            };
-            return _device.CreateRasterizerState(rasterDesc);
+            return _rasterizerStateCache[(mode, wireframe)];
         }
 
         public void Dispose()
         {
-            if (_isDisposed) return;
-            _isDisposed = true;
+            lock (_stateLock)
+            {
+                if (_isDisposed) return;
+                _isDisposed = true;
+            }
 
             _shadowMapManager.Dispose();
             _environmentMapManager.Dispose();
+            _rasterizerStateCache.Clear();
             _disposer.DisposeAndClear();
 
             try

@@ -16,6 +16,8 @@ using Matrix4x4 = System.Numerics.Matrix4x4;
 using ObjLoader.Core.Models;
 using ObjLoader.Cache.Gpu;
 using ObjLoader.Utilities.Logging;
+using System.Collections.Generic;
+using System;
 
 namespace ObjLoader.Services.Rendering
 {
@@ -24,6 +26,7 @@ namespace ObjLoader.Services.Rendering
         private const int MaxLayerArrayCapacity = 1024;
 
         private readonly string _instanceId = System.Guid.NewGuid().ToString("N").Substring(0, 8);
+        private readonly object _bitmapLock = new object();
 
         private ID3D11Device? _device;
         private ID3D11DeviceContext? _context;
@@ -43,7 +46,7 @@ namespace ObjLoader.Services.Rendering
         private readonly ID3D11Buffer[] _cbPerFrameArray = new ID3D11Buffer[1];
         private readonly ID3D11Buffer[] _cbPerObjectArray = new ID3D11Buffer[1];
         private readonly ID3D11Buffer[] _cbPerMaterialArray = new ID3D11Buffer[1];
-        
+
         private ConstantBuffer<CBPerFrame>? _cbPerFrame;
         private ConstantBuffer<CBPerObject>? _cbPerObject;
         private ConstantBuffer<CBPerMaterial>? _cbPerMaterial;
@@ -61,11 +64,14 @@ namespace ObjLoader.Services.Rendering
 
         private readonly List<(int LayerIndex, int PartIndex)> _opaquePartList = new();
         private readonly List<TransparentPart> _transparentParts = new List<TransparentPart>();
-        private readonly PartSorter _partSorter = new PartSorter();
+        private readonly HashSet<string> _usedPathsBuffer = new HashSet<string>();
 
         private Matrix4x4[]? _cachedLayerWorlds;
         private Matrix4x4[]? _cachedLayerWvps;
         private int _cachedLayerCapacity;
+
+        private byte[]? _stagingBuffer;
+        private int _stagingBufferSize;
 
         private readonly ITextureService _textureService;
         private readonly IDynamicTextureManager _dynamicTextureManager;
@@ -78,19 +84,15 @@ namespace ObjLoader.Services.Rendering
             _dynamicTextureManager = new DynamicTextureManager(_textureService);
         }
 
-        private class TransparentPart
+        private struct TransparentPart : IComparable<TransparentPart>
         {
             public int LayerIndex;
             public int PartIndex;
             public float DistanceSq;
-        }
 
-        private class PartSorter : IComparer<TransparentPart>
-        {
-            public int Compare(TransparentPart? x, TransparentPart? y)
+            public int CompareTo(TransparentPart other)
             {
-                if (x == null || y == null) return 0;
-                return y.DistanceSq.CompareTo(x.DistanceSq);
+                return other.DistanceSq.CompareTo(DistanceSq);
             }
         }
 
@@ -160,8 +162,65 @@ namespace ObjLoader.Services.Rendering
             int targetWidth = width * scaleFactor;
             int targetHeight = height * scaleFactor;
 
-            _viewportWidth = targetWidth;
-            _viewportHeight = targetHeight;
+            ID3D11Texture2D? newRenderTarget = null;
+            ID3D11RenderTargetView? newRtv = null;
+            ID3D11Texture2D? newDepthStencil = null;
+            ID3D11DepthStencilView? newDsv = null;
+            ID3D11Texture2D? newResolveTexture = null;
+            ID3D11Texture2D? newStagingTexture = null;
+
+            try
+            {
+                var texDesc = new Texture2DDescription
+                {
+                    Width = targetWidth,
+                    Height = targetHeight,
+                    MipLevels = 1,
+                    ArraySize = 1,
+                    Format = Format.B8G8R8A8_UNorm,
+                    SampleDescription = new SampleDescription(sampleCount, 0),
+                    Usage = ResourceUsage.Default,
+                    BindFlags = BindFlags.RenderTarget,
+                    CPUAccessFlags = CpuAccessFlags.None
+                };
+                newRenderTarget = _device.CreateTexture2D(texDesc);
+                newRtv = _device.CreateRenderTargetView(newRenderTarget);
+
+                var depthDesc = new Texture2DDescription
+                {
+                    Width = targetWidth,
+                    Height = targetHeight,
+                    MipLevels = 1,
+                    ArraySize = 1,
+                    Format = Format.D24_UNorm_S8_UInt,
+                    SampleDescription = new SampleDescription(sampleCount, 0),
+                    Usage = ResourceUsage.Default,
+                    BindFlags = BindFlags.DepthStencil,
+                    CPUAccessFlags = CpuAccessFlags.None
+                };
+                newDepthStencil = _device.CreateTexture2D(depthDesc);
+                newDsv = _device.CreateDepthStencilView(newDepthStencil);
+
+                var resolveDesc = texDesc;
+                resolveDesc.SampleDescription = new SampleDescription(1, 0);
+                newResolveTexture = _device.CreateTexture2D(resolveDesc);
+
+                var stagingDesc = resolveDesc;
+                stagingDesc.Usage = ResourceUsage.Staging;
+                stagingDesc.BindFlags = BindFlags.None;
+                stagingDesc.CPUAccessFlags = CpuAccessFlags.Read;
+                newStagingTexture = _device.CreateTexture2D(stagingDesc);
+            }
+            catch
+            {
+                newRtv?.Dispose();
+                newRenderTarget?.Dispose();
+                newDsv?.Dispose();
+                newDepthStencil?.Dispose();
+                newResolveTexture?.Dispose();
+                newStagingTexture?.Dispose();
+                throw;
+            }
 
             UnregisterResizeResources();
 
@@ -172,59 +231,39 @@ namespace ObjLoader.Services.Rendering
             _stagingTexture?.Dispose();
             _resolveTexture?.Dispose();
 
-            var texDesc = new Texture2DDescription
-            {
-                Width = targetWidth,
-                Height = targetHeight,
-                MipLevels = 1,
-                ArraySize = 1,
-                Format = Format.B8G8R8A8_UNorm,
-                SampleDescription = new SampleDescription(sampleCount, 0),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.RenderTarget,
-                CPUAccessFlags = CpuAccessFlags.None
-            };
-            _renderTarget = _device.CreateTexture2D(texDesc);
-            _rtv = _device.CreateRenderTargetView(_renderTarget);
+            _renderTarget = newRenderTarget;
+            _rtv = newRtv;
+            _depthStencil = newDepthStencil;
+            _dsv = newDsv;
+            _resolveTexture = newResolveTexture;
+            _stagingTexture = newStagingTexture;
+
+            _viewportWidth = targetWidth;
+            _viewportHeight = targetHeight;
 
             long renderTargetBytes = (long)targetWidth * targetHeight * 4 * sampleCount;
             ResourceTracker.Instance.Register(TrackingKey("RenderTarget"), "ID3D11Texture2D:RT", _renderTarget, renderTargetBytes);
 
-            var depthDesc = new Texture2DDescription
-            {
-                Width = targetWidth,
-                Height = targetHeight,
-                MipLevels = 1,
-                ArraySize = 1,
-                Format = Format.D24_UNorm_S8_UInt,
-                SampleDescription = new SampleDescription(sampleCount, 0),
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.DepthStencil,
-                CPUAccessFlags = CpuAccessFlags.None
-            };
-            _depthStencil = _device.CreateTexture2D(depthDesc);
-            _dsv = _device.CreateDepthStencilView(_depthStencil);
-
             long depthStencilBytes = (long)targetWidth * targetHeight * 4 * sampleCount;
             ResourceTracker.Instance.Register(TrackingKey("DepthStencil"), "ID3D11Texture2D:DS", _depthStencil, depthStencilBytes);
-
-            var resolveDesc = texDesc;
-            resolveDesc.SampleDescription = new SampleDescription(1, 0);
-            _resolveTexture = _device.CreateTexture2D(resolveDesc);
 
             long resolveBytes = (long)targetWidth * targetHeight * 4;
             ResourceTracker.Instance.Register(TrackingKey("ResolveTexture"), "ID3D11Texture2D:Resolve", _resolveTexture, resolveBytes);
 
-            var stagingDesc = resolveDesc;
-            stagingDesc.Usage = ResourceUsage.Staging;
-            stagingDesc.BindFlags = BindFlags.None;
-            stagingDesc.CPUAccessFlags = CpuAccessFlags.Read;
-            _stagingTexture = _device.CreateTexture2D(stagingDesc);
-
             long stagingBytes = (long)targetWidth * targetHeight * 4;
             ResourceTracker.Instance.Register(TrackingKey("StagingTexture"), "ID3D11Texture2D:Staging", _stagingTexture, stagingBytes);
 
-            SceneImage = new WriteableBitmap(targetWidth, targetHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32, null);
+            int requiredBufferSize = targetWidth * targetHeight * 4;
+            if (_stagingBuffer == null || _stagingBufferSize < requiredBufferSize)
+            {
+                _stagingBuffer = new byte[requiredBufferSize];
+                _stagingBufferSize = requiredBufferSize;
+            }
+
+            lock (_bitmapLock)
+            {
+                SceneImage = new WriteableBitmap(targetWidth, targetHeight, 96, 96, System.Windows.Media.PixelFormats.Pbgra32, null);
+            }
         }
 
         private void UnregisterResizeResources()
@@ -272,10 +311,7 @@ namespace ObjLoader.Services.Rendering
                 if (_isDisposed) return;
                 if (_device == null || _context == null || _rtv == null || _d3dResources == null || SceneImage == null || _stagingTexture == null) return;
 
-                if (IsDeviceLost())
-                {
-                    return;
-                }
+                if (IsDeviceLost()) return;
 
                 try
                 {
@@ -285,11 +321,8 @@ namespace ObjLoader.Services.Rendering
                 {
                     Logger<RenderService>.Instance.Error("Device lost during render", ex);
                 }
-                catch (Exception ex)
-                {
-                    Logger<RenderService>.Instance.Error("Render error", ex);
-                }
             }
+            UpdateBitmapFromStagingBuffer();
         }
 
         private bool IsDeviceLost()
@@ -334,7 +367,7 @@ namespace ObjLoader.Services.Rendering
 
             _context.PSSetShaderResources(RenderingConstants.SlotShadowMap, _nullSrv);
 
-            var usedPaths = new HashSet<string>();
+            _usedPathsBuffer.Clear();
             foreach (var layer in layers)
             {
                 if (layer.Data?.PartMaterials != null)
@@ -343,14 +376,14 @@ namespace ObjLoader.Services.Rendering
                     {
                         if (!string.IsNullOrEmpty(pm.TexturePath))
                         {
-                            usedPaths.Add(pm.TexturePath!);
+                            _usedPathsBuffer.Add(pm.TexturePath!);
                         }
                     }
                 }
             }
             if (_device != null)
             {
-                _dynamicTextureManager.Prepare(usedPaths, _device);
+                _dynamicTextureManager.Prepare(_usedPathsBuffer, _device);
             }
 
             ComputeLayerTransforms(layers, view, proj);
@@ -369,7 +402,7 @@ namespace ObjLoader.Services.Rendering
 
             RenderGridIfVisible(isGridVisible, isInfiniteGrid, gridScale, view, proj, camPos, gridColor, axisColor);
 
-            CopyToStagingTexture();
+            CopyToStagingBuffer();
         }
 
         private void ComputeLayerTransforms(List<LayerRenderData> layers, Matrix4x4 view, Matrix4x4 proj)
@@ -696,7 +729,7 @@ namespace ObjLoader.Services.Rendering
         {
             if (_transparentParts.Count == 0) return;
 
-            _transparentParts.Sort(_partSorter);
+            _transparentParts.Sort();
 
             _context!.OMSetDepthStencilState(_d3dResources!.DepthStencilStateNoWrite);
             if (!isWireframe)
@@ -763,15 +796,15 @@ namespace ObjLoader.Services.Rendering
                 CameraPos = new System.Numerics.Vector4(camPos, 1),
                 GridColor = gridColor,
                 GridAxisColor = axisColor,
-                EnvironmentParam = new System.Numerics.Vector4(0, 0, 0, isInfiniteGrid ? 1.0f : 0.0f) // Borrowed shininess flag to w component
+                EnvironmentParam = new System.Numerics.Vector4(0, 0, 0, isInfiniteGrid ? 1.0f : 0.0f)
             };
-            
+
             CBPerObject cbObject = new CBPerObject
             {
                 WorldViewProj = Matrix4x4.Transpose(gridWorld * view * proj),
                 World = Matrix4x4.Transpose(gridWorld)
             };
-            
+
             CBPerMaterial cbMaterial = default;
 
             UpdateConstantBuffers(ref cbFrame, ref cbObject, ref cbMaterial);
@@ -780,7 +813,7 @@ namespace ObjLoader.Services.Rendering
             _context.OMSetBlendState(_d3dResources.BlendState, new Color4(0, 0, 0, 0), -1);
         }
 
-        private void CopyToStagingTexture()
+        private void CopyToStagingBuffer()
         {
             ClearAllResourceBindings();
 
@@ -789,25 +822,63 @@ namespace ObjLoader.Services.Rendering
             _context.Flush();
 
             var map = _context.Map(_stagingTexture!, 0, MapMode.Read, D3D11MapFlags.None);
-
             try
             {
-                SceneImage!.Lock();
-                unsafe
+                int rowBytes = _viewportWidth * 4;
+                if (_stagingBuffer != null && _stagingBuffer.Length >= _viewportHeight * rowBytes)
                 {
-                    var srcPtr = (byte*)map.DataPointer;
-                    var dstPtr = (byte*)SceneImage.BackBuffer;
-                    for (int r = 0; r < _viewportHeight; r++)
+                    unsafe
                     {
-                        Buffer.MemoryCopy(srcPtr + (r * map.RowPitch), dstPtr + (r * SceneImage.BackBufferStride), SceneImage.BackBufferStride, _viewportWidth * 4);
+                        var srcPtr = (byte*)map.DataPointer;
+                        fixed (byte* dstBase = _stagingBuffer)
+                        {
+                            for (int r = 0; r < _viewportHeight; r++)
+                            {
+                                Buffer.MemoryCopy(srcPtr + (r * map.RowPitch), dstBase + (r * rowBytes), rowBytes, rowBytes);
+                            }
+                        }
                     }
                 }
-                SceneImage.AddDirtyRect(new Int32Rect(0, 0, _viewportWidth, _viewportHeight));
-                SceneImage.Unlock();
             }
             finally
             {
                 _context.Unmap(_stagingTexture, 0);
+            }
+        }
+
+        private void UpdateBitmapFromStagingBuffer()
+        {
+            lock (_bitmapLock)
+            {
+                var sceneImage = SceneImage;
+                if (sceneImage == null || _stagingBuffer == null) return;
+
+                int rowBytes = _viewportWidth * 4;
+                bool locked = false;
+                try
+                {
+                    sceneImage.Lock();
+                    locked = true;
+                    unsafe
+                    {
+                        var dstPtr = (byte*)sceneImage.BackBuffer;
+                        fixed (byte* srcBase = _stagingBuffer)
+                        {
+                            for (int r = 0; r < _viewportHeight; r++)
+                            {
+                                Buffer.MemoryCopy(srcBase + (r * rowBytes), dstPtr + (r * sceneImage.BackBufferStride), sceneImage.BackBufferStride, rowBytes);
+                            }
+                        }
+                    }
+                    sceneImage.AddDirtyRect(new Int32Rect(0, 0, _viewportWidth, _viewportHeight));
+                }
+                finally
+                {
+                    if (locked)
+                    {
+                        sceneImage.Unlock();
+                    }
+                }
             }
         }
 
@@ -845,7 +916,6 @@ namespace ObjLoader.Services.Rendering
             _texArray[0] = activeTexView ?? _d3dResources.WhiteTextureView!;
             _context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, _texArray);
 
-            System.Numerics.Vector4 ToVec4(System.Windows.Media.Color c) => new System.Numerics.Vector4(c.R / 255.0f, c.G / 255.0f, c.B / 255.0f, c.A / 255.0f);
             var rawLightPos = new System.Numerics.Vector3((float)layer.LightX, (float)layer.LightY, (float)layer.LightZ);
             System.Numerics.Vector3 finalLightPos;
             if (layer.LightType == 2)
@@ -856,25 +926,8 @@ namespace ObjLoader.Services.Rendering
             float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
             float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
 
-            CBPerFrame cbFrame = new CBPerFrame
-            {
-                ViewProj = Matrix4x4.Transpose(view * proj),
-                InverseViewProj = Matrix4x4.Transpose(Matrix4x4.Identity),
-                LightPos = new System.Numerics.Vector4(finalLightPos, 1.0f),
-                AmbientColor = ToVec4(settings.GetAmbientColor(wId)),
-                LightColor = ToVec4(settings.GetLightColor(wId)),
-                CameraPos = new System.Numerics.Vector4((float)camPos.X, (float)camPos.Y, (float)camPos.Z, 1),
-                GridColor = gridColor,
-                GridAxisColor = axisColor,
-                LightViewProj0 = Matrix4x4.Transpose(lightViewProj),
-                LightViewProj1 = Matrix4x4.Identity,
-                LightViewProj2 = Matrix4x4.Identity,
-                LightTypeParams = new System.Numerics.Vector4(layer.LightType, 0, 0, 0),
-                ShadowParams = new System.Numerics.Vector4((enableShadow && settings.ShadowMappingEnabled) ? 1 : 0, (float)settings.ShadowBias, (float)settings.ShadowStrength, settings.ShadowResolution),
-                CascadeSplits = new System.Numerics.Vector4(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue),
-                EnvironmentParam = new System.Numerics.Vector4(1, 0, 0, 0),
-                PcssParams = new System.Numerics.Vector4((float)settings.GetPcssLightSize(wId), RenderingConstants.PcssDefaultSearchFactor, (float)settings.GetPcssQuality(wId), (float)settings.GetPcssQuality(wId))
-            };
+            CBPerFrame cbFrame = ConstantBufferFactory.CreatePerFrameForPreview(
+                view * proj, camPos, finalLightPos, wId, gridColor, axisColor, lightViewProj, layer.LightType, enableShadow);
 
             CBPerObject cbObject = new CBPerObject
             {
@@ -882,33 +935,14 @@ namespace ObjLoader.Services.Rendering
                 World = Matrix4x4.Transpose(world)
             };
 
-            CBPerMaterial cbMaterial = new CBPerMaterial
-            {
-                BaseColor = material != null ? ToVec4(material.BaseColor) : part.BaseColor,
-                LightEnabled = layer.LightEnabled ? 1.0f : 0.0f,
-                DiffuseIntensity = (float)settings.GetDiffuseIntensity(wId),
-                SpecularIntensity = (float)settings.GetSpecularIntensity(wId),
-                Shininess = (float)settings.GetShininess(wId),
-                ToonParams = new System.Numerics.Vector4(settings.GetToonEnabled(wId) ? 1 : 0, settings.GetToonSteps(wId), (float)settings.GetToonSmoothness(wId), 0),
-                RimParams = new System.Numerics.Vector4(settings.GetRimEnabled(wId) ? 1 : 0, (float)settings.GetRimIntensity(wId), (float)settings.GetRimPower(wId), 0),
-                RimColor = ToVec4(settings.GetRimColor(wId)),
-                OutlineParams = new System.Numerics.Vector4(settings.GetOutlineEnabled(wId) ? 1 : 0, (float)settings.GetOutlineWidth(wId), (float)settings.GetOutlinePower(wId), 0),
-                OutlineColor = ToVec4(settings.GetOutlineColor(wId)),
-                FogParams = new System.Numerics.Vector4(settings.GetFogEnabled(wId) ? 1 : 0, (float)settings.GetFogStart(wId), (float)settings.GetFogEnd(wId), (float)settings.GetFogDensity(wId)),
-                FogColor = ToVec4(settings.GetFogColor(wId)),
-                ColorCorrParams = new System.Numerics.Vector4((float)settings.GetSaturation(wId), (float)settings.GetContrast(wId), (float)settings.GetGamma(wId), (float)settings.GetBrightnessPost(wId)),
-                VignetteParams = new System.Numerics.Vector4(settings.GetVignetteEnabled(wId) ? 1 : 0, (float)settings.GetVignetteIntensity(wId), (float)settings.GetVignetteRadius(wId), (float)settings.GetVignetteSoftness(wId)),
-                VignetteColor = ToVec4(settings.GetVignetteColor(wId)),
-                ScanlineParams = new System.Numerics.Vector4(settings.GetScanlineEnabled(wId) ? 1 : 0, (float)settings.GetScanlineIntensity(wId), (float)settings.GetScanlineFrequency(wId), 0),
-                ChromAbParams = new System.Numerics.Vector4(settings.GetChromAbEnabled(wId) ? 1 : 0, (float)settings.GetChromAbIntensity(wId), 0, 0),
-                MonoParams = new System.Numerics.Vector4(settings.GetMonochromeEnabled(wId) ? 1 : 0, (float)settings.GetMonochromeMix(wId), 0, 0),
-                MonoColor = ToVec4(settings.GetMonochromeColor(wId)),
-                PosterizeParams = new System.Numerics.Vector4(settings.GetPosterizeEnabled(wId) ? 1 : 0, settings.GetPosterizeLevels(wId), 0, 0),
-                PbrParams = new System.Numerics.Vector4(metallic, roughness, 1.0f, 0),
-                IblParams = new System.Numerics.Vector4((float)settings.GetIBLIntensity(wId), 6.0f, 0, 0),
-                SsrParams = new System.Numerics.Vector4(settings.GetSSREnabled(wId) ? 1 : 0, (float)settings.GetSSRStep(wId), (float)settings.GetSSRMaxDist(wId), (float)settings.GetSSRMaxSteps(wId)),
-                SsrParams2 = new System.Numerics.Vector4((float)settings.GetSSRMaxSteps(wId), (float)settings.GetSSRThickness(wId), 0, 0)
-            };
+            CBPerMaterial cbMaterial = ConstantBufferFactory.CreatePerMaterial(
+                wId,
+                material != null ? new System.Numerics.Vector4(material.BaseColor.R / 255.0f, material.BaseColor.G / 255.0f, material.BaseColor.B / 255.0f, material.BaseColor.A / 255.0f) : part.BaseColor,
+                layer.LightEnabled,
+                (float)settings.GetDiffuseIntensity(wId),
+                (float)settings.GetShininess(wId),
+                roughness,
+                metallic);
 
             UpdateConstantBuffers(ref cbFrame, ref cbObject, ref cbMaterial);
 
@@ -918,7 +952,7 @@ namespace ObjLoader.Services.Rendering
         private void UpdateConstantBuffers(ref CBPerFrame cbFrame, ref CBPerObject cbObject, ref CBPerMaterial cbMaterial)
         {
             if (_context == null || _cbPerFrame == null || _cbPerObject == null || _cbPerMaterial == null) return;
-            
+
             _cbPerFrame.Update(_context, ref cbFrame);
             _cbPerObject.Update(_context, ref cbObject);
             _cbPerMaterial.Update(_context, ref cbMaterial);
@@ -929,10 +963,10 @@ namespace ObjLoader.Services.Rendering
 
             _context.VSSetConstantBuffers(0, 1, _cbPerFrameArray);
             _context.PSSetConstantBuffers(0, 1, _cbPerFrameArray);
-            
+
             _context.VSSetConstantBuffers(1, 1, _cbPerObjectArray);
             _context.PSSetConstantBuffers(1, 1, _cbPerObjectArray);
-            
+
             _context.PSSetConstantBuffers(2, 1, _cbPerMaterialArray);
         }
 
@@ -966,7 +1000,13 @@ namespace ObjLoader.Services.Rendering
                 _cachedLayerWvps = null;
                 _cachedLayerCapacity = 0;
 
-                SceneImage = null;
+                _stagingBuffer = null;
+                _stagingBufferSize = 0;
+
+                lock (_bitmapLock)
+                {
+                    SceneImage = null;
+                }
 
                 if (_context != null)
                 {

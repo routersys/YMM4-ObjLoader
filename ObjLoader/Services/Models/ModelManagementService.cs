@@ -47,9 +47,14 @@ namespace ObjLoader.Services.Models
                     return result;
                 }
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
-                Logger<ModelManagementService>.Instance.Error("Failed to check file size", ex);
+                Logger<ModelManagementService>.Instance.Error("Failed to check file size (IO)", ex);
+                return result;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Logger<ModelManagementService>.Instance.Error("Failed to check file size (access denied)", ex);
                 return result;
             }
 
@@ -88,9 +93,21 @@ namespace ObjLoader.Services.Models
                         partTextures[i] = srv;
                         gpuBytes += texGpuBytes;
                     }
-                    catch (Exception ex)
+                    catch (FileNotFoundException ex)
                     {
-                        Logger<ModelManagementService>.Instance.Warning($"Failed to load texture {parts[i].TexturePath}", ex);
+                        Logger<ModelManagementService>.Instance.Warning($"Texture file not found: {parts[i].TexturePath}", ex);
+                    }
+                    catch (IOException ex)
+                    {
+                        Logger<ModelManagementService>.Instance.Warning($"IO error loading texture {parts[i].TexturePath}", ex);
+                    }
+                    catch (UnauthorizedAccessException ex)
+                    {
+                        Logger<ModelManagementService>.Instance.Warning($"Access denied for texture {parts[i].TexturePath}", ex);
+                    }
+                    catch (InvalidDataException ex)
+                    {
+                        Logger<ModelManagementService>.Instance.Warning($"Corrupt texture file {parts[i].TexturePath}", ex);
                     }
                 }
 

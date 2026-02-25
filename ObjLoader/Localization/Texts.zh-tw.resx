@@ -90,7 +90,7 @@
 <data name="Group_Model" xml:space="preserve"><value>模型</value></data>
 <data name="Setting" xml:space="preserve"><value>設定</value></data>
 <data name="File" xml:space="preserve"><value>檔案</value></data>
-<data name="File_Desc" xml:space="preserve"><value>glb</value></data>
+<data name="File_Desc" xml:space="preserve"><value>指定要載入的3D模型檔案。</value></data>
 <data name="BaseColor" xml:space="preserve"><value>基本色</value></data>
 <data name="Projection" xml:space="preserve"><value>投影方法</value></data>
 <data name="Group_Display" xml:space="preserve"><value>顯示</value></data>
@@ -195,7 +195,7 @@
 <data name="Preset_Standard" xml:space="preserve"><value>標準</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>自定義</value></data>
 <data name="Shader" xml:space="preserve"><value>著色器</value></data>
-<data name="Shader_Desc" xml:space="preserve"><value>cg</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>指定要載入的著色器檔案</value></data>
 <data name="Shader_Status_Success" xml:space="preserve"><value>編譯成功</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>編譯錯誤: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>未知</value></data>
@@ -323,7 +323,7 @@
 <data name="Window_CenterPoint" xml:space="preserve"><value>旋轉中心設定</value></data>
 <data name="Msg_CenterPointDesc" xml:space="preserve"><value>設定所選圖層的旋轉中心座標。</value></data>
 <data name="Group_Selection" xml:space="preserve"><value>3D選擇</value></data>
-<data name="Msg_HoverInfo" xml:space="preserve"><value>and faces when hovering over them in the 3D view.</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>在3D視圖中滑鼠懸停時自動識別頂點、邊和面。</value></data>
 <data name="Button_ApplySelection" xml:space="preserve"><value>應用檢測到的座標</value></data>
 <data name="State_None" xml:space="preserve"><value>無</value></data>
 <data name="Dialog_Close" xml:space="preserve"><value>關閉</value></data>
@@ -331,7 +331,7 @@
 <data name="State_Locked" xml:space="preserve"><value>已鎖定</value></data>
 <data name="Mode_Vertex" xml:space="preserve"><value>頂點</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>邊</value></data>
-<data name="Mode_Face" xml:space="preserve"><value>면</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>面</value></data>
 <data name="Layer_Rename" xml:space="preserve"><value>雙擊重新命名</value></data>
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>顯示</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>隱藏</value></data>
@@ -531,7 +531,7 @@
 <data name="RelocateCache" xml:space="preserve"><value>移動快取</value></data>
 <data name="OldPath" xml:space="preserve"><value>目前路徑前綴</value></data>
 <data name="NewPath" xml:space="preserve"><value>新路徑前綴</value></data>
-<data name="ConfirmMoveCache" xml:space="preserve"><value>确定要重新定位缓存路径吗？\n索引中的路径将被更新。\n如果源位置存在物理文件夹，它也将被移动。\n（目标：以OldPath开头的条目）</value></data>
+<data name="ConfirmMoveCache" xml:space="preserve"><value>確定要重新定位快取路徑嗎？\n索引中的路徑將被更新。\n如果來源位置存在實體資料夾，它也將被移動。\n（目標：以 OldPath 開頭的項目）</value></data>
 <data name="MoveCacheComplete" xml:space="preserve"><value>搬遷完成。</value></data>
 <data name="Convert" xml:space="preserve"><value>轉換</value></data>
 <data name="ConvertCacheDesc" xml:space="preserve"><value>轉換快取格式 (HDD⇔SSD)</value></data>

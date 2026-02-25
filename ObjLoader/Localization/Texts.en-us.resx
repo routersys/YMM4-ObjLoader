@@ -90,7 +90,7 @@
 <data name="Group_Model" xml:space="preserve"><value>Model</value></data>
 <data name="Setting" xml:space="preserve"><value>Settings</value></data>
 <data name="File" xml:space="preserve"><value>File</value></data>
-<data name="File_Desc" xml:space="preserve"><value>pmx</value></data>
+<data name="File_Desc" xml:space="preserve"><value>Specifies the 3D model file to load.</value></data>
 <data name="BaseColor" xml:space="preserve"><value>Base Color</value></data>
 <data name="Projection" xml:space="preserve"><value>Projection</value></data>
 <data name="Group_Display" xml:space="preserve"><value>Display</value></data>
@@ -195,7 +195,7 @@
 <data name="Preset_Standard" xml:space="preserve"><value>Standard</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>Custom</value></data>
 <data name="Shader" xml:space="preserve"><value>Shader</value></data>
-<data name="Shader_Desc" xml:space="preserve"><value>fx</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>Specifies the shader file to load.</value></data>
 <data name="Shader_Status_Success" xml:space="preserve"><value>Compilation Success</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>Compile Error: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>Unknown</value></data>
@@ -323,7 +323,7 @@
 <data name="Window_CenterPoint" xml:space="preserve"><value>Rotation Center Settings</value></data>
 <data name="Msg_CenterPointDesc" xml:space="preserve"><value>Sets the rotation center coordinates for the selected layer.</value></data>
 <data name="Group_Selection" xml:space="preserve"><value>3D Selection</value></data>
-<data name="Msg_HoverInfo" xml:space="preserve"><value>Automatically recognizes vertices</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>Automatically recognizes vertices, edges, and faces when hovering over them in the 3D view.</value></data>
 <data name="Button_ApplySelection" xml:space="preserve"><value>Apply Detected Coordinates</value></data>
 <data name="State_None" xml:space="preserve"><value>None</value></data>
 <data name="Dialog_Close" xml:space="preserve"><value>Close</value></data>
@@ -531,7 +531,7 @@
 <data name="RelocateCache" xml:space="preserve"><value>Relocate Cache</value></data>
 <data name="OldPath" xml:space="preserve"><value>Current Path Prefix</value></data>
 <data name="NewPath" xml:space="preserve"><value>New Path Prefix</value></data>
-<data name="ConfirmMoveCache" xml:space="preserve"><value>Are you sure you want to relocate cache paths?\nPaths in the index will be updated.\nIf the physical folder exists at the source</value></data>
+<data name="ConfirmMoveCache" xml:space="preserve"><value>Are you sure you want to relocate cache paths?\nPaths in the index will be updated.\nIf the physical folder exists at the source, it will also be moved.\n(Target: Entries starting with OldPath)</value></data>
 <data name="MoveCacheComplete" xml:space="preserve"><value>Relocation completed.</value></data>
 <data name="Convert" xml:space="preserve"><value>Convert</value></data>
 <data name="ConvertCacheDesc" xml:space="preserve"><value>Convert cache format (HDD⇔SSD)</value></data>

@@ -90,7 +90,7 @@
 <data name="Group_Model" xml:space="preserve"><value>モデル</value></data>
 <data name="Setting" xml:space="preserve"><value>設定</value></data>
 <data name="File" xml:space="preserve"><value>ファイル</value></data>
-<data name="File_Desc" xml:space="preserve"><value>読み込む3Dモデルファイルを指定します。(obj</value></data>
+<data name="File_Desc" xml:space="preserve"><value>読み込む3Dモデルファイルを指定します。</value></data>
 <data name="BaseColor" xml:space="preserve"><value>基本色</value></data>
 <data name="Projection" xml:space="preserve"><value>投影方法</value></data>
 <data name="Group_Display" xml:space="preserve"><value>表示</value></data>
@@ -195,7 +195,7 @@
 <data name="Preset_Standard" xml:space="preserve"><value>標準</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>カスタム</value></data>
 <data name="Shader" xml:space="preserve"><value>シェーダー</value></data>
-<data name="Shader_Desc" xml:space="preserve"><value>読み込むシェーダーファイルを指定します。(hlsl</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>読み込むシェーダーファイルを指定します。</value></data>
 <data name="Shader_Status_Success" xml:space="preserve"><value>コンパイル成功</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>コンパイルエラー: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>未確認</value></data>

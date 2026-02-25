@@ -90,7 +90,7 @@
 <data name="Group_Model" xml:space="preserve"><value>Modelo</value></data>
 <data name="Setting" xml:space="preserve"><value>Configuración</value></data>
 <data name="File" xml:space="preserve"><value>Archivo</value></data>
-<data name="File_Desc" xml:space="preserve"><value>3mf)</value></data>
+<data name="File_Desc" xml:space="preserve"><value>Especifica el archivo de modelo 3D a cargar.</value></data>
 <data name="BaseColor" xml:space="preserve"><value>Color base</value></data>
 <data name="Projection" xml:space="preserve"><value>Proyección</value></data>
 <data name="Group_Display" xml:space="preserve"><value>Visualización</value></data>
@@ -195,7 +195,7 @@
 <data name="Preset_Standard" xml:space="preserve"><value>Estándar</value></data>
 <data name="Preset_Custom" xml:space="preserve"><value>Personalizado</value></data>
 <data name="Shader" xml:space="preserve"><value>Sombreador</value></data>
-<data name="Shader_Desc" xml:space="preserve"><value>vert</value></data>
+<data name="Shader_Desc" xml:space="preserve"><value>Especifica el archivo de sombreador a cargar.</value></data>
 <data name="Shader_Status_Success" xml:space="preserve"><value>Compilación exitosa</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>Error de compilación: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>Desconocido</value></data>
@@ -323,7 +323,7 @@
 <data name="Window_CenterPoint" xml:space="preserve"><value>Configuración del centro de rotación</value></data>
 <data name="Msg_CenterPointDesc" xml:space="preserve"><value>Establece las coordenadas del centro de rotación para la capa seleccionada.</value></data>
 <data name="Group_Selection" xml:space="preserve"><value>Selección 3D</value></data>
-<data name="Msg_HoverInfo" xml:space="preserve"><value>在3D視圖中滑鼠懸停時自動識別頂點、邊和面。</value></data>
+<data name="Msg_HoverInfo" xml:space="preserve"><value>Reconoce automáticamente vértices, bordes y caras al pasar el ratón sobre ellos en la vista 3D.</value></data>
 <data name="Button_ApplySelection" xml:space="preserve"><value>Aplicar coordenadas detectadas</value></data>
 <data name="State_None" xml:space="preserve"><value>Ninguno</value></data>
 <data name="Dialog_Close" xml:space="preserve"><value>Cerrar</value></data>
@@ -331,7 +331,7 @@
 <data name="State_Locked" xml:space="preserve"><value>Bloqueado</value></data>
 <data name="Mode_Vertex" xml:space="preserve"><value>Vértice</value></data>
 <data name="Mode_Edge" xml:space="preserve"><value>Borde</value></data>
-<data name="Mode_Face" xml:space="preserve"><value>وجه</value></data>
+<data name="Mode_Face" xml:space="preserve"><value>Cara</value></data>
 <data name="Layer_Rename" xml:space="preserve"><value>Doble clic para renombrar</value></data>
 <data name="Layer_Visibility_Show" xml:space="preserve"><value>Mostrar</value></data>
 <data name="Layer_Visibility_Hide" xml:space="preserve"><value>Ocultar</value></data>
@@ -531,7 +531,7 @@
 <data name="RelocateCache" xml:space="preserve"><value>Reubicar caché</value></data>
 <data name="OldPath" xml:space="preserve"><value>Prefijo de ruta actual</value></data>
 <data name="NewPath" xml:space="preserve"><value>Nuevo prefijo de ruta</value></data>
-<data name="ConfirmMoveCache" xml:space="preserve"><value>캐시 경로를 재배치하시겠습니까?\n인덱스의 경로가 업데이트됩니다.\n원본 위치에 물리적 폴더가 있는 경우 해당 폴더도 이동됩니다.\n(대상: OldPath로 시작하는 항목)</value></data>
+<data name="ConfirmMoveCache" xml:space="preserve"><value>¿Está seguro de que desea reubicar las rutas de caché?\nLas rutas en el índice se actualizarán.\nSi existe la carpeta física en el origen, también se moverá.\n(Objetivo: Entradas que comienzan con OldPath)</value></data>
 <data name="MoveCacheComplete" xml:space="preserve"><value>Reubicación completada.</value></data>
 <data name="Convert" xml:space="preserve"><value>Convertir</value></data>
 <data name="ConvertCacheDesc" xml:space="preserve"><value>Convertir formato de caché (HDD⇔SSD)</value></data>

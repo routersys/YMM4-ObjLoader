@@ -11,6 +11,7 @@ using ObjLoader.Services.Mmd.Animation;
 using ObjLoader.Services.Mmd.Parsers;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
+using ObjLoader.Utilities.Logging;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
@@ -38,8 +39,15 @@ namespace ObjLoader.Services.Rendering
         private readonly Dictionary<string, string> _registeredSkinningGuids = new();
         private readonly Dictionary<string, (BoneAnimator Animator, string VmdPath)> _animators = new();
 
+        private readonly Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> _localPlacementsBuffer = new();
+        private readonly Dictionary<string, Matrix4x4> _globalPlacementsBuffer = new();
+        private readonly List<LayerRenderData> _layerRenderDataBuffer = new();
+        private readonly HashSet<string> _validLayerGuidsBuffer = new();
+        private readonly List<string> _animatorsToRemoveBuffer = new();
+
         private bool _isLoadingModel;
         private bool _isModelLoaded;
+        private Task? _loadModelTask;
         private readonly object _loadLock = new object();
         public Action? OnModelLoaded { get; set; }
 
@@ -90,6 +98,10 @@ namespace ObjLoader.Services.Rendering
                 await Task.Run(() => LoadModelInternal()).ConfigureAwait(false);
                 _isModelLoaded = true;
             }
+            catch (Exception ex)
+            {
+                Logger<SceneService>.Instance.Error("Failed to load model asynchronously", ex);
+            }
             finally
             {
                 lock (_loadLock)
@@ -135,7 +147,14 @@ namespace ObjLoader.Services.Rendering
                     }
                     hasData = true;
                 }
-                catch { }
+                catch (IOException ex)
+                {
+                    Logger<SceneService>.Instance.Warning($"IO error loading model for scale computation: {path}", ex);
+                }
+                catch (InvalidDataException ex)
+                {
+                    Logger<SceneService>.Instance.Warning($"Invalid model data for scale computation: {path}", ex);
+                }
             }
 
             if (hasData)
@@ -221,9 +240,17 @@ namespace ObjLoader.Services.Rendering
                             partTextures[i] = srv;
                             gpuBytes += texGpuBytes;
                         }
-                        catch (Exception ex)
+                        catch (IOException ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"SceneService: Failed to load texture {parts[i].TexturePath}: {ex.Message}");
+                            Logger<SceneService>.Instance.Warning($"IO error loading texture {parts[i].TexturePath}", ex);
+                        }
+                        catch (UnauthorizedAccessException ex)
+                        {
+                            Logger<SceneService>.Instance.Warning($"Access denied for texture {parts[i].TexturePath}", ex);
+                        }
+                        catch (InvalidDataException ex)
+                        {
+                            Logger<SceneService>.Instance.Warning($"Corrupt texture {parts[i].TexturePath}", ex);
                         }
                     }
 
@@ -322,7 +349,13 @@ namespace ObjLoader.Services.Rendering
         {
             if (!_isModelLoaded)
             {
-                _ = LoadModelAsync();
+                lock (_loadLock)
+                {
+                    if (_loadModelTask == null || _loadModelTask.IsCompleted)
+                    {
+                        _loadModelTask = LoadModelAsync();
+                    }
+                }
             }
 
             if (_renderService.SceneImage == null) return;
@@ -363,12 +396,13 @@ namespace ObjLoader.Services.Rendering
             bool isIndexValid = activeIndex >= 0 && activeIndex < layerList.Count;
             LayerData? activeLayer = isIndexValid ? layerList[activeIndex] : null;
 
-            var (localPlacements, globalLiftY) = BuildLocalPlacements(currentFrame, len, fps, settings, activeLayer);
-            var globalPlacements = ResolveHierarchy(localPlacements);
-            var layers = ConvertToRenderData(localPlacements, globalPlacements, axisConversion, globalLiftY, currentFrame, len, fps, activeLayer);
+            double globalLiftY;
+            BuildLocalPlacements(currentFrame, len, fps, settings, activeLayer, out globalLiftY);
+            ResolveHierarchy();
+            ConvertToRenderData(axisConversion, globalLiftY, currentFrame, len, fps, activeLayer);
 
             _renderService.Render(
-                layers,
+                _layerRenderDataBuffer,
                 view,
                 proj,
                 new Vector3((float)camPos.X, (float)camPos.Y, (float)camPos.Z),
@@ -381,11 +415,10 @@ namespace ObjLoader.Services.Rendering
                 enableShadow);
         }
 
-        private (Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> localPlacements, double globalLiftY) BuildLocalPlacements(
-            double currentFrame, int len, int fps, PluginSettings settings, LayerData? activeLayer)
+        private void BuildLocalPlacements(double currentFrame, int len, int fps, PluginSettings settings, LayerData? activeLayer, out double globalLiftY)
         {
-            var localPlacements = new Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)>();
-            double globalLiftY = 0;
+            _localPlacementsBuffer.Clear();
+            globalLiftY = 0;
             bool liftComputed = false;
 
             var layerList = _parameter.Layers;
@@ -450,63 +483,55 @@ namespace ObjLoader.Services.Rendering
 
                 var placement = Matrix4x4.CreateScale(fScale) * Matrix4x4.CreateRotationZ(fRz) * Matrix4x4.CreateRotationX(fRx) * Matrix4x4.CreateRotationY(fRy) * Matrix4x4.CreateTranslation(fTx, fTy, fTz);
 
-                localPlacements[layer.Guid] = (placement, layer.ParentGuid, layer, resource);
+                _localPlacementsBuffer[layer.Guid] = (placement, layer.ParentGuid, layer, resource);
             }
-
-            return (localPlacements, globalLiftY);
         }
 
-        private Dictionary<string, Matrix4x4> ResolveHierarchy(
-            Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> localPlacements)
+        private void ResolveHierarchy()
         {
-            var globalPlacements = new Dictionary<string, Matrix4x4>();
+            _globalPlacementsBuffer.Clear();
 
-            Matrix4x4 GetGlobalPlacement(string guid, int depth = 0)
+            foreach (var guid in _localPlacementsBuffer.Keys)
             {
-                if (globalPlacements.TryGetValue(guid, out var cached)) return cached;
-                if (!localPlacements.TryGetValue(guid, out var info)) return Matrix4x4.Identity;
-                if (depth > MaxHierarchyDepth) return Matrix4x4.Identity;
-
-                var parentMat = Matrix4x4.Identity;
-                if (!string.IsNullOrEmpty(info.ParentId) && localPlacements.ContainsKey(info.ParentId))
-                {
-                    parentMat = GetGlobalPlacement(info.ParentId, depth + 1);
-                }
-
-                var global = info.Local * parentMat;
-                globalPlacements[guid] = global;
-                return global;
+                GetGlobalPlacement(guid, 0);
             }
-
-            foreach (var guid in localPlacements.Keys)
-            {
-                GetGlobalPlacement(guid);
-            }
-
-            return globalPlacements;
         }
 
-        private List<LayerRenderData> ConvertToRenderData(
-            Dictionary<string, (Matrix4x4 Local, string? ParentId, LayerData Layer, GpuResourceCacheItem Resource)> localPlacements,
-            Dictionary<string, Matrix4x4> globalPlacements,
+        private Matrix4x4 GetGlobalPlacement(string guid, int depth)
+        {
+            if (_globalPlacementsBuffer.TryGetValue(guid, out var cached)) return cached;
+            if (!_localPlacementsBuffer.TryGetValue(guid, out var info)) return Matrix4x4.Identity;
+            if (depth > MaxHierarchyDepth) return Matrix4x4.Identity;
+
+            var parentMat = Matrix4x4.Identity;
+            if (!string.IsNullOrEmpty(info.ParentId) && _localPlacementsBuffer.ContainsKey(info.ParentId))
+            {
+                parentMat = GetGlobalPlacement(info.ParentId, depth + 1);
+            }
+
+            var global = info.Local * parentMat;
+            _globalPlacementsBuffer[guid] = global;
+            return global;
+        }
+
+        private void ConvertToRenderData(
             Matrix4x4 axisConversion,
             double globalLiftY,
             double currentFrame, int len, int fps,
             LayerData? activeLayer)
         {
-            var layers = new List<LayerRenderData>();
+            _layerRenderDataBuffer.Clear();
+            _validLayerGuidsBuffer.Clear();
 
             if (_skinningManager == null && _renderService.Device != null)
             {
                 _skinningManager = new SkinningManager(_renderService.Device);
             }
 
-            var validLayerGuids = new HashSet<string>();
-
-            foreach (var kvp in localPlacements)
+            foreach (var kvp in _localPlacementsBuffer)
             {
                 var guid = kvp.Key;
-                validLayerGuids.Add(guid);
+                _validLayerGuidsBuffer.Add(guid);
                 var info = kvp.Value;
                 var layer = info.Layer;
                 var resource = info.Resource;
@@ -532,7 +557,12 @@ namespace ObjLoader.Services.Rendering
                                     _modelBones[layer.FilePath] = new List<Core.Mmd.PmxBone>();
                                 }
                             }
-                            catch
+                            catch (IOException)
+                            {
+                                _modelSkinningData[layer.FilePath] = (Array.Empty<ObjVertex>(), Array.Empty<Core.Mmd.VertexBoneWeight>());
+                                _modelBones[layer.FilePath] = new List<Core.Mmd.PmxBone>();
+                            }
+                            catch (InvalidDataException)
                             {
                                 _modelSkinningData[layer.FilePath] = (Array.Empty<ObjVertex>(), Array.Empty<Core.Mmd.VertexBoneWeight>());
                                 _modelBones[layer.FilePath] = new List<Core.Mmd.PmxBone>();
@@ -573,7 +603,14 @@ namespace ObjLoader.Services.Rendering
                                         _animators[guid] = (animator, layer.VmdFilePath);
                                     }
                                 }
-                                catch { }
+                                catch (IOException ex)
+                                {
+                                    Logger<SceneService>.Instance.Warning($"IO error loading VMD: {layer.VmdFilePath}", ex);
+                                }
+                                catch (InvalidDataException ex)
+                                {
+                                    Logger<SceneService>.Instance.Warning($"Invalid VMD data: {layer.VmdFilePath}", ex);
+                                }
                             }
                             else
                             {
@@ -595,7 +632,7 @@ namespace ObjLoader.Services.Rendering
                     }
                 }
 
-                if (!globalPlacements.TryGetValue(guid, out var globalPlacement))
+                if (!_globalPlacementsBuffer.TryGetValue(guid, out var globalPlacement))
                     globalPlacement = info.Local;
 
                 var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
@@ -609,7 +646,7 @@ namespace ObjLoader.Services.Rendering
                 double wIdVal = isActive ? _parameter.WorldId.GetValue((long)currentFrame, len, fps) : layer.WorldId.GetValue((long)currentFrame, len, fps);
                 int worldId = (int)wIdVal;
 
-                layers.Add(new LayerRenderData
+                _layerRenderDataBuffer.Add(new LayerRenderData
                 {
                     Resource = resource,
                     WorldMatrixOverride = finalWorld,
@@ -630,15 +667,21 @@ namespace ObjLoader.Services.Rendering
                 });
             }
 
-            var animatorsToRemove = new List<string>();
-            foreach (var key in _animators.Keys) if (!validLayerGuids.Contains(key)) animatorsToRemove.Add(key);
-            foreach (var key in animatorsToRemove)
+            _animatorsToRemoveBuffer.Clear();
+            foreach (var key in _animators.Keys)
+            {
+                if (!_validLayerGuidsBuffer.Contains(key))
+                {
+                    _animatorsToRemoveBuffer.Add(key);
+                }
+            }
+
+            foreach (var key in _animatorsToRemoveBuffer)
             {
                 _animators.Remove(key);
                 _registeredSkinningGuids.Remove(key);
                 _skinningManager?.RemoveSkinningState(key);
             }
-            return layers;
         }
 
         public void Dispose()
@@ -666,7 +709,7 @@ namespace ObjLoader.Services.Rendering
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"SceneService: Dispose failed: {ex.Message}");
+                Logger<SceneService>.Instance.Error($"Dispose failed", ex);
             }
         }
     }
