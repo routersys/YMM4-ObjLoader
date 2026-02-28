@@ -30,6 +30,7 @@ namespace ObjLoader.Rendering.Core
         public ID3D11DepthStencilState DepthStencilStateNoWrite { get; }
         public ID3D11SamplerState SamplerState { get; }
         public ID3D11BlendState BlendState { get; }
+        public ID3D11BlendState BillboardBlendState { get; }
         public ID3D11BlendState GridBlendState { get; }
         public ID3D11ShaderResourceView WhiteTextureView { get; }
         public ID3D11Device Device => _device;
@@ -100,8 +101,11 @@ namespace ObjLoader.Rendering.Core
             SamplerState = CreateSamplerState(device);
             _disposer.Collect(SamplerState);
 
-            BlendState = CreateBlendState(device);
+            BlendState = CreateBlendState(device, false);
             _disposer.Collect(BlendState);
+
+            BillboardBlendState = CreateBlendState(device, true);
+            _disposer.Collect(BillboardBlendState);
 
             GridBlendState = CreateGridBlendState(device);
             _disposer.Collect(GridBlendState);
@@ -186,11 +190,11 @@ namespace ObjLoader.Rendering.Core
             return device.CreateSamplerState(sampDesc);
         }
 
-        private static ID3D11BlendState CreateBlendState(ID3D11Device device)
+        private static ID3D11BlendState CreateBlendState(ID3D11Device device, bool alphaToCoverage)
         {
             var blendDesc = new BlendDescription
             {
-                AlphaToCoverageEnable = false,
+                AlphaToCoverageEnable = alphaToCoverage,
                 IndependentBlendEnable = false,
             };
             blendDesc.RenderTarget[0] = new RenderTargetBlendDescription

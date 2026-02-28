@@ -1,6 +1,7 @@
 ﻿using ObjLoader.Api;
 using ObjLoader.Api.Core;
 using ObjLoader.Cache.Gpu;
+using ObjLoader.Core.Enums;
 using ObjLoader.Core.Models;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Localization;
@@ -15,7 +16,8 @@ using ObjLoader.Services.Mmd.Parsers;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
-using System.Collections.Immutable;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -29,14 +31,14 @@ namespace ObjLoader.Rendering.Core
 {
     public sealed class ObjLoaderSource : IShapeSource
     {
-        public static readonly object SharedRenderLock = new object();
+        public static readonly object SharedRenderLock = new();
 
         private const int MaxHierarchyDepth = 100;
         private const string CacheKeyPrefix = "export:";
 
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly ObjLoaderParameter _parameter;
-        private readonly DisposeCollector _disposer = new DisposeCollector();
+        private readonly DisposeCollector _disposer = new();
         private readonly ObjModelLoader _loader;
         private readonly D3DResources _resources;
         private readonly RenderTargetManager _renderTargets;
@@ -46,6 +48,8 @@ namespace ObjLoader.Rendering.Core
         private readonly ITextureService _textureService;
         private readonly IDynamicTextureManager _dynamicTextureManager;
         private readonly ISkinningManager _skinningManager;
+        private readonly ISceneDrawManager _sceneDrawManager;
+        private readonly IFrameStateCache _frameStateCache;
 
         private D2D.ID2D1CommandList? _commandList;
 
@@ -61,7 +65,7 @@ namespace ObjLoader.Rendering.Core
         private int _lastShadowResolution = -1;
         private bool _lastShadowEnabled;
 
-        private ImmutableDictionary<string, LayerState> _layerStates = ImmutableDictionary<string, LayerState>.Empty;
+        private Dictionary<string, LayerState> _layerStates = new Dictionary<string, LayerState>();
 
         private ObjLoaderSceneApi? _sceneApi;
         private Guid _registrationToken;
@@ -73,25 +77,23 @@ namespace ObjLoader.Rendering.Core
         private static readonly ID3D11ShaderResourceView[] _emptySrvArray4 = new ID3D11ShaderResourceView[4];
         private static readonly ID3D11Buffer[] _emptyBufferArray1 = new ID3D11Buffer[1];
 
-        private readonly List<(string Guid, LayerState State, LayerData Data)> _preCalcStates = new();
-        private readonly Dictionary<int, LayerState> _worldMasterLights = new();
-        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> _layersToRender = new();
-        private readonly Dictionary<string, LayerState> _newLayerStatesTemp = new();
-        private readonly Dictionary<string, LayerState> _mutableStatesForShadow = new();
-        private readonly Dictionary<string, LayerState> _mutableStatesForScene = new();
+        private readonly List<(string Guid, LayerState State, LayerData Data)> _preCalcStates = [];
+        private readonly Dictionary<int, LayerState> _worldMasterLights = [];
+        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> _layersToRender = [];
+        private readonly Dictionary<string, LayerState> _newLayerStatesTemp = [];
         private readonly Matrix4x4[] _lightViewProjs = new Matrix4x4[D3DResources.CascadeCount];
         private readonly float[] _cascadeSplits = new float[4];
         private readonly float[] _splitDistances = new float[4];
-        private readonly HashSet<string> _usedTexturePaths = new HashSet<string>();
+        private readonly HashSet<string> _usedTexturePaths = [];
         private readonly Vector3[] _frustumCorners = new Vector3[8];
         private double _currentTime;
         private bool _hasBoneAnimation;
 
         private static readonly Vector3[] _ndcCorners =
-        {
-            new Vector3(-1, -1, 0), new Vector3(1, -1, 0), new Vector3(-1, 1, 0), new Vector3(1, 1, 0),
-            new Vector3(-1, -1, 1), new Vector3(1, -1, 1), new Vector3(-1, 1, 1), new Vector3(1, 1, 1)
-        };
+        [
+            new(-1, -1, 0), new(1, -1, 0), new(-1, 1, 0), new(1, 1, 0),
+            new(-1, -1, 1), new(1, -1, 1), new(-1, 1, 1), new(1, 1, 1)
+        ];
 
         static ObjLoaderSource()
         {
@@ -122,7 +124,17 @@ namespace ObjLoader.Rendering.Core
             }
         }
 
-        public D2D.ID2D1Image Output => _commandList ?? throw new InvalidOperationException("Update must be called before accessing Output.");
+        public D2D.ID2D1Image Output
+        {
+            get
+            {
+                if (_commandList == null)
+                {
+                    CreateEmptyCommandList();
+                }
+                return _commandList!;
+            }
+        }
 
         public ObjLoaderSource(IGraphicsDevicesAndContext devices, ObjLoaderParameter parameter)
         {
@@ -132,13 +144,15 @@ namespace ObjLoader.Rendering.Core
             _textureService = new TextureService();
             _dynamicTextureManager = new DynamicTextureManager(_textureService);
             _skinningManager = new SkinningManager(_devices.D3D.Device);
+            _sceneDrawManager = new SceneDrawManager(_devices);
+            _frameStateCache = new FrameStateCache();
 
             _resources = D3DResourcesPool.Acquire(devices.D3D.Device);
 
             _renderTargets = new RenderTargetManager();
             _shaderManager = new CustomShaderManager(devices);
             _shadowRenderer = new ShadowRenderer(devices, _resources);
-            _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager);
+            _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager, _sceneDrawManager);
 
             _sceneApi = new ObjLoaderSceneApi(
                 _parameter,
@@ -162,17 +176,9 @@ namespace ObjLoader.Rendering.Core
 
         private bool IsDeviceLost()
         {
-            try
-            {
-                var device = _devices.D3D.Device;
-                if (device == null) return true;
-                var reason = device.DeviceRemovedReason;
-                return reason.Failure;
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            var device = _devices.D3D.Device;
+            if (device == null) return true;
+            return device.DeviceRemovedReason.Failure;
         }
 
         private bool ValidateDeviceState()
@@ -193,7 +199,6 @@ namespace ObjLoader.Rendering.Core
             lock (SharedRenderLock)
             {
                 if (_isDisposed) return;
-
                 if (!ValidateDeviceState()) return;
 
                 try
@@ -245,16 +250,28 @@ namespace ObjLoader.Rendering.Core
 
         private void UpdateInternal(TimelineItemSourceDescription desc)
         {
-            _parameter.Duration = (double)desc.ItemDuration.Frame / desc.FPS;
+            if (_sceneApi != null)
+            {
+                _sceneDrawManager.UpdateFromApi(_sceneApi.DrawInternal);
+            }
+
+            if (desc != null && desc.FPS > 0)
+            {
+                _parameter.Duration = (double)desc.ItemDuration.Frame / desc.FPS;
+            }
+            else
+            {
+                _parameter.Duration = 0.0;
+            }
 
             if (!_parameter.IsSwitchingLayer)
             {
                 _parameter.SyncActiveLayer();
             }
 
-            var frame = desc.ItemPosition.Frame;
-            var length = desc.ItemDuration.Frame;
-            var fps = desc.FPS;
+            var frame = desc != null ? desc.ItemPosition.Frame : 0L;
+            var length = desc != null ? desc.ItemDuration.Frame : 1L;
+            var fps = desc != null && desc.FPS > 0 ? desc.FPS : 60;
             _currentTime = (double)frame / fps;
 
             int sw = Math.Max(1, (int)_parameter.ScreenWidth.GetValue(frame, length, fps));
@@ -273,31 +290,42 @@ namespace ObjLoader.Rendering.Core
                                  Math.Abs(_lastTargetX - targetX) > RenderingConstants.StateComparisonEpsilon || Math.Abs(_lastTargetY - targetY) > RenderingConstants.StateComparisonEpsilon || Math.Abs(_lastTargetZ - targetZ) > RenderingConstants.StateComparisonEpsilon;
             bool shadowSettingsChanged = _lastShadowResolution != settings.ShadowResolution || _lastShadowEnabled != settings.ShadowMappingEnabled;
 
-            var (activeWorldId, newLayerStates, layersChanged) = BuildLayerStates(frame, length, fps, settings);
+            var (activeWorldId, layersChanged) = BuildLayerStates(frame, length, fps, settings);
 
-            bool activeWorldIdChanged = _lastActiveWorldId != activeWorldId;
+            var stateToRender = _frameStateCache.GetOrCreateState();
+            stateToRender.Update(frame, camX, camY, camZ, targetX, targetY, targetZ, activeWorldId, _newLayerStatesTemp);
+            _frameStateCache.SaveState(frame, stateToRender);
+
+            bool activeWorldIdChanged = _lastActiveWorldId != stateToRender.ActiveWorldId;
             bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
-            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null || _hasBoneAnimation;
+            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null || _hasBoneAnimation || _sceneDrawManager.IsDirty || _sceneDrawManager.GetExternalObjects().Count > 0 || _sceneDrawManager.GetBillboards().Count > 0;
 
             if (!needsSceneRedraw)
             {
                 return;
             }
 
-            ProcessVisibilityHierarchy(newLayerStates);
+            ProcessVisibilityHierarchy(stateToRender.LayerStates);
 
-            Interlocked.Exchange(ref _layerStates, newLayerStates);
+            _layerStates = stateToRender.LayerStates;
 
+            int renderWorldId = stateToRender.ActiveWorldId;
             bool shadowValid = RenderShadowsIfApplicable(
-                settings, ref activeWorldId, sw, sh,
-                camX, camY, camZ, targetX, targetY, targetZ, needsShadowRedraw);
+                settings, ref renderWorldId, sw, sh,
+                stateToRender.CamX, stateToRender.CamY, stateToRender.CamZ,
+                stateToRender.TargetX, stateToRender.TargetY, stateToRender.TargetZ,
+                needsShadowRedraw);
 
-            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged;
-            RenderMainScene(sw, sh, camX, camY, camZ, targetX, targetY, targetZ,
-                shadowValid, activeWorldId, needsEnvMapRedraw);
+            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged || _sceneDrawManager.IsDirty || _sceneDrawManager.GetExternalObjects().Count > 0 || _sceneDrawManager.GetBillboards().Count > 0;
+            RenderMainScene(sw, sh, stateToRender.CamX, stateToRender.CamY, stateToRender.CamZ,
+                stateToRender.TargetX, stateToRender.TargetY, stateToRender.TargetZ,
+                shadowValid, renderWorldId, needsEnvMapRedraw);
+
+
 
             FinalizeCommandList(camX, camY, camZ, targetX, targetY, targetZ,
                 settingsVersion, activeWorldId, settings);
+            _sceneDrawManager.ClearDirtyFlag();
         }
 
         private (double camX, double camY, double camZ, double targetX, double targetY, double targetZ) CalculateCameraTransforms(long frame, long length, int fps)
@@ -327,9 +355,6 @@ namespace ObjLoader.Rendering.Core
             _resources.UpdateRasterizerState(settings.CullMode);
             _resources.EnsureShadowMapSize(settings.ShadowResolution, true);
             _resources.EnsureEnvironmentMap();
-
-            var device = _devices.D3D.Device;
-            if (device == null) return;
         }
 
         private void PrepareDynamicTextures(IEnumerable<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> layers)
@@ -355,7 +380,7 @@ namespace ObjLoader.Rendering.Core
             _dynamicTextureManager.Prepare(_usedTexturePaths, device);
         }
 
-        private (int activeWorldId, ImmutableDictionary<string, LayerState> newLayerStates, bool layersChanged) BuildLayerStates(long frame, long length, int fps, PluginSettings settings)
+        private (int activeWorldId, bool layersChanged) BuildLayerStates(long frame, long length, int fps, PluginSettings settings)
         {
             _preCalcStates.Clear();
             _worldMasterLights.Clear();
@@ -363,7 +388,7 @@ namespace ObjLoader.Rendering.Core
 
             var activeGuid = _parameter.ActiveLayerGuid;
             int activeWorldId = 0;
-            var previousStates = Volatile.Read(ref _layerStates);
+            var previousStates = _layerStates;
 
             foreach (var layer in _parameter.Layers)
             {
@@ -462,7 +487,8 @@ namespace ObjLoader.Rendering.Core
             _newLayerStatesTemp.Clear();
             bool layersChanged = false;
 
-            foreach (var item in _preCalcStates)
+            var preCalcSpan = CollectionsMarshal.AsSpan(_preCalcStates);
+            foreach (var item in preCalcSpan)
             {
                 var layerState = item.State;
                 if (_worldMasterLights.TryGetValue(layerState.WorldId, out var master))
@@ -487,11 +513,10 @@ namespace ObjLoader.Rendering.Core
                 layersChanged = true;
             }
 
-            var newLayerStates = layersChanged ? _newLayerStatesTemp.ToImmutableDictionary() : previousStates;
-            return (activeWorldId, newLayerStates, layersChanged);
+            return (activeWorldId, layersChanged);
         }
 
-        private ImmutableDictionary<int, PartMaterialState>? CreatePartMaterials(LayerData layer, ImmutableDictionary<int, PartMaterialState>? oldPartMaterials)
+        private Dictionary<int, PartMaterialState>? CreatePartMaterials(LayerData layer, Dictionary<int, PartMaterialState>? oldPartMaterials)
         {
             var newMaterials = layer.PartMaterials;
             if (newMaterials == null || newMaterials.Count == 0) return null;
@@ -519,22 +544,26 @@ namespace ObjLoader.Rendering.Core
                 if (isSame) return oldPartMaterials;
             }
 
-            return newMaterials.ToImmutableDictionary(
-                k => k.Key,
-                v => new PartMaterialState
+            var dict = new Dictionary<int, PartMaterialState>(newMaterials.Count);
+            foreach (var kvp in newMaterials)
+            {
+                dict[kvp.Key] = new PartMaterialState
                 {
-                    Roughness = v.Value.Roughness,
-                    Metallic = v.Value.Metallic,
-                    BaseColor = v.Value.BaseColor,
-                    TexturePath = v.Value.TexturePath
-                });
+                    Roughness = kvp.Value.Roughness,
+                    Metallic = kvp.Value.Metallic,
+                    BaseColor = kvp.Value.BaseColor,
+                    TexturePath = kvp.Value.TexturePath
+                };
+            }
+            return dict;
         }
 
-        private void ProcessVisibilityHierarchy(ImmutableDictionary<string, LayerState> newLayerStates)
+        private void ProcessVisibilityHierarchy(Dictionary<string, LayerState> newLayerStates)
         {
             _layersToRender.Clear();
 
-            foreach (var item in _preCalcStates)
+            var preCalcSpan = CollectionsMarshal.AsSpan(_preCalcStates);
+            foreach (var item in preCalcSpan)
             {
                 if (!newLayerStates.TryGetValue(item.Guid, out var layerState)) continue;
 
@@ -667,8 +696,7 @@ namespace ObjLoader.Rendering.Core
 
             if (needsShadowRedraw)
             {
-                PopulateDictionary(_mutableStatesForShadow, Volatile.Read(ref _layerStates));
-                _shadowRenderer.Render(_layersToRender, _lightViewProjs, activeWorldId, _mutableStatesForShadow);
+                _shadowRenderer.Render(_layersToRender, _lightViewProjs, activeWorldId, _layerStates);
             }
 
             return true;
@@ -745,8 +773,7 @@ namespace ObjLoader.Rendering.Core
             double targetX, double targetY, double targetZ,
             bool shadowValid, int activeWorldId, bool needsEnvMapRedraw)
         {
-            PopulateDictionary(_mutableStatesForScene, Volatile.Read(ref _layerStates));
-            _sceneRenderer.Render(_layersToRender, _mutableStatesForScene, _parameter, sw, sh,
+            _sceneRenderer.Render(_layersToRender, _layerStates, _parameter, sw, sh,
                 camX, camY, camZ, targetX, targetY, targetZ,
                 _lightViewProjs, _cascadeSplits, shadowValid, activeWorldId, needsEnvMapRedraw, _dynamicTextureManager.Textures);
         }
@@ -771,14 +798,7 @@ namespace ObjLoader.Rendering.Core
             _lastShadowEnabled = settings.ShadowMappingEnabled;
         }
 
-        private static void PopulateDictionary(Dictionary<string, LayerState> target, ImmutableDictionary<string, LayerState> source)
-        {
-            target.Clear();
-            foreach (var kvp in source)
-            {
-                target[kvp.Key] = kvp.Value;
-            }
-        }
+
 
         private void ClearResourceBindings()
         {
@@ -823,6 +843,27 @@ namespace ObjLoader.Rendering.Core
             }
         }
 
+        private void CreateCommandList()
+        {
+            _disposer.RemoveAndDispose(ref _commandList);
+            _commandList = _devices.DeviceContext.CreateCommandList();
+            _disposer.Collect(_commandList);
+
+            var dc = _devices.DeviceContext;
+            dc.Target = _commandList;
+            dc.BeginDraw();
+            dc.Clear(null);
+
+            if (_renderTargets.SharedBitmap != null)
+            {
+                dc.DrawImage(_renderTargets.SharedBitmap, new Vector2(-_renderTargets.SharedBitmap.Size.Width / 2.0f, -_renderTargets.SharedBitmap.Size.Height / 2.0f));
+            }
+
+            dc.EndDraw();
+            dc.Target = null;
+            _commandList.Close();
+        }
+
         private static bool AreStatesEqual(in LayerState a, in LayerState b)
         {
             return Math.Abs(a.X - b.X) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Y - b.Y) < RenderingConstants.StateComparisonEpsilon && Math.Abs(a.Z - b.Z) < RenderingConstants.StateComparisonEpsilon &&
@@ -838,7 +879,7 @@ namespace ObjLoader.Rendering.Core
                    a.IsVisible == b.IsVisible && ArePartMaterialsEqual(a.PartMaterials, b.PartMaterials);
         }
 
-        private static bool ArePartMaterialsEqual(ImmutableDictionary<int, PartMaterialState>? a, ImmutableDictionary<int, PartMaterialState>? b)
+        private static bool ArePartMaterialsEqual(Dictionary<int, PartMaterialState>? a, Dictionary<int, PartMaterialState>? b)
         {
             if (a == null && b == null) return true;
             if (a == null || b == null) return false;
@@ -963,27 +1004,6 @@ namespace ObjLoader.Rendering.Core
             }
         }
 
-        private void CreateCommandList()
-        {
-            _disposer.RemoveAndDispose(ref _commandList);
-            _commandList = _devices.DeviceContext.CreateCommandList();
-            _disposer.Collect(_commandList);
-
-            var dc = _devices.DeviceContext;
-            dc.Target = _commandList;
-            dc.BeginDraw();
-            dc.Clear(null);
-
-            if (_renderTargets.SharedBitmap != null)
-            {
-                dc.DrawImage(_renderTargets.SharedBitmap, new Vector2(-_renderTargets.SharedBitmap.Size.Width / 2.0f, -_renderTargets.SharedBitmap.Size.Height / 2.0f));
-            }
-
-            dc.EndDraw();
-            dc.Target = null;
-            _commandList.Close();
-        }
-
         public void Dispose()
         {
             lock (SharedRenderLock)
@@ -992,9 +1012,11 @@ namespace ObjLoader.Rendering.Core
                 _isDisposed = true;
             }
 
+            _sceneDrawManager.Dispose();
             _shaderManager.Dispose();
             _renderTargets.Dispose();
             _skinningManager.Dispose();
+            _frameStateCache?.Dispose();
 
             if (_textureService is IDisposable disposableTextureService)
             {
@@ -1005,8 +1027,6 @@ namespace ObjLoader.Rendering.Core
             _worldMasterLights.Clear();
             _layersToRender.Clear();
             _newLayerStatesTemp.Clear();
-            _mutableStatesForShadow.Clear();
-            _mutableStatesForScene.Clear();
 
             _disposer.DisposeAndClear();
             ClearDynamicTextureCache();

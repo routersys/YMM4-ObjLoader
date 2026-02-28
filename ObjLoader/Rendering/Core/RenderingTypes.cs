@@ -19,6 +19,6 @@ namespace ObjLoader.Rendering.Core
         public bool IsVisible;
         public HashSet<int>? VisibleParts;
         public string ParentGuid;
-        public System.Collections.Immutable.ImmutableDictionary<int, PartMaterialState>? PartMaterials;
+        public System.Collections.Generic.Dictionary<int, PartMaterialState>? PartMaterials;
     }
 }
