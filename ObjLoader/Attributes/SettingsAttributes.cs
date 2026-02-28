@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace ObjLoader.Infrastructure
+﻿namespace ObjLoader.Attributes
 {
     public enum SettingButtonPlacement
     {

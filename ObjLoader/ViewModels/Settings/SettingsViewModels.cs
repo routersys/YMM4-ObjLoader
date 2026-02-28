@@ -1,16 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
-using ObjLoader.Localization;
+using ObjLoader.Attributes;
 
-namespace ObjLoader.Infrastructure
+namespace ObjLoader.ViewModels.Settings
 {
     public abstract class SettingItemViewModelBase : Bindable
     {

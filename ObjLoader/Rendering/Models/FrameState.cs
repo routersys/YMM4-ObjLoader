@@ -1,6 +1,6 @@
 ﻿using ObjLoader.Rendering.Core;
 
-namespace ObjLoader.Rendering.Managers
+namespace ObjLoader.Rendering.Models
 {
     internal sealed class FrameState
     {

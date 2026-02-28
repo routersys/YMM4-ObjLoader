@@ -1,5 +1,5 @@
 using ObjLoader.Localization;
-using ObjLoader.Infrastructure;
+using ObjLoader.Attributes;
 
 namespace ObjLoader.Settings
 {

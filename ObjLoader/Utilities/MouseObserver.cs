@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 
-namespace ObjLoader.Infrastructure
+namespace ObjLoader.Utilities
 {
     public static class MouseObserver
     {

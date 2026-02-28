@@ -1,4 +1,4 @@
-﻿using ObjLoader.Infrastructure;
+﻿using ObjLoader.Attributes;
 using ObjLoader.Localization;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;

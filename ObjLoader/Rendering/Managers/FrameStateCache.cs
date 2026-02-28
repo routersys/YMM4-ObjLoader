@@ -1,4 +1,5 @@
 ﻿using ObjLoader.Rendering.Managers.Interfaces;
+using ObjLoader.Rendering.Models;
 
 namespace ObjLoader.Rendering.Managers
 {

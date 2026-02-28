@@ -34,9 +34,9 @@ namespace ObjLoader.SourceGenerator
 
         private static void Execute(Compilation compilation, ImmutableArray<INamedTypeSymbol> classes, SourceProductionContext context)
         {
-            var settingsItemAttrSymbol = compilation.GetTypeByMetadataName("ObjLoader.Infrastructure.SettingItemAttribute");
-            var settingButtonAttrSymbol = compilation.GetTypeByMetadataName("ObjLoader.Infrastructure.SettingButtonAttribute");
-            var settingGroupAttrSymbol = compilation.GetTypeByMetadataName("ObjLoader.Infrastructure.SettingGroupAttribute");
+            var settingsItemAttrSymbol = compilation.GetTypeByMetadataName("ObjLoader.Attributes.SettingItemAttribute");
+            var settingButtonAttrSymbol = compilation.GetTypeByMetadataName("ObjLoader.Attributes.SettingButtonAttribute");
+            var settingGroupAttrSymbol = compilation.GetTypeByMetadataName("ObjLoader.Attributes.SettingGroupAttribute");
 
             if (settingsItemAttrSymbol == null || settingButtonAttrSymbol == null) return;
 
@@ -58,7 +58,7 @@ namespace ObjLoader.SourceGenerator
             sb.AppendLine("using System.Runtime.CompilerServices;");
             sb.AppendLine("using ObjLoader.ViewModels;");
             sb.AppendLine("using ObjLoader.ViewModels.Settings;");
-            sb.AppendLine("using ObjLoader.Infrastructure;");
+            sb.AppendLine("using ObjLoader.Attributes;");
             sb.AppendLine("using ObjLoader.Settings;");
             sb.AppendLine("using YukkuriMovieMaker.Commons;");
             sb.AppendLine("using System.ComponentModel;");

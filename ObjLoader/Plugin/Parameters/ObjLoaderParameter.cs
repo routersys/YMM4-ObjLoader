@@ -36,7 +36,7 @@ namespace ObjLoader.Plugin
         private int _updateSuspendCount = 0;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
-        [SettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
+        [ItemSettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
         [IgnoreDataMember]
         public ObjLoaderParameter Self => this;
 

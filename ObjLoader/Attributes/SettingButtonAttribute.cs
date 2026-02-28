@@ -6,7 +6,7 @@ using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.Attributes
 {
-    internal class SettingButtonAttribute : PropertyEditorAttribute2
+    internal class ItemSettingButtonAttribute : PropertyEditorAttribute2
     {
         public override FrameworkElement Create()
         {

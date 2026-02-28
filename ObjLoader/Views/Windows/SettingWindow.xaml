@@ -4,7 +4,6 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:settings="clr-namespace:ObjLoader.ViewModels.Settings"
-        xmlns:infra="clr-namespace:ObjLoader.Infrastructure"
         xmlns:util="clr-namespace:ObjLoader.Utilities"
         xmlns:l="clr-namespace:ObjLoader.Localization"
         xmlns:c="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
@@ -156,8 +155,8 @@
                     <ItemsControl.ItemContainerStyle>
                         <Style TargetType="ContentPresenter">
                             <Setter Property="Margin" Value="0,0,0,15"/>
-                            <Setter Property="infra:MouseObserver.Observe" Value="True"/>
-                            <Setter Property="infra:MouseObserver.IsHovered" Value="{Binding IsHovered, Mode=TwoWay}"/>
+                            <Setter Property="util:MouseObserver.Observe" Value="True"/>
+                            <Setter Property="util:MouseObserver.IsHovered" Value="{Binding IsHovered, Mode=TwoWay}"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding IsVisible}" Value="False">
                                     <Setter Property="Visibility" Value="Collapsed"/>

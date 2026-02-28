@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows.Data;
-using ObjLoader.Infrastructure;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels.Settings
