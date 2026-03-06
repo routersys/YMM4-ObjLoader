@@ -78,10 +78,10 @@ namespace ObjLoader.Rendering.Core
         private static readonly ID3D11ShaderResourceView[] _emptySrvArray4 = new ID3D11ShaderResourceView[4];
         private static readonly ID3D11Buffer[] _emptyBufferArray1 = new ID3D11Buffer[1];
 
-        private readonly List<(string Guid, LayerState State, LayerData Data)> _preCalcStates = [];
-        private readonly Dictionary<int, LayerState> _worldMasterLights = [];
-        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> _layersToRender = [];
-        private readonly Dictionary<string, LayerState> _newLayerStatesTemp = [];
+        private readonly List<(string Guid, LayerState State, LayerData Data)> _preCalcStates = new(8);
+        private readonly Dictionary<int, LayerState> _worldMasterLights = new(8);
+        private readonly List<(LayerData Data, GpuResourceCacheItem Resource, LayerState State, ID3D11Buffer? OverrideVB)> _layersToRender = new(8);
+        private readonly Dictionary<string, LayerState> _newLayerStatesTemp = new(8);
         private readonly Matrix4x4[] _lightViewProjs = new Matrix4x4[D3DResources.CascadeCount];
         private readonly float[] _cascadeSplits = new float[4];
         private readonly float[] _splitDistances = new float[4];
