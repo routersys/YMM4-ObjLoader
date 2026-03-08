@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>ko-kr</value></data>
+<data name="Label" xml:space="preserve"><value>3D 공간 통합</value></data>
+<data name="Group_Transform" xml:space="preserve"><value>변형</value></data>
+<data name="Name_WorldId" xml:space="preserve"><value>WorldId</value></data>
+<data name="Desc_WorldId" xml:space="preserve"><value>그리기 대상 World ID</value></data>
+<data name="Name_X" xml:space="preserve"><value>X</value></data>
+<data name="Desc_X" xml:space="preserve"><value>3D 공간 X 좌표</value></data>
+<data name="Name_Y" xml:space="preserve"><value>Y</value></data>
+<data name="Desc_Y" xml:space="preserve"><value>3D 공간 Y 좌표</value></data>
+<data name="Name_Z" xml:space="preserve"><value>Z</value></data>
+<data name="Desc_Z" xml:space="preserve"><value>3D 공간 Z 좌표</value></data>
+<data name="Name_Scale" xml:space="preserve"><value>전체 비율</value></data>
+<data name="Desc_Scale" xml:space="preserve"><value>이미지 전체 확대율</value></data>
+<data name="Name_ScaleX" xml:space="preserve"><value>X축 비율</value></data>
+<data name="Desc_ScaleX" xml:space="preserve"><value>이미지 너비의 확대율 (전체 비율에 곱해집니다)</value></data>
+<data name="Name_ScaleY" xml:space="preserve"><value>Y축 비율</value></data>
+<data name="Desc_ScaleY" xml:space="preserve"><value>이미지 높이의 확대율 (전체 비율에 곱해집니다)</value></data>
+<data name="Name_RotationX" xml:space="preserve"><value>X축 회전</value></data>
+<data name="Desc_RotationX" xml:space="preserve"><value>X축 회전 (도)</value></data>
+<data name="Name_RotationY" xml:space="preserve"><value>Y축 회전</value></data>
+<data name="Desc_RotationY" xml:space="preserve"><value>Y축 회전 (도)</value></data>
+<data name="Name_RotationZ" xml:space="preserve"><value>Z축 회전</value></data>
+<data name="Desc_RotationZ" xml:space="preserve"><value>Z축 회전 (도)</value></data>
+<data name="Name_Opacity" xml:space="preserve"><value>불투명도</value></data>
+<data name="Desc_Opacity" xml:space="preserve"><value>그리기 불투명도</value></data>
+<data name="Name_FaceCamera" xml:space="preserve"><value>카메라 추적</value></data>
+<data name="Desc_FaceCamera" xml:space="preserve"><value>항상 카메라 방향을 향하도록 회전합니다</value></data>
+</root>

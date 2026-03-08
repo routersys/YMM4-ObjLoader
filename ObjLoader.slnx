@@ -4,6 +4,9 @@
     <Platform Name="x64" />
   </Configurations>
   <Project Path="ObjLoader.SourceGenerator/ObjLoader.SourceGenerator.csproj" Id="51feb93c-e384-4e60-b4ba-7e2ae07069c3" />
+  <Project Path="ObjLoader.VideoEffect/ObjLoader.VideoEffect.csproj" Id="90ec7434-b593-4a53-8080-f3e900469290">
+    <Platform Solution="Release|x64" Project="x64" />
+  </Project>
   <Project Path="ObjLoader/ObjLoader.csproj">
     <Platform Project="x64" />
   </Project>

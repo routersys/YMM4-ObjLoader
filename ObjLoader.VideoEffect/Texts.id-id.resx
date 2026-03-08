@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>id-id</value></data>
+<data name="Label" xml:space="preserve"><value>Integrasi Ruang 3D</value></data>
+<data name="Group_Transform" xml:space="preserve"><value>Transformasi</value></data>
+<data name="Name_WorldId" xml:space="preserve"><value>WorldId</value></data>
+<data name="Desc_WorldId" xml:space="preserve"><value>World ID untuk digambar</value></data>
+<data name="Name_X" xml:space="preserve"><value>X</value></data>
+<data name="Desc_X" xml:space="preserve"><value>Koordinat X di ruang 3D</value></data>
+<data name="Name_Y" xml:space="preserve"><value>Y</value></data>
+<data name="Desc_Y" xml:space="preserve"><value>Koordinat Y di ruang 3D</value></data>
+<data name="Name_Z" xml:space="preserve"><value>Z</value></data>
+<data name="Desc_Z" xml:space="preserve"><value>Koordinat Z di ruang 3D</value></data>
+<data name="Name_Scale" xml:space="preserve"><value>Skala keseluruhan</value></data>
+<data name="Desc_Scale" xml:space="preserve"><value>Tingkat perbesaran seluruh gambar</value></data>
+<data name="Name_ScaleX" xml:space="preserve"><value>Skala sumbu X</value></data>
+<data name="Desc_ScaleX" xml:space="preserve"><value>Tingkat perbesaran lebar gambar (dikalikan dengan skala keseluruhan)</value></data>
+<data name="Name_ScaleY" xml:space="preserve"><value>Skala sumbu Y</value></data>
+<data name="Desc_ScaleY" xml:space="preserve"><value>Tingkat perbesaran tinggi gambar (dikalikan dengan skala keseluruhan)</value></data>
+<data name="Name_RotationX" xml:space="preserve"><value>Rotasi sumbu X</value></data>
+<data name="Desc_RotationX" xml:space="preserve"><value>Rotasi sumbu X (derajat)</value></data>
+<data name="Name_RotationY" xml:space="preserve"><value>Rotasi sumbu Y</value></data>
+<data name="Desc_RotationY" xml:space="preserve"><value>Rotasi sumbu Y (derajat)</value></data>
+<data name="Name_RotationZ" xml:space="preserve"><value>Rotasi sumbu Z</value></data>
+<data name="Desc_RotationZ" xml:space="preserve"><value>Rotasi sumbu Z (derajat)</value></data>
+<data name="Name_Opacity" xml:space="preserve"><value>Opasitas</value></data>
+<data name="Desc_Opacity" xml:space="preserve"><value>Opasitas render</value></data>
+<data name="Name_FaceCamera" xml:space="preserve"><value>Ikuti Kamera</value></data>
+<data name="Desc_FaceCamera" xml:space="preserve"><value>Selalu berputar untuk menghadap ke arah kamera</value></data>
+</root>
