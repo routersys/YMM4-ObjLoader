@@ -174,7 +174,8 @@ namespace ObjLoader.Rendering.Core
                 {
                     return (Matrix4x4.Identity, Matrix4x4.Identity, (int)_parameter.ScreenWidth.GetValue(0, 1, 1), (int)_parameter.ScreenHeight.GetValue(0, 1, 1));
                 },
-                ForceRender);
+                ForceRender,
+                devices.D3D?.Device?.NativePointer ?? IntPtr.Zero);
 
             _registrationToken = SceneContext.Register(_parameter.InstanceId, _sceneApi);
         }
@@ -306,8 +307,10 @@ namespace ObjLoader.Rendering.Core
             _frameStateCache.SaveState(frame, stateToRender);
 
             bool activeWorldIdChanged = _lastActiveWorldId != stateToRender.ActiveWorldId;
+            bool drawManagerDirty = _sceneDrawManager.IsDirty;
+            bool hasExternalOrBillboards = _sceneDrawManager.GetExternalObjects().Count > 0 || _sceneDrawManager.GetBillboards().Count > 0;
             bool needsShadowRedraw = layersChanged || settingsChanged || shadowSettingsChanged || activeWorldIdChanged || cameraChanged;
-            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null || _hasBoneAnimation || _sceneDrawManager.IsDirty || _sceneDrawManager.GetExternalObjects().Count > 0 || _sceneDrawManager.GetBillboards().Count > 0;
+            bool needsSceneRedraw = needsShadowRedraw || cameraChanged || resized || _commandList == null || _hasBoneAnimation || drawManagerDirty || hasExternalOrBillboards;
 
             if (!needsSceneRedraw)
             {
@@ -325,12 +328,10 @@ namespace ObjLoader.Rendering.Core
                 stateToRender.TargetX, stateToRender.TargetY, stateToRender.TargetZ,
                 needsShadowRedraw);
 
-            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged || _sceneDrawManager.IsDirty || _sceneDrawManager.GetExternalObjects().Count > 0 || _sceneDrawManager.GetBillboards().Count > 0;
+            bool needsEnvMapRedraw = layersChanged || activeWorldIdChanged || settingsChanged || drawManagerDirty || hasExternalOrBillboards;
             RenderMainScene(sw, sh, stateToRender.CamX, stateToRender.CamY, stateToRender.CamZ,
                 stateToRender.TargetX, stateToRender.TargetY, stateToRender.TargetZ,
                 shadowValid, renderWorldId, needsEnvMapRedraw);
-
-
 
             FinalizeCommandList(camX, camY, camZ, targetX, targetY, targetZ,
                 settingsVersion, activeWorldId, settings);
@@ -669,7 +670,11 @@ namespace ObjLoader.Rendering.Core
             }
             else if (_worldMasterLights.Count > 0)
             {
-                shadowLightState = _worldMasterLights.Values.First();
+                foreach (var entry in _worldMasterLights.Values)
+                {
+                    shadowLightState = entry;
+                    break;
+                }
                 activeWorldId = shadowLightState.WorldId;
             }
 
@@ -806,8 +811,6 @@ namespace ObjLoader.Rendering.Core
             _lastShadowResolution = settings.ShadowResolution;
             _lastShadowEnabled = settings.ShadowMappingEnabled;
         }
-
-
 
         private void ClearResourceBindings()
         {

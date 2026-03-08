@@ -6,7 +6,6 @@ using ObjLoader.Api.Material;
 using ObjLoader.Api.DepthBuffer;
 using ObjLoader.Api.Raycast;
 using ObjLoader.Api.Events;
-using ObjLoader.Api.Transaction;
 using ObjLoader.Api.Attachment;
 
 namespace ObjLoader.Api.Core
@@ -23,6 +22,7 @@ namespace ObjLoader.Api.Core
         ISceneEventApi Events { get; }
         IAttachmentApi Attachments { get; }
         bool IsDisposed { get; }
+        nint ContextPointer { get; }
         void TriggerUpdate();
     }
 }

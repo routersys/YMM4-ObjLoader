@@ -21,6 +21,11 @@ namespace ObjLoader.Api
             return SceneContext.GetAllSceneIds();
         }
 
+        public static ISceneServices? GetFirstScene()
+        {
+            return SceneContext.GetFirstScene();
+        }
+
         public static ID2D1Image? ForceRender(string instanceId)
         {
             if (SceneContext.TryGetScene(instanceId, out var services))

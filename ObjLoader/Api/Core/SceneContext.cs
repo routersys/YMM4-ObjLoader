@@ -88,5 +88,22 @@ namespace ObjLoader.Api.Core
                 _lock.ExitReadLock();
             }
         }
+
+        public static ISceneServices? GetFirstScene()
+        {
+            _lock.EnterReadLock();
+            try
+            {
+                foreach (var entry in _registry.Values)
+                {
+                    return entry.Services;
+                }
+                return null;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
     }
 }

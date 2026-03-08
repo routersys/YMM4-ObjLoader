@@ -95,46 +95,52 @@ namespace ObjLoader.Rendering.Managers
                 _currentIds.Add(b.Id);
                 if (b.Desc.Image == null) continue;
 
-                var bounds = _devices.DeviceContext.GetImageLocalBounds(b.Desc.Image);
-                int w = (int)Math.Ceiling(bounds.Right - bounds.Left);
-                int h = (int)Math.Ceiling(bounds.Bottom - bounds.Top);
-                if (w <= 0 || h <= 0) continue;
-
-                if (_textureCaches.TryGetValue(b.Id, out var cache))
-                {
-                    if (cache.Width != w || cache.Height != h)
-                    {
-                        cache.Dispose();
-                        _textureCaches.Remove(b.Id);
-                        cache = null;
-                    }
-                }
-
-                if (cache == null)
-                {
-                    cache = new BillboardTextureCache(_devices.D3D.Device, _devices.DeviceContext, w, h);
-                    _textureCaches[b.Id] = cache;
-                }
-
-                var d2dContext = _devices.DeviceContext;
-                var oldTarget = d2dContext.Target;
-                var oldTransform = d2dContext.Transform;
                 try
                 {
-                    d2dContext.Target = cache.D2dTarget;
-                    d2dContext.BeginDraw();
-                    d2dContext.Clear(new Color4(0, 0, 0, 0));
-                    d2dContext.Transform = System.Numerics.Matrix3x2.CreateTranslation(-bounds.Left, -bounds.Top);
-                    d2dContext.DrawImage(b.Desc.Image);
-                    d2dContext.EndDraw();
+                    var bounds = _devices.DeviceContext.GetImageLocalBounds(b.Desc.Image);
+                    int w = (int)Math.Ceiling(bounds.Right - bounds.Left);
+                    int h = (int)Math.Ceiling(bounds.Bottom - bounds.Top);
+                    if (w <= 0 || h <= 0) continue;
+
+                    if (_textureCaches.TryGetValue(b.Id, out var cache))
+                    {
+                        if (cache.Width != w || cache.Height != h)
+                        {
+                            cache.Dispose();
+                            _textureCaches.Remove(b.Id);
+                            cache = null;
+                        }
+                    }
+
+                    if (cache == null)
+                    {
+                        cache = new BillboardTextureCache(_devices.D3D.Device, _devices.DeviceContext, w, h);
+                        _textureCaches[b.Id] = cache;
+                    }
+
+                    var d2dContext = _devices.DeviceContext;
+                    var oldTarget = d2dContext.Target;
+                    var oldTransform = d2dContext.Transform;
+                    try
+                    {
+                        d2dContext.Target = cache.D2dTarget;
+                        d2dContext.BeginDraw();
+                        d2dContext.Clear(new Color4(0, 0, 0, 0));
+                        d2dContext.Transform = System.Numerics.Matrix3x2.CreateTranslation(-bounds.Left, -bounds.Top);
+                        d2dContext.DrawImage(b.Desc.Image);
+                        d2dContext.EndDraw();
+                    }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+                        d2dContext.Target = oldTarget;
+                        d2dContext.Transform = oldTransform;
+                    }
                 }
-                catch (Exception)
+                catch
                 {
-                }
-                finally
-                {
-                    d2dContext.Target = oldTarget;
-                    d2dContext.Transform = oldTransform;
                 }
             }
 

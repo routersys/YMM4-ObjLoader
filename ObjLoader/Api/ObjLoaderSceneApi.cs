@@ -33,6 +33,8 @@ namespace ObjLoader.Api
         private readonly ObjLoaderParameter _parameter;
         private bool _isDisposed;
 
+        private readonly nint _contextPointer;
+
         public ICameraApi Camera => _camera;
         public ISceneDrawApi Draw => _draw;
         public IObjectApi Objects => _objects;
@@ -43,6 +45,7 @@ namespace ObjLoader.Api
         public ISceneEventApi Events => _events;
         public ITransactionApi Transactions => _transactions;
         public IAttachmentApi Attachments => _attachments;
+        public nint ContextPointer => _contextPointer;
 
         internal ObjLoaderSceneApi(
             ObjLoaderParameter parameter,
@@ -50,7 +53,8 @@ namespace ObjLoader.Api
             Func<(ID3D11Texture2D? Texture, int Width, int Height)> depthTextureProvider,
             Func<ID3D11ShaderResourceView?> depthSrvProvider,
             Func<(Matrix4x4 View, Matrix4x4 Proj, int Width, int Height)> cameraMatrixProvider,
-            Func<ID2D1Image?> forceRenderProvider)
+            Func<ID2D1Image?> forceRenderProvider,
+            nint contextPointer)
         {
             if (parameter == null) throw new ArgumentNullException(nameof(parameter));
             if (layerManager == null) throw new ArgumentNullException(nameof(layerManager));
@@ -73,6 +77,7 @@ namespace ObjLoader.Api
             _transactions = new TransactionApi(eventApi);
             _attachments = new AttachmentApi(layerManager);
             _forceRenderProvider = forceRenderProvider ?? throw new ArgumentNullException(nameof(forceRenderProvider));
+            _contextPointer = contextPointer;
         }
 
         internal SceneDrawApi DrawInternal => _draw;
