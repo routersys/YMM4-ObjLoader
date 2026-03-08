@@ -200,9 +200,9 @@ namespace ObjLoader.ViewModels.Assets
                 }
 
                 var currentFiles = Files.ToDictionary(x => x.FullPath);
-                Files.Clear();
+                var newFiles = new List<ModelFileItem>();
 
-                var files = GetFilesFromDirectory(dir);
+                var files = GetFilesFromDirectory(dir).ToList();
 
                 var index = ModelSettings.Instance.GetCacheIndex();
                 IDictionary<string, CacheIndex.CacheEntry> cacheEntries = index.Entries;
@@ -215,27 +215,39 @@ namespace ObjLoader.ViewModels.Assets
 
                     if (currentFiles.TryGetValue(file, out var existing))
                     {
-                        if (existing.IsThumbnailEnabled == isThumbnailEnabled)
-                        {
-                            Files.Add(existing);
-                        }
-                        else
-                        {
-                            var item = CreateItem(file, isSelected, cacheEntries);
-                            if (item != null) Files.Add(item);
-                        }
+                        existing.IsThumbnailEnabled = isThumbnailEnabled;
+                        newFiles.Add(existing);
                     }
                     else
                     {
                         var item = CreateItem(file, isSelected, cacheEntries);
-                        if (item != null) Files.Add(item);
+                        if (item != null) newFiles.Add(item);
                     }
                 }
 
-                if (!string.IsNullOrEmpty(FilePath) && !Files.Any(x => x.FullPath.Equals(FilePath, StringComparison.OrdinalIgnoreCase)))
+                if (!string.IsNullOrEmpty(FilePath) && !newFiles.Any(x => x.FullPath.Equals(FilePath, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var item = CreateItem(FilePath, true, cacheEntries);
-                    if (item != null) Files.Add(item);
+                    if (currentFiles.TryGetValue(FilePath, out var existing))
+                    {
+                        existing.IsThumbnailEnabled = true;
+                        newFiles.Add(existing);
+                    }
+                    else
+                    {
+                        var item = CreateItem(FilePath, true, cacheEntries);
+                        if (item != null) newFiles.Add(item);
+                    }
+                }
+
+                bool isSequenceEqual = Files.Count == newFiles.Count && Files.Select(x => x.FullPath).SequenceEqual(newFiles.Select(x => x.FullPath));
+
+                if (!isSequenceEqual)
+                {
+                    Files.Clear();
+                    foreach (var item in newFiles)
+                    {
+                        Files.Add(item);
+                    }
                 }
 
                 OnPropertyChanged(nameof(SelectedFile));
@@ -253,7 +265,7 @@ namespace ObjLoader.ViewModels.Assets
             bool hasCache = File.Exists(path + ".bin") || cacheEntries.ContainsKey(path);
 
             var isThumbnailEnabled = isSelected || hasCache;
-            return new ModelFileItem(Path.GetFileName(path), path, isThumbnailEnabled ? _loader.GetThumbnail : _ => Array.Empty<byte>(), isThumbnailEnabled);
+            return new ModelFileItem(Path.GetFileName(path), path, _loader.GetThumbnail, isThumbnailEnabled);
         }
 
         public void Dispose()

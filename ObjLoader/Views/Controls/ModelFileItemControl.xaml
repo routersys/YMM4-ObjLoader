@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:assets="clr-namespace:ObjLoader.ViewModels.Assets"
+             xmlns:converters="clr-namespace:ObjLoader.Converters"
              mc:Ignorable="d" 
              d:DataContext="{d:DesignInstance assets:ModelFileItem}"
              d:DesignHeight="50" d:DesignWidth="300">
@@ -17,10 +18,11 @@
                 <ResourceDictionary.MergedDictionaries>
                     <ResourceDictionary Source="../Resources/Controls/ModelFileItemControl.Resources.xaml"/>
                 </ResourceDictionary.MergedDictionaries>
+                <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter"/>
             </ResourceDictionary>
         </Grid.Resources>
 
-        <Image Grid.Column="0" Source="{Binding Thumbnail}" RenderOptions.BitmapScalingMode="HighQuality"/>
+        <Image Grid.Column="0" Source="{Binding ThumbnailBytes, Converter={StaticResource ByteArrayToImageConverter}}" RenderOptions.BitmapScalingMode="HighQuality"/>
         <TextBlock Grid.Column="1" Text="{Binding FileName}" VerticalAlignment="Center"/>
     </Grid>
 </UserControl>

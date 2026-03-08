@@ -1,50 +1,70 @@
-﻿using System.IO;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+﻿using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels.Assets
 {
-    public class ModelFileItem
+    public class ModelFileItem : Bindable
     {
         private readonly string _path;
         private readonly Func<string, byte[]> _loader;
-        private WeakReference<ImageSource>? _thumbnailWeakRef;
+        private byte[]? _thumbnailBytes;
+        private bool _isThumbnailEnabled;
 
         public string FileName { get; }
         public string FullPath => _path;
 
-        public bool IsThumbnailEnabled { get; }
+        public bool IsThumbnailEnabled
+        {
+            get => _isThumbnailEnabled;
+            set
+            {
+                if (Set(ref _isThumbnailEnabled, value))
+                {
+                    OnPropertyChanged(nameof(ThumbnailBytes));
+                }
+            }
+        }
 
-        public ImageSource? Thumbnail
+        private bool _isThumbnailLoading;
+
+        public byte[]? ThumbnailBytes
         {
             get
             {
-                if (_thumbnailWeakRef != null && _thumbnailWeakRef.TryGetTarget(out var cached))
+                if (!_isThumbnailEnabled)
                 {
-                    return cached;
+                    return null;
                 }
 
-                try
+                if (_thumbnailBytes != null)
                 {
-                    var bytes = _loader(_path);
-                    if (bytes.Length > 0)
-                    {
-                        var image = new BitmapImage();
-                        using var ms = new MemoryStream(bytes);
-                        image.BeginInit();
-                        image.CacheOption = BitmapCacheOption.OnLoad;
-                        image.StreamSource = ms;
-                        image.DecodePixelWidth = 64;
-                        image.EndInit();
-                        image.Freeze();
-
-                        _thumbnailWeakRef = new WeakReference<ImageSource>(image);
-                        return image;
-                    }
+                    return _thumbnailBytes;
                 }
-                catch { }
+
+                if (!_isThumbnailLoading)
+                {
+                    _isThumbnailLoading = true;
+                    LoadThumbnailAsync();
+                }
 
                 return null;
+            }
+        }
+
+        private async void LoadThumbnailAsync()
+        {
+            try
+            {
+                var bytes = await Task.Run(() => _loader(_path));
+                if (bytes.Length > 0)
+                {
+                    _thumbnailBytes = bytes;
+                    OnPropertyChanged(nameof(ThumbnailBytes));
+                }
+            }
+            catch { }
+            finally
+            {
+                _isThumbnailLoading = false;
             }
         }
 
@@ -53,7 +73,7 @@ namespace ObjLoader.ViewModels.Assets
             FileName = fileName;
             _path = fullPath;
             _loader = loader;
-            IsThumbnailEnabled = isThumbnailEnabled;
+            _isThumbnailEnabled = isThumbnailEnabled;
         }
     }
 }
