@@ -11,6 +11,7 @@ using ObjLoader.Parsers;
 using ObjLoader.Utilities.Logging;
 using Vortice.Direct3D11;
 using Matrix4x4 = System.Numerics.Matrix4x4;
+using ObjLoader.Rendering.Mathematics;
 
 namespace ObjLoader.Services.Rendering.Scene;
 
@@ -157,6 +158,10 @@ internal sealed class SceneRenderDataConverter : IDisposable
 
             var finalWorld = normalize * axisConversion * globalPlacement * Matrix4x4.CreateTranslation(0, (float)globalLiftY, 0);
 
+            var worldBox = CullingBox.Transform(resource.LocalBoundingBox, finalWorld);
+
+            bool isAnimated = overrideVB != null;
+
             bool isActive = (activeLayer != null && layer == activeLayer);
             bool lightEnabled = isActive ? parameter.IsLightEnabled : layer.IsLightEnabled;
             Color baseColor = isActive ? parameter.BaseColor : layer.BaseColor;
@@ -181,7 +186,9 @@ internal sealed class SceneRenderDataConverter : IDisposable
                 HeightOffset = 0,
                 VisibleParts = layer.VisibleParts,
                 Data = layer,
-                OverrideVB = overrideVB
+                OverrideVB = overrideVB,
+                WorldBoundingBox = worldBox,
+                IsAnimated = isAnimated
             });
         }
 

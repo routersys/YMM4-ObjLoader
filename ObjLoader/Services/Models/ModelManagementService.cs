@@ -1,4 +1,4 @@
-﻿using ObjLoader.Cache.Gpu;
+using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Models;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Infrastructure;
@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using Vortice.Direct3D11;
 using Vector3 = System.Numerics.Vector3;
 using ObjLoader.Utilities.Logging;
+using ObjLoader.Rendering.Mathematics;
 
 namespace ObjLoader.Services.Models
 {
@@ -81,8 +82,11 @@ namespace ObjLoader.Services.Models
                 fixed (int* p = model.Indices) ib = renderService.Device.CreateBuffer(iDesc, new SubresourceData(p));
                 gpuBytes += indexBufferSize;
 
-                var parts = model.Parts.ToArray();
+                var (globalBox, parts) = BoundingBoxUtility.CalculateBounds(model);
+                model.LocalBoundingBox = globalBox;
+                model.Parts = parts.ToList();
                 partTextures = new ID3D11ShaderResourceView?[parts.Length];
+
                 for (int i = 0; i < parts.Length; i++)
                 {
                     if (!File.Exists(parts[i].TexturePath)) continue;
@@ -123,7 +127,7 @@ namespace ObjLoader.Services.Models
                     return result;
                 }
 
-                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
+                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, globalBox, gpuBytes);
 
                 if (!string.IsNullOrEmpty(_lastTrackingKey))
                 {
@@ -153,20 +157,14 @@ namespace ObjLoader.Services.Models
                 }
             }
 
-            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
-            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
-            double localMinY = double.MaxValue, localMaxY = double.MinValue;
-
-            foreach (var v in model.Vertices)
-            {
-                double x = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                if (x < minX) minX = x; if (x > maxX) maxX = x;
-                double y = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                if (y < minY) minY = y; if (y > maxY) maxY = y;
-                if (y < localMinY) localMinY = y; if (y > localMaxY) localMaxY = y;
-                double z = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-                if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
-            }
+            double minX = (model.LocalBoundingBox.Min.X - model.ModelCenter.X) * model.ModelScale;
+            double minY = (model.LocalBoundingBox.Min.Y - model.ModelCenter.Y) * model.ModelScale;
+            double minZ = (model.LocalBoundingBox.Min.Z - model.ModelCenter.Z) * model.ModelScale;
+            double maxX = (model.LocalBoundingBox.Max.X - model.ModelCenter.X) * model.ModelScale;
+            double maxY = (model.LocalBoundingBox.Max.Y - model.ModelCenter.Y) * model.ModelScale;
+            double maxZ = (model.LocalBoundingBox.Max.Z - model.ModelCenter.Z) * model.ModelScale;
+            double localMinY = minY;
+            double localMaxY = maxY;
 
             result.Scale = Math.Max(maxX - minX, Math.Max(maxY - minY, maxZ - minZ));
             result.Height = localMaxY - localMinY;
@@ -197,21 +195,12 @@ namespace ObjLoader.Services.Models
 
                 if (part.IndexCount > 0)
                 {
-                    double pMinX = double.MaxValue, pMinY = double.MaxValue, pMinZ = double.MaxValue;
-                    double pMaxX = double.MinValue, pMaxY = double.MinValue, pMaxZ = double.MinValue;
-
-                    for (int j = 0; j < part.IndexCount; j++)
-                    {
-                        int idx = model.Indices[part.IndexOffset + j];
-                        var v = model.Vertices[idx];
-                        double px = (v.Position.X - model.ModelCenter.X) * model.ModelScale;
-                        double py = (v.Position.Y - model.ModelCenter.Y) * model.ModelScale;
-                        double pz = (v.Position.Z - model.ModelCenter.Z) * model.ModelScale;
-
-                        if (px < pMinX) pMinX = px; if (px > pMaxX) pMaxX = px;
-                        if (py < pMinY) pMinY = py; if (py > pMaxY) pMaxY = py;
-                        if (pz < pMinZ) pMinZ = pz; if (pz > pMaxZ) pMaxZ = pz;
-                    }
+                    double pMinX = (part.LocalBoundingBox.Min.X - model.ModelCenter.X) * model.ModelScale;
+                    double pMinY = (part.LocalBoundingBox.Min.Y - model.ModelCenter.Y) * model.ModelScale;
+                    double pMinZ = (part.LocalBoundingBox.Min.Z - model.ModelCenter.Z) * model.ModelScale;
+                    double pMaxX = (part.LocalBoundingBox.Max.X - model.ModelCenter.X) * model.ModelScale;
+                    double pMaxY = (part.LocalBoundingBox.Max.Y - model.ModelCenter.Y) * model.ModelScale;
+                    double pMaxZ = (part.LocalBoundingBox.Max.Z - model.ModelCenter.Z) * model.ModelScale;
 
                     center = new Vector3((float)((pMinX + pMaxX) / 2.0), (float)((pMinY + pMaxY) / 2.0) + (float)(result.Height / 2.0), (float)((pMinZ + pMaxZ) / 2.0));
                     radius = Math.Max(pMaxX - pMinX, Math.Max(pMaxY - pMinY, pMaxZ - pMinZ));

@@ -61,9 +61,9 @@ internal sealed class ShadowCameraCalculator
 
             var lightView = Matrix4x4.CreateLookAt(center + lightDir * RenderingConstants.SunLightDistance, center, Vector3.UnitY);
 
-            float minX = float.MaxValue, maxX = float.MinValue;
-            float minY = float.MaxValue, maxY = float.MinValue;
-            float minZ = float.MaxValue, maxZ = float.MinValue;
+            float minX = float.MaxValue, maxX = -float.MaxValue;
+            float minY = float.MaxValue, maxY = -float.MaxValue;
+            float minZ = float.MaxValue, maxZ = -float.MaxValue;
 
             for (int j = 0; j < 8; j++)
             {

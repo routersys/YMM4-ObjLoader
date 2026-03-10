@@ -7,6 +7,7 @@ using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using Vortice.Direct3D11;
+using ObjLoader.Rendering.Mathematics;
 
 
 namespace ObjLoader.Rendering.Core.Resources;
@@ -56,7 +57,9 @@ internal sealed class GpuResourceFactory(Func<ID3D11Device?> deviceProvider, ITe
             }
             gpuBytes += indexBufferSize;
 
-            var parts = model.Parts.ToArray();
+            var (globalBox, parts) = BoundingBoxUtility.CalculateBounds(model);
+            model.LocalBoundingBox = globalBox;
+            model.Parts = parts.ToList();
             partTextures = new ID3D11ShaderResourceView?[parts.Length];
 
             for (int i = 0; i < parts.Length; i++)
@@ -88,7 +91,7 @@ internal sealed class GpuResourceFactory(Func<ID3D11Device?> deviceProvider, ITe
                 return null;
             }
 
-            var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, gpuBytes);
+            var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, globalBox, gpuBytes);
             string cacheKey = GetCacheKey(filePath);
             GpuResourceCache.Instance.AddOrUpdate(cacheKey, item);
             success = true;

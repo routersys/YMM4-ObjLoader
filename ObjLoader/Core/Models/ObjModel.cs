@@ -1,6 +1,6 @@
-﻿using ObjLoader.Core.Mmd;
+using ObjLoader.Core.Mmd;
 using System.Numerics;
-using System.Threading.Tasks;
+using ObjLoader.Rendering.Mathematics;
 
 namespace ObjLoader.Core.Models
 {
@@ -22,5 +22,6 @@ namespace ObjLoader.Core.Models
         public List<PmxRigidBody> RigidBodies { get; set; } = new List<PmxRigidBody>();
         public List<PmxJoint> Joints { get; set; } = new List<PmxJoint>();
         public Task? ExtensionLoadTask { get; set; }
+        public CullingBox LocalBoundingBox { get; set; }
     }
 }

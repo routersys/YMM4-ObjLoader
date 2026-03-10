@@ -1,5 +1,5 @@
-﻿using System.Numerics;
-
+using System.Numerics;
+using ObjLoader.Rendering.Mathematics;
 namespace ObjLoader.Core.Models
 {
     public struct ModelPart
@@ -12,5 +12,6 @@ namespace ObjLoader.Core.Models
         public float Metallic;
         public float Roughness;
         public Vector3 Center;
+        public CullingBox LocalBoundingBox;
     }
 }

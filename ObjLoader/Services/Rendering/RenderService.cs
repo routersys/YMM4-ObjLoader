@@ -1,4 +1,4 @@
-﻿using System.Windows.Media.Imaging;
+using System.Windows.Media.Imaging;
 using ObjLoader.Infrastructure;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
@@ -12,10 +12,12 @@ using System.Numerics;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using ObjLoader.Utilities.Logging;
 using ObjLoader.Services.Rendering.Device;
-using ObjLoader.Services.Rendering.Passes;
 using ObjLoader.Services.Shared;
+using ObjLoader.Services.Rendering.Passes;
 using ObjLoader.Rendering.Core.Buffers;
 using ObjLoader.Rendering.Core.Resources;
+using ObjLoader.Rendering.Mathematics;
+using ObjLoader.Services.Rendering.Spatial;
 
 namespace ObjLoader.Services.Rendering;
 
@@ -35,6 +37,7 @@ internal sealed class RenderService : IDisposable
 
     private D3DResources? _d3dResources;
     private ID3D11Buffer? _gridVertexBuffer;
+    private readonly List<int> _tempVisibleIndices = new List<int>(MaxLayerArrayCapacity);
     private ApiObjectRenderer? _apiObjectRenderer;
 
     private ConstantBuffer<CBPerFrame>? _cbPerFrame;
@@ -276,7 +279,26 @@ internal sealed class RenderService : IDisposable
 
         var (gridColor, axisColor) = PrepareRenderTargets(themeColor, isWireframe);
 
-        ClassifyPartsByOpacity(layers, camPos);
+        CullingBox[] itemBounds = new CullingBox[layers.Count];
+        bool[] disableCulling = new bool[layers.Count];
+        CullingBox rootBounds = new CullingBox();
+
+        for (int i = 0; i < layers.Count; i++)
+        {
+            itemBounds[i] = layers[i].WorldBoundingBox;
+            disableCulling[i] = layers[i].IsAnimated;
+            rootBounds.Expand(itemBounds[i].Min);
+            rootBounds.Expand(itemBounds[i].Max);
+        }
+
+        _tempVisibleIndices.Clear();
+        var frustum = new Frustum(view * proj);
+        using (var octree = new Octree(rootBounds, itemBounds, disableCulling))
+        {
+            octree.GetVisibleItems(frustum, _tempVisibleIndices);
+        }
+
+        ClassifyPartsByOpacity(layers, camPos, _tempVisibleIndices, frustum);
 
         var passContext = _reusableContext;
         passContext.DeviceContext = context;
@@ -427,22 +449,30 @@ internal sealed class RenderService : IDisposable
         return (gridColor, axisColor);
     }
 
-    private void ClassifyPartsByOpacity(List<LayerRenderData> layers, System.Numerics.Vector3 camPos)
+    private void ClassifyPartsByOpacity(List<LayerRenderData> layers, System.Numerics.Vector3 camPos, List<int> visibleIndices, Frustum frustum)
     {
         _opaquePartList.Clear();
         _transparentParts.Clear();
 
-        for (int i = 0; i < layers.Count; i++)
+        for (int idx = 0; idx < visibleIndices.Count; idx++)
         {
+            int i = visibleIndices[idx];
             var layer = layers[i];
             var modelResource = layer.Resource;
             var world = _cachedLayerWorlds![i];
+            bool isAnimated = layer.IsAnimated;
 
             for (int p = 0; p < modelResource.Parts.Length; p++)
             {
                 if (layer.VisibleParts != null && !layer.VisibleParts.Contains(p)) continue;
 
                 var part = modelResource.Parts[p];
+                if (!isAnimated)
+                {
+                    var pBox = CullingBox.Transform(part.LocalBoundingBox, world);
+                    if (!frustum.Intersects(pBox)) continue;
+                }
+
                 if (part.BaseColor.W < 0.99f)
                 {
                     var center = Vector3.Transform(part.Center, world);

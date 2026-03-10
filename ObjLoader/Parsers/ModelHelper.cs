@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using ObjLoader.Core.Models;
 
 namespace ObjLoader.Parsers
@@ -52,7 +52,7 @@ namespace ObjLoader.Parsers
             }
 
             Vector3 min = new Vector3(float.MaxValue);
-            Vector3 max = new Vector3(float.MinValue);
+            Vector3 max = new Vector3(-float.MaxValue);
 
             if (Vector.IsHardwareAccelerated && vertices.Length >= Vector<float>.Count)
             {
@@ -79,9 +79,9 @@ namespace ObjLoader.Parsers
             var minX = new Vector<float>(float.MaxValue);
             var minY = new Vector<float>(float.MaxValue);
             var minZ = new Vector<float>(float.MaxValue);
-            var maxX = new Vector<float>(float.MinValue);
-            var maxY = new Vector<float>(float.MinValue);
-            var maxZ = new Vector<float>(float.MinValue);
+            var maxX = new Vector<float>(-float.MaxValue);
+            var maxY = new Vector<float>(-float.MaxValue);
+            var maxZ = new Vector<float>(-float.MaxValue);
 
             int vecSize = Vector<float>.Count;
             int len = vertices.Length;

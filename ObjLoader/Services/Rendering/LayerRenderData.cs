@@ -1,6 +1,7 @@
-﻿using ObjLoader.Cache.Gpu;
+using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Timeline;
 using System.Numerics;
+using ObjLoader.Rendering.Mathematics;
 
 internal struct LayerRenderData
 {
@@ -20,4 +21,6 @@ internal struct LayerRenderData
     public double LightZ { get; set; }
     public LayerData? Data { get; set; }
     public Vortice.Direct3D11.ID3D11Buffer? OverrideVB;
+    public CullingBox WorldBoundingBox;
+    public bool IsAnimated;
 }
