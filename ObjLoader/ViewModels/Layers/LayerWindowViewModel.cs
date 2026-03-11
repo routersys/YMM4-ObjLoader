@@ -1,4 +1,4 @@
-﻿using ObjLoader.Core.Timeline;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Utilities;

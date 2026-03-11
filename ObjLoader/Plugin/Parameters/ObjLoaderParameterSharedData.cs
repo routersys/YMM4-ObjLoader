@@ -1,4 +1,4 @@
-﻿using System.Windows.Media;
+using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
 using ObjLoader.Core.Enums;
 using ObjLoader.Core.Timeline;
@@ -34,6 +34,7 @@ namespace ObjLoader.Plugin
 
         public List<LayerData> Layers { get; set; } = new List<LayerData>();
         public int SelectedLayerIndex { get; }
+        public string ActiveLayerGuid { get; }
 
         public ObjLoaderParameterSharedData(ObjLoaderParameter parameter)
         {
@@ -65,6 +66,7 @@ namespace ObjLoader.Plugin
             if (parameter.Layers != null)
                 Layers.AddRange(parameter.Layers.Select(l => l.Clone()));
             SelectedLayerIndex = parameter.SelectedLayerIndex;
+            ActiveLayerGuid = parameter.ActiveLayerGuid ?? string.Empty;
         }
 
         public void CopyTo(ObjLoaderParameter parameter)
@@ -102,7 +104,7 @@ namespace ObjLoader.Plugin
                     parameter.Layers.Add(layer.Clone());
                 }
             }
-            parameter.SelectedLayerIndex = SelectedLayerIndex;
+            parameter.ActiveLayerGuid = ActiveLayerGuid;
         }
     }
 }

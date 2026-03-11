@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
 

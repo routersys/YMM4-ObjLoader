@@ -115,14 +115,14 @@ internal sealed class LayerStateBuilder
                 HasBoneAnimation = true;
             }
 
-            if (!WorldMasterLights.ContainsKey(worldId))
+            if (layer.Guid == activeGuid)
             {
-                WorldMasterLights[worldId] = layerState;
-            }
-            else if (layer.Guid == activeGuid)
-            {
-                WorldMasterLights[worldId] = layerState;
                 activeWorldId = worldId;
+            }
+
+            if (!WorldMasterLights.ContainsKey(worldId) || layer.Guid == activeGuid)
+            {
+                WorldMasterLights[worldId] = layerState;
             }
         }
 

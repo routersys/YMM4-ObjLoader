@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
@@ -168,6 +168,16 @@ namespace ObjLoader.Services.Layers
 
         public void ChangeLayer(int newIndex, ObjLoaderParameter parameter)
         {
+            if (System.Windows.Application.Current?.Dispatcher != null &&
+                !System.Windows.Application.Current.Dispatcher.CheckAccess())
+            {
+                lock (_lock)
+                {
+                    _selectedLayerIndex = newIndex;
+                }
+                return;
+            }
+
             lock (_lock)
             {
                 if (_selectedLayerIndex == newIndex) return;
@@ -495,7 +505,7 @@ namespace ObjLoader.Services.Layers
                 parameter.Fov.CopyFrom(layer.Fov);
                 parameter.LightX.CopyFrom(layer.LightX);
                 parameter.LightY.CopyFrom(layer.LightY);
-                parameter.LightZ.CopyFrom(parameter.LightZ);
+                parameter.LightZ.CopyFrom(layer.LightZ);
                 parameter.WorldId.CopyFrom(layer.WorldId);
             }
         }

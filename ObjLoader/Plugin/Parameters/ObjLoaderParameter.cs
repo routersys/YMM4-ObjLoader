@@ -33,10 +33,10 @@ namespace ObjLoader.Plugin
         private readonly ShaderService _shaderService = new ShaderService();
         private readonly ILayerManager _layerManager = new LayerManager();
 
-        private bool _isLoading = false;
         private int _updateSuspendCount = 0;
         private Action? _forceUpdateAction;
         private readonly StringBuilder _layerIdBuilder = new StringBuilder();
+        private bool _isEnsuringLayers = false;
 
         [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
         [ItemSettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
@@ -290,35 +290,42 @@ namespace ObjLoader.Plugin
 
         public void EnsureLayers()
         {
-            if (_isLoading) return;
+            if (_isEnsuringLayers) return;
 
-            void Action()
+            _isEnsuringLayers = true;
+            try
             {
-                int count = Layers.Count;
-                _layerManager.EnsureLayers(this);
-
-                if (Layers.Count != count)
+                void Action()
                 {
-                    UpdateLayerSignature();
-                    OnPropertyChanged(nameof(Layers));
-                    BumpVersion();
-                    OnPropertyChanged(string.Empty);
+                    int count = Layers.Count;
+                    _layerManager.EnsureLayers(this);
+
+                    if (Layers.Count != count)
+                    {
+                        UpdateLayerSignature();
+                        OnPropertyChanged(nameof(Layers));
+                        BumpVersion();
+                        OnPropertyChanged(string.Empty);
+                    }
+                }
+
+                if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.CheckAccess())
+                {
+                    Application.Current.Dispatcher.InvokeAsync(Action, DispatcherPriority.Normal);
+                }
+                else
+                {
+                    Action();
                 }
             }
-
-            if (Application.Current?.Dispatcher != null && !Application.Current.Dispatcher.CheckAccess())
+            finally
             {
-                Application.Current.Dispatcher.Invoke(Action);
-            }
-            else
-            {
-                Action();
+                _isEnsuringLayers = false;
             }
         }
 
         public void SyncActiveLayer()
         {
-            if (_isLoading) return;
             if (IsSwitchingLayer) return;
             _layerManager.SaveActiveLayer(this);
         }
@@ -357,7 +364,6 @@ namespace ObjLoader.Plugin
 
         public void UpdateLayerSignature()
         {
-            if (_isLoading) return;
             if (_updateSuspendCount > 0) return;
 
             if (Layers != null)
@@ -423,7 +429,6 @@ namespace ObjLoader.Plugin
 
         protected override void LoadSharedData(SharedDataStore store)
         {
-            _isLoading = true;
             try
             {
                 var data = store.Load<ObjLoaderParameterSharedData>();
@@ -446,7 +451,6 @@ namespace ObjLoader.Plugin
             }
             finally
             {
-                _isLoading = false;
                 EnsureLayers();
                 UpdateLayerSignature();
 
