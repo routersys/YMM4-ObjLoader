@@ -1,4 +1,4 @@
-﻿using ObjLoader.Api;
+using ObjLoader.Api;
 using ObjLoader.Api.Core;
 using ObjLoader.Api.Draw;
 using ObjLoader.VideoEffect;

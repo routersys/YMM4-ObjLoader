@@ -1,4 +1,4 @@
-﻿using ObjLoader.Attributes;
+using ObjLoader.Attributes;
 using ObjLoader.Localization;
 using ObjLoader.Utilities;
 using System.ComponentModel.DataAnnotations;
@@ -330,7 +330,7 @@ namespace ObjLoader.Plugin
             if (Application.Current?.Dispatcher != null)
             {
                 _forceUpdateAction ??= ForceUpdateCore;
-                Application.Current.Dispatcher.Invoke(_forceUpdateAction);
+                Application.Current.Dispatcher.InvokeAsync(_forceUpdateAction);
             }
         }
 
