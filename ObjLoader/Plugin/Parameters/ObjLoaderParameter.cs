@@ -61,24 +61,6 @@ namespace ObjLoader.Plugin
                     SyncActiveLayer();
                     EnsureLayers();
 
-                    if (!IsSwitchingLayer && _updateSuspendCount == 0 && !string.IsNullOrEmpty(sanitized) && SelectedLayerIndex >= 0 && SelectedLayerIndex < Layers.Count)
-                    {
-                        var layer = Layers[SelectedLayerIndex];
-                        var fileName = System.IO.Path.GetFileNameWithoutExtension(sanitized);
-
-                        if (!string.IsNullOrEmpty(fileName))
-                        {
-                            if (layer.Name == "Default" || layer.Name == "Layer" || string.IsNullOrEmpty(layer.Name))
-                            {
-                                layer.Name = fileName;
-                            }
-                            else if (layer.FilePath != sanitized)
-                            {
-                                layer.Name = fileName;
-                            }
-                        }
-                    }
-
                     UpdateLayerSignature();
                     ForceUpdate();
                     OnPropertyChanged(nameof(Layers));

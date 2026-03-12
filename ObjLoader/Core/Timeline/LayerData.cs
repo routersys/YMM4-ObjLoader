@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
@@ -32,6 +32,12 @@ namespace ObjLoader.Core.Timeline
 
         public bool IsVisible { get; set => Set(ref field, value); } = true;
 
+        [JsonIgnore]
+        private readonly Dictionary<string, string> _layerNameCache = new Dictionary<string, string>();
+
+        [JsonIgnore]
+        private string _previousFilePath = string.Empty;
+
         private string _filePath = string.Empty;
         public string FilePath
         {
@@ -39,7 +45,31 @@ namespace ObjLoader.Core.Timeline
             set
             {
                 var sanitized = SanitizeFilePath(value);
-                Set(ref _filePath, sanitized);
+                if (_filePath == sanitized) return;
+
+                var currentName = Name;
+                if (!string.IsNullOrEmpty(currentName) && currentName != "Layer" && currentName != "Default")
+                {
+                    _layerNameCache[_previousFilePath] = currentName;
+                }
+                else
+                {
+                    _layerNameCache.Remove(_previousFilePath);
+                }
+
+                _previousFilePath = sanitized;
+
+                if (Set(ref _filePath, sanitized))
+                {
+                    if (_layerNameCache.TryGetValue(sanitized, out var cachedName))
+                    {
+                        Name = cachedName;
+                    }
+                    else
+                    {
+                        Name = "Default";
+                    }
+                }
             }
         }
 
@@ -139,6 +169,7 @@ namespace ObjLoader.Core.Timeline
                 RotationCenterZ = RotationCenterZ
             };
             clone._filePath = _filePath;
+            clone._previousFilePath = _filePath;
             clone._vmdFilePath = _vmdFilePath;
             clone._vmdTimeOffset = _vmdTimeOffset;
             clone.VmdMotionData = VmdMotionData;

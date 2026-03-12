@@ -1,4 +1,4 @@
-﻿using ObjLoader.Core.Timeline;
+using ObjLoader.Core.Timeline;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
 using System.Collections.ObjectModel;
@@ -15,8 +15,7 @@ namespace ObjLoader.ViewModels.Layers
     {
         private readonly ObjModelLoader _loader;
         private readonly Action _forceUpdateAction;
-        private readonly Dictionary<string, string> _layerNameCache = new Dictionary<string, string>();
-        private string _previousFilePath;
+
         private CancellationTokenSource? _thumbnailCts;
         private CancellationTokenSource? _partThumbnailCts;
 
@@ -128,7 +127,6 @@ namespace ObjLoader.ViewModels.Layers
             Data = data;
             _loader = loader;
             _forceUpdateAction = forceUpdateAction;
-            _previousFilePath = Data.FilePath ?? string.Empty;
 
             Data.PropertyChanged += Data_PropertyChanged;
 
@@ -152,27 +150,6 @@ namespace ObjLoader.ViewModels.Layers
             }
             else if (e.PropertyName == nameof(LayerData.FilePath))
             {
-                var currentName = Data.Name;
-                if (!string.IsNullOrEmpty(currentName) && currentName != "Layer" && currentName != "Default")
-                {
-                    _layerNameCache[_previousFilePath] = currentName;
-                }
-                else
-                {
-                    _layerNameCache.Remove(_previousFilePath);
-                }
-
-                _previousFilePath = Data.FilePath ?? string.Empty;
-
-                if (_layerNameCache.TryGetValue(_previousFilePath, out var cachedName))
-                {
-                    Data.Name = cachedName;
-                }
-                else
-                {
-                    Data.Name = "Default";
-                }
-
                 OnPropertyChanged(nameof(Name));
                 OnPropertyChanged(nameof(FileName));
                 UpdateThumbnail();
