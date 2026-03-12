@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>يحدد عتبة اكتشاف تصادم المرحلة الضيقة المتوازية.</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>مقياس البدء الدافئ</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>يحدد مقياس البدء الدافئ لقيود الفيزياء.</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>تحميل حركة كاميرا VMD</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>إعادة تعيين VMD للنموذج</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>إعادة تعيين VMD للكاميرا</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>تم تحميل حركة كاميرا VMD: {0} إطارات</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>فشل تحميل حركة كاميرا VMD: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>لم يتم العثور على إطارات الكاميرا</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>تم إعادة تعيين VMD للنموذج</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>تم إعادة تعيين VMD للكاميرا</value></data>
 </root>

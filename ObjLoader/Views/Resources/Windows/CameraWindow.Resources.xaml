@@ -89,7 +89,7 @@
                                     <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
                                         <RepeatButton.Template>
                                             <ControlTemplate TargetType="RepeatButton">
-                                                <Rectangle Fill="Transparent"/>
+                                                <Border Height="4.0" Margin="5,0,0,0" Background="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                             </ControlTemplate>
                                         </RepeatButton.Template>
                                     </RepeatButton>

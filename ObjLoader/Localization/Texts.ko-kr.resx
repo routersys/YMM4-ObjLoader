@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>충돌의 병렬 계산을 시작하는 임계값을 설정합니다.</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>웜 스타트 계수</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>이전 프레임의 충돌 결과를 이용하여 안정화시키는 계수를 설정합니다.</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>VMD 카메라 모션 로드</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>모델 VMD 재설정</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>카메라 VMD 재설정</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>VMD 카메라 모션 로드 완료: {0}프레임</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>VMD 카메라 모션 로드 실패: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>카메라 프레임이 포함되어 있지 않습니다</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>모델 VMD가 재설정되었습니다</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>카메라 VMD가 재설정되었습니다</value></data>
 </root>

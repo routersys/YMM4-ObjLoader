@@ -6,171 +6,183 @@ using ObjLoader.Plugin.CameraAnimation;
 using ObjLoader.Services.Mmd.Animation.Interfaces;
 using ObjLoader.Services.Mmd.Parsers;
 
-namespace ObjLoader.Services.Mmd.Animation
+namespace ObjLoader.Services.Mmd.Animation;
+
+public class DefaultMotionApplier : IMotionApplier
 {
-    public class DefaultMotionApplier : IMotionApplier
+    private const double MmdFps = 30.0;
+
+    public List<CameraKeyframe> ConvertCameraFrames(VmdData vmdData, Vector3 modelCenter, float modelScale)
     {
-        private const double MmdFps = 30.0;
+        var keyframes = new List<CameraKeyframe>();
 
-        public List<CameraKeyframe> ConvertCameraFrames(VmdData vmdData)
-        {
-            var keyframes = new List<CameraKeyframe>();
-
-            if (vmdData.CameraFrames.Count == 0)
-                return keyframes;
-
-            var sortedFrames = new List<VmdCameraFrame>(vmdData.CameraFrames);
-            sortedFrames.Sort(static (a, b) => a.FrameNumber.CompareTo(b.FrameNumber));
-
-            foreach (var frame in sortedFrames)
-            {
-                double time = frame.FrameNumber / MmdFps;
-
-                double distance = frame.Distance;
-                double rx = frame.Rotation.X;
-                double ry = frame.Rotation.Y;
-                double rz = frame.Rotation.Z;
-
-                double cosRx = Math.Cos(rx);
-                double sinRx = Math.Sin(rx);
-                double cosRy = Math.Cos(ry);
-                double sinRy = Math.Sin(ry);
-
-                double camOffX = -distance * sinRy * cosRx;
-                double camOffY = distance * sinRx;
-                double camOffZ = -distance * cosRy * cosRx;
-
-                double camX = frame.Position.X + camOffX;
-                double camY = frame.Position.Y + camOffY;
-                double camZ = -(frame.Position.Z + camOffZ);
-
-                double targetX = frame.Position.X;
-                double targetY = frame.Position.Y;
-                double targetZ = -frame.Position.Z;
-
-                keyframes.Add(new CameraKeyframe
-                {
-                    Time = time,
-                    CamX = camX,
-                    CamY = camY,
-                    CamZ = camZ,
-                    TargetX = targetX,
-                    TargetY = targetY,
-                    TargetZ = targetZ,
-                    Easing = new EasingData()
-                });
-            }
-
+        if (vmdData.CameraFrames.Count == 0)
             return keyframes;
-        }
 
-        public double GetDuration(VmdData vmdData)
+        var sortedFrames = new List<VmdCameraFrame>(vmdData.CameraFrames);
+        sortedFrames.Sort(static (a, b) => a.FrameNumber.CompareTo(b.FrameNumber));
+
+        double mcx = modelCenter.X;
+        double mcy = modelCenter.Y;
+        double mcz = modelCenter.Z;
+        double ms = modelScale;
+
+        foreach (var frame in sortedFrames)
         {
-            uint maxFrame = 0;
+            double time = frame.FrameNumber / MmdFps;
 
-            if (vmdData.CameraFrames.Count > 0)
-                maxFrame = Math.Max(maxFrame, vmdData.CameraFrames.Max(f => f.FrameNumber));
+            double distance = frame.Distance;
+            double rx = frame.Rotation.X;
+            double ry = frame.Rotation.Y;
+            double rz = frame.Rotation.Z;
 
-            if (vmdData.BoneFrames.Count > 0)
-                maxFrame = Math.Max(maxFrame, vmdData.BoneFrames.Max(f => f.FrameNumber));
+            double cosRx = Math.Cos(rx);
+            double sinRx = Math.Sin(rx);
+            double cosRy = Math.Cos(ry);
+            double sinRy = Math.Sin(ry);
 
-            if (vmdData.MorphFrames.Count > 0)
-                maxFrame = Math.Max(maxFrame, vmdData.MorphFrames.Max(f => f.FrameNumber));
+            double camOffX = distance * cosRx * sinRy;
+            double camOffY = -distance * sinRx;
+            double camOffZ = distance * cosRx * cosRy;
 
-            return maxFrame / MmdFps;
-        }
+            double mmdCamX = frame.Position.X + camOffX;
+            double mmdCamY = frame.Position.Y + camOffY;
+            double mmdCamZ = frame.Position.Z + camOffZ;
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public ObjVertex[] ApplySkinning(ObjVertex[] original, VertexBoneWeight[] weights, Matrix4x4[] boneTransforms)
-        {
-            int count = original.Length;
+            double mmdTargetX = frame.Position.X;
+            double mmdTargetY = frame.Position.Y;
+            double mmdTargetZ = frame.Position.Z;
 
-            var result = System.Buffers.ArrayPool<ObjVertex>.Shared.Rent(count);
-            int boneCount = boneTransforms.Length;
+            double camX = (mmdCamX - mcx) * ms;
+            double camY = (mmdCamY - mcy) * ms;
+            double camZ = -(mmdCamZ - mcz) * ms;
 
-            for (int i = 0; i < count; i++)
+            double targetX = (mmdTargetX - mcx) * ms;
+            double targetY = (mmdTargetY - mcy) * ms;
+            double targetZ = -(mmdTargetZ - mcz) * ms;
+
+            keyframes.Add(new CameraKeyframe
             {
-                ref readonly var src = ref original[i];
-                ref readonly var bw = ref weights[i];
-                Vector3 skinnedPos = Vector3.Zero;
-                Vector3 skinnedNormal = Vector3.Zero;
-                float totalWeight = 0f;
-
-                int bi0 = bw.BoneIndex0;
-                float w0 = bw.Weight0;
-                if ((uint)bi0 < (uint)boneCount && w0 > 0f)
-                {
-                    ref readonly var mat = ref boneTransforms[bi0];
-                    skinnedPos += Vector3.Transform(src.Position, mat) * w0;
-                    skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w0;
-                    totalWeight += w0;
-                }
-
-                int bi1 = bw.BoneIndex1;
-                float w1 = bw.Weight1;
-                if ((uint)bi1 < (uint)boneCount && w1 > 0f)
-                {
-                    ref readonly var mat = ref boneTransforms[bi1];
-                    skinnedPos += Vector3.Transform(src.Position, mat) * w1;
-                    skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w1;
-                    totalWeight += w1;
-                }
-
-                int bi2 = bw.BoneIndex2;
-                float w2 = bw.Weight2;
-                if ((uint)bi2 < (uint)boneCount && w2 > 0f)
-                {
-                    ref readonly var mat = ref boneTransforms[bi2];
-                    skinnedPos += Vector3.Transform(src.Position, mat) * w2;
-                    skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w2;
-                    totalWeight += w2;
-                }
-
-                int bi3 = bw.BoneIndex3;
-                float w3 = bw.Weight3;
-                if ((uint)bi3 < (uint)boneCount && w3 > 0f)
-                {
-                    ref readonly var mat = ref boneTransforms[bi3];
-                    skinnedPos += Vector3.Transform(src.Position, mat) * w3;
-                    skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w3;
-                    totalWeight += w3;
-                }
-
-                float nLenSq = skinnedNormal.LengthSquared();
-                if (nLenSq > 1e-12f)
-                    skinnedNormal *= 1f / MathF.Sqrt(nLenSq);
-
-                result[i] = new ObjVertex
-                {
-                    Position = skinnedPos,
-                    Normal = skinnedNormal,
-                    TexCoord = src.TexCoord,
-                    Color = src.Color
-                };
-            }
-
-            return result;
+                Time = time,
+                CamX = camX,
+                CamY = camY,
+                CamZ = camZ,
+                TargetX = targetX,
+                TargetY = targetY,
+                TargetZ = targetZ,
+                Easing = new EasingData()
+            });
         }
+
+        return keyframes;
     }
 
-    public static class VmdMotionApplier
+    public double GetDuration(VmdData vmdData)
     {
-        private static readonly IMotionApplier Applier = new DefaultMotionApplier();
+        uint maxFrame = 0;
 
-        public static List<CameraKeyframe> ConvertCameraFrames(VmdData vmdData)
+        if (vmdData.CameraFrames.Count > 0)
+            maxFrame = Math.Max(maxFrame, vmdData.CameraFrames.Max(f => f.FrameNumber));
+
+        if (vmdData.BoneFrames.Count > 0)
+            maxFrame = Math.Max(maxFrame, vmdData.BoneFrames.Max(f => f.FrameNumber));
+
+        if (vmdData.MorphFrames.Count > 0)
+            maxFrame = Math.Max(maxFrame, vmdData.MorphFrames.Max(f => f.FrameNumber));
+
+        return maxFrame / MmdFps;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public ObjVertex[] ApplySkinning(ObjVertex[] original, VertexBoneWeight[] weights, Matrix4x4[] boneTransforms)
+    {
+        int count = original.Length;
+
+        var result = System.Buffers.ArrayPool<ObjVertex>.Shared.Rent(count);
+        int boneCount = boneTransforms.Length;
+
+        for (int i = 0; i < count; i++)
         {
-            return Applier.ConvertCameraFrames(vmdData);
+            ref readonly var src = ref original[i];
+            ref readonly var bw = ref weights[i];
+            Vector3 skinnedPos = Vector3.Zero;
+            Vector3 skinnedNormal = Vector3.Zero;
+            float totalWeight = 0f;
+
+            int bi0 = bw.BoneIndex0;
+            float w0 = bw.Weight0;
+            if ((uint)bi0 < (uint)boneCount && w0 > 0f)
+            {
+                ref readonly var mat = ref boneTransforms[bi0];
+                skinnedPos += Vector3.Transform(src.Position, mat) * w0;
+                skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w0;
+                totalWeight += w0;
+            }
+
+            int bi1 = bw.BoneIndex1;
+            float w1 = bw.Weight1;
+            if ((uint)bi1 < (uint)boneCount && w1 > 0f)
+            {
+                ref readonly var mat = ref boneTransforms[bi1];
+                skinnedPos += Vector3.Transform(src.Position, mat) * w1;
+                skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w1;
+                totalWeight += w1;
+            }
+
+            int bi2 = bw.BoneIndex2;
+            float w2 = bw.Weight2;
+            if ((uint)bi2 < (uint)boneCount && w2 > 0f)
+            {
+                ref readonly var mat = ref boneTransforms[bi2];
+                skinnedPos += Vector3.Transform(src.Position, mat) * w2;
+                skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w2;
+                totalWeight += w2;
+            }
+
+            int bi3 = bw.BoneIndex3;
+            float w3 = bw.Weight3;
+            if ((uint)bi3 < (uint)boneCount && w3 > 0f)
+            {
+                ref readonly var mat = ref boneTransforms[bi3];
+                skinnedPos += Vector3.Transform(src.Position, mat) * w3;
+                skinnedNormal += Vector3.TransformNormal(src.Normal, mat) * w3;
+                totalWeight += w3;
+            }
+
+            float nLenSq = skinnedNormal.LengthSquared();
+            if (nLenSq > 1e-12f)
+                skinnedNormal *= 1f / MathF.Sqrt(nLenSq);
+
+            result[i] = new ObjVertex
+            {
+                Position = skinnedPos,
+                Normal = skinnedNormal,
+                TexCoord = src.TexCoord,
+                Color = src.Color
+            };
         }
 
-        public static double GetDuration(VmdData vmdData)
-        {
-            return Applier.GetDuration(vmdData);
-        }
+        return result;
+    }
+}
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        public static ObjVertex[] ApplySkinning(ObjVertex[] original, VertexBoneWeight[] weights, Matrix4x4[] boneTransforms)
-        {
-            return Applier.ApplySkinning(original, weights, boneTransforms);
-        }
+public static class VmdMotionApplier
+{
+    private static readonly IMotionApplier Applier = new DefaultMotionApplier();
+
+    public static List<CameraKeyframe> ConvertCameraFrames(VmdData vmdData, Vector3 modelCenter, float modelScale)
+    {
+        return Applier.ConvertCameraFrames(vmdData, modelCenter, modelScale);
+    }
+
+    public static double GetDuration(VmdData vmdData)
+    {
+        return Applier.GetDuration(vmdData);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static ObjVertex[] ApplySkinning(ObjVertex[] original, VertexBoneWeight[] weights, Matrix4x4[] boneTransforms)
+    {
+        return Applier.ApplySkinning(original, weights, boneTransforms);
     }
 }

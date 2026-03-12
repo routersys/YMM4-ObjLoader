@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>設定開始並行計算碰撞的閾值。</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>熱啟動係數</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>設定利用上一幀碰撞結果進行穩定處理的係數。</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>載入VMD相機動作</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>重置模型VMD</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>重置相機VMD</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>VMD相機動作載入完成: {0}幀</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>載入VMD相機動作失敗: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>未包含相機幀</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>模型VMD已重置</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>相機VMD已重置</value></data>
 </root>

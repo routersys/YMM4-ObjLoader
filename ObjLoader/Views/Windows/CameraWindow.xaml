@@ -1,4 +1,4 @@
-﻿<Window x:Class="ObjLoader.Views.Windows.CameraWindow"
+<Window x:Class="ObjLoader.Views.Windows.CameraWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -347,9 +347,9 @@
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Grid.Column="1" VerticalAlignment="Center" Margin="0,0,15,0">
-                        <TextBlock Text="{Binding CurrentTime, StringFormat=N2}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CurrentTime, StringFormat=N2}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" FontWeight="Bold" Typography.NumeralAlignment="Tabular" MinWidth="45" TextAlignment="Right"/>
                         <TextBlock Text=" / " Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
-                        <TextBox Text="{Binding MaxDuration, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="50" Style="{StaticResource ModernTextBox}"/>
+                        <TextBox Text="{Binding MaxDuration, UpdateSourceTrigger=PropertyChanged, StringFormat=N2}" Width="50" Style="{StaticResource ModernTextBox}" Typography.NumeralAlignment="Tabular" TextAlignment="Right" Padding="4,2,4,2"/>
                         <TextBlock Text="{x:Static l:Texts.Timeline_Seconds}" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Margin="2,0,0,0"/>
                     </StackPanel>
 

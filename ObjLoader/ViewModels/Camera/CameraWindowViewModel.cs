@@ -114,17 +114,26 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     [Menu(Group = "File", NameKey = nameof(Texts.Menu_SaveAs), ResourceType = typeof(Texts), Order = 2, IsSeparatorAfter = true, AcceleratorKey = "A")]
     public ActionCommand SaveProjectAsCommand { get; }
 
-    [Menu(Group = "File", NameKey = nameof(Texts.Menu_LoadVmd), ResourceType = typeof(Texts), Order = 3, IsSeparatorAfter = true, AcceleratorKey = "V")]
+    [Menu(Group = "File", NameKey = nameof(Texts.Menu_LoadVmd), ResourceType = typeof(Texts), Order = 3, AcceleratorKey = "V")]
     public ActionCommand LoadVmdMotionCommand { get; }
 
-    [Menu(Group = "File", NameKey = nameof(Texts.Menu_Exit), ResourceType = typeof(Texts), Order = 4, AcceleratorKey = "X")]
+    [Menu(Group = "File", NameKey = nameof(Texts.Menu_LoadCameraVmd), ResourceType = typeof(Texts), Order = 4, IsSeparatorAfter = true, AcceleratorKey = "C")]
+    public ActionCommand LoadCameraVmdCommand { get; }
+
+    [Menu(Group = "File", NameKey = nameof(Texts.Menu_Exit), ResourceType = typeof(Texts), Order = 5, AcceleratorKey = "X")]
     public ActionCommand ExitCommand { get; }
 
     [Menu(Group = "Edit", GroupNameKey = nameof(Texts.Menu_Edit), GroupAcceleratorKey = "E", NameKey = nameof(Texts.Menu_Undo), ResourceType = typeof(Texts), Order = 0, AcceleratorKey = "U")]
     public ActionCommand UndoCommand { get; }
 
-    [Menu(Group = "Edit", NameKey = nameof(Texts.Menu_Redo), ResourceType = typeof(Texts), Order = 1, AcceleratorKey = "R")]
+    [Menu(Group = "Edit", NameKey = nameof(Texts.Menu_Redo), ResourceType = typeof(Texts), Order = 1, IsSeparatorAfter = true, AcceleratorKey = "R")]
     public ActionCommand RedoCommand { get; }
+
+    [Menu(Group = "Edit", NameKey = nameof(Texts.Menu_ResetModelVmd), ResourceType = typeof(Texts), Order = 2, AcceleratorKey = "M")]
+    public ActionCommand ResetModelVmdCommand { get; }
+
+    [Menu(Group = "Edit", NameKey = nameof(Texts.Menu_ResetCameraVmd), ResourceType = typeof(Texts), Order = 3, AcceleratorKey = "K")]
+    public ActionCommand ResetCameraVmdCommand { get; }
 
     public string WindowTitle
     {
@@ -397,6 +406,9 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
         SaveProjectCommand = new ActionCommand(_ => !string.IsNullOrEmpty(_currentFilePath), _ => _projectManager.SaveProject(_currentFilePath));
         SaveProjectAsCommand = new ActionCommand(_ => true, _ => _projectManager.SaveProjectAs(_currentFilePath));
         LoadVmdMotionCommand = new ActionCommand(_ => _vmdManager.IsSelectedLayerPmx(), _ => _vmdManager.LoadVmdMotion(OnNotification));
+        LoadCameraVmdCommand = new ActionCommand(_ => _vmdManager.IsSelectedLayerPmx(), _ => _vmdManager.LoadCameraVmd(OnNotification));
+        ResetModelVmdCommand = new ActionCommand(_ => _vmdManager.IsSelectedLayerPmx(), _ => _vmdManager.ResetModelVmd(OnNotification));
+        ResetCameraVmdCommand = new ActionCommand(_ => true, _ => _vmdManager.ResetCameraVmd(OnNotification));
         ExitCommand = new ActionCommand(_ => true, _ => Application.Current.Windows.OfType<CameraWindow>().FirstOrDefault()?.Close());
 
         InitializeMenuItems();
@@ -480,7 +492,12 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     private void OnParameterPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ObjLoaderParameter.Duration)) MaxDuration = _parameter.Duration;
-        if (e.PropertyName == nameof(ObjLoaderParameter.SelectedLayerIndex) || e.PropertyName == nameof(ObjLoaderParameter.FilePath)) LoadVmdMotionCommand.RaiseCanExecuteChanged();
+        if (e.PropertyName is nameof(ObjLoaderParameter.SelectedLayerIndex) or nameof(ObjLoaderParameter.FilePath))
+        {
+            LoadVmdMotionCommand.RaiseCanExecuteChanged();
+            LoadCameraVmdCommand.RaiseCanExecuteChanged();
+            ResetModelVmdCommand.RaiseCanExecuteChanged();
+        }
     }
 
     private void SetCurrentFilePath(string path)

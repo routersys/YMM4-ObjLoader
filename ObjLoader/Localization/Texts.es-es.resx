@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>Establece el umbral para la detección de colisión de fase estrecha paralela.</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>Escala de inicio cálido</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>Establece la escala para el inicio cálido de las restricciones físicas.</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>Cargar Movimiento de Cámara VMD</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>Restablecer VMD del Modelo</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>Restablecer VMD de Cámara</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>Movimiento de cámara VMD cargado: {0} fotogramas</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>Error al cargar el movimiento de cámara VMD: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>No se encontraron fotogramas de cámara</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>El VMD del modelo ha sido restablecido</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>El VMD de cámara ha sido restablecido</value></data>
 </root>

@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>衝突の並列計算を開始する閾値を設定します。</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>ウォームスタート係数</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>前回のフレームの衝突結果を利用して安定させる係数を設定します。</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>VMDカメラモーション読み込み</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>モデルVMDリセット</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>カメラVMDリセット</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>VMDカメラモーション読み込み完了: {0}フレーム</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>VMDカメラモーションの読み込みに失敗しました: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>カメラフレームが含まれていません</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>モデルVMDをリセットしました</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>カメラVMDをリセットしました</value></data>
 </root>

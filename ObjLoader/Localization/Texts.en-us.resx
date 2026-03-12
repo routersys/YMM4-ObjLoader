@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>Sets the threshold for parallel narrow phase collision detection.</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>Warm Start Scale</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>Sets the scale for warm starting the physics constraints.</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>Load VMD Camera Motion</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>Reset Model VMD</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>Reset Camera VMD</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>VMD camera motion loaded: {0} frames</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>Failed to load VMD camera motion: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>No camera frames found</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>Model VMD has been reset</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>Camera VMD has been reset</value></data>
 </root>

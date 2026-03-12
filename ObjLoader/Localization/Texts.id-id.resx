@@ -574,4 +574,12 @@
 <data name="PhysicsParallelNarrowPhaseThreshold_Desc" xml:space="preserve"><value>Mengatur ambang batas untuk deteksi tabrakan fase sempit paralel.</value></data>
 <data name="PhysicsWarmStartScale" xml:space="preserve"><value>Skala Mulai Hangat</value></data>
 <data name="PhysicsWarmStartScale_Desc" xml:space="preserve"><value>Mengatur skala untuk memulai hangat kendala fisika.</value></data>
+<data name="Menu_LoadCameraVmd" xml:space="preserve"><value>Muat Gerakan Kamera VMD</value></data>
+<data name="Menu_ResetModelVmd" xml:space="preserve"><value>Reset VMD Model</value></data>
+<data name="Menu_ResetCameraVmd" xml:space="preserve"><value>Reset VMD Kamera</value></data>
+<data name="Msg_CameraVmdLoadSuccess" xml:space="preserve"><value>Gerakan kamera VMD dimuat: {0} bingkai</value></data>
+<data name="Msg_CameraVmdLoadFailed" xml:space="preserve"><value>Gagal memuat gerakan kamera VMD: {0}</value></data>
+<data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>Tidak ada frame kamera ditemukan</value></data>
+<data name="Msg_ModelVmdReset" xml:space="preserve"><value>VMD model telah direset</value></data>
+<data name="Msg_CameraVmdReset" xml:space="preserve"><value>VMD kamera telah direset</value></data>
 </root>
