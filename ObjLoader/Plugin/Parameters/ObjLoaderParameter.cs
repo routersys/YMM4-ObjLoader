@@ -264,6 +264,50 @@ namespace ObjLoader.Plugin
             }
         }
 
+        public IDisposable SuspendUpdate(Action? asyncFinalizer = null)
+        {
+            return new UpdateSuspender(this, asyncFinalizer);
+        }
+
+        private readonly struct UpdateSuspender : IDisposable
+        {
+            private readonly ObjLoaderParameter _parameter;
+            private readonly Action? _asyncFinalizer;
+
+            public UpdateSuspender(ObjLoaderParameter parameter, Action? asyncFinalizer)
+            {
+                _parameter = parameter;
+                _asyncFinalizer = asyncFinalizer;
+                _parameter.BeginUpdate();
+            }
+
+            public void Dispose()
+            {
+                if (_asyncFinalizer != null)
+                {
+                    var dispatcher = Application.Current?.Dispatcher;
+                    if (dispatcher != null)
+                    {
+                        var p = _parameter;
+                        var a = _asyncFinalizer;
+                        dispatcher.InvokeAsync(() =>
+                        {
+                            try { a(); }
+                            finally { p.EndUpdate(); }
+                        }, DispatcherPriority.ContextIdle);
+                        return;
+                    }
+
+                    try { _asyncFinalizer(); }
+                    finally { _parameter.EndUpdate(); }
+                }
+                else
+                {
+                    _parameter.EndUpdate();
+                }
+            }
+        }
+
         private void Layers_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             UpdateLayerSignature();
@@ -411,11 +455,23 @@ namespace ObjLoader.Plugin
 
         protected override void LoadSharedData(SharedDataStore store)
         {
-            try
+            using var suspender = SuspendUpdate(() =>
             {
-                var data = store.Load<ObjLoaderParameterSharedData>();
-                if (data is null) return;
+                if (Layers.Count == 0) return;
 
+                var targetLayer = Layers.FirstOrDefault(l => l.Guid == ActiveLayerGuid);
+                var targetIndex = targetLayer != null ? Layers.IndexOf(targetLayer) : 0;
+
+                SelectedLayerIndex = -1;
+                SelectedLayerIndex = targetIndex;
+
+                OnPropertyChanged(nameof(SelectedLayerIndex));
+                ForceUpdate();
+            });
+
+            var data = store.Load<ObjLoaderParameterSharedData>();
+            if (data != null)
+            {
                 data.CopyTo(this);
 
                 if (data.Layers != null)
@@ -431,28 +487,9 @@ namespace ObjLoader.Plugin
                 }
                 _layerManager.Initialize(this);
             }
-            finally
-            {
-                EnsureLayers();
-                UpdateLayerSignature();
 
-                if (Application.Current?.Dispatcher != null)
-                {
-                    Application.Current.Dispatcher.InvokeAsync(() =>
-                    {
-                        if (Layers.Count == 0) return;
-
-                        var targetLayer = Layers.FirstOrDefault(l => l.Guid == ActiveLayerGuid);
-                        var targetIndex = targetLayer != null ? Layers.IndexOf(targetLayer) : 0;
-
-                        SelectedLayerIndex = -1;
-                        SelectedLayerIndex = targetIndex;
-
-                        OnPropertyChanged(nameof(SelectedLayerIndex));
-                        ForceUpdate();
-                    }, DispatcherPriority.ContextIdle);
-                }
-            }
+            EnsureLayers();
+            UpdateLayerSignature();
         }
 
         protected override void SaveSharedData(SharedDataStore store)
