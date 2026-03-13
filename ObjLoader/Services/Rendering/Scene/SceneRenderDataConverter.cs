@@ -24,11 +24,13 @@ internal sealed class SceneRenderDataConverter : IDisposable
     private readonly Dictionary<string, (ObjVertex[] Vertices, Core.Mmd.VertexBoneWeight[] BoneWeights)> _modelSkinningData = new();
     private readonly Dictionary<string, List<Core.Mmd.PmxBone>> _modelBones = new();
     private readonly Dictionary<string, string> _registeredSkinningGuids = new();
-    private readonly Dictionary<string, (BoneAnimator Animator, string VmdPath)> _animators = new();
+    private readonly Dictionary<string, (BoneAnimator? Animator, string VmdPath, string ModelPath, VmdData VmdData)> _animators = new();
 
     private readonly List<LayerRenderData> _layerRenderDataBuffer = new();
     private readonly HashSet<string> _validLayerGuidsBuffer = new();
-    private readonly List<string> _animatorsToRemoveBuffer = new();
+    private readonly List<string> _guidsToRemoveBuffer = new();
+    private readonly HashSet<string> _usedPathsBuffer = new();
+    private readonly List<string> _pathsToRemoveBuffer = new();
 
     public List<LayerRenderData> RenderDataList => _layerRenderDataBuffer;
 
@@ -60,114 +62,27 @@ internal sealed class SceneRenderDataConverter : IDisposable
         {
             var guid = kvp.Key;
             _validLayerGuidsBuffer.Add(guid);
+
             var info = kvp.Value;
             var layer = info.Layer;
             var resource = info.Resource;
-            ID3D11Buffer? overrideVB = null;
 
-            if (_skinningManager != null && !string.IsNullOrEmpty(layer.FilePath))
-            {
-                if (!_modelSkinningData.ContainsKey(layer.FilePath))
-                {
-                    if (Path.GetExtension(layer.FilePath).Equals(".pmx", StringComparison.OrdinalIgnoreCase) && File.Exists(layer.FilePath))
-                    {
-                        try
-                        {
-                            var pmxModel = new PmxParser().Parse(layer.FilePath);
-                            if (pmxModel.BoneWeights != null && pmxModel.Bones.Count > 0)
-                            {
-                                _modelSkinningData[layer.FilePath] = (pmxModel.Vertices.ToArray(), pmxModel.BoneWeights);
-                                _modelBones[layer.FilePath] = pmxModel.Bones;
-                            }
-                            else
-                            {
-                                _modelSkinningData[layer.FilePath] = (Array.Empty<ObjVertex>(), Array.Empty<Core.Mmd.VertexBoneWeight>());
-                                _modelBones[layer.FilePath] = new List<Core.Mmd.PmxBone>();
-                            }
-                        }
-                        catch (Exception ex) when (ex is IOException || ex is InvalidDataException)
-                        {
-                            _modelSkinningData[layer.FilePath] = (Array.Empty<ObjVertex>(), Array.Empty<Core.Mmd.VertexBoneWeight>());
-                            _modelBones[layer.FilePath] = new List<Core.Mmd.PmxBone>();
-                        }
-                    }
-                    else
-                    {
-                        _modelSkinningData[layer.FilePath] = (Array.Empty<ObjVertex>(), Array.Empty<Core.Mmd.VertexBoneWeight>());
-                        _modelBones[layer.FilePath] = new List<Core.Mmd.PmxBone>();
-                    }
-                }
-
-                if (_modelSkinningData.TryGetValue(layer.FilePath, out var skinData) && skinData.Vertices.Length > 0)
-                {
-                    bool needsRegister = true;
-                    if (_registeredSkinningGuids.TryGetValue(guid, out var currentPath) && currentPath == layer.FilePath)
-                    {
-                        needsRegister = false;
-                    }
-
-                    if (needsRegister)
-                    {
-                        _skinningManager.RegisterSkinningState(guid, layer.FilePath, skinData.Vertices, skinData.BoneWeights);
-                        _registeredSkinningGuids[guid] = layer.FilePath;
-                    }
-
-                    BoneAnimator? animator = null;
-                    if (!string.IsNullOrEmpty(layer.VmdFilePath) && File.Exists(layer.VmdFilePath))
-                    {
-                        if (!_animators.TryGetValue(guid, out var cache) || cache.VmdPath != layer.VmdFilePath)
-                        {
-                            try
-                            {
-                                var vmdData = VmdParser.Parse(layer.VmdFilePath);
-                                if (vmdData.BoneFrames.Count > 0 && _modelBones.TryGetValue(layer.FilePath, out var bones) && bones.Count > 0)
-                                {
-                                    animator = new BoneAnimator(bones, vmdData.BoneFrames);
-                                    _animators[guid] = (animator, layer.VmdFilePath);
-                                }
-                            }
-                            catch (Exception ex) when (ex is IOException || ex is InvalidDataException)
-                            {
-                                Logger<SceneRenderDataConverter>.Instance.Warning($"Error loading VMD: {layer.VmdFilePath}", ex);
-                            }
-                        }
-                        else
-                        {
-                            animator = cache.Animator;
-                        }
-                    }
-
-                    if (animator != null)
-                    {
-                        double motionTime = (currentFrame / fps) - layer.VmdTimeOffset;
-                        if (motionTime < 0) motionTime = 0;
-                        _skinningManager.ProcessSkinning(guid, layer.FilePath, animator, motionTime);
-                        overrideVB = _skinningManager.GetOverrideVertexBuffer(guid);
-                    }
-                    else
-                    {
-                        _skinningManager.ProcessSkinning(guid, layer.FilePath, null, 0);
-                    }
-                }
-            }
+            var overrideVB = ProcessLayerSkinning(guid, layer, currentFrame, fps);
 
             if (!globalPlacements.TryGetValue(guid, out var globalPlacement))
+            {
                 globalPlacement = info.Local;
+            }
 
-            var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter) * Matrix4x4.CreateScale(resource.ModelScale);
+            var normalize = Matrix4x4.CreateTranslation(-resource.ModelCenter)
+                          * Matrix4x4.CreateScale(resource.ModelScale);
 
-            var finalWorld = normalize * axisConversion * globalPlacement * Matrix4x4.CreateTranslation(0, (float)globalLiftY, 0);
+            var finalWorld = normalize
+                           * axisConversion
+                           * globalPlacement
+                           * Matrix4x4.CreateTranslation(0, (float)globalLiftY, 0);
 
-            var worldBox = CullingBox.Transform(resource.LocalBoundingBox, finalWorld);
-
-            bool isAnimated = overrideVB != null;
-
-            bool isActive = (activeLayer != null && layer == activeLayer);
-            bool lightEnabled = isActive ? parameter.IsLightEnabled : layer.IsLightEnabled;
-            Color baseColor = isActive ? parameter.BaseColor : layer.BaseColor;
-
-            double wIdVal = isActive ? parameter.WorldId.GetValue((long)currentFrame, len, fps) : layer.WorldId.GetValue((long)currentFrame, len, fps);
-            int worldId = (int)wIdVal;
+            bool isActive = activeLayer != null && layer == activeLayer;
 
             _layerRenderDataBuffer.Add(new LayerRenderData
             {
@@ -180,32 +95,180 @@ internal sealed class SceneRenderDataConverter : IDisposable
                 Rx = 0,
                 Ry = 0,
                 Rz = 0,
-                BaseColor = baseColor,
-                LightEnabled = lightEnabled,
-                WorldId = worldId,
+                BaseColor = isActive ? parameter.BaseColor : layer.BaseColor,
+                LightEnabled = isActive ? parameter.IsLightEnabled : layer.IsLightEnabled,
+                WorldId = (int)(isActive
+                    ? parameter.WorldId.GetValue((long)currentFrame, len, fps)
+                    : layer.WorldId.GetValue((long)currentFrame, len, fps)),
                 HeightOffset = 0,
                 VisibleParts = layer.VisibleParts,
                 Data = layer,
                 OverrideVB = overrideVB,
-                WorldBoundingBox = worldBox,
-                IsAnimated = isAnimated
+                WorldBoundingBox = CullingBox.Transform(resource.LocalBoundingBox, finalWorld),
+                IsAnimated = overrideVB != null
             });
         }
+        CleanupStaleSkinningGuids();
+        CleanupUnusedModelData();
+    }
 
-        _animatorsToRemoveBuffer.Clear();
-        foreach (var key in _animators.Keys)
+    private ID3D11Buffer? ProcessLayerSkinning(string guid, LayerData layer, double currentFrame, int fps)
+    {
+        if (_skinningManager == null || string.IsNullOrEmpty(layer.FilePath))
+        {
+            return null;
+        }
+
+        EnsureModelSkinningData(layer.FilePath);
+
+        if (!_modelSkinningData.TryGetValue(layer.FilePath, out var skinData) || skinData.Vertices.Length == 0)
+        {
+            return null;
+        }
+
+        EnsureSkinningRegistration(guid, layer.FilePath, skinData);
+
+        var animator = ResolveAnimator(guid, layer);
+
+        double motionTime = animator != null
+            ? Math.Max(0, (currentFrame / fps) - layer.VmdTimeOffset)
+            : 0;
+
+        _skinningManager.ProcessSkinning(guid, layer.FilePath, animator, motionTime);
+        return _skinningManager.GetOverrideVertexBuffer(guid);
+    }
+
+    private void EnsureModelSkinningData(string filePath)
+    {
+        if (_modelSkinningData.ContainsKey(filePath))
+        {
+            return;
+        }
+
+        if (!filePath.EndsWith(".pmx", StringComparison.OrdinalIgnoreCase) || !File.Exists(filePath))
+        {
+            SetEmptyModelData(filePath);
+            return;
+        }
+
+        try
+        {
+            var pmxModel = new PmxParser().Parse(filePath);
+            if (pmxModel.BoneWeights != null && pmxModel.Bones.Count > 0)
+            {
+                _modelSkinningData[filePath] = (pmxModel.Vertices, pmxModel.BoneWeights);
+                _modelBones[filePath] = pmxModel.Bones;
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException)
+        {
+        }
+        SetEmptyModelData(filePath);
+    }
+
+    private void SetEmptyModelData(string filePath)
+    {
+        _modelSkinningData[filePath] = (Array.Empty<ObjVertex>(), Array.Empty<Core.Mmd.VertexBoneWeight>());
+        _modelBones[filePath] = new List<Core.Mmd.PmxBone>();
+    }
+
+    private void EnsureSkinningRegistration(
+        string guid,
+        string filePath,
+        (ObjVertex[] Vertices, Core.Mmd.VertexBoneWeight[] BoneWeights) skinData)
+    {
+        if (_registeredSkinningGuids.TryGetValue(guid, out var currentPath) && currentPath == filePath)
+        {
+            return;
+        }
+        _skinningManager!.RegisterSkinningState(guid, filePath, skinData.Vertices, skinData.BoneWeights);
+        _registeredSkinningGuids[guid] = filePath;
+    }
+
+    private BoneAnimator? ResolveAnimator(string guid, LayerData layer)
+    {
+        if (string.IsNullOrEmpty(layer.VmdFilePath) || !File.Exists(layer.VmdFilePath))
+        {
+            return null;
+        }
+
+        if (_animators.TryGetValue(guid, out var cache))
+        {
+            if (cache.VmdPath == layer.VmdFilePath && cache.ModelPath == layer.FilePath)
+            {
+                return cache.Animator;
+            }
+            return RebuildAnimator(guid, layer,
+                cache.VmdPath == layer.VmdFilePath ? cache.VmdData : null);
+        }
+        return RebuildAnimator(guid, layer, null);
+    }
+
+    private BoneAnimator? RebuildAnimator(string guid, LayerData layer, VmdData? cachedVmd)
+    {
+        try
+        {
+            var vmdData = cachedVmd ?? VmdParser.Parse(layer.VmdFilePath);
+            BoneAnimator? animator = null;
+
+            if (vmdData.BoneFrames.Count > 0
+                && _modelBones.TryGetValue(layer.FilePath, out var bones)
+                && bones.Count > 0)
+            {
+                animator = new BoneAnimator(bones, vmdData.BoneFrames);
+            }
+            _animators[guid] = (animator, layer.VmdFilePath, layer.FilePath, vmdData);
+            return animator;
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException)
+        {
+            Logger<SceneRenderDataConverter>.Instance.Warning($"Error loading VMD: {layer.VmdFilePath}", ex);
+            return null;
+        }
+    }
+
+    private void CleanupStaleSkinningGuids()
+    {
+        _guidsToRemoveBuffer.Clear();
+
+        foreach (var key in _registeredSkinningGuids.Keys)
         {
             if (!_validLayerGuidsBuffer.Contains(key))
             {
-                _animatorsToRemoveBuffer.Add(key);
+                _guidsToRemoveBuffer.Add(key);
             }
         }
 
-        foreach (var key in _animatorsToRemoveBuffer)
+        foreach (var key in _guidsToRemoveBuffer)
         {
             _animators.Remove(key);
             _registeredSkinningGuids.Remove(key);
             _skinningManager?.RemoveSkinningState(key);
+        }
+    }
+
+    private void CleanupUnusedModelData()
+    {
+        _usedPathsBuffer.Clear();
+        foreach (var path in _registeredSkinningGuids.Values)
+        {
+            _usedPathsBuffer.Add(path);
+        }
+
+        _pathsToRemoveBuffer.Clear();
+        foreach (var key in _modelSkinningData.Keys)
+        {
+            if (!_usedPathsBuffer.Contains(key))
+            {
+                _pathsToRemoveBuffer.Add(key);
+            }
+        }
+
+        foreach (var path in _pathsToRemoveBuffer)
+        {
+            _modelSkinningData.Remove(path);
+            _modelBones.Remove(path);
         }
     }
 

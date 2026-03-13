@@ -37,106 +37,200 @@ internal sealed class VisibilityAndSkinningResolver(
         var preCalcSpan = CollectionsMarshal.AsSpan(preCalcStates);
         foreach (var item in preCalcSpan)
         {
-            if (!newLayerStates.TryGetValue(item.Guid, out var layerState)) continue;
-
-            bool effectiveVisibility = layerState.IsVisible;
-            var parentGuid = layerState.ParentGuid;
-            int depth = 0;
-            while (effectiveVisibility && !string.IsNullOrEmpty(parentGuid) && newLayerStates.TryGetValue(parentGuid, out var parentState))
+            if (!newLayerStates.TryGetValue(item.Guid, out var layerState))
             {
-                if (!parentState.IsVisible)
-                {
-                    effectiveVisibility = false;
-                    break;
-                }
-                parentGuid = parentState.ParentGuid;
-                depth++;
-                if (depth > MaxHierarchyDepth) break;
+                continue;
             }
 
-            if (effectiveVisibility && !string.IsNullOrEmpty(layerState.FilePath))
+            if (!ResolveEffectiveVisibility(layerState, newLayerStates))
             {
-                GpuResourceCacheItem? resource = null;
-                ObjModel? loadedModel = null;
-                if (GpuResourceCache.Instance.TryGetValue(layerState.CacheKey, out var cached))
-                {
-                    if (cached != null && cached.Device == devices.D3D.Device)
-                    {
-                        resource = cached;
-                    }
-                }
-
-                if (resource == null)
-                {
-                    loadedModel = loader.Load(layerState.FilePath);
-                    if (loadedModel.Vertices.Length > 0)
-                    {
-                        resource = resourceFactory.Create(loadedModel, layerState.FilePath);
-                    }
-                }
-
-                if (resource != null)
-                {
-                    if (item.Data.BoneAnimatorInstance == null && !string.IsNullOrEmpty(item.Data.VmdFilePath) && File.Exists(item.Data.VmdFilePath))
-                    {
-                        try
-                        {
-                            var vmdData = VmdParser.Parse(item.Data.VmdFilePath);
-                            item.Data.VmdMotionData = vmdData;
-                            if (vmdData.BoneFrames.Count > 0 && Path.GetExtension(layerState.FilePath).Equals(".pmx", StringComparison.OrdinalIgnoreCase))
-                            {
-                                loadedModel ??= loader.Load(layerState.FilePath);
-                                if (loadedModel.BoneWeights != null)
-                                {
-                                    skinningManager.RegisterSkinningState(item.Guid, layerState.FilePath, loadedModel.Vertices, loadedModel.BoneWeights);
-                                }
-                                if (loadedModel.Bones.Count > 0)
-                                {
-                                    item.Data.BoneAnimatorInstance = new BoneAnimator(loadedModel.Bones, vmdData.BoneFrames, loadedModel.RigidBodies, loadedModel.Joints);
-                                }
-                            }
-                        }
-                        catch
-                        {
-                        }
-                    }
-
-                    double motionTime = currentTime - item.Data.VmdTimeOffset;
-                    if (motionTime < 0) motionTime = 0;
-
-                    skinningManager.ProcessSkinning(item.Guid, layerState.FilePath, item.Data.BoneAnimatorInstance, motionTime);
-
-                    if (layerState.FilePath.EndsWith(".pmx", StringComparison.OrdinalIgnoreCase))
-                        _activeSkinningGuids.Add(item.Guid);
-
-                    ID3D11Buffer? overrideVB = skinningManager.GetOverrideVertexBuffer(item.Guid);
-
-                    LayersToRender.Add((item.Data, resource, layerState, overrideVB));
-                }
+                continue;
             }
+
+            if (string.IsNullOrEmpty(layerState.FilePath))
+            {
+                continue;
+            }
+
+            var resource = ResolveGpuResource(layerState, out var loadedModel);
+            if (resource == null)
+            {
+                continue;
+            }
+
+            TryRebuildSkinning(item, layerState, ref loadedModel);
+
+            double motionTime = Math.Max(0, currentTime - item.Data.VmdTimeOffset);
+            ID3D11Buffer? overrideVB = null;
+
+            if (item.Data.BoneAnimatorInstance != null)
+            {
+                skinningManager.ProcessSkinning(item.Guid, layerState.FilePath, item.Data.BoneAnimatorInstance, motionTime);
+                overrideVB = skinningManager.GetOverrideVertexBuffer(item.Guid);
+            }
+            else
+            {
+                skinningManager.RemoveSkinningState(item.Guid);
+            }
+
+            if (layerState.FilePath.EndsWith(".pmx", StringComparison.OrdinalIgnoreCase))
+            {
+                _activeSkinningGuids.Add(item.Guid);
+            }
+            LayersToRender.Add((item.Data, resource, layerState, overrideVB));
         }
         skinningManager.CleanupStaleStates(_activeSkinningGuids);
         _activeSkinningGuids.Clear();
         PrepareDynamicTextures();
     }
 
+    private static bool ResolveEffectiveVisibility(LayerState layerState, Dictionary<string, LayerState> allStates)
+    {
+        if (!layerState.IsVisible)
+        {
+            return false;
+        }
+
+        var parentGuid = layerState.ParentGuid;
+        int depth = 0;
+
+        while (!string.IsNullOrEmpty(parentGuid) && allStates.TryGetValue(parentGuid, out var parentState))
+        {
+            if (!parentState.IsVisible)
+            {
+                return false;
+            }
+
+            parentGuid = parentState.ParentGuid;
+            if (++depth > MaxHierarchyDepth)
+            {
+                break;
+            }
+        }
+        return true;
+    }
+
+    private GpuResourceCacheItem? ResolveGpuResource(LayerState layerState, out ObjModel? loadedModel)
+    {
+        loadedModel = null;
+
+        if (GpuResourceCache.Instance.TryGetValue(layerState.CacheKey, out var cached)
+            && cached != null
+            && cached.Device == devices.D3D.Device)
+        {
+            return cached;
+        }
+
+        loadedModel = loader.Load(layerState.FilePath);
+        return loadedModel.Vertices.Length > 0
+            ? resourceFactory.Create(loadedModel, layerState.FilePath)
+            : null;
+    }
+
+    private void TryRebuildSkinning(
+        (string Guid, LayerState State, LayerData Data) item,
+        LayerState layerState,
+        ref ObjModel? loadedModel)
+    {
+        if (string.IsNullOrEmpty(item.Data.VmdFilePath) || !File.Exists(item.Data.VmdFilePath))
+        {
+            return;
+        }
+
+        bool needsRebuild = DetermineSkinningRebuildNeeded(item.Data, layerState.FilePath);
+
+        if (needsRebuild
+            && item.Data.VmdMotionData != null
+            && layerState.FilePath.EndsWith(".pmx", StringComparison.OrdinalIgnoreCase))
+        {
+            BuildSkinningState(item, layerState, ref loadedModel);
+        }
+    }
+
+    private static bool DetermineSkinningRebuildNeeded(LayerData data, string filePath)
+    {
+        if (data.VmdMotionData == null)
+        {
+            try
+            {
+                data.VmdMotionData = VmdParser.Parse(data.VmdFilePath);
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+
+        if (data.BoneAnimatorInstance == null)
+        {
+            return true;
+        }
+
+        if (!string.Equals(data.AppliedModelFilePath, filePath, StringComparison.OrdinalIgnoreCase))
+        {
+            data.BoneAnimatorInstance = null;
+            data.AppliedModelFilePath = string.Empty;
+            return true;
+        }
+        return false;
+    }
+
+    private void BuildSkinningState(
+        (string Guid, LayerState State, LayerData Data) item,
+        LayerState layerState,
+        ref ObjModel? loadedModel)
+    {
+        try
+        {
+            loadedModel ??= loader.Load(layerState.FilePath);
+            loadedModel.ExtensionLoadTask?.Wait();
+
+            if (loadedModel.BoneWeights == null)
+            {
+                return;
+            }
+
+            skinningManager.RegisterSkinningState(
+                item.Guid, layerState.FilePath, loadedModel.Vertices, loadedModel.BoneWeights);
+
+            if (loadedModel.Bones.Count > 0)
+            {
+                item.Data.BoneAnimatorInstance = new BoneAnimator(
+                    loadedModel.Bones,
+                    item.Data.VmdMotionData!.BoneFrames,
+                    loadedModel.RigidBodies,
+                    loadedModel.Joints);
+                item.Data.AppliedModelFilePath = layerState.FilePath;
+            }
+        }
+        catch
+        {
+        }
+    }
+
     private void PrepareDynamicTextures()
     {
         var device = devices.D3D.Device;
-        if (device == null) return;
+        if (device == null)
+        {
+            return;
+        }
 
         _usedTexturePaths.Clear();
 
         foreach (var layer in LayersToRender)
         {
-            if (layer.State.PartMaterials != null)
+            if (layer.State.PartMaterials == null)
             {
-                foreach (var pm in layer.State.PartMaterials.Values)
+                continue;
+            }
+
+            foreach (var pm in layer.State.PartMaterials.Values)
+            {
+                if (!string.IsNullOrEmpty(pm.TexturePath))
                 {
-                    if (!string.IsNullOrEmpty(pm.TexturePath))
-                    {
-                        _usedTexturePaths.Add(pm.TexturePath!);
-                    }
+                    _usedTexturePaths.Add(pm.TexturePath!);
                 }
             }
         }

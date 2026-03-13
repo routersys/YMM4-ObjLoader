@@ -18,7 +18,10 @@ namespace ObjLoader.Core.Timeline
 
         protected bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            if (EqualityComparer<T>.Default.Equals(field, value))
+            {
+                return false;
+            }
             field = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             return true;
@@ -33,7 +36,7 @@ namespace ObjLoader.Core.Timeline
         public bool IsVisible { get; set => Set(ref field, value); } = true;
 
         [JsonIgnore]
-        private readonly Dictionary<string, string> _layerNameCache = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _layerNameCache = new();
 
         [JsonIgnore]
         private string _previousFilePath = string.Empty;
@@ -45,7 +48,10 @@ namespace ObjLoader.Core.Timeline
             set
             {
                 var sanitized = SanitizeFilePath(value);
-                if (_filePath == sanitized) return;
+                if (_filePath == sanitized)
+                {
+                    return;
+                }
 
                 var currentName = Name;
                 if (!string.IsNullOrEmpty(currentName) && currentName != "Layer" && currentName != "Default")
@@ -61,14 +67,9 @@ namespace ObjLoader.Core.Timeline
 
                 if (Set(ref _filePath, sanitized))
                 {
-                    if (_layerNameCache.TryGetValue(sanitized, out var cachedName))
-                    {
-                        Name = cachedName;
-                    }
-                    else
-                    {
-                        Name = "Default";
-                    }
+                    Name = _layerNameCache.TryGetValue(sanitized, out var cachedName)
+                        ? cachedName
+                        : "Default";
                 }
             }
         }
@@ -82,6 +83,7 @@ namespace ObjLoader.Core.Timeline
                 if (Set(ref _vmdFilePath, value ?? string.Empty))
                 {
                     VmdMotionData = null;
+                    AppliedModelFilePath = string.Empty;
                     BoneAnimatorInstance = null;
                 }
             }
@@ -122,20 +124,29 @@ namespace ObjLoader.Core.Timeline
 
         public byte[]? Thumbnail { get; set => Set(ref field, value); }
 
-        public Dictionary<int, PartMaterialData> PartMaterials { get; set => Set(ref field, value); } = new Dictionary<int, PartMaterialData>();
+        public Dictionary<int, PartMaterialData> PartMaterials { get; set => Set(ref field, value); } = new();
 
         [JsonIgnore]
         public VmdData? VmdMotionData { get; set; }
+
+        [JsonIgnore]
+        public string AppliedModelFilePath { get; set; } = string.Empty;
 
         [JsonIgnore]
         public BoneAnimator? BoneAnimatorInstance { get; set; }
 
         private static string SanitizeFilePath(string? value)
         {
-            if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
 
             var trimmed = value.Trim().Trim('"');
-            if (string.IsNullOrWhiteSpace(trimmed)) return string.Empty;
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                return string.Empty;
+            }
 
             var result = FileSystemSandbox.Instance.ValidatePath(trimmed);
             if (result.IsAllowed && result.ResolvedPath != null)
@@ -148,7 +159,6 @@ namespace ObjLoader.Core.Timeline
             {
                 return basicResult.NormalizedPath;
             }
-
             return string.Empty;
         }
 
@@ -168,12 +178,15 @@ namespace ObjLoader.Core.Timeline
                 RotationCenterY = RotationCenterY,
                 RotationCenterZ = RotationCenterZ
             };
+
             clone._filePath = _filePath;
             clone._previousFilePath = _filePath;
             clone._vmdFilePath = _vmdFilePath;
             clone._vmdTimeOffset = _vmdTimeOffset;
             clone.VmdMotionData = VmdMotionData;
+            clone.AppliedModelFilePath = AppliedModelFilePath;
             clone.BoneAnimatorInstance = BoneAnimatorInstance;
+
             clone.X.CopyFrom(X);
             clone.Y.CopyFrom(Y);
             clone.Z.CopyFrom(Z);
@@ -194,7 +207,7 @@ namespace ObjLoader.Core.Timeline
 
             if (PartMaterials != null)
             {
-                clone.PartMaterials = new Dictionary<int, PartMaterialData>();
+                clone.PartMaterials = new Dictionary<int, PartMaterialData>(PartMaterials.Count);
                 foreach (var kvp in PartMaterials)
                 {
                     clone.PartMaterials.Add(kvp.Key, new PartMaterialData
