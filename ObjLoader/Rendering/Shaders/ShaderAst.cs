@@ -1,4 +1,4 @@
-﻿namespace ObjLoader.Rendering.Shaders;
+namespace ObjLoader.Rendering.Shaders;
 
 public sealed class ShaderAst
 {
@@ -8,6 +8,13 @@ public sealed class ShaderAst
     public IReadOnlyList<VariableDeclaration> GlobalVariables => _globalVariables;
     public IReadOnlyList<FunctionDefinition> Functions => _functions;
     public IReadOnlyList<TypedefDeclaration> Typedefs => _typedefs;
+
+    public bool HasUserDefinedContent =>
+        Functions.Count > 0 ||
+        Structures.Count > 0 ||
+        ConstantBuffers.Count > 0 ||
+        GlobalVariables.Count > 0 ||
+        Typedefs.Count > 0;
 
     private readonly List<string> _preprocessorDirectives = new();
     private readonly List<StructDefinition> _structures = new();

@@ -1,5 +1,6 @@
-﻿using ObjLoader.Localization;
+using ObjLoader.Localization;
 using ObjLoader.Rendering.Shaders;
+using ObjLoader.Rendering.Shaders.Exceptions;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Utilities;
 using System.IO;
@@ -185,6 +186,12 @@ namespace ObjLoader.ViewModels.Assets
                 return;
             }
 
+            if (!ShaderConverterFactory.IsSupported(FullPath))
+            {
+                HandleUnsupportedFormatError();
+                return;
+            }
+
             try
             {
                 string convertedSource;
@@ -195,19 +202,7 @@ namespace ObjLoader.ViewModels.Assets
 
                     if (string.IsNullOrEmpty(convertedSource))
                     {
-                        DispatchUI(() =>
-                        {
-                            StatusColor = Brushes.Orange;
-                            StatusMessage = Texts.Shader_Status_Incompatible;
-                            ShortStatus = "\u26a0 " + Texts.Shader_Status_Incompatible;
-                            DetailedMessage = Texts.Shader_Status_Incompatible;
-                            ErrorCategory = string.Empty;
-                            HasError = false;
-                            LastValidationTime = DateTime.Now;
-                            CodeSnippet = string.Empty;
-                            ErrorLine = null;
-                            ErrorColumn = null;
-                        });
+                        HandleUnsupportedFormatError();
                         return;
                     }
                 }
@@ -218,6 +213,11 @@ namespace ObjLoader.ViewModels.Assets
                     try
                     {
                         convertedSource = await Task.Run(() => converter.Convert(source)).ConfigureAwait(false);
+                    }
+                    catch (ShaderNotRecognizedException)
+                    {
+                        HandleUnsupportedFormatError();
+                        return;
                     }
                     catch (ShaderConversionException ex)
                     {
@@ -258,6 +258,23 @@ namespace ObjLoader.ViewModels.Assets
             {
                 HandleGeneralError(ex);
             }
+        }
+
+        private void HandleUnsupportedFormatError()
+        {
+            DispatchUI(() =>
+            {
+                StatusColor = Brushes.Orange;
+                StatusMessage = Texts.Shader_Status_UnsupportedFormat;
+                ShortStatus = "⚠ " + Texts.Shader_Status_UnsupportedFormat;
+                DetailedMessage = Texts.Shader_Status_UnsupportedFormat;
+                ErrorCategory = string.Empty;
+                HasError = false;
+                LastValidationTime = DateTime.Now;
+                CodeSnippet = string.Empty;
+                ErrorLine = null;
+                ErrorColumn = null;
+            });
         }
 
         private void HandleConversionError(ShaderConversionException ex, string source)

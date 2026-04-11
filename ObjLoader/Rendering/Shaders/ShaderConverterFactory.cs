@@ -1,4 +1,5 @@
-﻿using ObjLoader.Rendering.Shaders.Fx;
+using ObjLoader.Rendering.Shaders.Fx;
+using ObjLoader.Rendering.Shaders.Interfaces;
 using System.IO;
 
 namespace ObjLoader.Rendering.Shaders;
@@ -15,18 +16,20 @@ public static class ShaderConverterFactory
         ".hlsl", ".shader", ".cg", ".glsl", ".vert", ".frag", ".txt"
     };
 
-    public static IShaderConverter CreateForFile(string filePath)
+    public static bool IsSupported(string filePath)
     {
         ArgumentNullException.ThrowIfNull(filePath);
+        var ext = Path.GetExtension(filePath);
+        return FxExtensions.Contains(ext) || HlslExtensions.Contains(ext);
+    }
 
+    public static IShaderConverter? CreateForFile(string filePath)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
         var extension = Path.GetExtension(filePath);
-
-        if (FxExtensions.Contains(extension))
-        {
-            return new FxShaderConverter();
-        }
-
-        return new HlslShaderConverter();
+        if (FxExtensions.Contains(extension)) return new FxShaderConverter();
+        if (HlslExtensions.Contains(extension)) return new HlslShaderConverter();
+        return null;
     }
 
     public static bool IsFxFormat(string filePath)

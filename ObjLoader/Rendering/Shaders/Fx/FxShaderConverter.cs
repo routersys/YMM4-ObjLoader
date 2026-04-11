@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using ObjLoader.Rendering.Shaders.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace ObjLoader.Rendering.Shaders.Fx;
 

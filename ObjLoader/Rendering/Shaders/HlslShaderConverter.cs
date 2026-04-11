@@ -1,12 +1,9 @@
-﻿using ObjLoader.Localization;
+using ObjLoader.Localization;
+using ObjLoader.Rendering.Shaders.Exceptions;
+using ObjLoader.Rendering.Shaders.Interfaces;
 using System.Text;
 
 namespace ObjLoader.Rendering.Shaders;
-
-public interface IShaderConverter
-{
-    string Convert(string sourceCode);
-}
 
 public sealed class HlslShaderConverter : IShaderConverter
 {
@@ -87,6 +84,9 @@ public sealed class HlslShaderConverter : IShaderConverter
 
     private static string BuildShaderCode(ShaderAst ast)
     {
+        if (!ast.HasUserDefinedContent)
+            throw new ShaderNotRecognizedException();
+
         var builder = new StringBuilder(4096);
 
         AppendPreprocessorDirectives(builder, ast);
@@ -578,18 +578,6 @@ public sealed class HlslShaderConverter : IShaderConverter
         if (computeFunc is not null)
         {
             AppendFullFunction(builder, computeFunc with { Name = "CS" });
-        }
-    }
-}
-
-public sealed class ShaderConversionException : Exception
-{
-    public ShaderConversionException(string message, Exception? innerException = null)
-        : base(message, innerException)
-    {
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            throw new ArgumentException(Texts.ShaderConversion_ArgumentNull, nameof(message));
         }
     }
 }
