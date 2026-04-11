@@ -148,6 +148,7 @@ Shader_Desc,Setting Description,読み込むシェーダーファイルを指定
 Shader_Status_Success,Message,コンパイル成功,Compilation Success,编译成功,編譯成功,컴파일 성공,Compilación exitosa,نجاح التحويل البرمجي,Kompilasi Berhasil,
 Shader_Status_Error,Message,コンパイルエラー: {0},Compile Error: {0},编译错误: {0},編譯錯誤: {0},컴파일 오류: {0},Error de compilación: {0},خطأ في التحويل البرمجي: {0},Kesalahan kompilasi: {0},
 Shader_Status_Unknown,Message,未確認,Unknown,未知,未知,알 수 없음,Desconocido,مجهول,Tidak diketahui,
+Shader_Status_Incompatible,Message,非対応 (オフスクリーン),Incompatible (Off-Screen),不兼容 (离屏),不相容 (離屏),비호환 (오프스크린),Incompatible (Fuera de Pantalla),غير متوافق (خارج الشاشة),Tidak Kompatibel (Off-Screen),
 Shader_None,Setting Label,無効,None,无,無,없음,Ninguno,لا شيء,Tidak ada,
 Group_Toon,Toon Shader,アニメ調,Toon,卡通,卡通,툰,Toon,تون,Toon,
 ToonEnabled,Enable Toon,アニメ調を有効にする,Enable Toon,启用卡通,啟用卡通,툰 활성화,Habilitar Toon,تمكين تون,Aktifkan Toon,
@@ -532,4 +533,4 @@ Msg_CameraVmdLoadSuccess,Message,VMDカメラモーション読み込み完了: 
 Msg_CameraVmdLoadFailed,Message,VMDカメラモーションの読み込みに失敗しました: {0},Failed to load VMD camera motion: {0},加载VMD相机动作失败: {0},載入VMD相機動作失敗: {0},VMD 카메라 모션 로드 실패: {0},Error al cargar el movimiento de cámara VMD: {0},فشل تحميل حركة كاميرا VMD: {0},Gagal memuat gerakan kamera VMD: {0},
 Msg_CameraVmdNoCameraFrames,Message,カメラフレームが含まれていません,No camera frames found,未包含相机帧,未包含相機幀,카메라 프레임이 포함되어 있지 않습니다,No se encontraron fotogramas de cámara,لم يتم العثور على إطارات الكاميرا,Tidak ada frame kamera ditemukan,
 Msg_ModelVmdReset,Message,モデルVMDをリセットしました,Model VMD has been reset,模型VMD已重置,模型VMD已重置,모델 VMD가 재설정되었습니다,El VMD del modelo ha sido restablecido,تم إعادة تعيين VMD للنموذج,VMD model telah direset,
-Msg_CameraVmdReset,Message,カメラVMDをリセットしました,Camera VMD has been reset,相机VMD已重置,相機VMD已重置,카메라 VMD가 재설정되었습니다,El VMD de cámara ha sido restablecido,تم إعادة تعيين VMD للكاميرا,VMD kamera telah direset,
+Msg_CameraVmdReset,Message,カメラVMDをリセットしました,Camera VMD has been reset,相机VMD已重置,相機VMD已重置,카메라 VMD가 재설정되었습니다,El VMD de cámara ha sido restablecido,تم إعادة تعيين VMD للكاميرا,VMD kamera telah direset,

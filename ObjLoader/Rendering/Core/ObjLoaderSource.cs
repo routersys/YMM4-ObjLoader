@@ -11,6 +11,7 @@ using ObjLoader.Rendering.Managers.Interfaces;
 using ObjLoader.Rendering.Models;
 using ObjLoader.Rendering.Renderers;
 using ObjLoader.Rendering.Shaders;
+using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using System.Numerics;
@@ -34,7 +35,8 @@ public sealed class ObjLoaderSource : IShapeSource2
     private readonly DisposeCollector _disposer = new();
     private readonly D3DResources _resources;
     private readonly RenderTargetManager _renderTargets;
-    private readonly CustomShaderManager _shaderManager;
+    private readonly CustomShaderCache _shaderCache;
+    private readonly ShaderCompiler _shaderCompiler;
     private readonly ShadowRenderer _shadowRenderer;
     private readonly SceneRenderer _sceneRenderer;
     private readonly ITextureService _textureService;
@@ -140,9 +142,10 @@ public sealed class ObjLoaderSource : IShapeSource2
         _resources = D3DResourcesPool.Acquire(devices.D3D.Device);
 
         _renderTargets = new RenderTargetManager();
-        _shaderManager = new CustomShaderManager(devices);
+        _shaderCompiler = new ShaderCompiler(devices);
+        _shaderCache = new CustomShaderCache(new ShaderService(), _shaderCompiler);
         _shadowRenderer = new ShadowRenderer(devices, _resources);
-        _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderManager, _sceneDrawManager);
+        _sceneRenderer = new SceneRenderer(devices, _resources, _renderTargets, _shaderCache, _sceneDrawManager);
 
         _sceneApi = new ObjLoaderSceneApi(
             _parameter,
@@ -549,7 +552,7 @@ public sealed class ObjLoaderSource : IShapeSource2
         }
 
         _sceneDrawManager.Dispose();
-        _shaderManager.Dispose();
+        _shaderCache.Dispose();
         _renderTargets.Dispose();
         _skinningManager.Dispose();
         _sceneRenderer?.Dispose();

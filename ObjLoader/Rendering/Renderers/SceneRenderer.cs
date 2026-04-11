@@ -10,7 +10,7 @@ using ObjLoader.Rendering.Core.States;
 using ObjLoader.Rendering.Managers;
 using ObjLoader.Rendering.Managers.Interfaces;
 using ObjLoader.Rendering.Mathematics;
-using ObjLoader.Rendering.Shaders;
+using ObjLoader.Rendering.Shaders.Interfaces;
 using ObjLoader.Rendering.Utilities;
 using ObjLoader.Services.Rendering.Spatial;
 using ObjLoader.Settings;
@@ -33,7 +33,7 @@ namespace ObjLoader.Rendering.Renderers
         private readonly IGraphicsDevicesAndContext _devices;
         private readonly D3DResources _resources;
         private readonly RenderTargetManager _renderTargets;
-        private readonly CustomShaderManager _shaderManager;
+        private readonly IShaderCache _shaderCache;
         private readonly SceneDrawManager _sceneDrawManager;
         private readonly List<int> _tempMainVisibleIndices = new List<int>(1024);
         private readonly List<int> _tempEnvVisibleIndices = new List<int>(1024);
@@ -45,6 +45,7 @@ namespace ObjLoader.Rendering.Renderers
         private ConstantBuffer<CBPerMaterial>? _cbPerMaterialCore;
         private ConstantBuffer<CBSceneEffects>? _cbSceneEffects;
         private ConstantBuffer<CBPostEffects>? _cbPostEffects;
+        private ConstantBuffer<CustomShaderCbuf>? _cbCustomShader;
         private ApiObjectRenderer? _apiObjectRenderer;
 
         private readonly Octree _octree = new Octree();
@@ -54,6 +55,7 @@ namespace ObjLoader.Rendering.Renderers
         private readonly ID3D11Buffer[] _cbPerMaterialArray = new ID3D11Buffer[1];
         private readonly ID3D11Buffer[] _cbSceneEffectsArray = new ID3D11Buffer[1];
         private readonly ID3D11Buffer[] _cbPostEffectsArray = new ID3D11Buffer[1];
+        private readonly ID3D11Buffer[] _cbCustomShaderArray = new ID3D11Buffer[1];
 
         private readonly ID3D11Buffer[] _vbArray = new ID3D11Buffer[1];
         private readonly int[] _strideArray = new int[1];
@@ -92,13 +94,13 @@ namespace ObjLoader.Rendering.Renderers
             IGraphicsDevicesAndContext devices,
             D3DResources resources,
             RenderTargetManager renderTargets,
-            CustomShaderManager shaderManager,
+            IShaderCache shaderCache,
             ISceneDrawManager sceneDrawManager)
         {
             _devices = devices;
             _resources = resources;
             _renderTargets = renderTargets;
-            _shaderManager = shaderManager;
+            _shaderCache = shaderCache;
             _sceneDrawManager = (SceneDrawManager)sceneDrawManager;
 
             _cbPerFrame = new ConstantBuffer<CBPerFrame>(_devices.D3D.Device);
@@ -106,6 +108,7 @@ namespace ObjLoader.Rendering.Renderers
             _cbPerMaterialCore = new ConstantBuffer<CBPerMaterial>(_devices.D3D.Device);
             _cbSceneEffects = new ConstantBuffer<CBSceneEffects>(_devices.D3D.Device);
             _cbPostEffects = new ConstantBuffer<CBPostEffects>(_devices.D3D.Device);
+            _cbCustomShader = new ConstantBuffer<CustomShaderCbuf>(_devices.D3D.Device);
             _apiObjectRenderer = new ApiObjectRenderer(_devices.D3D.Device, _resources);
         }
 
@@ -459,11 +462,11 @@ namespace ObjLoader.Rendering.Renderers
                 var resource = item.Resource;
                 var settings = PluginSettings.Instance;
 
-                _shaderManager.Update(state.ShaderFilePath, parameter);
+                var shaders = _shaderCache.Resolve(state.ShaderFilePath);
 
-                var vs = _shaderManager.VertexShader ?? _resources.VertexShader;
-                var ps = _shaderManager.PixelShader ?? _resources.PixelShader;
-                var layout = _shaderManager.VertexShader != null ? _shaderManager.InputLayout : _resources.InputLayout;
+                var vs = shaders?.VertexShader ?? _resources.VertexShader;
+                var ps = shaders?.PixelShader ?? _resources.PixelShader;
+                var layout = shaders?.InputLayout ?? _resources.InputLayout;
 
                 if (vs == null || ps == null || layout == null) continue;
 
@@ -576,6 +579,30 @@ namespace ObjLoader.Rendering.Renderers
                     var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
                     var partColor = resolvedBaseColor * uiColorVec;
 
+                    if (shaders?.VertexShader != null && _cbCustomShader != null)
+                    {
+                        var cbCustom = new CustomShaderCbuf
+                        {
+                            WorldViewProj = Matrix4x4.Transpose(wvp),
+                            World = Matrix4x4.Transpose(world),
+                            LightPos = lightPos,
+                            BaseColor = partColor,
+                            AmbientColor = amb,
+                            LightColor = lCol,
+                            CameraPos = camPos,
+                            LightEnabled = state.IsLightEnabled ? 1.0f : 0.0f,
+                            DiffuseIntensity = (float)state.Diffuse,
+                            SpecularIntensity = 1.0f,
+                            Shininess = (float)state.Shininess,
+                            GridColor = Vector4.Zero,
+                            GridAxisColor = Vector4.Zero
+                        };
+                        _cbCustomShader.Update(context, ref cbCustom);
+                        _cbCustomShaderArray[0] = _cbCustomShader.Buffer;
+                        context.VSSetConstantBuffers(0, 1, _cbCustomShaderArray);
+                        context.PSSetConstantBuffers(0, 1, _cbCustomShaderArray);
+                    }
+
                     ConstantBufferFactory.CreatePerMaterial(wId, partColor, state.IsLightEnabled, (float)state.Diffuse, (float)state.Shininess, roughness, metallic, out var cbCore, out var cbScene, out var cbPost);
 
                     _cbPerMaterialCore.Update(context, ref cbCore);
@@ -609,6 +636,7 @@ namespace ObjLoader.Rendering.Renderers
             _cbPerMaterialCore?.Dispose();
             _cbSceneEffects?.Dispose();
             _cbPostEffects?.Dispose();
+            _cbCustomShader?.Dispose();
         }
     }
 }

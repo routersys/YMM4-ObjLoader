@@ -199,6 +199,7 @@
 <data name="Shader_Status_Success" xml:space="preserve"><value>Kompilasi Berhasil</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>Kesalahan kompilasi: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>Tidak diketahui</value></data>
+<data name="Shader_Status_Incompatible" xml:space="preserve"><value>Tidak Kompatibel (Off-Screen)</value></data>
 <data name="Shader_None" xml:space="preserve"><value>Tidak ada</value></data>
 <data name="Group_Toon" xml:space="preserve"><value>Toon</value></data>
 <data name="ToonEnabled" xml:space="preserve"><value>Aktifkan Toon</value></data>

@@ -199,6 +199,7 @@
 <data name="Shader_Status_Success" xml:space="preserve"><value>コンパイル成功</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>コンパイルエラー: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>未確認</value></data>
+<data name="Shader_Status_Incompatible" xml:space="preserve"><value>非対応 (オフスクリーン)</value></data>
 <data name="Shader_None" xml:space="preserve"><value>無効</value></data>
 <data name="Group_Toon" xml:space="preserve"><value>アニメ調</value></data>
 <data name="ToonEnabled" xml:space="preserve"><value>アニメ調を有効にする</value></data>

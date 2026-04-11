@@ -199,6 +199,7 @@
 <data name="Shader_Status_Success" xml:space="preserve"><value>Compilation Success</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>Compile Error: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>Unknown</value></data>
+<data name="Shader_Status_Incompatible" xml:space="preserve"><value>Incompatible (Off-Screen)</value></data>
 <data name="Shader_None" xml:space="preserve"><value>None</value></data>
 <data name="Group_Toon" xml:space="preserve"><value>Toon</value></data>
 <data name="ToonEnabled" xml:space="preserve"><value>Enable Toon</value></data>

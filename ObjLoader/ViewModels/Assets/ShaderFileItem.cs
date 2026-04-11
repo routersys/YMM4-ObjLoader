@@ -1,5 +1,6 @@
 ﻿using ObjLoader.Localization;
 using ObjLoader.Rendering.Shaders;
+using ObjLoader.Services.Rendering;
 using ObjLoader.Utilities;
 using System.IO;
 using System.Windows.Media;
@@ -113,6 +114,7 @@ namespace ObjLoader.ViewModels.Assets
         }
 
         private static readonly System.Text.RegularExpressions.Regex _errorRegex = new(@"\((\d+),(\d+)", System.Text.RegularExpressions.RegexOptions.Compiled);
+        private static readonly ShaderService _shaderService = new();
 
         private void DispatchUI(Action action)
         {
@@ -185,18 +187,43 @@ namespace ObjLoader.ViewModels.Assets
 
             try
             {
-                var source = await Task.Run(() => EncodingUtil.ReadAllText(FullPath)).ConfigureAwait(false);
-                var converter = new HlslShaderConverter();
                 string convertedSource;
 
-                try
+                if (ShaderConverterFactory.IsFxFormat(FullPath))
                 {
-                    convertedSource = await Task.Run(() => converter.Convert(source)).ConfigureAwait(false);
+                    convertedSource = await Task.Run(() => _shaderService.LoadAndAdaptShader(FullPath)).ConfigureAwait(false);
+
+                    if (string.IsNullOrEmpty(convertedSource))
+                    {
+                        DispatchUI(() =>
+                        {
+                            StatusColor = Brushes.Orange;
+                            StatusMessage = Texts.Shader_Status_Incompatible;
+                            ShortStatus = "\u26a0 " + Texts.Shader_Status_Incompatible;
+                            DetailedMessage = Texts.Shader_Status_Incompatible;
+                            ErrorCategory = string.Empty;
+                            HasError = false;
+                            LastValidationTime = DateTime.Now;
+                            CodeSnippet = string.Empty;
+                            ErrorLine = null;
+                            ErrorColumn = null;
+                        });
+                        return;
+                    }
                 }
-                catch (ShaderConversionException ex)
+                else
                 {
-                    HandleConversionError(ex, source);
-                    return;
+                    var source = await Task.Run(() => EncodingUtil.ReadAllText(FullPath)).ConfigureAwait(false);
+                    var converter = new HlslShaderConverter();
+                    try
+                    {
+                        convertedSource = await Task.Run(() => converter.Convert(source)).ConfigureAwait(false);
+                    }
+                    catch (ShaderConversionException ex)
+                    {
+                        HandleConversionError(ex, source);
+                        return;
+                    }
                 }
 
                 var vsResult = await Task.Run(() => ShaderStore.Compile(convertedSource, "VS", "vs_5_0")).ConfigureAwait(false);

@@ -199,6 +199,7 @@
 <data name="Shader_Status_Success" xml:space="preserve"><value>컴파일 성공</value></data>
 <data name="Shader_Status_Error" xml:space="preserve"><value>컴파일 오류: {0}</value></data>
 <data name="Shader_Status_Unknown" xml:space="preserve"><value>알 수 없음</value></data>
+<data name="Shader_Status_Incompatible" xml:space="preserve"><value>비호환 (오프스크린)</value></data>
 <data name="Shader_None" xml:space="preserve"><value>없음</value></data>
 <data name="Group_Toon" xml:space="preserve"><value>툰</value></data>
 <data name="ToonEnabled" xml:space="preserve"><value>툰 활성화</value></data>
