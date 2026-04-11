@@ -1,7 +1,7 @@
-﻿using System.Windows.Media;
-using ObjLoader.Core.Enums;
+﻿using ObjLoader.Core.Enums;
 using ObjLoader.Plugin;
 using ObjLoader.Settings;
+using System.Windows.Media;
 
 namespace ObjLoader.Rendering.Core.States
 {

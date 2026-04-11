@@ -1,7 +1,7 @@
-using ObjLoader.Plugin;
-using ObjLoader.Settings;
 using ObjLoader.Core.Timeline;
+using ObjLoader.Plugin;
 using ObjLoader.Rendering.Core;
+using ObjLoader.Settings;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 
 namespace ObjLoader.Services.Rendering.Scene;

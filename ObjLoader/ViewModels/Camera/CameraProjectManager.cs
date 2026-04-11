@@ -1,11 +1,11 @@
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Windows;
-using System.Xml.Serialization;
 using Microsoft.Win32;
 using ObjLoader.Localization;
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Windows;
+using System.Xml.Serialization;
 
 namespace ObjLoader.ViewModels.Camera;
 

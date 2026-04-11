@@ -1,5 +1,5 @@
-using System.Numerics;
 using ObjLoader.Rendering.Mathematics;
+using System.Numerics;
 namespace ObjLoader.Core.Models
 {
     public struct ModelPart

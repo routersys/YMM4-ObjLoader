@@ -1,5 +1,5 @@
-using System.Numerics;
 using ObjLoader.Api.Core;
+using System.Numerics;
 
 namespace ObjLoader.Api.Raycast
 {

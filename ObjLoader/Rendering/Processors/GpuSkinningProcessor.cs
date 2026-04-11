@@ -1,9 +1,9 @@
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using ObjLoader.Core.Mmd;
 using ObjLoader.Core.Models;
 using ObjLoader.Rendering.Shaders;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 

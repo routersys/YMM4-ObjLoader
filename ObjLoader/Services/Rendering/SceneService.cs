@@ -1,10 +1,10 @@
-﻿using System.Windows.Media;
-using System.Windows.Media.Media3D;
+﻿using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
-using ObjLoader.Settings;
-using ObjLoader.Core.Timeline;
-using ObjLoader.Services.Rendering.Scene;
 using ObjLoader.Rendering.Core;
+using ObjLoader.Services.Rendering.Scene;
+using ObjLoader.Settings;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vector3 = System.Numerics.Vector3;
 

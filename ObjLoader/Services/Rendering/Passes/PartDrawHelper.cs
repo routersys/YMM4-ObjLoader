@@ -1,10 +1,10 @@
-using System.Numerics;
-using Vortice.Direct3D11;
+using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Models;
 using ObjLoader.Rendering.Core;
-using ObjLoader.Settings;
-using ObjLoader.Cache.Gpu;
 using ObjLoader.Rendering.Core.Buffers;
+using ObjLoader.Settings;
+using System.Numerics;
+using Vortice.Direct3D11;
 
 namespace ObjLoader.Services.Rendering.Passes;
 

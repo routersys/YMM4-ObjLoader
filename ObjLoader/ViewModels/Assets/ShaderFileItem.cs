@@ -1,8 +1,8 @@
-﻿using System.Windows.Media;
-using System.IO;
-using ObjLoader.Localization;
+﻿using ObjLoader.Localization;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Utilities;
+using System.IO;
+using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels.Assets

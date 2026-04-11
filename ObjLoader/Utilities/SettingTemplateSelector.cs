@@ -1,6 +1,6 @@
-﻿using System.Windows;
+﻿using ObjLoader.ViewModels.Settings;
+using System.Windows;
 using System.Windows.Controls;
-using ObjLoader.ViewModels.Settings;
 
 namespace ObjLoader.Utilities
 {

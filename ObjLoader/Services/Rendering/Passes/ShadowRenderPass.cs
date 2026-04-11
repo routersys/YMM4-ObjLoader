@@ -1,12 +1,12 @@
+using ObjLoader.Core.Models;
+using ObjLoader.Rendering.Core;
+using ObjLoader.Rendering.Core.Buffers;
+using ObjLoader.Settings;
 using System.Runtime.CompilerServices;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
-using ObjLoader.Core.Models;
-using ObjLoader.Rendering.Core;
-using ObjLoader.Settings;
-using Matrix4x4 = System.Numerics.Matrix4x4;
 using Vortice.DXGI;
-using ObjLoader.Rendering.Core.Buffers;
+using Matrix4x4 = System.Numerics.Matrix4x4;
 
 namespace ObjLoader.Services.Rendering.Passes;
 

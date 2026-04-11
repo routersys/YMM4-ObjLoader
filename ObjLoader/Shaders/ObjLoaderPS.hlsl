@@ -585,5 +585,6 @@ float4 PS(PS_IN input) : SV_Target
     
     color = pow(abs(color), 1.0 / 2.2);
 
-    return float4(saturate(color), texColor.a);
+    float alpha = texColor.a;
+    return float4(saturate(color) * alpha, alpha);
 }

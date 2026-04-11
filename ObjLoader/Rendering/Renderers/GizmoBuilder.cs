@@ -1,7 +1,7 @@
-﻿using System.Windows.Media.Media3D;
-using System.Windows.Media;
+﻿using ObjLoader.Localization;
 using System.Windows;
-using ObjLoader.Localization;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 
 namespace ObjLoader.Rendering.Renderers
 {

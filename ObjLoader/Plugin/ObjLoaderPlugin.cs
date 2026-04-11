@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
-using System.Windows;
 using ObjLoader.Localization;
+using System.Windows;
 using YukkuriMovieMaker.Plugin.Shape;
 using YukkuriMovieMaker.Project;
 

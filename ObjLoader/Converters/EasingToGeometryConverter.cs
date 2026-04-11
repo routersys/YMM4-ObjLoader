@@ -1,8 +1,8 @@
-﻿using System.Globalization;
+﻿using ObjLoader.Plugin.CameraAnimation;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
-using ObjLoader.Plugin.CameraAnimation;
 
 namespace ObjLoader.Converters
 {

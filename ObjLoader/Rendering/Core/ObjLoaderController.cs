@@ -1,10 +1,10 @@
 using ObjLoader.Core.Enums;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering.Core.States;
+using ObjLoader.Rendering.Models;
 using ObjLoader.Rendering.Utilities;
 using System.Numerics;
 using YukkuriMovieMaker.Player.Video;
-using ObjLoader.Rendering.Models;
 
 namespace ObjLoader.Rendering.Core;
 

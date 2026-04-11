@@ -1,13 +1,13 @@
-using System.IO;
 using ObjLoader.Cache.Gpu;
 using ObjLoader.Parsers;
 using ObjLoader.Plugin;
+using ObjLoader.Rendering.Core.Resources;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities.Logging;
+using System.IO;
 using Vortice.Direct3D11;
 using Vector3 = System.Numerics.Vector3;
-using ObjLoader.Rendering.Core.Resources;
 
 namespace ObjLoader.Services.Rendering.Scene;
 

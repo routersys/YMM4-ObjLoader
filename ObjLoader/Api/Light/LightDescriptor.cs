@@ -1,6 +1,6 @@
+using ObjLoader.Plugin;
 using System.Numerics;
 using System.Windows.Media;
-using ObjLoader.Plugin;
 
 namespace ObjLoader.Api.Light
 {

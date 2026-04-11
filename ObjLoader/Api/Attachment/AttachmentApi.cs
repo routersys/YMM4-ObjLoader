@@ -1,6 +1,6 @@
-using System.Collections.Concurrent;
 using ObjLoader.Api.Core;
 using ObjLoader.Services.Layers;
+using System.Collections.Concurrent;
 
 namespace ObjLoader.Api.Attachment
 {

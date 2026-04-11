@@ -1,7 +1,7 @@
 using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Timeline;
-using System.Numerics;
 using ObjLoader.Rendering.Mathematics;
+using System.Numerics;
 
 internal struct LayerRenderData
 {

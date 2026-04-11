@@ -1,7 +1,7 @@
-using Vortice.Direct3D11;
-using ObjLoader.Rendering.Managers.Interfaces;
 using ObjLoader.Api.Core;
 using ObjLoader.Api.Draw;
+using ObjLoader.Rendering.Managers.Interfaces;
+using Vortice.Direct3D11;
 
 namespace ObjLoader.Services.Rendering.Device;
 

@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
 using ObjLoader.Views.Dialogs;
+using System.Collections.ObjectModel;
 
 namespace ObjLoader.ViewModels.Camera;
 

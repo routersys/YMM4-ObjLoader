@@ -222,7 +222,7 @@ namespace ObjLoader.ViewModels.Layers
 
                 if (bytes != null && bytes.Length > 0)
                 {
-                    var bitmap = await Task.Run(() => 
+                    var bitmap = await Task.Run(() =>
                     {
                         using (var ms = new MemoryStream(bytes))
                         {
@@ -237,14 +237,14 @@ namespace ObjLoader.ViewModels.Layers
                     }, token).ConfigureAwait(false);
 
                     if (token.IsCancellationRequested) return;
-                    
+
                     DispatchUI(() => ThumbnailSource = bitmap);
                 }
                 else
                 {
                     DispatchUI(() => ThumbnailSource = null);
                 }
-                
+
                 DispatchUI(() => OnPropertyChanged(nameof(Name)));
             }
             catch (OperationCanceledException)
@@ -278,7 +278,7 @@ namespace ObjLoader.ViewModels.Layers
             {
                 try
                 {
-                    var thumbnails = await Task.Run(() => 
+                    var thumbnails = await Task.Run(() =>
                     {
                         var thumbs = _loader.GetPartThumbnails(Data.FilePath, Data.VisibleParts);
                         var bitmaps = new List<BitmapImage>();
@@ -298,10 +298,10 @@ namespace ObjLoader.ViewModels.Layers
                         }
                         return bitmaps;
                     }, token).ConfigureAwait(false);
-                    
+
                     if (token.IsCancellationRequested) return;
 
-                    DispatchUI(() => 
+                    DispatchUI(() =>
                     {
                         foreach (var bmp in thumbnails)
                         {

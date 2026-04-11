@@ -1,6 +1,6 @@
-using System.Windows.Media.Imaging;
 using ObjLoader.Infrastructure;
 using ObjLoader.Settings;
+using System.Windows.Media.Imaging;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;

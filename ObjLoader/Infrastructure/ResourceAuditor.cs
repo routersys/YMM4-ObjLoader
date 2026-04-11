@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using ObjLoader.Utilities.Logging;
+﻿using ObjLoader.Utilities.Logging;
 
 namespace ObjLoader.Infrastructure
 {

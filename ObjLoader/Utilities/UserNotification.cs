@@ -1,6 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using ObjLoader.Utilities.Logging;
+using System.Collections.Concurrent;
 using System.Windows;
-using ObjLoader.Utilities.Logging;
 
 namespace ObjLoader.Utilities
 {

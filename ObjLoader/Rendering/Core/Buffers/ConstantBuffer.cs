@@ -37,12 +37,12 @@ namespace ObjLoader.Rendering.Core.Buffers
 
             MappedSubresource mapped;
             context.Map(_buffer, 0, MapMode.WriteDiscard, MapFlags.None, out mapped);
-            
+
             unsafe
             {
                 System.Runtime.CompilerServices.Unsafe.Copy(mapped.DataPointer.ToPointer(), ref data);
             }
-            
+
             context.Unmap(_buffer, 0);
         }
 

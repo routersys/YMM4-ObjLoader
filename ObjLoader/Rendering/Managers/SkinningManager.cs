@@ -4,9 +4,9 @@ using ObjLoader.Rendering.Core.Resolvers;
 using ObjLoader.Rendering.Managers.Interfaces;
 using ObjLoader.Rendering.Processors;
 using ObjLoader.Services.Mmd.Animation;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using Vortice.Direct3D11;
-using System.Buffers;
 
 namespace ObjLoader.Rendering.Managers
 {

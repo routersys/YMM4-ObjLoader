@@ -1,8 +1,8 @@
-﻿using System.Reflection;
-using System.Windows;
-using ObjLoader.Localization;
+﻿using ObjLoader.Localization;
 using ObjLoader.ViewModels.Assets;
 using ObjLoader.Views.Controls;
+using System.Reflection;
+using System.Windows;
 using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.Attributes

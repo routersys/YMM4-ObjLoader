@@ -22,7 +22,7 @@ namespace ObjLoader.Rendering.Renderers
 
         private ConstantBuffer<CBPerObject>? _cbPerObject;
         private readonly ID3D11Buffer[] _cbPerObjectArray = new ID3D11Buffer[1];
-        
+
         private readonly ID3D11Buffer[] _vbArray = new ID3D11Buffer[1];
         private readonly int[] _strideArray = new int[1];
         private readonly int[] _offsetArray = new int[] { 0 };

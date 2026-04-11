@@ -1,6 +1,6 @@
-using System.Numerics;
 using ObjLoader.Cache.Core;
 using ObjLoader.Core.Models;
+using System.Numerics;
 
 namespace ObjLoader.Cache.Streaming
 {

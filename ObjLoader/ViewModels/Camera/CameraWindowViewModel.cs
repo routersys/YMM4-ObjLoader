@@ -2,11 +2,12 @@ using ObjLoader.Attributes;
 using ObjLoader.Localization;
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
+using ObjLoader.Rendering.Managers.Interfaces;
 using ObjLoader.Rendering.Renderers;
 using ObjLoader.Services;
 using ObjLoader.Services.Camera;
 using ObjLoader.Services.Rendering;
-using ObjLoader.Rendering.Managers.Interfaces;
+using ObjLoader.ViewModels.Common;
 using ObjLoader.Views.Windows;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -16,7 +17,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using YukkuriMovieMaker.Commons;
-using ObjLoader.ViewModels.Common;
 
 namespace ObjLoader.ViewModels.Camera;
 
@@ -29,7 +29,7 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     private readonly UndoStack<(double cx, double cy, double cz, double tx, double ty, double tz)> _undoStack;
     private readonly CameraAnimationManager _animationManager;
     private readonly CameraInteractionManager _interactionManager;
-    
+
     private readonly CameraProjectManager _projectManager;
     private readonly CameraVmdManager _vmdManager;
     private readonly CameraKeyframeManager _keyframeManager;

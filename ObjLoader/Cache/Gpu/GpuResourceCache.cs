@@ -1,9 +1,9 @@
-using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
 using ObjLoader.Infrastructure;
 using ObjLoader.Settings;
-using Vortice.Direct3D11;
 using ObjLoader.Utilities.Logging;
+using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using Vortice.Direct3D11;
 
 namespace ObjLoader.Cache.Gpu
 {

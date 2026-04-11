@@ -1,6 +1,6 @@
-﻿using System.IO;
-using ObjLoader.Rendering.Shaders;
+﻿using ObjLoader.Rendering.Shaders;
 using ObjLoader.Utilities;
+using System.IO;
 
 namespace ObjLoader.Services.Rendering
 {

@@ -1,13 +1,13 @@
-﻿using System.IO;
-using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
-using ObjLoader.Cache.Extensions;
+﻿using ObjLoader.Cache.Extensions;
 using ObjLoader.Cache.Storage;
 using ObjLoader.Cache.Streaming;
 using ObjLoader.Cache.Utilities;
 using ObjLoader.Core.Models;
 using ObjLoader.Settings;
+using System.IO;
+using System.Numerics;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ObjLoader.Cache.Core
 {

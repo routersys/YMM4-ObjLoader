@@ -9,14 +9,14 @@ using ObjLoader.Rendering.Core.Resources;
 using ObjLoader.Rendering.Core.States;
 using ObjLoader.Rendering.Managers;
 using ObjLoader.Rendering.Managers.Interfaces;
+using ObjLoader.Rendering.Mathematics;
 using ObjLoader.Rendering.Shaders;
 using ObjLoader.Rendering.Utilities;
+using ObjLoader.Services.Rendering.Spatial;
 using ObjLoader.Settings;
+using System.Buffers;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Buffers;
-using ObjLoader.Rendering.Mathematics;
-using ObjLoader.Services.Rendering.Spatial;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -384,6 +384,7 @@ namespace ObjLoader.Rendering.Renderers
                 {
                     if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
                     var part = resource.Parts[i];
+                    if (part.BaseColor.W < 1.0f) continue;
 
                     if (!isAnimated)
                     {
@@ -541,56 +542,41 @@ namespace ObjLoader.Rendering.Renderers
 
                 int wId = state.WorldId;
                 bool isAnimated = item.OverrideVB != null;
+                int opaqueEnd = resource.OpaquePartCount;
+                int partTotal = resource.Parts.Length;
 
-                for (int i = 0; i < resource.Parts.Length; i++)
+                void DrawPart(int i)
                 {
-                    if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) continue;
+                    if (item.Data.VisibleParts != null && !item.Data.VisibleParts.Contains(i)) return;
 
                     var part = resource.Parts[i];
 
                     if (!isAnimated)
                     {
                         var pBox = CullingBox.Transform(part.LocalBoundingBox, world);
-                        if (!mainFrustum.Intersects(pBox)) continue;
+                        if (!mainFrustum.Intersects(pBox)) return;
                     }
 
                     var texView = resource.PartTextures[i];
 
                     PartMaterialData? material = null;
-                    if (item.Data.PartMaterials != null)
-                    {
-                        item.Data.PartMaterials.TryGetValue(i, out material);
-                    }
+                    item.Data.PartMaterials?.TryGetValue(i, out material);
 
                     ID3D11ShaderResourceView? activeTexView = texView;
                     if (material != null && !string.IsNullOrEmpty(material.TexturePath) && dynamicTextureCache != null && dynamicTextureCache.TryGetValue(material.TexturePath, out var dynTex))
-                    {
                         activeTexView = dynTex;
-                    }
 
                     bool hasTexture = activeTexView != null;
-
                     _srvSlot0[0] = hasTexture ? activeTexView! : _resources.WhiteTextureView!;
                     context.PSSetShaderResources(RenderingConstants.SlotStandardTexture, 1, _srvSlot0);
 
                     float roughness = (float)(material?.Roughness ?? settings.GetRoughness(wId));
                     float metallic = (float)(material?.Metallic ?? settings.GetMetallic(wId));
                     var resolvedBaseColor = material != null ? RenderUtils.ToVec4(material.BaseColor) : part.BaseColor;
-
                     var uiColorVec = hasTexture ? Vector4.One : new Vector4(state.BaseColor.ScR, state.BaseColor.ScG, state.BaseColor.ScB, state.BaseColor.ScA);
                     var partColor = resolvedBaseColor * uiColorVec;
 
-                    ConstantBufferFactory.CreatePerMaterial(
-                        wId,
-                        partColor,
-                        state.IsLightEnabled,
-                        (float)state.Diffuse,
-                        (float)state.Shininess,
-                        roughness,
-                        metallic,
-                        out var cbCore,
-                        out var cbScene,
-                        out var cbPost);
+                    ConstantBufferFactory.CreatePerMaterial(wId, partColor, state.IsLightEnabled, (float)state.Diffuse, (float)state.Shininess, roughness, metallic, out var cbCore, out var cbScene, out var cbPost);
 
                     _cbPerMaterialCore.Update(context, ref cbCore);
                     _cbSceneEffects.Update(context, ref cbScene);
@@ -604,6 +590,9 @@ namespace ObjLoader.Rendering.Renderers
 
                     context.DrawIndexed(part.IndexCount, part.IndexOffset, 0);
                 }
+
+                for (int i = 0; i < opaqueEnd; i++) DrawPart(i);
+                for (int i = opaqueEnd; i < partTotal; i++) DrawPart(i);
             }
 
             context.PSSetShaderResources(0, 1, _nullSrv1);

@@ -62,7 +62,7 @@ namespace ObjLoader.Settings
         public PluginSettingsMemento CreateMemento()
         {
             EnsureWorlds();
-            
+
             List<WorldParameter> clonedWorlds;
             lock (_worldParametersLock)
             {

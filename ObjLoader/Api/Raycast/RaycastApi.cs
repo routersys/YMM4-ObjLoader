@@ -1,8 +1,8 @@
-using System.Numerics;
 using ObjLoader.Api.Core;
 using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Services.Layers;
+using System.Numerics;
 
 namespace ObjLoader.Api.Raycast
 {

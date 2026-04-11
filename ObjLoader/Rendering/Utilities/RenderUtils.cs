@@ -1,6 +1,6 @@
-﻿using System.Numerics;
-using ObjLoader.Rendering.Core.States;
+﻿using ObjLoader.Rendering.Core.States;
 using ObjLoader.Settings;
+using System.Numerics;
 
 namespace ObjLoader.Rendering.Utilities
 {

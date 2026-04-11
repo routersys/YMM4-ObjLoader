@@ -102,7 +102,8 @@ namespace ObjLoader.Parsers
             var pSort = new int[totalV];
             for (int i = 0; i < totalV; i++) pSort[i] = i;
 
-            Array.Sort(pSort, (a, b) => {
+            Array.Sort(pSort, (a, b) =>
+            {
                 var va = rawPositions[a];
                 var vb = rawPositions[b];
                 int c = va.X.CompareTo(vb.X);

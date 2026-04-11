@@ -1,9 +1,9 @@
-﻿using System.Buffers;
+﻿using ObjLoader.Localization;
+using ObjLoader.Utilities;
+using System.Buffers;
 using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ObjLoader.Localization;
-using ObjLoader.Utilities;
 
 namespace ObjLoader.Services.Textures.Loaders
 {

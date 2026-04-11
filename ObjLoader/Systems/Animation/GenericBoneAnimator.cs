@@ -1,9 +1,9 @@
-﻿using System.Numerics;
-using System.Runtime.CompilerServices;
-using ObjLoader.Services.Mmd.Animation.Interfaces;
+﻿using ObjLoader.Services.Mmd.Animation.Interfaces;
 using ObjLoader.Services.Mmd.Physics.Interfaces;
 using ObjLoader.Systems.MathUtils;
 using ObjLoader.Systems.Models;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace ObjLoader.Systems.Animation
 {

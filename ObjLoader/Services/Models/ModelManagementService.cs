@@ -1,13 +1,15 @@
-using ObjLoader.Cache.Gpu;
+﻿using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Models;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Infrastructure;
 using ObjLoader.Localization;
 using ObjLoader.Parsers;
+using ObjLoader.Rendering.Mathematics;
 using ObjLoader.Services.Rendering;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
+using ObjLoader.Utilities.Logging;
 using ObjLoader.ViewModels.Splitter;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -15,8 +17,6 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using Vortice.Direct3D11;
 using Vector3 = System.Numerics.Vector3;
-using ObjLoader.Utilities.Logging;
-using ObjLoader.Rendering.Mathematics;
 
 namespace ObjLoader.Services.Models
 {
@@ -127,7 +127,13 @@ namespace ObjLoader.Services.Models
                     return result;
                 }
 
-                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, globalBox, gpuBytes);
+                int opaquePartCount = 0;
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    if (parts[i].BaseColor.W >= 1.0f) opaquePartCount++;
+                }
+
+                result.Resource = new GpuResourceCacheItem(renderService.Device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, globalBox, opaquePartCount, gpuBytes);
 
                 if (!string.IsNullOrEmpty(_lastTrackingKey))
                 {

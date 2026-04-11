@@ -1,6 +1,6 @@
-using System.Numerics;
 using ObjLoader.Api.Core;
 using ObjLoader.Plugin;
+using System.Numerics;
 
 namespace ObjLoader.Api.Camera
 {

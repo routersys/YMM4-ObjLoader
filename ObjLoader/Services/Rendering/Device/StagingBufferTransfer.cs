@@ -1,8 +1,8 @@
+using ObjLoader.Utilities.Logging;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
-using ObjLoader.Utilities.Logging;
 
 namespace ObjLoader.Services.Rendering.Device;
 

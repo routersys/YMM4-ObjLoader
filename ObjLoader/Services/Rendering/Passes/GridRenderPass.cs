@@ -1,9 +1,9 @@
+using ObjLoader.Rendering.Core;
+using ObjLoader.Rendering.Core.Buffers;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.Mathematics;
-using ObjLoader.Rendering.Core;
 using Matrix4x4 = System.Numerics.Matrix4x4;
-using ObjLoader.Rendering.Core.Buffers;
 
 namespace ObjLoader.Services.Rendering.Passes;
 

@@ -1,7 +1,7 @@
-using System.Numerics;
 using ObjLoader.Api.Core;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Services.Layers;
+using System.Numerics;
 
 namespace ObjLoader.Api.Objects
 {

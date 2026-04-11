@@ -1,9 +1,9 @@
-using System.Runtime.CompilerServices;
-using Vortice.Direct3D;
-using Vortice.Direct3D11;
 using ObjLoader.Core.Models;
 using ObjLoader.Rendering.Core;
 using ObjLoader.Settings;
+using System.Runtime.CompilerServices;
+using Vortice.Direct3D;
+using Vortice.Direct3D11;
 using Vortice.DXGI;
 
 namespace ObjLoader.Services.Rendering.Passes;

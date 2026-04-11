@@ -1,6 +1,6 @@
-using System.Numerics;
 using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Timeline;
+using System.Numerics;
 
 namespace ObjLoader.Services.Rendering.Scene;
 

@@ -1,9 +1,9 @@
-using System.Windows.Input;
-using YukkuriMovieMaker.Commons;
+using ObjLoader.Cache.Core;
 using ObjLoader.Localization;
 using ObjLoader.Utilities;
-using ObjLoader.Cache.Core;
 using ObjLoader.Utilities.Logging;
+using System.Windows.Input;
+using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.ViewModels.Settings
 {
@@ -77,7 +77,7 @@ namespace ObjLoader.ViewModels.Settings
                 {
                     bool targetSplit = !IsSplit;
                     CacheManager.ConvertCache(OriginalPath, targetSplit);
-                    
+
                     IsSplit = targetSplit;
 
                     var index = ObjLoader.Settings.ModelSettings.Instance.GetCacheIndex();

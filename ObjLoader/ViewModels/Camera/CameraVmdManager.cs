@@ -1,12 +1,12 @@
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Numerics;
 using Microsoft.Win32;
 using ObjLoader.Localization;
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
 using ObjLoader.Services.Mmd.Animation;
 using ObjLoader.Services.Mmd.Parsers;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Numerics;
 
 namespace ObjLoader.ViewModels.Camera;
 

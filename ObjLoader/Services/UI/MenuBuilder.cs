@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using System.Reflection;
-using System.Windows.Shapes;
-using System.Windows.Media;
-using ObjLoader.Attributes;
+﻿using ObjLoader.Attributes;
 using ObjLoader.ViewModels.Common;
+using System.Collections.ObjectModel;
+using System.Reflection;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace ObjLoader.Services.UI
 {

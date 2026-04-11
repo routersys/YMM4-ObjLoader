@@ -50,7 +50,7 @@ namespace ObjLoader.Rendering.Core.Resources
         public static void Release(ID3D11Device device)
         {
             var key = device.NativePointer;
-            
+
             lock (_globalLock)
             {
                 if (!_pool.TryGetValue(key, out var entry)) return;

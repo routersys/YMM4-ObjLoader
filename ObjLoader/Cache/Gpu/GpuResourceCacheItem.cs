@@ -1,7 +1,7 @@
-using System.Numerics;
-using Vortice.Direct3D11;
 using ObjLoader.Core.Models;
 using ObjLoader.Rendering.Mathematics;
+using System.Numerics;
+using Vortice.Direct3D11;
 
 namespace ObjLoader.Cache.Gpu
 {
@@ -20,6 +20,7 @@ namespace ObjLoader.Cache.Gpu
         public float ModelScale { get; }
         public CullingBox LocalBoundingBox { get; }
         public long EstimatedGpuBytes { get; }
+        public int OpaquePartCount { get; }
 
         public GpuResourceCacheItem(
             ID3D11Device device,
@@ -31,6 +32,7 @@ namespace ObjLoader.Cache.Gpu
             Vector3 center,
             float scale,
             CullingBox localBoundingBox,
+            int opaquePartCount,
             long estimatedGpuBytes = 0)
         {
             Device = device ?? throw new ArgumentNullException(nameof(device));
@@ -42,6 +44,7 @@ namespace ObjLoader.Cache.Gpu
             ModelCenter = center;
             ModelScale = scale;
             LocalBoundingBox = localBoundingBox;
+            OpaquePartCount = opaquePartCount;
             EstimatedGpuBytes = estimatedGpuBytes;
         }
 

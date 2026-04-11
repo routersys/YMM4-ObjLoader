@@ -1,6 +1,6 @@
+using ObjLoader.Utilities.Logging;
 using System.IO;
 using System.Runtime.InteropServices;
-using ObjLoader.Utilities.Logging;
 
 namespace ObjLoader.Cache.Storage
 {

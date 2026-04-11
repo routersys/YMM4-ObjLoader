@@ -1,15 +1,15 @@
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using ObjLoader.Api.Draw;
 using ObjLoader.Core.Models;
 using ObjLoader.Rendering.Core;
+using ObjLoader.Rendering.Core.Buffers;
+using ObjLoader.Rendering.Core.Resources;
 using ObjLoader.Rendering.Managers.Interfaces;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
 using Vortice.Mathematics;
-using Vortice.Direct3D;
-using ObjLoader.Rendering.Core.Buffers;
-using ObjLoader.Rendering.Core.Resources;
 
 namespace ObjLoader.Rendering.Renderers
 {

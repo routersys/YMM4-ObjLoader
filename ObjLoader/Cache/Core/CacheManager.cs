@@ -1,8 +1,8 @@
-using System.IO;
 using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
 using ObjLoader.Utilities.Logging;
+using System.IO;
 
 namespace ObjLoader.Cache.Core
 {

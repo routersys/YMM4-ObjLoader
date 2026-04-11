@@ -1,6 +1,6 @@
-using System.Numerics;
 using ObjLoader.Rendering.Mathematics;
 using System.Buffers;
+using System.Numerics;
 
 namespace ObjLoader.Services.Rendering.Spatial;
 
@@ -11,7 +11,7 @@ internal class Octree
     private bool[] _disableCulling = Array.Empty<bool>();
     private const int MaxItems = 16;
     private const int MaxDepth = 6;
-    
+
     private readonly Stack<OctreeNode> _nodePool = new Stack<OctreeNode>(256);
 
     public Octree()
@@ -115,7 +115,7 @@ internal class Octree
 
         int[] oldIndices = node.ItemIndices;
         int oldCount = node.ItemCount;
-        
+
         node.ItemIndices = Array.Empty<int>();
         node.ItemCount = 0;
 
@@ -137,7 +137,7 @@ internal class Octree
                 node.AddIndex(index);
             }
         }
-        
+
         if (oldIndices.Length > 0)
         {
             ArrayPool<int>.Shared.Return(oldIndices);

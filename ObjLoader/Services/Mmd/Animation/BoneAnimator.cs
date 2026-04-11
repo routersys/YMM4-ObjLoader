@@ -1,11 +1,11 @@
-using System.Numerics;
 using ObjLoader.Core.Mmd;
-using ObjLoader.Services.Mmd.Parsers;
-using ObjLoader.Services.Mmd.Physics;
 using ObjLoader.Services.Mmd.Adapters;
 using ObjLoader.Services.Mmd.Animation.Interfaces;
+using ObjLoader.Services.Mmd.Parsers;
+using ObjLoader.Services.Mmd.Physics;
 using ObjLoader.Services.Mmd.Physics.Interfaces;
 using ObjLoader.Systems.Animation;
+using System.Numerics;
 
 namespace ObjLoader.Services.Mmd.Animation
 {

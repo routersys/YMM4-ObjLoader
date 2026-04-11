@@ -1,5 +1,5 @@
-﻿using System.Collections.Concurrent;
-using ObjLoader.Utilities.Logging;
+﻿using ObjLoader.Utilities.Logging;
+using System.Collections.Concurrent;
 
 namespace ObjLoader.Infrastructure
 {

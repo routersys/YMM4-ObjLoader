@@ -1,9 +1,9 @@
-using System.Numerics;
-using Vortice.Direct3D11;
-using ObjLoader.Rendering.Renderers;
-using ObjLoader.Services.Rendering.Device;
 using ObjLoader.Rendering.Core.Buffers;
 using ObjLoader.Rendering.Core.Resources;
+using ObjLoader.Rendering.Renderers;
+using ObjLoader.Services.Rendering.Device;
+using System.Numerics;
+using Vortice.Direct3D11;
 
 namespace ObjLoader.Services.Rendering.Passes;
 

@@ -1,10 +1,10 @@
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using ObjLoader.Core.Mmd;
 using ObjLoader.Core.Models;
 using ObjLoader.Plugin.CameraAnimation;
 using ObjLoader.Services.Mmd.Animation.Interfaces;
 using ObjLoader.Services.Mmd.Parsers;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace ObjLoader.Services.Mmd.Animation;
 

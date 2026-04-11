@@ -1,12 +1,12 @@
-﻿using System.IO;
-using System.Reflection;
-using ObjLoader.Cache.Core;
+﻿using ObjLoader.Cache.Core;
 using ObjLoader.Cache.Streaming;
 using ObjLoader.Core.Interfaces;
 using ObjLoader.Core.Models;
 using ObjLoader.Localization;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
+using System.IO;
+using System.Reflection;
 
 namespace ObjLoader.Parsers
 {

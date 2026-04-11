@@ -1,7 +1,6 @@
 ﻿using ObjLoader.Attributes;
 using ObjLoader.Core.Interfaces;
 using ObjLoader.Core.Models;
-using System.Buffers;
 using System.Globalization;
 using System.IO;
 using System.Numerics;

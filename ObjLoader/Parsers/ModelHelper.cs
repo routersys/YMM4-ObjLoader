@@ -1,5 +1,5 @@
-using System.Numerics;
 using ObjLoader.Core.Models;
+using System.Numerics;
 
 namespace ObjLoader.Parsers
 {

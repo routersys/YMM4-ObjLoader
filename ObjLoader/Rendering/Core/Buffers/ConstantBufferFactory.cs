@@ -1,6 +1,6 @@
+using ObjLoader.Settings;
 using System.Numerics;
 using System.Windows.Media;
-using ObjLoader.Settings;
 
 namespace ObjLoader.Rendering.Core.Buffers
 {

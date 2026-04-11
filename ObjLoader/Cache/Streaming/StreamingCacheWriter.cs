@@ -1,8 +1,8 @@
+using ObjLoader.Cache.Core;
+using ObjLoader.Core.Models;
 using System.IO;
 using System.Numerics;
 using System.Text;
-using ObjLoader.Cache.Core;
-using ObjLoader.Core.Models;
 
 namespace ObjLoader.Cache.Streaming
 {

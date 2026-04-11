@@ -1,8 +1,8 @@
-using System.Numerics;
 using ObjLoader.Core.Mmd;
 using ObjLoader.Services.Mmd.Adapters;
 using ObjLoader.Services.Mmd.Physics.Interfaces;
 using ObjLoader.Systems.Physics;
+using System.Numerics;
 
 namespace ObjLoader.Services.Mmd.Physics;
 

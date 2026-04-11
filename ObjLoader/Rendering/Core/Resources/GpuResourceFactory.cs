@@ -1,13 +1,13 @@
-using System.IO;
-using System.Runtime.CompilerServices;
 using ObjLoader.Cache.Gpu;
 using ObjLoader.Core.Models;
 using ObjLoader.Localization;
+using ObjLoader.Rendering.Mathematics;
 using ObjLoader.Services.Textures;
 using ObjLoader.Settings;
 using ObjLoader.Utilities;
+using System.IO;
+using System.Runtime.CompilerServices;
 using Vortice.Direct3D11;
-using ObjLoader.Rendering.Mathematics;
 
 
 namespace ObjLoader.Rendering.Core.Resources;
@@ -91,7 +91,9 @@ internal sealed class GpuResourceFactory(Func<ID3D11Device?> deviceProvider, ITe
                 return null;
             }
 
-            var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, globalBox, gpuBytes);
+            int opaquePartCount = StablePartitionOpaqueFirst(parts, partTextures);
+
+            var item = new GpuResourceCacheItem(device, vb, ib, model.Indices.Length, parts, partTextures, model.ModelCenter, model.ModelScale, globalBox, opaquePartCount, gpuBytes);
             string cacheKey = GetCacheKey(filePath);
             GpuResourceCache.Instance.AddOrUpdate(cacheKey, item);
             success = true;
@@ -113,6 +115,39 @@ internal sealed class GpuResourceFactory(Func<ID3D11Device?> deviceProvider, ITe
                 SafeDispose(vb);
             }
         }
+    }
+
+    private static int StablePartitionOpaqueFirst(ModelPart[] parts, ID3D11ShaderResourceView?[] textures)
+    {
+        int n = parts.Length;
+        var opaqueP = new ModelPart[n];
+        var transP = new ModelPart[n];
+        var opaqueT = new ID3D11ShaderResourceView?[n];
+        var transT = new ID3D11ShaderResourceView?[n];
+
+        int oc = 0, tc = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (parts[i].BaseColor.W >= 1.0f)
+            {
+                opaqueP[oc] = parts[i];
+                opaqueT[oc] = textures[i];
+                oc++;
+            }
+            else
+            {
+                transP[tc] = parts[i];
+                transT[tc] = textures[i];
+                tc++;
+            }
+        }
+
+        Array.Copy(opaqueP, 0, parts, 0, oc);
+        Array.Copy(transP, 0, parts, oc, tc);
+        Array.Copy(opaqueT, 0, textures, 0, oc);
+        Array.Copy(transT, 0, textures, oc, tc);
+
+        return oc;
     }
 
     private static void SafeDispose(IDisposable? disposable)

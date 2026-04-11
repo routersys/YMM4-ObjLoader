@@ -1,6 +1,6 @@
 using ObjLoader.Core.Mmd;
-using System.Numerics;
 using ObjLoader.Rendering.Mathematics;
+using System.Numerics;
 
 namespace ObjLoader.Core.Models
 {

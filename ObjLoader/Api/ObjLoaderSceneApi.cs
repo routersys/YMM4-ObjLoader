@@ -1,4 +1,3 @@
-using System.Numerics;
 using ObjLoader.Api.Attachment;
 using ObjLoader.Api.Camera;
 using ObjLoader.Api.Core;
@@ -12,8 +11,9 @@ using ObjLoader.Api.Raycast;
 using ObjLoader.Api.Transaction;
 using ObjLoader.Plugin;
 using ObjLoader.Services.Layers;
-using Vortice.Direct3D11;
+using System.Numerics;
 using Vortice.Direct2D1;
+using Vortice.Direct3D11;
 
 namespace ObjLoader.Api
 {

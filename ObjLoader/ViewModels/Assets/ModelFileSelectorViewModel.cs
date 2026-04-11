@@ -1,16 +1,16 @@
-﻿using System.Collections.ObjectModel;
+﻿using Microsoft.Win32;
+using ObjLoader.Cache.Core;
+using ObjLoader.Localization;
+using ObjLoader.Parsers;
+using ObjLoader.Plugin;
+using ObjLoader.Settings;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows.Input;
-using Microsoft.Win32;
-using ObjLoader.Localization;
-using ObjLoader.Parsers;
-using ObjLoader.Plugin;
 using YukkuriMovieMaker.Commons;
-using ObjLoader.Settings;
-using ObjLoader.Cache.Core;
 
 namespace ObjLoader.ViewModels.Assets
 {
@@ -261,7 +261,7 @@ namespace ObjLoader.ViewModels.Assets
         private ModelFileItem? CreateItem(string path, bool isSelected, IDictionary<string, CacheIndex.CacheEntry> cacheEntries)
         {
             if (!File.Exists(path)) return null;
-            
+
             bool hasCache = File.Exists(path + ".bin") || cacheEntries.ContainsKey(path);
 
             var isThumbnailEnabled = isSelected || hasCache;

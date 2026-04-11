@@ -1,6 +1,6 @@
-﻿using ObjLoader.Localization;
+﻿using ObjLoader.Attributes;
+using ObjLoader.Localization;
 using System.Windows.Media;
-using ObjLoader.Attributes;
 
 namespace ObjLoader.Settings
 {

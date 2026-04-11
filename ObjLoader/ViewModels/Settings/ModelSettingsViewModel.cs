@@ -221,7 +221,7 @@ namespace ObjLoader.ViewModels.Settings
         public ICommand RefreshGpuCacheCommand { get; private set; } = null!;
         public ActionCommand RemoveSelectedCacheCommand { get; private set; } = null!;
         public ICommand ClearAllCacheCommand { get; private set; } = null!;
-        
+
         public ActionCommand RemoveSelectedDiskCacheCommand { get; private set; } = null!;
         public ICommand CleanUpDiskCacheCommand { get; private set; } = null!;
         public ICommand RefreshDiskCacheCommand { get; private set; } = null!;
@@ -442,7 +442,7 @@ namespace ObjLoader.ViewModels.Settings
                         LatestReport = AuditReport.Empty;
                     }
                 });
-            
+
             CopyDashboardCommand = new ActionCommand(_ => true, _ =>
             {
                 try
@@ -508,7 +508,7 @@ namespace ObjLoader.ViewModels.Settings
                 D3DResourceReleaseDelay = ModelSettings.DefaultD3DResourceReleaseDelay;
             });
         }
-        
+
         private void InitializeCacheCommands()
         {
             ClearGpuCacheCommand = new ActionCommand(_ => true, _ =>
@@ -646,10 +646,10 @@ namespace ObjLoader.ViewModels.Settings
 
                         CacheManager.MoveCache(MoveCacheOldPath, MoveCacheNewPath);
                         RefreshDiskCacheList();
-                        
+
                         MoveCacheOldPath = string.Empty;
                         MoveCacheNewPath = string.Empty;
-                        
+
                         MessageBox.Show(Texts.MoveCacheComplete, Texts.ConfirmTitle, MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                     catch { }

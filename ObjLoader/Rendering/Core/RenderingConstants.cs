@@ -1,6 +1,6 @@
-﻿using System.Numerics;
+﻿using ObjLoader.Settings;
+using System.Numerics;
 using Vortice.Mathematics;
-using ObjLoader.Settings;
 
 namespace ObjLoader.Rendering.Core
 {

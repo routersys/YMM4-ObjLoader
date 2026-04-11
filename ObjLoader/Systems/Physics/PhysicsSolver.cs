@@ -1,6 +1,6 @@
-﻿using System.Numerics;
+﻿using ObjLoader.Systems.Models;
+using System.Numerics;
 using System.Runtime.CompilerServices;
-using ObjLoader.Systems.Models;
 
 namespace ObjLoader.Systems.Physics;
 

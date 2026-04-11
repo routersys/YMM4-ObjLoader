@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace ObjLoader.Services.Layers
 {

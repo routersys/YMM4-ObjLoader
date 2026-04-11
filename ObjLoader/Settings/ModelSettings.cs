@@ -1,13 +1,13 @@
-﻿using System.IO;
+﻿using ObjLoader.Cache.Core;
 using ObjLoader.Infrastructure;
 using ObjLoader.Localization;
 using ObjLoader.Utilities;
-using ObjLoader.Views.Controls;
+using ObjLoader.Utilities.Logging;
 using ObjLoader.ViewModels.Settings;
+using ObjLoader.Views.Controls;
+using System.IO;
 using Vortice.DXGI;
 using YukkuriMovieMaker.Plugin;
-using ObjLoader.Cache.Core;
-using ObjLoader.Utilities.Logging;
 
 namespace ObjLoader.Settings
 {

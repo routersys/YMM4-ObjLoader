@@ -1,6 +1,6 @@
-using System.Collections.ObjectModel;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
+using System.Collections.ObjectModel;
 
 namespace ObjLoader.Services.Layers
 {

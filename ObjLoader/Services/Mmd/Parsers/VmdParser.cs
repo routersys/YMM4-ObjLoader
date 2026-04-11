@@ -1,7 +1,7 @@
 using System.IO;
 using System.Numerics;
-using System.Text;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace ObjLoader.Services.Mmd.Parsers
 {

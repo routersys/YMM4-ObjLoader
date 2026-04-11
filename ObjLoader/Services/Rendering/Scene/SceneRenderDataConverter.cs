@@ -1,16 +1,16 @@
-using System.IO;
 using ObjLoader.Core.Models;
 using ObjLoader.Core.Timeline;
+using ObjLoader.Parsers;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering.Managers;
 using ObjLoader.Rendering.Managers.Interfaces;
+using ObjLoader.Rendering.Mathematics;
 using ObjLoader.Services.Mmd.Animation;
 using ObjLoader.Services.Mmd.Parsers;
-using ObjLoader.Parsers;
 using ObjLoader.Utilities.Logging;
+using System.IO;
 using Vortice.Direct3D11;
 using Matrix4x4 = System.Numerics.Matrix4x4;
-using ObjLoader.Rendering.Mathematics;
 
 namespace ObjLoader.Services.Rendering.Scene;
 

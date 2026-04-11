@@ -1,5 +1,5 @@
-﻿using System.IO;
-using ObjLoader.Core.Models;
+﻿using ObjLoader.Core.Models;
+using System.IO;
 
 namespace ObjLoader.Cache.Extensions
 {

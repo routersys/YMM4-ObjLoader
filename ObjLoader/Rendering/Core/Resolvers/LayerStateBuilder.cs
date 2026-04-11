@@ -1,8 +1,8 @@
-using System.Runtime.InteropServices;
 using ObjLoader.Core.Timeline;
 using ObjLoader.Plugin;
 using ObjLoader.Rendering.Core.States;
 using ObjLoader.Settings;
+using System.Runtime.InteropServices;
 
 namespace ObjLoader.Rendering.Core.Resolvers;
 
@@ -22,9 +22,9 @@ internal sealed class LayerStateBuilder
 
     public (int ActiveWorldId, bool LayersChanged) Build(
         ObjLoaderParameter parameter,
-        long frame, 
-        long length, 
-        int fps, 
+        long frame,
+        long length,
+        int fps,
         PluginSettings settings,
         Dictionary<string, LayerState> previousStates)
     {

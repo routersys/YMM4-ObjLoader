@@ -1,8 +1,8 @@
-﻿using System.IO;
-using System.Numerics;
-using ObjLoader.Attributes;
-using ObjLoader.Core.Models;
+﻿using ObjLoader.Attributes;
 using ObjLoader.Core.Mmd;
+using ObjLoader.Core.Models;
+using System.IO;
+using System.Numerics;
 
 namespace ObjLoader.Cache.Extensions
 {
@@ -47,7 +47,7 @@ namespace ObjLoader.Cache.Extensions
                 bw.Write(b.AxisZ.Y);
                 bw.Write(b.AxisZ.Z);
                 bw.Write(b.ExportKey);
-                
+
                 if (b.IkData != null)
                 {
                     bw.Write(true);
@@ -234,7 +234,7 @@ namespace ObjLoader.Cache.Extensions
                         });
                     }
                 }
-                
+
                 model.Bones.Add(b);
             }
 
@@ -348,7 +348,7 @@ namespace ObjLoader.Cache.Extensions
                                 Index = br.ReadInt32()
                             });
                         }
-                        
+
                         model.DisplayFrames.Add(new PmxDisplayFrame
                         {
                             Name = dfName,

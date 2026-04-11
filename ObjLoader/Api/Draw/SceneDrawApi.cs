@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using ObjLoader.Api.Core;
+using System.Collections.Concurrent;
 
 namespace ObjLoader.Api.Draw
 {
