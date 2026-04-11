@@ -202,7 +202,7 @@ namespace ObjLoader.ViewModels.Assets
 
                     if (string.IsNullOrEmpty(convertedSource))
                     {
-                        HandleUnsupportedFormatError();
+                        HandleIncompatibleError();
                         return;
                     }
                 }
@@ -258,6 +258,23 @@ namespace ObjLoader.ViewModels.Assets
             {
                 HandleGeneralError(ex);
             }
+        }
+
+        private void HandleIncompatibleError()
+        {
+            DispatchUI(() =>
+            {
+                StatusColor = Brushes.Orange;
+                StatusMessage = Texts.Shader_Status_Incompatible;
+                ShortStatus = "\u26a0 " + Texts.Shader_Status_Incompatible;
+                DetailedMessage = Texts.Shader_Status_Incompatible;
+                ErrorCategory = string.Empty;
+                HasError = false;
+                LastValidationTime = DateTime.Now;
+                CodeSnippet = string.Empty;
+                ErrorLine = null;
+                ErrorColumn = null;
+            });
         }
 
         private void HandleUnsupportedFormatError()

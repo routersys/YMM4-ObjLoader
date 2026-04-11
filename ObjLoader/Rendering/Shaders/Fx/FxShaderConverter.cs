@@ -1,4 +1,4 @@
-﻿using ObjLoader.Rendering.Shaders.Interfaces;
+using ObjLoader.Rendering.Shaders.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace ObjLoader.Rendering.Shaders.Fx;
@@ -32,7 +32,7 @@ public sealed class FxShaderConverter : IShaderConverter
         var entryRenamed = RenameEntryPoints(callsFixed, properties);
         var cleaned = CollapseBlankLines(entryRenamed);
 
-        if (!ContainsVsPattern.IsMatch(cleaned) || !ContainsPsPattern.IsMatch(cleaned))
+        if (properties.IsPostEffect || !ContainsVsPattern.IsMatch(cleaned) || !ContainsPsPattern.IsMatch(cleaned))
         {
             return string.Empty;
         }

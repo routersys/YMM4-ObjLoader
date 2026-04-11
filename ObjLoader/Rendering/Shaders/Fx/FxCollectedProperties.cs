@@ -1,4 +1,4 @@
-﻿namespace ObjLoader.Rendering.Shaders.Fx;
+namespace ObjLoader.Rendering.Shaders.Fx;
 
 internal sealed class FxCollectedProperties
 {
@@ -11,6 +11,7 @@ internal sealed class FxCollectedProperties
     public string VsEntryPoint { get; internal set; } = string.Empty;
     public string PsEntryPoint { get; internal set; } = string.Empty;
     public string VsOutputType { get; internal set; } = string.Empty;
+    public bool IsPostEffect { get; internal set; }
 
     internal void AddTexture(string name, string semantic) =>
         _textures.TryAdd(name, new FxTextureInfo(name, semantic));

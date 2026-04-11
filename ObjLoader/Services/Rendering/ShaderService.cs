@@ -20,13 +20,20 @@ namespace ObjLoader.Services.Rendering
             if (!File.Exists(shaderFilePath)) return string.Empty;
             if (!ShaderConverterFactory.IsSupported(shaderFilePath)) return string.Empty;
 
-            var source = EncodingUtil.ReadAllText(shaderFilePath);
+            try
+            {
+                var source = EncodingUtil.ReadAllText(shaderFilePath);
 
-            if (ShaderConverterFactory.IsFxFormat(shaderFilePath))
-                return ConvertFxShader(source, shaderFilePath);
+                if (ShaderConverterFactory.IsFxFormat(shaderFilePath))
+                    return ConvertFxShader(source, shaderFilePath);
 
-            var converter = ShaderConverterFactory.CreateForFile(shaderFilePath);
-            return converter is null ? string.Empty : converter.Convert(source);
+                var converter = ShaderConverterFactory.CreateForFile(shaderFilePath);
+                return converter is null ? string.Empty : converter.Convert(source);
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         private static string ConvertFxShader(string source, string filePath)

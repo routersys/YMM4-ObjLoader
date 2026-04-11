@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 
 namespace ObjLoader.Rendering.Shaders.Fx;
 
@@ -114,6 +114,7 @@ internal sealed class FxPropertyCollector
             else if (RemovedTextureSemantics.Contains(tex.Semantic))
             {
                 tex.Slot = -1;
+                props.IsPostEffect = true;
             }
             else
             {
