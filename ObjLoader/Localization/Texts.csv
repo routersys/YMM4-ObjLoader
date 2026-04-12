@@ -535,3 +535,4 @@ Msg_CameraVmdLoadFailed,Message,VMDカメラモーションの読み込みに失
 Msg_CameraVmdNoCameraFrames,Message,カメラフレームが含まれていません,No camera frames found,未包含相机帧,未包含相機幀,카메라 프레임이 포함되어 있지 않습니다,No se encontraron fotogramas de cámara,لم يتم العثور على إطارات الكاميرا,Tidak ada frame kamera ditemukan,
 Msg_ModelVmdReset,Message,モデルVMDをリセットしました,Model VMD has been reset,模型VMD已重置,模型VMD已重置,모델 VMD가 재설정되었습니다,El VMD del modelo ha sido restablecido,تم إعادة تعيين VMD للنموذج,VMD model telah direset,
 Msg_CameraVmdReset,Message,カメラVMDをリセットしました,Camera VMD has been reset,相机VMD已重置,相機VMD已重置,카메라 VMD가 재설정되었습니다,El VMD de cámara ha sido restablecido,تم إعادة تعيين VMD للكاميرا,VMD kamera telah direset,
+ModelFileSelector_NoneSelected,Model File Selector,未選択,None Selected,未选择,未選擇,선택 안 함,Ninguno seleccionado,لم يتم التحديد,Tidak ada yang dipilih,

@@ -584,4 +584,5 @@
 <data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>카메라 프레임이 포함되어 있지 않습니다</value></data>
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>모델 VMD가 재설정되었습니다</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>카메라 VMD가 재설정되었습니다</value></data>
+<data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>선택 안 함</value></data>
 </root>

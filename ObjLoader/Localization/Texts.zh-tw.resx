@@ -584,4 +584,5 @@
 <data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>未包含相機幀</value></data>
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>模型VMD已重置</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>相機VMD已重置</value></data>
+<data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>未選擇</value></data>
 </root>

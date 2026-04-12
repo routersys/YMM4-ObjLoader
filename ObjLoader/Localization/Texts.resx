@@ -584,4 +584,5 @@
 <data name="Msg_CameraVmdNoCameraFrames" xml:space="preserve"><value>カメラフレームが含まれていません</value></data>
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>モデルVMDをリセットしました</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>カメラVMDをリセットしました</value></data>
+<data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>未選択</value></data>
 </root>
