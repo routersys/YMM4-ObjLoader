@@ -38,7 +38,7 @@ namespace ObjLoader.Plugin
         private readonly StringBuilder _layerIdBuilder = new StringBuilder();
         private bool _isEnsuringLayers = false;
 
-        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Setting), Description = nameof(Texts.Setting_Desc), ResourceType = typeof(Texts))]
         [ItemSettingButton(PropertyEditorSize = PropertyEditorSize.FullWidth)]
         [IgnoreDataMember]
         public ObjLoaderParameter Self => this;
@@ -80,59 +80,59 @@ namespace ObjLoader.Plugin
             }
         } = string.Empty;
 
-        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.BaseColor), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.BaseColor), Description = nameof(Texts.BaseColor_Desc), ResourceType = typeof(Texts))]
         [ColorPicker]
         public Color BaseColor { get; set => Set(ref field, value); } = Colors.White;
 
-        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Projection), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Model), Name = nameof(Texts.Projection), Description = nameof(Texts.Projection_Desc), ResourceType = typeof(Texts))]
         [EnumComboBox]
         public ProjectionType Projection { get; set => Set(ref field, value); } = ProjectionType.Parallel;
 
-        [Display(GroupName = nameof(Texts.Group_Display), Name = nameof(Texts.ScreenWidth), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Display), Name = nameof(Texts.ScreenWidth), Description = nameof(Texts.ScreenWidth_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F0", "px", 1, 4096)]
         public Animation ScreenWidth { get; } = new Animation(1920, 1, 8192);
 
-        [Display(GroupName = nameof(Texts.Group_Display), Name = nameof(Texts.ScreenHeight), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Display), Name = nameof(Texts.ScreenHeight), Description = nameof(Texts.ScreenHeight_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F0", "px", 1, 4096)]
         public Animation ScreenHeight { get; } = new Animation(1080, 1, 8192);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.X), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.X), Description = nameof(Texts.X_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation X { get; } = new Animation(0, -100000, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Y), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Y), Description = nameof(Texts.Y_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation Y { get; } = new Animation(0, -100000, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Z), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Z), Description = nameof(Texts.Z_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation Z { get; } = new Animation(0, -100000, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Fov), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Fov), Description = nameof(Texts.Fov_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F0", "°", 1, 179)]
         public Animation Fov { get; } = new Animation(45, 1, 179);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Scale), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.Scale), Description = nameof(Texts.Scale_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "%", 0, 5000)]
         public Animation Scale { get; } = new Animation(100, 0, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.RotationX), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.RotationX), Description = nameof(Texts.RotationX_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "°", -360, 360)]
         public Animation RotationX { get; } = new Animation(0, -36000, 36000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.RotationY), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.RotationY), Description = nameof(Texts.RotationY_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "°", -360, 360)]
         public Animation RotationY { get; } = new Animation(0, -36000, 36000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.RotationZ), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.RotationZ), Description = nameof(Texts.RotationZ_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "°", -360, 360)]
         public Animation RotationZ { get; } = new Animation(0, -36000, 36000);
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.ResetTrigger), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.ResetTrigger), Description = nameof(Texts.ResetTrigger_Desc), ResourceType = typeof(Texts))]
         [Reset3DTransformButton]
         public bool ResetTrigger { get; set => Set(ref field, value); }
 
-        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.OpenCameraWindow), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Placement), Name = nameof(Texts.OpenCameraWindow), Description = nameof(Texts.OpenCameraWindow_Desc), ResourceType = typeof(Texts))]
         [CameraWindowButton]
         public bool IsCameraWindowOpen2 { get; set => Set(ref field, value); }
 
@@ -143,27 +143,27 @@ namespace ObjLoader.Plugin
         public Animation TargetY { get; } = new Animation(0, -100000, 100000);
         public Animation TargetZ { get; } = new Animation(0, -100000, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.WorldId), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.WorldId), Description = nameof(Texts.WorldId_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F0", "", 0, 19)]
         public Animation WorldId { get; } = new Animation(0, 0, 19);
 
-        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.IsLightEnabled), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.IsLightEnabled), Description = nameof(Texts.IsLightEnabled_Desc), ResourceType = typeof(Texts))]
         [ToggleSlider]
         public bool IsLightEnabled { get; set => Set(ref field, value); } = false;
 
-        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightType), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightType), Description = nameof(Texts.LightType_Desc), ResourceType = typeof(Texts))]
         [EnumComboBox]
         public LightType LightType { get; set => Set(ref field, value); } = LightType.Point;
 
-        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightX), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightX), Description = nameof(Texts.LightX_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation LightX { get; } = new Animation(0, -100000, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightY), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightY), Description = nameof(Texts.LightY_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation LightY { get; } = new Animation(0, -100000, 100000);
 
-        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightZ), ResourceType = typeof(Texts))]
+        [Display(GroupName = nameof(Texts.Group_Light), Name = nameof(Texts.LightZ), Description = nameof(Texts.LightZ_Desc), ResourceType = typeof(Texts))]
         [AnimationSlider("F1", "px", -1000, 1000)]
         public Animation LightZ { get; } = new Animation(-100, -100000, 100000);
 

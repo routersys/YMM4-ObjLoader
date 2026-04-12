@@ -585,4 +585,24 @@
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>모델 VMD가 재설정되었습니다</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>카메라 VMD가 재설정되었습니다</value></data>
 <data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>선택 안 함</value></data>
+<data name="Setting_Desc" xml:space="preserve"><value>모델의 레이어 및 재질 등 자세한 설정을 구성합니다.</value></data>
+<data name="BaseColor_Desc" xml:space="preserve"><value>모델의 기본 색상을 설정합니다.</value></data>
+<data name="Projection_Desc" xml:space="preserve"><value>카메라 투영 방법(평행/원근)을 설정합니다.</value></data>
+<data name="ScreenWidth_Desc" xml:space="preserve"><value>렌더링 대상의 화면 너비를 설정합니다.</value></data>
+<data name="ScreenHeight_Desc" xml:space="preserve"><value>렌더링 대상의 화면 높이를 설정합니다.</value></data>
+<data name="X_Desc" xml:space="preserve"><value>모델의 X 좌표(가로 방향) 위치를 설정합니다.</value></data>
+<data name="Y_Desc" xml:space="preserve"><value>모델의 Y 좌표(세로 방향) 위치를 설정합니다.</value></data>
+<data name="Z_Desc" xml:space="preserve"><value>모델의 Z 좌표(깊이 방향) 위치를 설정합니다.</value></data>
+<data name="Fov_Desc" xml:space="preserve"><value>카메라의 시야각을 설정합니다 (원근 투영만 해당).</value></data>
+<data name="Scale_Desc" xml:space="preserve"><value>모델의 표시 비율을 설정합니다.</value></data>
+<data name="RotationX_Desc" xml:space="preserve"><value>X축 기준(세로 방향)의 회전 각도를 설정합니다.</value></data>
+<data name="RotationY_Desc" xml:space="preserve"><value>Y축 기준(가로 방향)의 회전 각도를 설정합니다.</value></data>
+<data name="RotationZ_Desc" xml:space="preserve"><value>Z축 기준(평면 방향)의 회전 각도를 설정합니다.</value></data>
+<data name="ResetTrigger_Desc" xml:space="preserve"><value>重置模型的变换（位置、旋转、缩放）。</value></data>
+<data name="OpenCameraWindow_Desc" xml:space="preserve"><value>카메라 위치를 시각적으로 조정하는 창을 엽니다.</value></data>
+<data name="IsLightEnabled_Desc" xml:space="preserve"><value>광원을 활성화하고 모델에 빛을 비춥니다.</value></data>
+<data name="LightType_Desc" xml:space="preserve"><value>Area</value></data>
+<data name="LightX_Desc" xml:space="preserve"><value>광원의 X 좌표(가로 방향) 위치를 설정합니다.</value></data>
+<data name="LightY_Desc" xml:space="preserve"><value>광원의 Y 좌표(세로 방향) 위치를 설정합니다.</value></data>
+<data name="LightZ_Desc" xml:space="preserve"><value>광원의 Z 좌표(깊이 방향) 위치를 설정합니다.</value></data>
 </root>

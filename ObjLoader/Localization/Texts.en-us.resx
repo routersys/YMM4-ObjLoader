@@ -585,4 +585,24 @@
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>Model VMD has been reset</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>Camera VMD has been reset</value></data>
 <data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>None Selected</value></data>
+<data name="Setting_Desc" xml:space="preserve"><value>Configures detailed settings such as model layers and materials.</value></data>
+<data name="BaseColor_Desc" xml:space="preserve"><value>Sets the base color of the model.</value></data>
+<data name="Projection_Desc" xml:space="preserve"><value>Sets the camera projection method (parallel/perspective).</value></data>
+<data name="ScreenWidth_Desc" xml:space="preserve"><value>Sets the screen width of the rendering target.</value></data>
+<data name="ScreenHeight_Desc" xml:space="preserve"><value>Sets the screen height of the rendering target.</value></data>
+<data name="X_Desc" xml:space="preserve"><value>Sets the X coordinate (horizontal) position of the model.</value></data>
+<data name="Y_Desc" xml:space="preserve"><value>Sets the Y coordinate (vertical) position of the model.</value></data>
+<data name="Z_Desc" xml:space="preserve"><value>Sets the Z coordinate (depth) position of the model.</value></data>
+<data name="Fov_Desc" xml:space="preserve"><value>Sets the field of view of the camera (Persp. only).</value></data>
+<data name="Scale_Desc" xml:space="preserve"><value>Sets the display scale of the model.</value></data>
+<data name="RotationX_Desc" xml:space="preserve"><value>Sets the rotation angle around the X-axis (pitch).</value></data>
+<data name="RotationY_Desc" xml:space="preserve"><value>Sets the rotation angle around the Y-axis (yaw).</value></data>
+<data name="RotationZ_Desc" xml:space="preserve"><value>Sets the rotation angle around the Z-axis (roll).</value></data>
+<data name="ResetTrigger_Desc" xml:space="preserve"><value>Resets the model's transforms (position</value></data>
+<data name="OpenCameraWindow_Desc" xml:space="preserve"><value>Opens a window to visually adjust the camera position.</value></data>
+<data name="IsLightEnabled_Desc" xml:space="preserve"><value>Enables the light source to illuminate the model.</value></data>
+<data name="LightType_Desc" xml:space="preserve"><value>Sets the type of light source (Point</value></data>
+<data name="LightX_Desc" xml:space="preserve"><value>Sets the X coordinate (horizontal) position of the light.</value></data>
+<data name="LightY_Desc" xml:space="preserve"><value>Sets the Y coordinate (vertical) position of the light.</value></data>
+<data name="LightZ_Desc" xml:space="preserve"><value>Sets the Z coordinate (depth) position of the light.</value></data>
 </root>

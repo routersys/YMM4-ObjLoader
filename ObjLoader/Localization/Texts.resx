@@ -585,4 +585,24 @@
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>モデルVMDをリセットしました</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>カメラVMDをリセットしました</value></data>
 <data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>未選択</value></data>
+<data name="Setting_Desc" xml:space="preserve"><value>モデルのレイヤーやマテリアルなどの詳細な設定を行います。</value></data>
+<data name="BaseColor_Desc" xml:space="preserve"><value>モデルの基本となる色を設定します。</value></data>
+<data name="Projection_Desc" xml:space="preserve"><value>カメラの投影方法（平行投影・透視投影）を設定します。</value></data>
+<data name="ScreenWidth_Desc" xml:space="preserve"><value>描画先の画面幅を設定します。</value></data>
+<data name="ScreenHeight_Desc" xml:space="preserve"><value>描画先の画面高さを設定します。</value></data>
+<data name="X_Desc" xml:space="preserve"><value>モデルのX座標（横方向）の位置を設定します。</value></data>
+<data name="Y_Desc" xml:space="preserve"><value>モデルのY座標（縦方向）の位置を設定します。</value></data>
+<data name="Z_Desc" xml:space="preserve"><value>モデルのZ座標（奥方向）の位置を設定します。</value></data>
+<data name="Fov_Desc" xml:space="preserve"><value>カメラの視野角を設定します。（透視投影時のみ有効）</value></data>
+<data name="Scale_Desc" xml:space="preserve"><value>モデルの表示スケールを設定します。</value></data>
+<data name="RotationX_Desc" xml:space="preserve"><value>モデルのX軸周り（縦方向）の回転角度を設定します。</value></data>
+<data name="RotationY_Desc" xml:space="preserve"><value>モデルのY軸周り（横方向）の回転角度を設定します。</value></data>
+<data name="RotationZ_Desc" xml:space="preserve"><value>モデルのZ軸周り（平面方向）の回転角度を設定します。</value></data>
+<data name="ResetTrigger_Desc" xml:space="preserve"><value>モデルのトランスフォーム（位置・回転・スケール）を初期化します。</value></data>
+<data name="OpenCameraWindow_Desc" xml:space="preserve"><value>カメラ位置を視覚的に調整するウィンドウを開きます。</value></data>
+<data name="IsLightEnabled_Desc" xml:space="preserve"><value>光源を有効にし、モデルに光を当てます。</value></data>
+<data name="LightType_Desc" xml:space="preserve"><value>光源の種類（ポイント、スポット、サン、エリアなど）を設定します。</value></data>
+<data name="LightX_Desc" xml:space="preserve"><value>光源のX座標（横方向）の位置を設定します。</value></data>
+<data name="LightY_Desc" xml:space="preserve"><value>光源のY座標（縦方向）の位置を設定します。</value></data>
+<data name="LightZ_Desc" xml:space="preserve"><value>光源のZ座標（奥方向）の位置を設定します。</value></data>
 </root>

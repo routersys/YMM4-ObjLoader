@@ -585,4 +585,24 @@
 <data name="Msg_ModelVmdReset" xml:space="preserve"><value>تم إعادة تعيين VMD للنموذج</value></data>
 <data name="Msg_CameraVmdReset" xml:space="preserve"><value>تم إعادة تعيين VMD للكاميرا</value></data>
 <data name="ModelFileSelector_NoneSelected" xml:space="preserve"><value>لم يتم التحديد</value></data>
+<data name="Setting_Desc" xml:space="preserve"><value>تكوين الإعدادات التفصيلية مثل طبقات النموذج والمواد.</value></data>
+<data name="BaseColor_Desc" xml:space="preserve"><value>تعيين اللون الأساسي للنموذج.</value></data>
+<data name="Projection_Desc" xml:space="preserve"><value>تحديد طريقة إسقاط الكاميرا (متوازي/منظور).</value></data>
+<data name="ScreenWidth_Desc" xml:space="preserve"><value>تعيين عرض شاشة هدف التصيير.</value></data>
+<data name="ScreenHeight_Desc" xml:space="preserve"><value>تعيين ارتفاع شاشة هدف التصيير.</value></data>
+<data name="X_Desc" xml:space="preserve"><value>تعيين موضع إحداثي س (أفقي) للنموذج.</value></data>
+<data name="Y_Desc" xml:space="preserve"><value>تعيين موضع إحداثي ص (عمودي) للنموذج.</value></data>
+<data name="Z_Desc" xml:space="preserve"><value>تعيين موضع إحداثي ع (العمق) للنموذج.</value></data>
+<data name="Fov_Desc" xml:space="preserve"><value>تعيين مجال رؤية الكاميرا (المنظور فقط).</value></data>
+<data name="Scale_Desc" xml:space="preserve"><value>تعيين مقياس عرض النموذج.</value></data>
+<data name="RotationX_Desc" xml:space="preserve"><value>تعيين زاوية الدوران حول محور س (درجة الميل).</value></data>
+<data name="RotationY_Desc" xml:space="preserve"><value>تعيين زاوية الدوران حول محور ص (الانعراج).</value></data>
+<data name="RotationZ_Desc" xml:space="preserve"><value>تعيين زاوية الدوران حول محور ع (الالتفاف).</value></data>
+<data name="ResetTrigger_Desc" xml:space="preserve"><value>모델의 트랜스폼(위치</value></data>
+<data name="OpenCameraWindow_Desc" xml:space="preserve"><value>يفتح نافذة لضبط موضع الكاميرا بصريًا.</value></data>
+<data name="IsLightEnabled_Desc" xml:space="preserve"><value>يفعل مصدر الضوء لإضاءة النموذج.</value></data>
+<data name="LightType_Desc" xml:space="preserve"><value>设置光源类型（点光、聚光、太阳光、面光等）。</value></data>
+<data name="LightX_Desc" xml:space="preserve"><value>تعيين موضع إحداثي س (أفقي) للضوء.</value></data>
+<data name="LightY_Desc" xml:space="preserve"><value>تعيين موضع إحداثي ص (عمودي) للضوء.</value></data>
+<data name="LightZ_Desc" xml:space="preserve"><value>تعيين موضع إحداثي ع (العمق) للضوء.</value></data>
 </root>
