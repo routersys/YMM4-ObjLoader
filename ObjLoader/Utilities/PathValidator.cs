@@ -1,10 +1,10 @@
-﻿using System.IO;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace ObjLoader.Utilities
 {
-    public static class PathValidator
+    public static partial class PathValidator
     {
         private static readonly HashSet<string> AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -23,20 +23,18 @@ namespace ObjLoader.Utilities
             "LPT0", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
         };
 
-        private static readonly Regex TraversalPattern = new Regex(
-            @"(^|[\\/])\.\.($|[\\/])",
-            RegexOptions.Compiled);
+        [GeneratedRegex(@"(^|[\\/])\.\.($|[\\/])", RegexOptions.Compiled)]
+        private static partial Regex TraversalPattern();
 
-        private static readonly Regex NullBytePattern = new Regex(
-            @"\x00",
-            RegexOptions.Compiled);
+        [GeneratedRegex(@"\x00", RegexOptions.Compiled)]
+        private static partial Regex NullBytePattern();
 
         public static ValidationResult Validate(string? path)
         {
             if (string.IsNullOrWhiteSpace(path))
                 return ValidationResult.Fail("Path is null or empty.");
 
-            if (NullBytePattern.IsMatch(path))
+            if (NullBytePattern().IsMatch(path))
                 return ValidationResult.Fail("Path contains null bytes.");
 
             if (path.Length > 32767)
@@ -53,7 +51,7 @@ namespace ObjLoader.Utilities
             if (IsUncPath(trimmed))
                 return ValidationResult.Fail("UNC paths are not allowed.");
 
-            if (TraversalPattern.IsMatch(trimmed))
+            if (TraversalPattern().IsMatch(trimmed))
                 return ValidationResult.Fail("Path traversal sequences detected.");
 
             string? normalized;
@@ -69,7 +67,7 @@ namespace ObjLoader.Utilities
             if (string.IsNullOrEmpty(normalized))
                 return ValidationResult.Fail("Normalized path is empty.");
 
-            if (TraversalPattern.IsMatch(normalized))
+            if (TraversalPattern().IsMatch(normalized))
                 return ValidationResult.Fail("Path traversal detected after normalization.");
 
             if (IsUncPath(normalized))

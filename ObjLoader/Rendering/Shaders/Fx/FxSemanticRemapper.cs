@@ -1,55 +1,51 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ObjLoader.Rendering.Shaders.Fx;
 
-internal sealed class FxSemanticRemapper
+internal sealed partial class FxSemanticRemapper
 {
-    private static readonly Regex StringVarPattern = new(
-        @"^\s*string\s+\w+\s*(?:=\s*(?:""[^""]*""|'[^']*'|[^;])*)?;[ \t]*$",
-        RegexOptions.Compiled | RegexOptions.Multiline);
+    [GeneratedRegex(@"^\s*string\s+\w+\s*(?:=\s*(?:""[^""]*""|'[^']*'|[^;])*)?;[ \t]*$", RegexOptions.Compiled | RegexOptions.Multiline)]
+    private static partial Regex StringVarPattern();
 
-    private static readonly Regex TextureDeclPattern = new(
-        @"(?:texture2D|texture)\s+(\w+)\s*(?::\s*\w+)?\s*;",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(?:texture2D|texture)\s+(\w+)\s*(?::\s*\w+)?\s*;", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex TextureDeclPattern();
 
-    private static readonly Regex SamplerStateDeclPattern = new(
-        @"(?:sampler2D|sampler)\s+(\w+)\s*=\s*sampler_state\s*\{[^}]*\}\s*;",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(?:sampler2D|sampler)\s+(\w+)\s*=\s*sampler_state\s*\{[^}]*\}\s*;", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex SamplerStateDeclPattern();
 
-    private static readonly Regex MatrixSemanticPattern = new(
-        @"float4x4\s+(\w+)\s*:\s*(WORLDVIEWPROJECTION|WORLDVIEW|WORLD|WORLDINVERSE|WORLDTRANSPOSE|VIEW|PROJECTION|VIEWINVERSE)\s*;",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"float4x4\s+(\w+)\s*:\s*(WORLDVIEWPROJECTION|WORLDVIEW|WORLD|WORLDINVERSE|WORLDTRANSPOSE|VIEW|PROJECTION|VIEWINVERSE)\s*;", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex MatrixSemanticPattern();
 
-    private static readonly Regex VectorSemanticWithObjectPattern = new(
-        @"(float4|float3|float2|float)\s+(\w+)\s*:\s*(DIFFUSE|AMBIENT|EMISSIVE|SPECULAR|SPECULARPOWER|TOONCOLOR|EDGECOLOR|DIRECTION|ADDINGTEXTURE|MULTIPLYINGTEXTURE|ADDINGSPHERETEXTURE|MULTIPLYINGSPHERETEXTURE)\s+<\s*string\s+Object\s*=\s*""(\w+)""\s*[^>]*>\s*;",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(float4|float3|float2|float)\s+(\w+)\s*:\s*(DIFFUSE|AMBIENT|EMISSIVE|SPECULAR|SPECULARPOWER|TOONCOLOR|EDGECOLOR|DIRECTION|ADDINGTEXTURE|MULTIPLYINGTEXTURE|ADDINGSPHERETEXTURE|MULTIPLYINGSPHERETEXTURE)\s+<\s*string\s+Object\s*=\s*""(\w+)""\s*[^>]*>\s*;", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex VectorSemanticWithObjectPattern();
 
-    private static readonly Regex VectorSemanticPattern = new(
-        @"(float4|float3|float2|float)\s+(\w+)\s*:\s*(DIFFUSE|AMBIENT|EMISSIVE|SPECULAR|SPECULARPOWER|TOONCOLOR|EDGECOLOR|DIRECTION|POSITION|ADDINGTEXTURE|MULTIPLYINGTEXTURE|ADDINGSPHERETEXTURE|MULTIPLYINGSPHERETEXTURE|VIEWPORTPIXELSIZE)\s*;",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(float4|float3|float2|float)\s+(\w+)\s*:\s*(DIFFUSE|AMBIENT|EMISSIVE|SPECULAR|SPECULARPOWER|TOONCOLOR|EDGECOLOR|DIRECTION|POSITION|ADDINGTEXTURE|MULTIPLYINGTEXTURE|ADDINGSPHERETEXTURE|MULTIPLYINGSPHERETEXTURE|VIEWPORTPIXELSIZE)\s*;", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex VectorSemanticPattern();
 
-    private static readonly Regex ControlObjectPattern = new(
-        @"(float4x4|float4|float3|float2|float|bool|int)\s+(\w+)\s*:\s*CONTROLOBJECT\s*;",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(float4x4|float4|float3|float2|float|bool|int)\s+(\w+)\s*:\s*CONTROLOBJECT\s*;", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex ControlObjectPattern();
 
-    private static readonly Regex PlainBoolFlagPattern = new(
-        @"^\s*bool\s+(use_texture|use_spheremap|use_toon|use_subtexture|parthf|transp|spadd)\s*;[ \t]*$",
-        RegexOptions.Compiled | RegexOptions.Multiline);
+    [GeneratedRegex(@"^\s*bool\s+(use_texture|use_spheremap|use_toon|use_subtexture|parthf|transp|spadd)\s*;[ \t]*$", RegexOptions.Compiled | RegexOptions.Multiline)]
+    private static partial Regex PlainBoolFlagPattern();
 
-    private static readonly Regex SharedModifierPattern = new(@"\bshared\s+", RegexOptions.Compiled);
-    private static readonly Regex InlineModifierPattern = new(@"\binline\s+", RegexOptions.Compiled);
-    private static readonly Regex AnyStringStatementPattern = new(
-        @"\bstring\b[^;\n]*;",
-        RegexOptions.Compiled);
+    [GeneratedRegex(@"\bshared\s+", RegexOptions.Compiled)]
+    private static partial Regex SharedModifierPattern();
 
-    private static readonly Regex OutputColorSemanticPattern = new(
-        @"\)\s*:\s*COLOR\d*\b",
-        RegexOptions.Compiled);
+    [GeneratedRegex(@"\binline\s+", RegexOptions.Compiled)]
+    private static partial Regex InlineModifierPattern();
 
-    private static readonly Regex MmdCatchAllSemanticPattern = new(
-        @"^[ \t]*(?:float4x4|float4|float3|float2|float|bool|int)\s+\w+\s*:\s*(?:STANDARDSGLOBAL|OFFSCREENRENDERTARGET|RENDEREDRESULTTEXTURE|MOUSEPOSITION|LEFTMOUSEDOWN|RIGHTMOUSEDOWN|MIDDLEMOUSEDOWN|TIME|ELAPSEDTIME|GAMETIMERESET|SYSTIME|ELAPSEDTIMERESET|CONTROLOBJECT|WORLDVIEWPROJECTION|WORLD|VIEW|PROJECTION|DIRECTION|DIFFUSE|AMBIENT|SPECULAR|EMISSIVE|SPECULARPOWER|TOONCOLOR|EDGECOLOR|ADDINGTEXTURE|MULTIPLYINGTEXTURE|ADDINGSPHERETEXTURE|MULTIPLYINGSPHERETEXTURE|VIEWPORTPIXELSIZE|POSITION)\b[^;]*;[ \t]*$",
-        RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"\bstring\b[^;\n]*;", RegexOptions.Compiled)]
+    private static partial Regex AnyStringStatementPattern();
+
+    [GeneratedRegex(@"\)\s*:\s*COLOR\d*\b", RegexOptions.Compiled)]
+    private static partial Regex OutputColorSemanticPattern();
+
+    [GeneratedRegex(@"^[ \t]*(?:float4x4|float4|float3|float2|float|bool|int)\s+\w+\s*:\s*(?:STANDARDSGLOBAL|OFFSCREENRENDERTARGET|RENDEREDRESULTTEXTURE|MOUSEPOSITION|LEFTMOUSEDOWN|RIGHTMOUSEDOWN|MIDDLEMOUSEDOWN|TIME|ELAPSEDTIME|GAMETIMERESET|SYSTIME|ELAPSEDTIMERESET|CONTROLOBJECT|WORLDVIEWPROJECTION|WORLD|VIEW|PROJECTION|DIRECTION|DIFFUSE|AMBIENT|SPECULAR|EMISSIVE|SPECULARPOWER|TOONCOLOR|EDGECOLOR|ADDINGTEXTURE|MULTIPLYINGTEXTURE|ADDINGSPHERETEXTURE|MULTIPLYINGSPHERETEXTURE|VIEWPORTPIXELSIZE|POSITION)\b[^;]*;[ \t]*$", RegexOptions.Compiled | RegexOptions.Multiline | RegexOptions.IgnoreCase)]
+    private static partial Regex MmdCatchAllSemanticPattern();
+
+    [GeneratedRegex(@"(:\s*)POSITION\b", RegexOptions.Compiled)]
+    private static partial Regex PositionMatchPattern();
 
     private static readonly Dictionary<string, string> MatrixSemanticMap = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -103,20 +99,20 @@ internal sealed class FxSemanticRemapper
         var (global, structs) = ExtractStructBlocks(source);
 
         global = RemoveTechniqueBlocks(global);
-        global = VectorSemanticWithObjectPattern.Replace(global, SubstituteVectorSemanticWithObject);
+        global = VectorSemanticWithObjectPattern().Replace(global, SubstituteVectorSemanticWithObject);
         global = RemoveAnnotationsSafe(global);
-        global = ControlObjectPattern.Replace(global, SubstituteControlObject);
-        global = MatrixSemanticPattern.Replace(global, SubstituteMatrixSemantic);
-        global = VectorSemanticPattern.Replace(global, SubstituteVectorSemantic);
-        global = StringVarPattern.Replace(global, string.Empty);
-        global = TextureDeclPattern.Replace(global, m => SubstituteTexture(m, properties));
-        global = SamplerStateDeclPattern.Replace(global, m => SubstituteSampler(m, properties));
-        global = PlainBoolFlagPattern.Replace(global, SubstituteBoolFlag);
-        global = MmdCatchAllSemanticPattern.Replace(global, string.Empty);
-        global = SharedModifierPattern.Replace(global, string.Empty);
-        global = InlineModifierPattern.Replace(global, string.Empty);
-        global = AnyStringStatementPattern.Replace(global, string.Empty);
-        global = OutputColorSemanticPattern.Replace(global, ") : SV_Target");
+        global = ControlObjectPattern().Replace(global, SubstituteControlObject);
+        global = MatrixSemanticPattern().Replace(global, SubstituteMatrixSemantic);
+        global = VectorSemanticPattern().Replace(global, SubstituteVectorSemantic);
+        global = StringVarPattern().Replace(global, string.Empty);
+        global = TextureDeclPattern().Replace(global, m => SubstituteTexture(m, properties));
+        global = SamplerStateDeclPattern().Replace(global, m => SubstituteSampler(m, properties));
+        global = PlainBoolFlagPattern().Replace(global, SubstituteBoolFlag);
+        global = MmdCatchAllSemanticPattern().Replace(global, string.Empty);
+        global = SharedModifierPattern().Replace(global, string.Empty);
+        global = InlineModifierPattern().Replace(global, string.Empty);
+        global = AnyStringStatementPattern().Replace(global, string.Empty);
+        global = OutputColorSemanticPattern().Replace(global, ") : SV_Target");
 
         return RestoreStructBlocks(global, structs, properties.VsOutputType);
     }
@@ -187,10 +183,7 @@ internal sealed class FxSemanticRemapper
             if (!string.IsNullOrEmpty(vsOutputType) &&
                 string.Equals(name, vsOutputType, StringComparison.Ordinal))
             {
-                restored = Regex.Replace(restored,
-                    @"(:\s*)POSITION\b",
-                    "$1SV_POSITION",
-                    RegexOptions.Compiled);
+                restored = PositionMatchPattern().Replace(restored, "$1SV_POSITION");
             }
 
             sb.Replace(placeholder, restored);

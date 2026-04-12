@@ -2,27 +2,25 @@ using System.Text.RegularExpressions;
 
 namespace ObjLoader.Rendering.Shaders.Fx;
 
-internal sealed class FxPropertyCollector
+internal sealed partial class FxPropertyCollector
 {
-    private static readonly Regex TextureSemanticPattern = new(
-        @"(?:texture2D|texture)\s+(\w+)\s*:\s*(\w+)\s*(?:<[^>]*>)?\s*;",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(?:texture2D|texture)\s+(\w+)\s*:\s*(\w+)\s*(?:<[^>]*>)?\s*;", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex TextureSemanticPattern();
 
-    private static readonly Regex SamplerStatePattern = new(
-        @"(?:sampler2D|sampler)\s+(\w+)\s*=\s*sampler_state\s*\{([^}]*)\}\s*;",
-        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"(?:sampler2D|sampler)\s+(\w+)\s*=\s*sampler_state\s*\{([^}]*)\}\s*;", RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.IgnoreCase)]
+    private static partial Regex SamplerStatePattern();
 
-    private static readonly Regex TextureRefInSamplerPattern = new(
-        @"texture\s*=\s*<(\w+)>",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"texture\s*=\s*<(\w+)>", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex TextureRefInSamplerPattern();
 
-    private static readonly Regex VsEntryPointInTechniquePattern = new(
-        @"VertexShader\s*=\s*compile\s+\w+\s+(\w+)\s*\(",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"VertexShader\s*=\s*compile\s+\w+\s+(\w+)\s*\(", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex VsEntryPointInTechniquePattern();
 
-    private static readonly Regex PsEntryPointInTechniquePattern = new(
-        @"PixelShader\s*=\s*compile\s+\w+\s+(\w+)\s*\(",
-        RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"PixelShader\s*=\s*compile\s+\w+\s+(\w+)\s*\(", RegexOptions.Compiled | RegexOptions.IgnoreCase)]
+    private static partial Regex PsEntryPointInTechniquePattern();
+
+    [GeneratedRegex(@"\b(\w+)\s+(\w+)\s*\(", RegexOptions.Compiled)]
+    private static partial Regex FunctionSignaturePattern();
 
     private static readonly HashSet<string> MainTextureSemantics = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -54,11 +52,11 @@ internal sealed class FxPropertyCollector
 
     private static void CollectEntryPoints(string source, FxCollectedProperties props)
     {
-        var vsMatch = VsEntryPointInTechniquePattern.Match(source);
+        var vsMatch = VsEntryPointInTechniquePattern().Match(source);
         if (vsMatch.Success)
             props.VsEntryPoint = vsMatch.Groups[1].Value;
 
-        var psMatch = PsEntryPointInTechniquePattern.Match(source);
+        var psMatch = PsEntryPointInTechniquePattern().Match(source);
         if (psMatch.Success)
             props.PsEntryPoint = psMatch.Groups[1].Value;
     }
@@ -67,17 +65,24 @@ internal sealed class FxPropertyCollector
     {
         if (string.IsNullOrEmpty(props.VsEntryPoint)) return;
 
-        var pattern = new Regex(
-            $@"\b(\w+)\s+{Regex.Escape(props.VsEntryPoint)}\s*\(",
-            RegexOptions.Compiled);
-        var m = pattern.Match(source);
-        if (m.Success && !string.Equals(m.Groups[1].Value, "void", StringComparison.OrdinalIgnoreCase))
-            props.VsOutputType = m.Groups[1].Value;
+        foreach (Match m in FunctionSignaturePattern().Matches(source))
+        {
+            if (string.Equals(m.Groups[2].Value, props.VsEntryPoint, StringComparison.OrdinalIgnoreCase))
+            {
+                var type = m.Groups[1].Value;
+                if (!string.Equals(type, "return", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(type, "void", StringComparison.OrdinalIgnoreCase))
+                {
+                    props.VsOutputType = type;
+                    return;
+                }
+            }
+        }
     }
 
     private static void CollectTextures(string source, FxCollectedProperties props)
     {
-        foreach (Match m in TextureSemanticPattern.Matches(source))
+        foreach (Match m in TextureSemanticPattern().Matches(source))
         {
             props.AddTexture(m.Groups[1].Value, m.Groups[2].Value);
         }
@@ -85,11 +90,11 @@ internal sealed class FxPropertyCollector
 
     private static void CollectSamplers(string source, FxCollectedProperties props)
     {
-        foreach (Match m in SamplerStatePattern.Matches(source))
+        foreach (Match m in SamplerStatePattern().Matches(source))
         {
             var name = m.Groups[1].Value;
             var body = m.Groups[2].Value;
-            var texMatch = TextureRefInSamplerPattern.Match(body);
+            var texMatch = TextureRefInSamplerPattern().Match(body);
             var textureName = texMatch.Success ? texMatch.Groups[1].Value : null;
 
             if (MmdSystemSamplerNames.Contains(name))
