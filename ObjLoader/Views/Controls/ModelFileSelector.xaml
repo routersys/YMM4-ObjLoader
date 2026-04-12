@@ -26,6 +26,7 @@
                   ItemsSource="{Binding Files}" 
                   SelectedItem="{Binding SelectedFile}"
                   HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Center"
                   ItemTemplate="{StaticResource ModelFileItemTemplate}"/>
 
         <Button Grid.Column="1" 
