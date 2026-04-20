@@ -155,7 +155,7 @@ namespace ObjLoader.Rendering.Renderers
             var billboards = (List<(Api.Core.SceneObjectId Id, BillboardDescriptor Desc)>)drawManager.GetBillboards();
             if (billboards.Count == 0) return;
 
-            context.OMSetDepthStencilState(_resources.DepthStencilState);
+            context.OMSetDepthStencilState(_resources.DepthStencilStateNoWrite);
             context.OMSetBlendState(_resources.BillboardBlendState, _clearBlend, -1);
 
             context.IASetInputLayout(_resources.InputLayout);

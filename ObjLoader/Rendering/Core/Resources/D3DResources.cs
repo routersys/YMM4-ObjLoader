@@ -103,7 +103,7 @@ namespace ObjLoader.Rendering.Core.Resources
             BlendState = CreateBlendState(device, false);
             _disposer.Collect(BlendState);
 
-            BillboardBlendState = CreateBlendState(device, true);
+            BillboardBlendState = CreateBlendState(device, false);
             _disposer.Collect(BillboardBlendState);
 
             GridBlendState = CreateGridBlendState(device);
