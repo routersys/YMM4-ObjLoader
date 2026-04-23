@@ -63,6 +63,10 @@ public sealed class ObjLoaderSource : IShapeSource2
     private int _lastActiveWorldId = -1;
     private int _lastShadowResolution = -1;
     private bool _lastShadowEnabled;
+    private int _lastRenderWidth;
+    private int _lastRenderHeight;
+    private bool _lastShadowValid;
+    private int _lastRenderWorldId;
 
     private Dictionary<string, LayerState> _layerStates = new();
 
@@ -231,7 +235,7 @@ public sealed class ObjLoaderSource : IShapeSource2
 
             try
             {
-                UpdateInternal(_lastDesc);
+                RefreshSceneContent();
             }
             catch (SharpGen.Runtime.SharpGenException ex) when (
                 ex.HResult == unchecked((int)0x887A0005) ||
@@ -239,14 +243,28 @@ public sealed class ObjLoaderSource : IShapeSource2
                 ex.HResult == unchecked((int)0x887A0007))
             {
                 GpuResourceCache.Instance.CleanupInvalidResources();
-                CreateEmptyCommandList();
             }
-            catch (Exception)
-            {
-                CreateEmptyCommandList();
-            }
+            catch { }
         }
         return _commandList;
+    }
+
+    private void RefreshSceneContent()
+    {
+        if (_isDisposed || _lastRenderWidth <= 0 || _lastRenderHeight <= 0 || double.IsNaN(_lastCamX)) return;
+
+        if (_sceneApi != null)
+            _sceneDrawManager.UpdateFromApi(_sceneApi.DrawInternal);
+
+        bool hasBillboards = _sceneDrawManager.GetBillboards().Count > 0;
+
+        RenderMainScene(_lastRenderWidth, _lastRenderHeight,
+            _lastCamX, _lastCamY, _lastCamZ,
+            _lastTargetX, _lastTargetY, _lastTargetZ,
+            _lastShadowValid, _lastRenderWorldId, hasBillboards);
+
+        ClearResourceBindings();
+        _sceneDrawManager.ClearDirtyFlag();
     }
 
     private void UpdateInternal(TimelineItemSourceDescription? desc)
@@ -316,6 +334,11 @@ public sealed class ObjLoaderSource : IShapeSource2
         RenderMainScene(sw, sh, stateToRender.CamX, stateToRender.CamY, stateToRender.CamZ,
             stateToRender.TargetX, stateToRender.TargetY, stateToRender.TargetZ,
             shadowValid, renderWorldId, needsEnvMapRedraw);
+
+        _lastRenderWidth = sw;
+        _lastRenderHeight = sh;
+        _lastShadowValid = shadowValid;
+        _lastRenderWorldId = renderWorldId;
 
         FinalizeCommandList(camX, camY, camZ, targetX, targetY, targetZ,
             settingsVersion, activeWorldId, settings);

@@ -47,7 +47,7 @@ namespace ObjLoader.Rendering.Managers
             var bitmapProps = new BitmapProperties1(
                 new PixelFormat(Format.B8G8R8A8_UNorm, Vortice.DCommon.AlphaMode.Premultiplied),
                 96.0f, 96.0f,
-                BitmapOptions.Target | BitmapOptions.CannotDraw);
+                BitmapOptions.Target);
             D2dTarget = d2dContext.CreateBitmapFromDxgiSurface(surface, bitmapProps);
         }
 
