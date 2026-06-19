@@ -92,7 +92,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     public WriteableBitmap? SceneImage => _renderService.SceneImage;
 
     public ObservableCollection<CameraKeyframe> Keyframes { get; }
-    public ObservableCollection<EasingData> EasingPresets => EasingManager.Presets;
     public ObservableCollection<MenuItemViewModel> MenuItems { get; private set; } = [];
 
     public ActionCommand ResetCommand { get; }
@@ -102,8 +101,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     public ActionCommand StopCommand { get; }
     public ActionCommand AddKeyframeCommand { get; }
     public ActionCommand RemoveKeyframeCommand { get; }
-    public ActionCommand SavePresetCommand { get; }
-    public ActionCommand DeletePresetCommand { get; }
 
     [Menu(Group = "File", GroupNameKey = nameof(Texts.Menu_File), GroupAcceleratorKey = "F", NameKey = nameof(Texts.Menu_Open), ResourceType = typeof(Texts), Order = 0, AcceleratorKey = "O")]
     public ActionCommand OpenProjectCommand { get; }
@@ -330,29 +327,12 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             Set(ref _selectedKeyframe, value);
             if (_selectedKeyframe != null) CurrentTime = _selectedKeyframe.Time;
             OnPropertyChanged(nameof(IsKeyframeSelected));
-            OnPropertyChanged(nameof(SelectedKeyframeEasing));
             AddKeyframeCommand.RaiseCanExecuteChanged();
             RemoveKeyframeCommand.RaiseCanExecuteChanged();
-            SavePresetCommand.RaiseCanExecuteChanged();
-            DeletePresetCommand.RaiseCanExecuteChanged();
         }
     }
 
     public bool IsKeyframeSelected => SelectedKeyframe != null;
-
-    public EasingData? SelectedKeyframeEasing
-    {
-        get => SelectedKeyframe?.Easing;
-        set
-        {
-            if (SelectedKeyframe != null && value != null)
-            {
-                SelectedKeyframe.Easing = value.Clone();
-                OnPropertyChanged();
-                UpdateAnimation();
-            }
-        }
-    }
 
     public CameraWindowViewModel(ObjLoaderParameter parameter)
     {
@@ -399,8 +379,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
         StopCommand = new ActionCommand(_ => true, _ => _playbackController.StopPlayback());
         AddKeyframeCommand = new ActionCommand(_ => !IsKeyframeSelected, _ => _keyframeManager.AddKeyframe(SelectedKeyframe));
         RemoveKeyframeCommand = new ActionCommand(_ => IsKeyframeSelected, _ => _keyframeManager.RemoveKeyframe(SelectedKeyframe));
-        SavePresetCommand = new ActionCommand(_ => IsKeyframeSelected, _ => _keyframeManager.SavePreset(SelectedKeyframeEasing));
-        DeletePresetCommand = new ActionCommand(_ => IsKeyframeSelected && SelectedKeyframeEasing != null && SelectedKeyframeEasing.IsCustom, _ => _keyframeManager.DeletePreset(SelectedKeyframeEasing, p => SelectedKeyframeEasing = p));
 
         OpenProjectCommand = new ActionCommand(_ => true, _ => _projectManager.OpenProject());
         SaveProjectCommand = new ActionCommand(_ => !string.IsNullOrEmpty(_currentFilePath), _ => _projectManager.SaveProject(_currentFilePath));

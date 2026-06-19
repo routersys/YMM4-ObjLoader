@@ -5,6 +5,5 @@
     <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
     <conv:StringToDoubleConverter x:Key="StringToDoubleConverter"/>
-    <conv:EasingToGeometryConverter x:Key="EasingToGeometryConverter"/>
 
 </ResourceDictionary>

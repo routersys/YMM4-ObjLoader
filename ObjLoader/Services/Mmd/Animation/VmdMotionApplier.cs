@@ -5,6 +5,7 @@ using ObjLoader.Services.Mmd.Animation.Interfaces;
 using ObjLoader.Services.Mmd.Parsers;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using YukkuriMovieMaker.Commons;
 
 namespace ObjLoader.Services.Mmd.Animation;
 
@@ -69,8 +70,7 @@ public class DefaultMotionApplier : IMotionApplier
                 CamZ = camZ,
                 TargetX = targetX,
                 TargetY = targetY,
-                TargetZ = targetZ,
-                Easing = new EasingData()
+                TargetZ = targetZ
             });
         }
 

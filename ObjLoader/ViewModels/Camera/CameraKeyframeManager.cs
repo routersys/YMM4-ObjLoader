@@ -1,6 +1,5 @@
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
-using ObjLoader.Views.Dialogs;
 using System.Collections.ObjectModel;
 
 namespace ObjLoader.ViewModels.Camera;
@@ -27,8 +26,7 @@ internal class CameraKeyframeManager(
             CamZ = state.cz,
             TargetX = state.tx,
             TargetY = state.ty,
-            TargetZ = state.tz,
-            Easing = EasingManager.Presets.FirstOrDefault()?.Clone() ?? new EasingData()
+            TargetZ = state.tz
         };
 
         int index = -1;
@@ -63,39 +61,15 @@ internal class CameraKeyframeManager(
 
     public void RemoveKeyframe(CameraKeyframe? selectedKeyframe)
     {
-        if (selectedKeyframe != null)
-        {
-            keyframes.Remove(selectedKeyframe);
-            setSelectedKeyframe(null);
+        if (selectedKeyframe == null) return;
 
-            if (keyframes.Count == 0)
-            {
-                resetCameraToDefault();
-            }
+        keyframes.Remove(selectedKeyframe);
+        setSelectedKeyframe(null);
 
-            parameter.Keyframes = [.. keyframes];
-            updateAnimation();
-            syncToParameter();
-        }
-    }
+        if (keyframes.Count == 0) resetCameraToDefault();
 
-    public void SavePreset(EasingData? selectedKeyframeEasing)
-    {
-        if (selectedKeyframeEasing == null) return;
-        var dialog = new NameDialog();
-        if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.ResultName))
-        {
-            selectedKeyframeEasing.Name = dialog.ResultName;
-            EasingManager.SavePreset(selectedKeyframeEasing);
-        }
-    }
-
-    public void DeletePreset(EasingData? selectedKeyframeEasing, Action<EasingData?> setSelectedKeyframeEasing)
-    {
-        if (selectedKeyframeEasing != null && selectedKeyframeEasing.IsCustom)
-        {
-            EasingManager.DeletePreset(selectedKeyframeEasing);
-            setSelectedKeyframeEasing(EasingManager.Presets.FirstOrDefault());
-        }
+        parameter.Keyframes = [.. keyframes];
+        updateAnimation();
+        syncToParameter();
     }
 }
