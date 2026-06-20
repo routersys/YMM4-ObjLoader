@@ -276,9 +276,9 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*" MinWidth="300"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="280"/>
+                    <ColumnDefinition Width="280" MinWidth="200" MaxWidth="600"/>
                 </Grid.ColumnDefinitions>
 
                 <Slider Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Minimum="0" Maximum="{Binding MaxDuration}" Value="{Binding CurrentTime}" Style="{StaticResource ModernSlider}" Margin="0,0,0,10"/>
