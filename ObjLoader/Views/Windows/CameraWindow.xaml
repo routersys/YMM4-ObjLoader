@@ -184,48 +184,27 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="65"/>
                             </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
                             <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="X"/>
-                            <Slider Grid.Column="1" Value="{Binding CamX}" Minimum="{Binding CamXMin}" Maximum="{Binding CamXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="2" Text="{Binding CamX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                            <c:TextBoxSlider Grid.Column="1" Value="{Binding CamX}" Min="-100000" Max="100000" DefaultMin="-10" DefaultMax="10" StringFormat="F2" TextBoxWidth="65"/>
                         </Grid>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="65"/>
                             </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
                             <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Y"/>
-                            <Slider Grid.Column="1" Value="{Binding CamY}" Minimum="{Binding CamYMin}" Maximum="{Binding CamYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="2" Text="{Binding CamY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                            <c:TextBoxSlider Grid.Column="1" Value="{Binding CamY}" Min="-100000" Max="100000" DefaultMin="-10" DefaultMax="10" StringFormat="F2" TextBoxWidth="65"/>
                         </Grid>
 
                         <Grid Margin="0,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="20"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="65"/>
                             </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
                             <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0" Cursor="SizeWE" MouseLeftButtonDown="Label_MouseDown" MouseMove="Label_MouseMove" MouseLeftButtonUp="Label_MouseUp" Tag="Z"/>
-                            <Slider Grid.Column="1" Value="{Binding CamZ}" Minimum="{Binding CamZMin}" Maximum="{Binding CamZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding CamZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                            <TextBox Grid.Column="2" Text="{Binding CamZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                            <c:TextBoxSlider Grid.Column="1" Value="{Binding CamZ}" Min="-100000" Max="100000" DefaultMin="-10" DefaultMax="10" StringFormat="F2" TextBoxWidth="65"/>
                         </Grid>
 
                         <Separator Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" Margin="0,15"/>
@@ -243,48 +222,27 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="20"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="65"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
                                 <TextBlock Text="X" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider Grid.Column="1" Value="{Binding TargetX}" Minimum="{Binding TargetXMin}" Maximum="{Binding TargetXMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetXScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                                <TextBox Grid.Column="2" Text="{Binding TargetX, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                <c:TextBoxSlider Grid.Column="1" Value="{Binding TargetX}" Min="-100000" Max="100000" DefaultMin="-10" DefaultMax="10" StringFormat="F2" TextBoxWidth="65"/>
                             </Grid>
 
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="20"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="65"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
                                 <TextBlock Text="Y" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider Grid.Column="1" Value="{Binding TargetY}" Minimum="{Binding TargetYMin}" Maximum="{Binding TargetYMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetYScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                                <TextBox Grid.Column="2" Text="{Binding TargetY, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                <c:TextBoxSlider Grid.Column="1" Value="{Binding TargetY}" Min="-100000" Max="100000" DefaultMin="-10" DefaultMax="10" StringFormat="F2" TextBoxWidth="65"/>
                             </Grid>
 
                             <Grid Margin="0,5">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="20"/>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="65"/>
                                 </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
                                 <TextBlock Text="Z" Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" VerticalAlignment="Center" Grid.Column="0"/>
-                                <Slider Grid.Column="1" Value="{Binding TargetZ}" Minimum="{Binding TargetZMin}" Maximum="{Binding TargetZMax}" Margin="0,0,10,0" Style="{StaticResource ModernSlider}"/>
-                                <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding TargetZScaleInfo}" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" FontSize="10" HorizontalAlignment="Center"/>
-                                <TextBox Grid.Column="2" Text="{Binding TargetZ, Converter={StaticResource StringToDoubleConverter}, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBox}"/>
+                                <c:TextBoxSlider Grid.Column="1" Value="{Binding TargetZ}" Min="-100000" Max="100000" DefaultMin="-10" DefaultMax="10" StringFormat="F2" TextBoxWidth="65"/>
                             </Grid>
                         </StackPanel>
 

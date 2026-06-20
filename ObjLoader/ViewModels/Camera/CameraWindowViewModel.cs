@@ -35,15 +35,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     private readonly CameraKeyframeManager _keyframeManager;
     private readonly CameraPlaybackController _playbackController;
 
-    private double _camXMin = -10, _camXMax = 10;
-    private double _camYMin = -10, _camYMax = 10;
-    private double _camZMin = -10, _camZMax = 10;
-    private double _targetXMin = -10, _targetXMax = 10;
-    private double _targetYMin = -10, _targetYMax = 10;
-    private double _targetZMin = -10, _targetZMax = 10;
-
-    private string _camXScaleInfo = "", _camYScaleInfo = "", _camZScaleInfo = "";
-    private string _targetXScaleInfo = "", _targetYScaleInfo = "", _targetZScaleInfo = "";
 
     private double _aspectRatio = 16.0 / 9.0;
     private int _viewportWidth = 100;
@@ -162,7 +153,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             if (_cameraLogic.CamX == value) return;
             _cameraLogic.CamX = value;
             OnPropertyChanged();
-            UpdateRange(value, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo));
             if (!_isUpdatingAnimation)
             {
                 SyncToParameter();
@@ -179,7 +169,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             if (_cameraLogic.CamY == value) return;
             _cameraLogic.CamY = value;
             OnPropertyChanged();
-            UpdateRange(value, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo));
             if (!_isUpdatingAnimation)
             {
                 SyncToParameter();
@@ -196,7 +185,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             if (_cameraLogic.CamZ == value) return;
             _cameraLogic.CamZ = value;
             OnPropertyChanged();
-            UpdateRange(value, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo));
             if (!_isUpdatingAnimation)
             {
                 SyncToParameter();
@@ -213,7 +201,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             if (_cameraLogic.TargetX == value) return;
             _cameraLogic.TargetX = value;
             OnPropertyChanged();
-            UpdateRange(value, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo));
             if (!_isUpdatingAnimation)
             {
                 SyncToParameter();
@@ -230,7 +217,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             if (_cameraLogic.TargetY == value) return;
             _cameraLogic.TargetY = value;
             OnPropertyChanged();
-            UpdateRange(value, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo));
             if (!_isUpdatingAnimation)
             {
                 SyncToParameter();
@@ -247,7 +233,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
             if (_cameraLogic.TargetZ == value) return;
             _cameraLogic.TargetZ = value;
             OnPropertyChanged();
-            UpdateRange(value, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo));
             if (!_isUpdatingAnimation)
             {
                 SyncToParameter();
@@ -266,24 +251,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
     public double ModelHeight => _sceneService.ModelHeight;
     public int ViewportHeight => _viewportHeight;
 
-    public double CamXMin { get => _camXMin; set => Set(ref _camXMin, value); }
-    public double CamXMax { get => _camXMax; set => Set(ref _camXMax, value); }
-    public string CamXScaleInfo { get => _camXScaleInfo; set => Set(ref _camXScaleInfo, value); }
-    public double CamYMin { get => _camYMin; set => Set(ref _camYMin, value); }
-    public double CamYMax { get => _camYMax; set => Set(ref _camYMax, value); }
-    public string CamYScaleInfo { get => _camYScaleInfo; set => Set(ref _camYScaleInfo, value); }
-    public double CamZMin { get => _camZMin; set => Set(ref _camZMin, value); }
-    public double CamZMax { get => _camZMax; set => Set(ref _camZMax, value); }
-    public string CamZScaleInfo { get => _camZScaleInfo; set => Set(ref _camZScaleInfo, value); }
-    public double TargetXMin { get => _targetXMin; set => Set(ref _targetXMin, value); }
-    public double TargetXMax { get => _targetXMax; set => Set(ref _targetXMax, value); }
-    public string TargetXScaleInfo { get => _targetXScaleInfo; set => Set(ref _targetXScaleInfo, value); }
-    public double TargetYMin { get => _targetYMin; set => Set(ref _targetYMin, value); }
-    public double TargetYMax { get => _targetYMax; set => Set(ref _targetYMax, value); }
-    public string TargetYScaleInfo { get => _targetYScaleInfo; set => Set(ref _targetYScaleInfo, value); }
-    public double TargetZMin { get => _targetZMin; set => Set(ref _targetZMin, value); }
-    public double TargetZMax { get => _targetZMax; set => Set(ref _targetZMax, value); }
-    public string TargetZScaleInfo { get => _targetZScaleInfo; set => Set(ref _targetZScaleInfo, value); }
 
     public bool IsGridVisible { get => _isGridVisible; set { if (Set(ref _isGridVisible, value)) _isDirty = true; } }
     public bool IsInfiniteGrid { get => _isInfiniteGrid; set { if (Set(ref _isInfiniteGrid, value)) _isDirty = true; } }
@@ -560,12 +527,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
         Action updateAction = () =>
         {
             _cameraLogic.ViewRadius = _sceneService.ModelScale * 2.5;
-            UpdateRange(CamX, ref _camXMin, ref _camXMax, ref _camXScaleInfo, nameof(CamXMin), nameof(CamXMax), nameof(CamXScaleInfo));
-            UpdateRange(CamY, ref _camYMin, ref _camYMax, ref _camYScaleInfo, nameof(CamYMin), nameof(CamYMax), nameof(CamYScaleInfo));
-            UpdateRange(CamZ, ref _camZMin, ref _camZMax, ref _camZScaleInfo, nameof(CamZMin), nameof(CamZMax), nameof(CamZScaleInfo));
-            UpdateRange(TargetX, ref _targetXMin, ref _targetXMax, ref _targetXScaleInfo, nameof(TargetXMin), nameof(TargetXMax), nameof(TargetXScaleInfo));
-            UpdateRange(TargetY, ref _targetYMin, ref _targetYMax, ref _targetYScaleInfo, nameof(TargetYMin), nameof(TargetYMax), nameof(TargetYScaleInfo));
-            UpdateRange(TargetZ, ref _targetZMin, ref _targetZMax, ref _targetZScaleInfo, nameof(TargetZMin), nameof(TargetZMax), nameof(TargetZScaleInfo));
         };
         if (dispatcher != null && !dispatcher.CheckAccess()) dispatcher.Invoke(updateAction);
         else updateAction();
@@ -583,19 +544,6 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
         _cameraLogic.AnimateView(Math.PI / 4, Math.PI / 4);
     }
 
-    private void UpdateRange(double value, ref double min, ref double max, ref string scaleInfo, string minProp, string maxProp, string infoProp)
-    {
-        double abs = Math.Abs(value);
-        double targetMax = 10;
-        if (abs >= 50) targetMax = 100;
-        else if (abs >= 10) targetMax = 50;
-        if (Math.Abs(max - targetMax) > 0.001)
-        {
-            max = targetMax; min = -targetMax;
-            if (targetMax > 10) scaleInfo = $"x{targetMax / 10:0}"; else scaleInfo = "";
-            OnPropertyChanged(minProp); OnPropertyChanged(maxProp); OnPropertyChanged(infoProp);
-        }
-    }
 
     public void SyncToParameter() => _parameter.SetCameraValues(CamX, CamY, CamZ, TargetX, TargetY, TargetZ);
 
