@@ -1,6 +1,9 @@
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("ObjLoader.UnitTests")]
 
 namespace ObjLoader.ViewModels.Camera;
 
@@ -57,6 +60,8 @@ internal class CameraKeyframeManager(
 
         setSelectedKeyframe(keyframe);
         parameter.Keyframes = [.. keyframes];
+        updateAnimation();
+        syncToParameter();
     }
 
     public void RemoveKeyframe(CameraKeyframe? selectedKeyframe)
