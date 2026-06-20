@@ -277,10 +277,11 @@
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="280"/>
                 </Grid.ColumnDefinitions>
 
-                <Slider Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Minimum="0" Maximum="{Binding MaxDuration}" Value="{Binding CurrentTime}" Style="{StaticResource ModernSlider}" Margin="0,0,0,10"/>
+                <Slider Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Minimum="0" Maximum="{Binding MaxDuration}" Value="{Binding CurrentTime}" Style="{StaticResource ModernSlider}" Margin="0,0,0,10"/>
 
                 <Grid Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
                     <Grid.ColumnDefinitions>
@@ -344,7 +345,9 @@
                     </ListView.View>
                 </ListView>
 
-                <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Background="#10000000" Height="184">
+                <GridSplitter Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
+
+                <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="2" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Background="#10000000" Height="184">
                     <c:BezierAnimationEditor Value="{Binding SelectedKeyframe.BezierEasing}" IsEnabled="{Binding IsKeyframeSelected}"/>
                 </Border>
             </Grid>
