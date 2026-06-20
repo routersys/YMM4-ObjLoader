@@ -1,6 +1,4 @@
-using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Xml.Serialization;
 using YukkuriMovieMaker.Commons;
@@ -10,8 +8,10 @@ namespace ObjLoader.Plugin.CameraAnimation
     public class CameraKeyframe : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
+
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
         protected bool Set<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value)) return false;
@@ -27,6 +27,7 @@ namespace ObjLoader.Plugin.CameraAnimation
         private double _targetX;
         private double _targetY;
         private double _targetZ;
+        private ICameraEasing? _easing;
 
         public double Time { get => _time; set => Set(ref _time, value); }
         public double CamX { get => _camX; set => Set(ref _camX, value); }
@@ -37,19 +38,21 @@ namespace ObjLoader.Plugin.CameraAnimation
         public double TargetZ { get => _targetZ; set => Set(ref _targetZ, value); }
 
         [XmlIgnore]
-        public BezierAnimation Easing { get; } = new BezierAnimation();
+        public ICameraEasing Easing
+        {
+            get => _easing ??= new BezierCameraEasing();
+            internal set => _easing = value;
+        }
+
+        [XmlIgnore]
+        public BezierAnimation? BezierEasing => (Easing as BezierCameraEasing)?.Animation;
 
         [XmlArray("EasingPoints")]
         [XmlArrayItem("Point")]
         public List<BezierPointData> EasingPointsData
         {
-            get => Easing.Points.Select(p => new BezierPointData(p)).ToList();
-            set
-            {
-                if (value == null || value.Count == 0) return;
-                var pts = value.Select(p => p.ToAnimationPoint()).ToArray();
-                Easing.Points = ImmutableList.Create(new ReadOnlySpan<BezierAnimationPoint>(pts));
-            }
+            get => Easing.GetPoints();
+            set => Easing.SetPoints(value);
         }
 
         public bool EasingIsQuadratic
@@ -57,27 +60,5 @@ namespace ObjLoader.Plugin.CameraAnimation
             get => Easing.IsQuadratic;
             set => Easing.IsQuadratic = value;
         }
-    }
-
-    public class BezierPointData
-    {
-        public float PX { get; set; }
-        public float PY { get; set; }
-        public float C1X { get; set; }
-        public float C1Y { get; set; }
-        public float C2X { get; set; }
-        public float C2Y { get; set; }
-
-        public BezierPointData() { }
-
-        public BezierPointData(BezierAnimationPoint p)
-        {
-            PX = p.Point.X; PY = p.Point.Y;
-            C1X = p.ControlPoint1.X; C1Y = p.ControlPoint1.Y;
-            C2X = p.ControlPoint2.X; C2Y = p.ControlPoint2.Y;
-        }
-
-        public BezierAnimationPoint ToAnimationPoint() =>
-            new BezierAnimationPoint(new Vector2(PX, PY), new Vector2(C1X, C1Y), new Vector2(C2X, C2Y));
     }
 }

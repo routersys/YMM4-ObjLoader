@@ -324,12 +324,27 @@ public partial class CameraWindowViewModel : Bindable, IDisposable, ICameraManip
         get => _selectedKeyframe;
         set
         {
+            if (_selectedKeyframe != null && _selectedKeyframe.BezierEasing != null)
+                _selectedKeyframe.BezierEasing.PropertyChanged -= OnBezierEasingChanged;
+
             Set(ref _selectedKeyframe, value);
-            if (_selectedKeyframe != null) CurrentTime = _selectedKeyframe.Time;
+            if (_selectedKeyframe != null)
+            {
+                CurrentTime = _selectedKeyframe.Time;
+                if (_selectedKeyframe.BezierEasing != null)
+                    _selectedKeyframe.BezierEasing.PropertyChanged += OnBezierEasingChanged;
+            }
             OnPropertyChanged(nameof(IsKeyframeSelected));
             AddKeyframeCommand.RaiseCanExecuteChanged();
             RemoveKeyframeCommand.RaiseCanExecuteChanged();
         }
+    }
+
+    private void OnBezierEasingChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        _parameter.Keyframes = [.. Keyframes];
+        UpdateAnimation();
+        SyncToParameter();
     }
 
     public bool IsKeyframeSelected => SelectedKeyframe != null;

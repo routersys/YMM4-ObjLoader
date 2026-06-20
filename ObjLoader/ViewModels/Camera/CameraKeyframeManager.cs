@@ -1,9 +1,6 @@
 using ObjLoader.Plugin;
 using ObjLoader.Plugin.CameraAnimation;
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
-
-[assembly: InternalsVisibleTo("ObjLoader.UnitTests")]
 
 namespace ObjLoader.ViewModels.Camera;
 
@@ -31,6 +28,12 @@ internal class CameraKeyframeManager(
             TargetY = state.ty,
             TargetZ = state.tz
         };
+
+        if (currentSelectedKeyframe != null)
+        {
+            keyframe.EasingIsQuadratic = currentSelectedKeyframe.EasingIsQuadratic;
+            keyframe.EasingPointsData = currentSelectedKeyframe.EasingPointsData;
+        }
 
         int index = -1;
         int lo = 0;

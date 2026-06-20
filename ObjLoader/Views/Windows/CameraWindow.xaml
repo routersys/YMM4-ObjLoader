@@ -386,8 +386,8 @@
                     </ListView.View>
                 </ListView>
 
-                <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Background="#10000000">
-                    <c:BezierAnimationEditor Value="{Binding SelectedKeyframe.Easing}" IsEnabled="{Binding IsKeyframeSelected}"/>
+                <Border Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" Background="#10000000" Height="184">
+                    <c:BezierAnimationEditor Value="{Binding SelectedKeyframe.BezierEasing}" IsEnabled="{Binding IsKeyframeSelected}"/>
                 </Border>
             </Grid>
         </Border>
